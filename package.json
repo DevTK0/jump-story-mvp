@@ -1,0 +1,41 @@
+{
+  "name": "jump-story-mvp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "docs:dev": "astro dev",
+    "docs:build": "astro build",
+    "docs:preview": "astro preview",
+    "test:load": "tsx src/tests/stagehand-screenshot-test.ts",
+    "test:climb": "tsx src/tests/stagehand-climbing-test.ts",
+    "mcp:stagehand": "npx @browserbasehq/mcp-stagehand"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.6.5",
+  "dependencies": {
+    "@astrojs/starlight": "^0.35.0",
+    "@browserbasehq/stagehand": "^2.4.0",
+    "@fontsource/geist-mono": "^5.2.6",
+    "@fontsource/geist-sans": "^5.2.5",
+    "astro": "^5.12.0",
+    "astro-d2": "^0.8.0",
+    "phaser": "^3.90.0",
+    "starlight-auto-sidebar": "^0.1.2",
+    "starlight-image-zoom": "^0.13.0",
+    "starlight-theme-black": "^0.6.0"
+  },
+  "devDependencies": {
+    "@browserbasehq/mcp-stagehand": "^0.5.1",
+    "@types/node": "^24.0.8",
+    "tsx": "^4.19.2",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.0"
+  }
+}
