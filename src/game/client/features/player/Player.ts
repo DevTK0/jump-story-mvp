@@ -166,6 +166,7 @@ export class Player extends Phaser.GameObjects.Sprite {
     return PLAYER_JUMP_SPEED;
   }
   
+  
   public destroy(): void {
     // Destroy all systems
     for (const system of this.systems.values()) {

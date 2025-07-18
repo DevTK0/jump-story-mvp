@@ -7,6 +7,8 @@ import {
     PLAYER_HITBOX_WIDTH,
     PLAYER_HITBOX_HEIGHT,
 } from "../features/player";
+import type { IDebuggable } from "../shared/debug";
+import { DEBUG_CONFIG, DebugState } from "../shared/debug";
 
 // Scene-specific constants
 const COLOR_BACKGROUND = 0x2c3e50;
@@ -15,7 +17,7 @@ const SPRITE_FRAME_HEIGHT = 100;
 const CAMERA_SHAKE_DURATION = 100;
 const CAMERA_SHAKE_INTENSITY = 0.03;
 
-export class PlaygroundScene extends Phaser.Scene {
+export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     private player!: Player;
 
     // System managers
@@ -178,5 +180,110 @@ export class PlaygroundScene extends Phaser.Scene {
         // Update enemy system
         this.enemyManager.update();
 
+    }
+    
+    // Debug methods
+    renderDebug(graphics: Phaser.GameObjects.Graphics): void {
+        if (!DebugState.getInstance().enabled || !this.player) return;
+        
+        this.drawNearbyCollisionBoundaries(graphics);
+        this.drawAllObjectHitboxes(graphics);
+    }
+    
+    private drawNearbyCollisionBoundaries(graphics: Phaser.GameObjects.Graphics): void {
+        const playerX = this.player.x;
+        const playerY = this.player.y;
+        const checkRadius = DEBUG_CONFIG.ui.collisionCheckRadius;
+        
+        // Set style for collision boundaries
+        graphics.lineStyle(2, DEBUG_CONFIG.colors.collision, 0.8);
+        
+        // Get all physics bodies in the world
+        const bodies = this.physics.world.staticBodies.entries;
+        
+        for (const body of bodies) {
+            // Only draw bodies near the player
+            const distance = Phaser.Math.Distance.Between(
+                playerX, playerY,
+                body.x + body.halfWidth, body.y + body.halfHeight
+            );
+            
+            if (distance < checkRadius) {
+                // Draw collision boundary rectangle
+                graphics.strokeRect(body.x, body.y, body.width, body.height);
+            }
+        }
+    }
+    
+    private drawAllObjectHitboxes(graphics: Phaser.GameObjects.Graphics): void {
+        const playerX = this.player.x;
+        const playerY = this.player.y;
+        const checkRadius = DEBUG_CONFIG.ui.collisionCheckRadius;
+        
+        // Set style for object hitboxes
+        graphics.lineStyle(2, 0xff0000, 0.7); // Red color for enemy hitboxes
+        
+        // Draw enemy hitboxes
+        this.enemyManager.getEnemyGroup().children.entries.forEach(enemy => {
+            const enemySprite = enemy as Phaser.Physics.Arcade.Sprite;
+            if (enemySprite.body) {
+                const body = enemySprite.body as Phaser.Physics.Arcade.Body;
+                const distance = Phaser.Math.Distance.Between(
+                    playerX, playerY,
+                    enemySprite.x, enemySprite.y
+                );
+                
+                if (distance < checkRadius) {
+                    // Draw enemy hitbox
+                    graphics.strokeRect(body.x, body.y, body.width, body.height);
+                    
+                    // Draw center point
+                    graphics.fillStyle(0xff0000, 0.8);
+                    graphics.fillCircle(enemySprite.x, enemySprite.y, 2);
+                }
+            }
+        });
+        
+        // Draw all dynamic bodies (non-player entities)
+        graphics.lineStyle(1, 0xffff00, 0.5); // Yellow for other dynamic bodies
+        
+        // Get combat system to check for attack hitbox
+        const combatSystem = this.player.getSystem('combat');
+        const attackHitbox = combatSystem ? (combatSystem as any).getHitboxSprite().body : null;
+        
+        this.physics.world.bodies.entries.forEach(body => {
+            // Skip player body (it's handled by Player class)
+            if (body === this.player.body) return;
+            
+            // Skip attack hitbox (it's handled by Combat system)
+            if (attackHitbox && body === attackHitbox) return;
+            
+            const distance = Phaser.Math.Distance.Between(
+                playerX, playerY,
+                body.x + body.halfWidth, body.y + body.halfHeight
+            );
+            
+            if (distance < checkRadius) {
+                graphics.strokeRect(body.x, body.y, body.width, body.height);
+            }
+        });
+    }
+    
+    getDebugInfo(): Record<string, any> {
+        if (!DebugState.getInstance().enabled) return {};
+        
+        const staticBodies = this.physics.world.staticBodies.entries.length;
+        const dynamicBodies = this.physics.world.bodies.entries.length;
+        
+        return {
+            staticBodies,
+            dynamicBodies,
+            totalBodies: staticBodies + dynamicBodies,
+            mapSize: this.mapData ? `${this.mapData.tilemap.widthInPixels}x${this.mapData.tilemap.heightInPixels}` : 'N/A',
+        };
+    }
+    
+    isDebugEnabled(): boolean {
+        return DebugState.getInstance().enabled;
     }
 }

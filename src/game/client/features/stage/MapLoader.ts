@@ -96,22 +96,12 @@ export class MapLoader {
         ]);
         tilemap.createLayer("Props", propsTileset!);
         tilemap.createLayer("Chests", propsTileset!);
-        const platformLayer = tilemap.createLayer("Platform", propsTileset!);
-        const climbeableLayer = tilemap.createLayer("Climbeable", propsTileset!);
+        tilemap.createLayer("Platform", propsTileset!);
+        tilemap.createLayer("Climbeable", propsTileset!);
         
-        // Add color tints to distinguish different layer types
-        if (platformLayer) {
-            platformLayer.setTint(0xDEB887); // Burlywood tint for platform tiles
-        }
-        if (climbeableLayer) {
-            climbeableLayer.setTint(0x90EE90); // Light green tint for climbeable tiles
-        }
-
         // Set collision for ground tiles (exclude empty tiles with ID 0) - Traditional solid collision
         if (groundLayer) {
             groundLayer.setCollisionByExclusion([0]);
-            // Add color tint to ground tiles to distinguish them from platforms
-            groundLayer.setTint(0x8B4513); // Brown tint for ground tiles
         }
 
         // Platform tiles will be handled as one-way platforms (no tile collision, object-based only)
@@ -264,14 +254,14 @@ export class MapLoader {
         const groundGroup = this.scene.physics.add.staticGroup();
 
         ground.forEach((groundRect) => {
-            // Create visible rectangle for ground (dark brown color)
+            // Create invisible rectangle for ground physics
             const rect = this.scene.add.rectangle(
                 groundRect.x + groundRect.width / 2,
                 groundRect.y + groundRect.height / 2,
                 groundRect.width,
                 groundRect.height,
-                0x654321, // Dark brown color
-                0.7 // Semi-visible for debugging
+                0x654321, // Color (invisible)
+                0.0 // Invisible
             );
 
             // Add physics body
@@ -298,14 +288,14 @@ export class MapLoader {
         const platformGroup = this.scene.physics.add.staticGroup();
 
         platforms.forEach((platform) => {
-            // Create visible rectangle for platform (brown color)
+            // Create invisible rectangle for platform physics
             const rect = this.scene.add.rectangle(
                 platform.x + platform.width / 2,
                 platform.y + platform.height / 2,
                 platform.width,
                 platform.height,
-                0x8b4513, // Brown color
-                0.5 // Visible
+                0x8b4513, // Color (invisible)
+                0.0 // Invisible
             );
 
             // Add physics body
@@ -332,14 +322,14 @@ export class MapLoader {
         const climbeableGroup = this.scene.physics.add.staticGroup();
 
         climbeable.forEach((climb) => {
-            // Create visible rectangle for climbeable (green color, semi-transparent)
+            // Create invisible rectangle for climbeable physics
             const rect = this.scene.add.rectangle(
                 climb.x + climb.width / 2,
                 climb.y + climb.height / 2,
                 climb.width,
                 climb.height,
-                0x00ff00, // Green color
-                0.3 // Semi-transparent
+                0x00ff00, // Color (invisible)
+                0.0 // Invisible
             );
 
             // Add physics body
@@ -363,14 +353,14 @@ export class MapLoader {
         const boundaryGroup = this.scene.physics.add.staticGroup();
 
         boundaries.forEach((boundary) => {
-            // Create invisible rectangle for boundary (no color, invisible)
+            // Create invisible rectangle for boundary physics
             const rect = this.scene.add.rectangle(
                 boundary.x + boundary.width / 2,
                 boundary.y + boundary.height / 2,
                 boundary.width,
                 boundary.height,
-                0xff0000, // Red color (for debug)
-                0.2 // Semi-transparent
+                0xff0000, // Color (invisible)
+                0.0 // Invisible
             );
 
             // Add physics body

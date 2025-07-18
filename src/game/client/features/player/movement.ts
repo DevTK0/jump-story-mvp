@@ -1,101 +1,212 @@
-import type { System } from '../../shared/types';
-import { gameEvents, GameEvent } from '../../shared/events';
-import { Player } from './Player';
-import { InputSystem } from './input';
+import type { System } from "../../shared/types";
+import { gameEvents, GameEvent } from "../../shared/events";
+import { Player } from "./Player";
+import { InputSystem } from "./input";
+import type { IDebuggable } from "../../shared/debug";
+import { DebugState, ShadowState, DEBUG_CONFIG, BaseDebugRenderer } from "../../shared/debug";
+import { ShadowTrajectoryRenderer } from "./effects/shadow";
 
-export class MovementSystem implements System {
-  private player: Player;
-  private inputSystem: InputSystem;
-  
-  // Movement state
-  private hasUsedDoubleJump = false;
-  
-  constructor(player: Player, inputSystem: InputSystem) {
-    this.player = player;
-    this.inputSystem = inputSystem;
-  }
-  
-  update(_time: number, _delta: number): void {
-    // Don't move if climbing (handled by climbing system)
-    if (this.player.isClimbing) {
-      return;
+export class MovementSystem extends BaseDebugRenderer implements System, IDebuggable {
+    private player: Player;
+    private inputSystem: InputSystem;
+
+    // Movement state
+    private hasUsedDoubleJump = false;
+
+    // Shadow trajectory renderer
+    private shadowRenderer: ShadowTrajectoryRenderer;
+
+    constructor(player: Player, inputSystem: InputSystem) {
+        super();
+        this.player = player;
+        this.inputSystem = inputSystem;
+        this.shadowRenderer = new ShadowTrajectoryRenderer(player.scene);
     }
-    
-    const body = this.player.body;
-    const onGround = body.onFloor();
-    const inputState = this.inputSystem.getInputState();
-    
-    // Horizontal movement (only when on ground)
-    if (onGround) {
-      const horizontalDir = this.inputSystem.getHorizontalDirection();
-      if (horizontalDir !== 0) {
-        body.setVelocityX(horizontalDir * this.player.getSpeed());
-      } else {
-        body.setVelocityX(0);
-      }
+
+    update(time: number, _delta: number): void {
+        // Don't move if climbing (handled by climbing system)
+        if (this.player.isClimbing) {
+            return;
+        }
+
+        const body = this.player.body;
+        const onGround = body.onFloor();
+        const inputState = this.inputSystem.getInputState();
+
+        // Horizontal movement (only when on ground)
+        if (onGround) {
+            const horizontalDir = this.inputSystem.getHorizontalDirection();
+            if (horizontalDir !== 0) {
+                body.setVelocityX(horizontalDir * this.player.getSpeed());
+            } else {
+                body.setVelocityX(0);
+            }
+        }
+
+        // Regular jump
+        if (inputState.jump && onGround) {
+            this.jump();
+        }
+
+        // Double jump
+        this.handleDoubleJump();
+
+        // Sample trajectory for debug mode OR shadow effect
+        const shouldShowShadow = DebugState.getInstance().enabled || ShadowState.getInstance().enabled;
+        if (shouldShowShadow) {
+            this.shadowRenderer.sampleTrajectory(
+                time,
+                this.player.x,
+                this.player.y,
+                this.player.texture.key,
+                this.player.frame.name,
+                this.player.flipX,
+                this.player.scaleX,
+                this.player.scaleY
+            );
+        } else if (this.shadowRenderer.getTrajectoryPointCount() > 0) {
+            // Clear trajectory when both debug and shadow are disabled
+            this.shadowRenderer.clearTrajectory();
+            this.shadowRenderer.cleanupSprites();
+        }
     }
-    
-    // Regular jump
-    if (inputState.jump && onGround) {
-      this.jump();
+
+    private jump(): void {
+        this.player.body.setVelocityY(-this.player.getJumpSpeed());
+        gameEvents.emit(GameEvent.PLAYER_JUMP, {
+            velocity: this.player.getJumpSpeed(),
+        });
     }
-    
-    // Double jump
-    this.handleDoubleJump();
-  }
-  
-  private jump(): void {
-    this.player.body.setVelocityY(-this.player.getJumpSpeed());
-    gameEvents.emit(GameEvent.PLAYER_JUMP, { velocity: this.player.getJumpSpeed() });
-  }
-  
-  private handleDoubleJump(): void {
-    const onGround = this.player.body.onFloor();
-    
-    // Check for double jump input
-    if (
-      this.inputSystem.isDoubleJumpPressed() &&
-      !onGround &&
-      !this.hasUsedDoubleJump &&
-      !this.player.isClimbing
-    ) {
-      this.player.body.setVelocityY(-this.player.getJumpSpeed());
-      this.hasUsedDoubleJump = true;
-      gameEvents.emit(GameEvent.PLAYER_JUMP, { velocity: this.player.getJumpSpeed() });
+
+    private handleDoubleJump(): void {
+        const onGround = this.player.body.onFloor();
+
+        // Check for double jump input
+        if (
+            this.inputSystem.isDoubleJumpPressed() &&
+            !onGround &&
+            !this.hasUsedDoubleJump &&
+            !this.player.isClimbing
+        ) {
+            this.player.body.setVelocityY(-this.player.getJumpSpeed());
+            this.hasUsedDoubleJump = true;
+            gameEvents.emit(GameEvent.PLAYER_JUMP, {
+                velocity: this.player.getJumpSpeed(),
+            });
+        }
+
+        // Reset double jump when landing
+        if (onGround && this.hasUsedDoubleJump) {
+            this.hasUsedDoubleJump = false;
+        }
     }
-    
-    // Reset double jump when landing
-    if (onGround && this.hasUsedDoubleJump) {
-      this.hasUsedDoubleJump = false;
+
+    // Public methods for other systems to use
+    public forceJump(velocityMultiplier: number = 1): void {
+        this.player.body.setVelocityY(
+            -this.player.getJumpSpeed() * velocityMultiplier
+        );
+        gameEvents.emit(GameEvent.PLAYER_JUMP, {
+            velocity: this.player.getJumpSpeed() * velocityMultiplier,
+        });
     }
-  }
-  
-  // Public methods for other systems to use
-  public forceJump(velocityMultiplier: number = 1): void {
-    this.player.body.setVelocityY(-this.player.getJumpSpeed() * velocityMultiplier);
-    gameEvents.emit(GameEvent.PLAYER_JUMP, { 
-      velocity: this.player.getJumpSpeed() * velocityMultiplier 
-    });
-  }
-  
-  public setVelocity(x?: number, y?: number): void {
-    if (x !== undefined) {
-      this.player.body.setVelocityX(x);
+
+    public setVelocity(x?: number, y?: number): void {
+        if (x !== undefined) {
+            this.player.body.setVelocityX(x);
+        }
+        if (y !== undefined) {
+            this.player.body.setVelocityY(y);
+        }
     }
-    if (y !== undefined) {
-      this.player.body.setVelocityY(y);
+
+    public stopMovement(): void {
+        this.player.body.setVelocity(0, 0);
     }
-  }
-  
-  public stopMovement(): void {
-    this.player.body.setVelocity(0, 0);
-  }
-  
-  public isOnGround(): boolean {
-    return this.player.body.onFloor();
-  }
-  
-  public resetDoubleJump(): void {
-    this.hasUsedDoubleJump = false;
-  }
+
+    public isOnGround(): boolean {
+        return this.player.body.onFloor();
+    }
+
+    public resetDoubleJump(): void {
+        this.hasUsedDoubleJump = false;
+    }
+
+    // Debug resource cleanup implementation
+    cleanupDebugResources(): void {
+        this.shadowRenderer.cleanupSprites();
+    }
+
+    protected performDebugRender(graphics: Phaser.GameObjects.Graphics): void {
+        const body = this.player.body;
+        if (!body) return;
+
+        // Draw velocity vector (only in debug mode)
+        this.drawVelocityVector(graphics, body);
+    }
+
+    /**
+     * Render shadow effect separately from debug mode
+     * This allows shadow to be shown independently
+     */
+    public renderShadowEffect(): void {
+        if (DebugState.getInstance().enabled || ShadowState.getInstance().enabled) {
+            this.shadowRenderer.render();
+        }
+    }
+
+    private drawVelocityVector(
+        graphics: Phaser.GameObjects.Graphics,
+        body: Phaser.Physics.Arcade.Body
+    ): void {
+        const velX = body.velocity.x;
+        const velY = body.velocity.y;
+
+        // Only draw if there's some velocity
+        if (Math.abs(velX) < 0.1 && Math.abs(velY) < 0.1) return;
+
+        const endX = this.player.x + velX * DEBUG_CONFIG.ui.velocityScale;
+        const endY = this.player.y + velY * DEBUG_CONFIG.ui.velocityScale;
+
+        graphics.lineStyle(3, DEBUG_CONFIG.colors.velocity, 0.2);
+        graphics.lineBetween(this.player.x, this.player.y, endX, endY);
+
+        // Draw velocity arrow head
+        const angle = Math.atan2(velY, velX);
+        const arrowLength = DEBUG_CONFIG.ui.arrowLength;
+        const arrowAngle = DEBUG_CONFIG.ui.arrowAngle;
+
+        graphics.lineBetween(
+            endX,
+            endY,
+            endX - arrowLength * Math.cos(angle - arrowAngle),
+            endY - arrowLength * Math.sin(angle - arrowAngle)
+        );
+
+        graphics.lineBetween(
+            endX,
+            endY,
+            endX - arrowLength * Math.cos(angle + arrowAngle),
+            endY - arrowLength * Math.sin(angle + arrowAngle)
+        );
+    }
+
+
+    protected provideDebugInfo(): Record<string, any> {
+        const body = this.player.body;
+        return {
+            velocity: {
+                x: Math.round(body.velocity.x),
+                y: Math.round(body.velocity.y),
+            },
+            onGround: body.onFloor(),
+            hasUsedDoubleJump: this.hasUsedDoubleJump,
+            trajectoryPoints: this.shadowRenderer.getTrajectoryPointCount(),
+        };
+    }
+
+    // Clean up all resources
+    destroy(): void {
+        this.shadowRenderer.destroy();
+    }
 }

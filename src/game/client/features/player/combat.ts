@@ -4,6 +4,8 @@ import { gameEvents, GameEvent } from '../../shared/events';
 import { Player } from './Player';
 import { InputSystem } from './input';
 import { ATTACK_EDGE_OFFSET, ATTACK_HITBOX_POSITION_MULTIPLIER } from './constants';
+import type { IDebuggable } from '../../shared/debug';
+import { DEBUG_CONFIG, BaseDebugRenderer } from '../../shared/debug';
 
 export interface AttackConfig {
   name: string;
@@ -17,7 +19,7 @@ export interface AttackConfig {
   damage: number;
 }
 
-export class CombatSystem implements System {
+export class CombatSystem extends BaseDebugRenderer implements System, IDebuggable {
   private player: Player;
   private inputSystem: InputSystem;
   private scene: Phaser.Scene;
@@ -51,6 +53,7 @@ export class CombatSystem implements System {
     scene: Phaser.Scene,
     config?: AttackConfig
   ) {
+    super();
     this.player = player;
     this.inputSystem = inputSystem;
     this.scene = scene;
@@ -190,6 +193,40 @@ export class CombatSystem implements System {
     // Update hitbox size
     this.hitboxSprite.setCircle(this.config.reach / 2);
   }
+  
+  // Debug rendering implementation
+  protected performDebugRender(graphics: Phaser.GameObjects.Graphics): void {
+    // Always show attack hitbox when attacking (even if body is not enabled)
+    if (this.player.isAttacking) {
+      const body = this.hitboxSprite.body as Phaser.Physics.Arcade.Body;
+      const radius = body.halfWidth;
+      
+      // Draw attack hitbox circle with different style based on whether it's active
+      if (this.hitboxSprite.body?.enable) {
+        // Active hitbox - solid and bright
+        graphics.lineStyle(3, DEBUG_CONFIG.colors.attackHitbox, 1.0);
+        graphics.fillStyle(DEBUG_CONFIG.colors.attackHitbox, 0.3);
+      } else {
+        // Inactive hitbox - dashed and dim
+        graphics.lineStyle(2, DEBUG_CONFIG.colors.attackHitbox, 0.5);
+        graphics.fillStyle(DEBUG_CONFIG.colors.attackHitbox, 0.1);
+      }
+      
+      graphics.fillCircle(this.hitboxSprite.x, this.hitboxSprite.y, radius);
+      graphics.strokeCircle(this.hitboxSprite.x, this.hitboxSprite.y, radius);
+    }
+  }
+  
+  protected provideDebugInfo(): Record<string, any> {
+    return {
+      isAttacking: this.player.isAttacking,
+      canAttack: this.canAttack(),
+      isOnCooldown: this.isOnCooldown,
+      attackConfig: this.config.name,
+      hitboxEnabled: this.hitboxSprite.body?.enable || false,
+    };
+  }
+  
   
   destroy(): void {
     if (this.attackTimer) {

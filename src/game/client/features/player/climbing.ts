@@ -4,38 +4,23 @@ import { gameEvents, GameEvent } from '../../shared/events';
 import { Player } from './Player';
 import { InputSystem } from './input';
 import { MovementSystem } from './movement';
-import {
-  CLIMB_TOP_BOUNDARY_OFFSET,
-  CLIMB_BOTTOM_BOUNDARY_OFFSET,
-  CLIMB_BOUNDARY_OFFSET,
-  CLIMB_EXIT_PLAYER_OFFSET,
-  CLIMB_SPEED,
-  CLIMB_GROUND_LEVEL_THRESHOLD,
-} from './constants';
+import { CLIMB_SPEED } from './constants';
+import type { IDebuggable } from '../../shared/debug';
+import { DEBUG_CONFIG, BaseDebugRenderer } from '../../shared/debug';
 
-export interface ClimbingConfig {
-  x: number;
-  topY: number;
-  bottomY: number;
-  width: number;
-  climbSpeed: number;
-}
 
-export class ClimbingSystem implements System {
+export class ClimbingSystem extends BaseDebugRenderer implements System, IDebuggable {
   private player: Player;
   private inputSystem: InputSystem;
   private movementSystem: MovementSystem;
   private scene: Phaser.Scene;
-  
-  // Climbing configuration
-  private config: ClimbingConfig | null = null;
   
   // Climbeable areas from tilemap
   private climbeableGroup: Phaser.Physics.Arcade.Group | null = null;
   
   // State
   private originalGravity = 0;
-  private climbingKeyStates = { up: false, down: false };
+  private isInClimbeableArea = false;
   
   constructor(
     player: Player,
@@ -43,37 +28,24 @@ export class ClimbingSystem implements System {
     movementSystem: MovementSystem,
     scene: Phaser.Scene
   ) {
+    super();
     this.player = player;
     this.inputSystem = inputSystem;
     this.movementSystem = movementSystem;
     this.scene = scene;
+    this.originalGravity = this.player.body.gravity.y;
   }
   
   // Set up climbeable areas from tilemap
   public setClimbeableGroup(group: Phaser.Physics.Arcade.Group): void {
     this.climbeableGroup = group;
+    this.setupClimbeableOverlaps();
   }
   
-  // Legacy config support
-  public setConfig(config: ClimbingConfig): void {
-    this.config = config;
-  }
   
   update(_time: number, _delta: number): void {
-    
-    // Update climbing key states
-    if (this.inputSystem.isJustPressed('up')) {
-      this.climbingKeyStates.up = true;
-    }
-    if (this.inputSystem.isJustReleased('up')) {
-      this.climbingKeyStates.up = false;
-    }
-    if (this.inputSystem.isJustPressed('down')) {
-      this.climbingKeyStates.down = true;
-    }
-    if (this.inputSystem.isJustReleased('down')) {
-      this.climbingKeyStates.down = false;
-    }
+    // Update climbeable area detection
+    this.checkClimbeableOverlap();
     
     if (this.player.isClimbing) {
       this.updateClimbing();
@@ -86,23 +58,14 @@ export class ClimbingSystem implements System {
   private checkClimbingStart(): void {
     const inputState = this.inputSystem.getInputState();
     const onGround = this.movementSystem.isOnGround();
-    const inClimbeableArea = this.isInClimbeableArea();
     
     // Check for climbing initiation
-    if (
-      inputState.up &&
-      inClimbeableArea &&
-      this.player.y > CLIMB_GROUND_LEVEL_THRESHOLD
-    ) {
+    if (inputState.up && this.isInClimbeableArea) {
       this.startClimbing();
     }
     
     // Check for climbing descent from ground
-    if (
-      inputState.down &&
-      onGround &&
-      inClimbeableArea
-    ) {
+    if (inputState.down && onGround && this.isInClimbeableArea) {
       this.startClimbing();
     }
   }
@@ -111,45 +74,21 @@ export class ClimbingSystem implements System {
     if (!this.player.isClimbing) return;
     
     const body = this.player.body;
+    const inputState = this.inputSystem.getInputState();
     let targetVelocityY = 0;
     
-    // Use config if available (legacy support)
-    if (this.config) {
-      if (
-        this.climbingKeyStates.up &&
-        this.player.y > this.config.topY - CLIMB_TOP_BOUNDARY_OFFSET
-      ) {
-        targetVelocityY = -this.config.climbSpeed;
-      } else if (
-        this.climbingKeyStates.down &&
-        this.player.y < this.config.bottomY + CLIMB_BOUNDARY_OFFSET
-      ) {
-        targetVelocityY = this.config.climbSpeed;
-      }
-      
-      // Keep player centered on climbing surface
-      this.player.x = this.config.x;
-      body.setVelocity(0, targetVelocityY);
-      
-      // Check boundaries
-      if (this.player.y <= this.config.topY - CLIMB_EXIT_PLAYER_OFFSET) {
-        this.player.y = this.config.topY - CLIMB_EXIT_PLAYER_OFFSET;
-        this.exitClimbing();
-      } else if (
-        this.player.y >= this.config.bottomY - CLIMB_EXIT_PLAYER_OFFSET
-      ) {
-        this.player.y = this.config.bottomY - CLIMB_EXIT_PLAYER_OFFSET;
-        this.exitClimbing();
-      }
-    } else {
-      // Map-based climbing
-      if (this.climbingKeyStates.up) {
-        targetVelocityY = -CLIMB_SPEED;
-      } else if (this.climbingKeyStates.down) {
-        targetVelocityY = CLIMB_SPEED;
-      }
-      
-      body.setVelocity(0, targetVelocityY);
+    // Map-based climbing
+    if (inputState.up) {
+      targetVelocityY = -CLIMB_SPEED;
+    } else if (inputState.down) {
+      targetVelocityY = CLIMB_SPEED;
+    }
+    
+    body.setVelocity(0, targetVelocityY);
+    
+    // Exit climbing if no longer in climbeable area
+    if (!this.isInClimbeableArea) {
+      this.exitClimbing();
     }
   }
   
@@ -161,7 +100,6 @@ export class ClimbingSystem implements System {
       const horizontalDir = this.inputSystem.getHorizontalDirection();
       
       this.exitClimbing();
-      this.climbingKeyStates = { up: false, down: false };
       
       // Apply jump
       this.movementSystem.forceJump();
@@ -183,11 +121,6 @@ export class ClimbingSystem implements System {
     body.setGravityY(0);
     body.setVelocity(0, 0);
     
-    // Snap to climbing position if using config
-    if (this.config) {
-      this.player.x = this.config.x;
-    }
-    
     gameEvents.emit(GameEvent.PLAYER_CLIMB_START, {
       climbableObject: this.player,
     });
@@ -206,45 +139,78 @@ export class ClimbingSystem implements System {
     gameEvents.emit(GameEvent.PLAYER_CLIMB_END);
   }
   
-  private isInClimbeableArea(): boolean {
-    // Check config-based climbeable
-    if (this.config) {
-      const distance = Math.abs(this.player.x - this.config.x);
-      const verticalRange =
-        this.player.y >= this.config.topY - CLIMB_TOP_BOUNDARY_OFFSET &&
-        this.player.y <= this.config.bottomY + CLIMB_BOTTOM_BOUNDARY_OFFSET;
-      
-      if (distance <= this.config.width / 2 && verticalRange) {
-        return true;
-      }
+  private setupClimbeableOverlaps(): void {
+    if (!this.climbeableGroup) return;
+    
+    // Set up overlap detection for climbeable areas
+    this.scene.physics.add.overlap(
+      this.player,
+      this.climbeableGroup,
+      () => {
+        this.isInClimbeableArea = true;
+      },
+      undefined,
+      this.scene
+    );
+  }
+
+  private checkClimbeableOverlap(): void {
+    if (!this.climbeableGroup) {
+      this.isInClimbeableArea = false;
+      return;
     }
     
-    // Check map-based climbeable areas
-    if (this.climbeableGroup) {
-      const playerBody = this.player.body;
+    const playerBody = this.player.body;
+    this.isInClimbeableArea = false;
+    
+    // Check if player is overlapping with any climbeable area
+    for (const climbeableRect of this.climbeableGroup.children.entries) {
+      const climbeableBody = climbeableRect.body as Phaser.Physics.Arcade.StaticBody;
       
-      for (const climbeableRect of this.climbeableGroup.children.entries) {
-        const climbeableBody = climbeableRect.body as Phaser.Physics.Arcade.StaticBody;
-        
-        if (this.scene.physics.world.overlap(playerBody, climbeableBody)) {
-          return true;
-        }
+      if (this.scene.physics.world.overlap(playerBody, climbeableBody)) {
+        this.isInClimbeableArea = true;
+        break;
       }
     }
-    
-    return false;
   }
   
   // Public API
   public isPlayerOnClimbeable(): boolean {
-    return this.isInClimbeableArea();
+    return this.isInClimbeableArea;
   }
   
   public canGrabClimbeable(): boolean {
-    return this.isInClimbeableArea() && !this.player.isClimbing;
+    return this.isInClimbeableArea && !this.player.isClimbing;
   }
   
   public forceExitClimbing(): void {
     this.exitClimbing();
   }
+  
+  // Debug rendering implementation
+  protected performDebugRender(graphics: Phaser.GameObjects.Graphics): void {
+    // Draw climbeable areas
+    if (this.climbeableGroup) {
+      graphics.lineStyle(2, DEBUG_CONFIG.colors.climbeable, 0.8);
+      graphics.fillStyle(DEBUG_CONFIG.colors.climbeable, 0.2);
+      
+      this.climbeableGroup.children.entries.forEach(climbeable => {
+        const body = climbeable.body as Phaser.Physics.Arcade.StaticBody;
+        if (body) {
+          graphics.fillRect(body.x, body.y, body.width, body.height);
+          graphics.strokeRect(body.x, body.y, body.width, body.height);
+        }
+      });
+    }
+  }
+  
+  protected provideDebugInfo(): Record<string, any> {
+    return {
+      isClimbing: this.player.isClimbing,
+      isInClimbeableArea: this.isInClimbeableArea,
+      canGrabClimbeable: this.canGrabClimbeable(),
+      climbeableCount: this.climbeableGroup?.children.entries.length || 0,
+    };
+  }
+  
 }
