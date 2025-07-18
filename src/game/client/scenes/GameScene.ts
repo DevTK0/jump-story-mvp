@@ -15,7 +15,7 @@ const SPRITE_FRAME_HEIGHT = 100;
 const CAMERA_SHAKE_DURATION = 100;
 const CAMERA_SHAKE_INTENSITY = 0.03;
 
-export class GameScene extends Phaser.Scene {
+export class PlaygroundScene extends Phaser.Scene {
     private player!: Player;
 
     // System managers
@@ -24,7 +24,7 @@ export class GameScene extends Phaser.Scene {
     private mapData!: MapData;
 
     constructor() {
-        super({ key: "GameScene" });
+        super({ key: "playground" });
     }
 
     preload(): void {

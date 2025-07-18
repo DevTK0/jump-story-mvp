@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GameScene } from './scenes/GameScene';
+import { PlaygroundScene } from './scenes/GameScene';
 import { GAME_WIDTH, GAME_HEIGHT } from './features/stage';
 
 // Physics constants for game config
@@ -10,7 +10,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   width: GAME_WIDTH,
   height: GAME_HEIGHT,
   backgroundColor: '#87CEEB',
-  scene: GameScene,
+  scene: PlaygroundScene,
   parent: 'game-container',
   render: {
     pixelArt: true,
