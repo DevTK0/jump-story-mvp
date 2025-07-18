@@ -18,7 +18,7 @@ title: Guidelines
 
 -   Do not include content that is not relevant to the doc title.
 -   Give a simple explanation of all the components described in the d2 diagram.
-
+-   Prefer shorter names (e.g. debug.md vs debug-system.md)
 -   Write content from the perspective of a new dev who has to use the docs to add new features.
 
 ```

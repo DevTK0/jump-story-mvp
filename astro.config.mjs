@@ -51,6 +51,10 @@ export default defineConfig({
                     label: "Stage",
                     autogenerate: { directory: "stage" },
                 },
+                {
+                    label: "Debug",
+                    autogenerate: { directory: "debug" },
+                },
             ],
             title: "Jump Story",
         }),
