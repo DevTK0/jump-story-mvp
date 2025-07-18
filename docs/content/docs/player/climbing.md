@@ -3,102 +3,105 @@ title: Climbing
 ---
 
 ```d2
-direction: right
 
-Player: {
-  label: "Player\n(Main Entity)"
-}
+shape: sequence_diagram
+GameLoop: "Game Loop"
+ClimbingSystem: "ClimbingSystem"
+InputSystem: "InputSystem"
+MovementSystem: "MovementSystem"
+Player: "Player"
+ClimbableGroup: "Climbable Areas"
+GameEvents: "Game Events"
 
-ClimbingSystem: {
-  label: "ClimbingSystem"
-}
+# Every Frame Flow
+GameLoop -> ClimbingSystem: update()
+ClimbingSystem -> ClimbingSystem: checkClimbeableOverlap()
+ClimbingSystem -> ClimbableGroup: check physics overlap
+ClimbableGroup -> ClimbingSystem: isInClimbeableArea = true/false
 
-InputSystem: {
-  label: "InputSystem"
-}
+# State Check
+ClimbingSystem -> Player: check isClimbing
 
-MovementSystem: {
-  label: "MovementSystem"
-}
+# NOT CLIMBING: Check for climbing start
+ClimbingSystem -> InputSystem: getInputState()
+InputSystem -> ClimbingSystem: input.up || input.down
+ClimbingSystem -> MovementSystem: isOnGround()
+MovementSystem -> ClimbingSystem: onGround = true/false
 
-ClimbableGroup: {
-  label: "Climbable Areas\n(Tilemap)"
-}
+# CONDITIONAL: Start climbing if conditions met
+ClimbingSystem -> ClimbingSystem: IF (input.up && isInClimbeableArea) OR\n(input.down && onGround && isInClimbeableArea)
+ClimbingSystem -> Player: setPlayerState(isClimbing: true)
+ClimbingSystem -> Player: body.setGravityY(0)
+ClimbingSystem -> GameEvents: emit(PLAYER_CLIMB_START)
 
-GameEvents: {
-  label: "Game Events"
-}
+# CLIMBING: Movement and exit handling
+ClimbingSystem -> InputSystem: getInputState()
+InputSystem -> ClimbingSystem: movement input
+ClimbingSystem -> Player: body.setVelocity(0, targetVelocityY)
 
-# Dependencies
-Player -> ClimbingSystem: owns
-ClimbingSystem -> InputSystem: reads climb input
-ClimbingSystem -> MovementSystem: coordinates with
-ClimbingSystem -> ClimbableGroup: detects overlaps
-
-# Event Communication
-ClimbingSystem -> GameEvents: PLAYER_CLIMB_START
-ClimbingSystem -> GameEvents: PLAYER_CLIMB_END
-
-# State Management
-ClimbingSystem -> Player: isClimbing state
-ClimbingSystem -> Player.body: gravity control
+# Exit via jump
+ClimbingSystem -> InputSystem: check input.jump
+ClimbingSystem -> MovementSystem: forceJump()
+ClimbingSystem -> Player: setPlayerState(isClimbing: false)
+ClimbingSystem -> Player: body.setGravityY(originalGravity)
+ClimbingSystem -> GameEvents: emit(PLAYER_CLIMB_END)
 ```
 
 ## Overview
 
-The ClimbingSystem enables players to climb designated areas with gravity control and specialized movement. It allows players to climb specific areas marked in the tilemap, managing gravity suspension, climbing movement, and seamless transitions between climbing and normal movement states.
+The ClimbingSystem enables players to climb designated areas with gravity control and specialized movement. It uses tilemap-based detection to identify climbable areas, managing gravity suspension, climbing movement, and seamless transitions between climbing and normal movement states.
 
 ## Key Features
 
-- **Tilemap Integration**: Detects climbable areas from map data
-- **Gravity Management**: Disables gravity while climbing
-- **Vertical Movement**: Up/down arrow controls during climb
-- **Jump Dismount**: Jump off with directional control
-- **Boundary Enforcement**: Prevents climbing outside designated areas
-- **Legacy Support**: Maintains compatibility with config-based climbing
+-   **Tilemap Integration**: Detects climbable areas from map data
+-   **Gravity Management**: Disables gravity while climbing
+-   **Vertical Movement**: Up/down arrow controls during climb
+-   **Jump Dismount**: Jump off with directional control
+-   **Boundary Enforcement**: Prevents climbing outside designated areas
 
 ## Implementation Details
 
 ### Climbing Detection
 
-The system supports two climbing modes:
-
-1. **Tilemap-based** (Recommended): Uses Phaser.Physics.Arcade.Group for climbable areas
-2. **Config-based** (Legacy): Fixed position climbing areas via ClimbingConfig
+The system uses tilemap-based climbing detection through Phaser.Physics.Arcade.Group for climbable areas.
 
 ### Core Methods
 
 ```typescript
 setClimbeableGroup(group: Phaser.Physics.Arcade.Group): void
 ```
+
 Sets the physics group containing climbable area rectangles from tilemap.
 
 ```typescript
 isPlayerOnClimbeable(): boolean
 ```
+
 Checks if player is currently overlapping a climbable area.
 
 ```typescript
 forceExitClimbing(): void
 ```
+
 Forces player to stop climbing (used by other systems).
 
 ### Climbing States
 
 1. **Entry Conditions**:
-   - Press UP while in climbable area
-   - Press DOWN while grounded in climbable area
+
+    - Press UP while in climbable area
+    - Press DOWN while grounded in climbable area
 
 2. **During Climbing**:
-   - Gravity set to 0
-   - Vertical movement with UP/DOWN keys
-   - Horizontal movement disabled
-   - Other systems check `player.isClimbing`
+
+    - Gravity set to 0
+    - Vertical movement with UP/DOWN keys
+    - Horizontal movement disabled
+    - Other systems check `player.isClimbing`
 
 3. **Exit Conditions**:
-   - Press JUMP to dismount with optional horizontal velocity
-   - Reach boundary limits (config mode)
-   - Leave climbable area (tilemap mode)
+    - Press JUMP to dismount with optional horizontal velocity
+    - Leave climbable area
 
 ## Usage Example
 
@@ -108,14 +111,14 @@ const climbableGroup = scene.physics.add.group();
 // Add rectangles from tilemap layer to group
 
 const player = createPlayer(config);
-const climbingSystem = player.getSystem<ClimbingSystem>('climbing');
+const climbingSystem = player.getSystem<ClimbingSystem>("climbing");
 
 // Register climbable areas
 climbingSystem.setClimbeableGroup(climbableGroup);
 
 // Check if player can start climbing
 if (climbingSystem.canGrabClimbeable()) {
-  // Player is in position to climb
+    // Player is in position to climb
 }
 
 // Force exit from climbing (e.g., from damage)
@@ -125,37 +128,27 @@ climbingSystem.forceExitClimbing();
 ## Integration Points
 
 ### Events Emitted
-- `PLAYER_CLIMB_START`: Fired when climbing begins
-- `PLAYER_CLIMB_END`: Fired when climbing ends
+
+-   `PLAYER_CLIMB_START`: Fired when climbing begins
+-   `PLAYER_CLIMB_END`: Fired when climbing ends
 
 ### System Coordination
-- **MovementSystem**: Disabled during climbing
-- **InputSystem**: Provides climb direction input
-- **AnimationSystem**: Can switch to climbing animations
+
+-   **MovementSystem**: Disabled during climbing
+-   **InputSystem**: Provides climb direction input
+-   **AnimationSystem**: Can switch to climbing animations
 
 ### State Management
-- Sets `player.isClimbing` flag
-- Stores and restores gravity settings
-- Manages climbing key states for smooth movement
+
+-   Sets `player.isClimbing` flag
+-   Stores and restores gravity settings
+-   Manages climbing key states for smooth movement
 
 ## Configuration
 
-### ClimbingConfig (Legacy)
-```typescript
-interface ClimbingConfig {
-  x: number;           // Horizontal position
-  topY: number;        // Top boundary
-  bottomY: number;     // Bottom boundary  
-  width: number;       // Climbable area width
-  climbSpeed: number;  // Vertical movement speed
-}
-```
-
 ### Constants
-- `CLIMB_SPEED`: Default climbing velocity (150)
-- `CLIMB_TOP_BOUNDARY_OFFSET`: Top boundary padding
-- `CLIMB_BOTTOM_BOUNDARY_OFFSET`: Bottom boundary padding
-- `CLIMB_EXIT_PLAYER_OFFSET`: Exit position offset
+
+-   `CLIMB_SPEED`: Default climbing velocity (150)
 
 ## Best Practices
 

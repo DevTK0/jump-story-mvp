@@ -11,6 +11,8 @@ export const ATTACK_HITBOX_POSITION_MULTIPLIER = 0.25;
 
 // Climbing constants
 export const CLIMB_SPEED = 150;
+export const CLIMB_CENTER_THRESHOLD = 0.7; // Player must be within 70% of ladder center to climb
+export const CLIMB_SNAP_SPEED = 300; // Speed of horizontal snapping to center
 
 // Player animation constants
 export const ANIMATION_SOLDIER_IDLE_FRAMES = { start: 0, end: 5 };
