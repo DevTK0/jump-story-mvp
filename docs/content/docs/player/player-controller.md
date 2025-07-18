@@ -1,261 +1,150 @@
 ---
-title: Player Controller
+title: Player Controller Overview
 ---
-
-## Component-Based System Architecture
-
-The player controller is implemented as a component-based system using a central `Player` entity that registers and manages multiple specialized system classes. This architecture provides excellent separation of concerns and modularity.
 
 ```d2
 direction: right
 
 Player: {
-  label: "Player Entity\n(Phaser.Sprite)"
+  label: "Player Entity\n(Central Coordinator)"
 }
 
 InputSystem: {
-  label: "InputSystem"
+  label: "Input System\n(Keyboard Processing)"
 }
 
 MovementSystem: {
-  label: "MovementSystem"
+  label: "Movement System\n(Physics & Jumps)"
 }
 
 CombatSystem: {
-  label: "CombatSystem"
+  label: "Combat System\n(Attacks & Damage)"
 }
 
 ClimbingSystem: {
-  label: "ClimbingSystem"
+  label: "Climbing System\n(Vertical Movement)"
 }
 
 AnimationSystem: {
-  label: "AnimationSystem"
-}
-
-GameEvents: {
-  label: "Game Events"
-}
-
-PlayerState: {
-  label: "Player State"
+  label: "Animation System\n(Visual States)"
 }
 
 Factory: {
-  label: "createPlayer()"
+  label: "createPlayer()\n(Factory Function)"
 }
 
-# System registration and communication
-Player -> InputSystem: registers
-Player -> MovementSystem: registers
-Player -> CombatSystem: registers
-Player -> ClimbingSystem: registers
-Player -> AnimationSystem: registers
-
-# State management
-Player -> PlayerState: manages
-InputSystem -> PlayerState: reads/updates
-MovementSystem -> PlayerState: reads
-CombatSystem -> PlayerState: reads/updates
-ClimbingSystem -> PlayerState: reads/updates
-
-# Event communication
-MovementSystem -> GameEvents: PLAYER_JUMP
-CombatSystem -> GameEvents: PLAYER_ATTACKED, DAMAGE_DEALT
-Player -> GameEvents: PLAYER_DAMAGED, PLAYER_DIED
-
-# Factory creation
-Factory -> Player: creates & configures
+# System Creation
+Factory -> Player: creates
 Factory -> InputSystem: creates
 Factory -> MovementSystem: creates
 Factory -> CombatSystem: creates
 Factory -> ClimbingSystem: creates
 Factory -> AnimationSystem: creates
+
+# System Registration
+Player -> InputSystem: registers
+Player -> MovementSystem: registers
+Player -> CombatSystem: registers
+Player -> ClimbingSystem: registers
+Player -> AnimationSystem: registers
 ```
 
-## System Components
+## Overview
 
-### Player Entity (`Player.ts`)
+The player controller uses a modular component-based system where each gameplay aspect is handled by a dedicated system. This provides excellent separation of concerns and makes the codebase easy to extend. The player controller consists of several specialized systems, each handling a specific aspect of player behavior.
 
-The central entity extending `Phaser.GameObjects.Sprite` that:
+### Core Systems
 
--   Manages a registry of systems via `Map<string, System>`
--   Maintains player state (health, alive, climbing, attacking, facing direction)
--   Provides input references (cursor keys, C/Z keys) to systems
--   Handles physics setup and visual updates (sprite flipping)
--   Coordinates system lifecycle (update, destroy)
+- **[Input](./input.md)** - Processes keyboard input and provides edge detection
+- **[Movement](./movement.md)** - Handles physics-based movement, jumping, and double jumps
+- **[Combat](./combat.md)** - Manages attack phases, hitboxes, and damage dealing
+- **[Climbing](./climbing.md)** - Enables climbing on designated tilemap areas
+- **[Animation](./animation.md)** - Coordinates sprite animations based on state
 
-**Key Methods:**
+### Player Entity
 
--   `registerSystem(name, system)` - Register a system with string key
--   `getSystem<T>(name)` - Retrieve typed system reference
--   `setPlayerState(updates)` - Update state with event emission
--   `update(time, delta)` - Update all registered systems
+The central `Player` class acts as the coordinator:
+- Extends `Phaser.GameObjects.Sprite`
+- Maintains a registry of all systems
+- Manages player state (health, alive, climbing, attacking)
+- Provides shared resources (input references, physics body)
+- Updates all systems each frame
 
-### InputSystem (`input.ts`)
+## Creating a Player
 
-Handles all keyboard input processing and state management:
-
--   Maintains current and previous input state for edge detection
--   Maps physical keys to logical actions (left, right, up, down, jump, attack)
--   Provides convenience methods: `isJustPressed()`, `isJustReleased()`, `isPressed()`
--   Updates player facing direction based on movement input
--   Special methods for climbing and double jump input
-
-**Input Mapping:**
-
--   Arrow keys / WASD: directional movement
--   Space: jump
--   C: double jump
--   Z: attack
-
-### MovementSystem (`movement.ts`)
-
-Manages physics-based player movement:
-
--   Horizontal movement (only when on ground)
--   Jump mechanics with velocity application
--   Double jump system with usage tracking
--   Ground detection and state management
--   Integration with climbing system (disables movement when climbing)
-
-**Features:**
-
--   Respects ground state for movement
--   Double jump cooldown and reset on landing
--   Emits `PLAYER_JUMP` events for audio/visual feedback
--   Public API for other systems to trigger movement
-
-### CombatSystem (`combat.ts`)
-
-Complex attack system with sophisticated timing:
-
--   **Attack Phases**: Startup → Active → Recovery with precise timing
--   **Hitbox Management**: Dynamically positioned physics sprite
--   **Cooldown System**: Prevents attack spam with configurable timing
--   **Damage Dealing**: Emits `DAMAGE_DEALT` events for enemy collision
--   **State Coordination**: Updates `isAttacking` player state
-
-**Attack Configuration:**
-
--   Startup: 80ms preparation
--   Active: 100ms damage window
--   Recovery: 120ms completion
--   Total Cooldown: 400ms between attacks
--   Configurable reach, damage, and timing
-
-### ClimbingSystem (`climbing.ts`)
-
-Handles climbing on designated tilemap areas:
-
--   **Tilemap Integration**: Detects climbable areas from map data
--   **Gravity Control**: Disables gravity when climbing
--   **Climbing Movement**: Vertical movement with up/down arrows
--   **Entry/Exit Logic**: Automatic climbing state transitions
--   **Boundary Management**: Prevents climbing outside designated areas
-
-### AnimationSystem (`animations.ts`)
-
-Manages sprite animations based on player state:
-
--   **State-Based Animation**: Switches between idle, walk, attack animations
--   **Event-Driven Updates**: Listens to `PLAYER_ATTACKED` events
--   **Animation Coordination**: Ensures proper timing with combat system
--   **Resource Management**: Handles animation asset loading and cleanup
-
-## Factory Pattern
-
-### createPlayer() Function (`index.ts`)
-
-The factory function that creates a fully configured player:
+Use the factory function to create a fully configured player:
 
 ```typescript
-function createPlayer(config: PlayerFactoryConfig): Player {
-    // 1. Create Player entity
-    const player = new Player(config);
+import { createPlayer } from './features/player';
 
-    // 2. Create all systems with dependencies
-    const inputSystem = new InputSystem(player);
-    const movementSystem = new MovementSystem(player, inputSystem);
-    const climbingSystem = new ClimbingSystem(
-        player,
-        inputSystem,
-        movementSystem,
-        scene
-    );
-    const combatSystem = new CombatSystem(
-        player,
-        inputSystem,
-        scene,
-        attackConfig
-    );
-    const animationSystem = new AnimationSystem(player, inputSystem, scene);
+const player = createPlayer({
+  scene: this,
+  x: 100,
+  y: 200,
+  texture: 'player-sprite',
+  
+  // Optional configurations
+  attackConfig: {
+    name: 'sword_slash',
+    damage: 15,
+    reach: 60,
+    // ... other attack settings
+  },
+  
+  climbingConfig: {
+    climbSpeed: 150,
+    // ... other climbing settings
+  }
+});
 
-    // 3. Register all systems
-    player.registerSystem("input", inputSystem);
-    player.registerSystem("movement", movementSystem);
-    player.registerSystem("climbing", climbingSystem);
-    player.registerSystem("combat", combatSystem);
-    player.registerSystem("animations", animationSystem);
-
-    return player;
-}
+// Add to scene
+this.add.existing(player);
 ```
 
-**Benefits:**
+## System Communication
 
--   **Dependency Injection**: Systems receive their dependencies
--   **Configuration**: Optional climbing and attack configs
--   **Encapsulation**: Complex wiring hidden from caller
--   **Testability**: Systems can be mocked/replaced easily
+Systems communicate through:
 
-## Event-Driven Communication
+1. **Direct Dependencies** - Systems receive references during construction
+2. **Event Bus** - Global events for decoupled communication
+3. **Shared State** - Player state object for common data
 
-Systems communicate via a global `gameEvents` bus:
+### Key Events
 
-**Events Emitted:**
+- `PLAYER_JUMP` - Emitted when player jumps
+- `PLAYER_ATTACKED` - Emitted when attack starts
+- `PLAYER_DAMAGED` - Emitted when taking damage
+- `PLAYER_DIED` - Emitted when health reaches zero
+- `PLAYER_CLIMB_START/END` - Climbing state changes
 
--   `PLAYER_JUMP` - Movement system on jump actions
--   `PLAYER_ATTACKED` - Combat system on attack initiation
--   `PLAYER_DAMAGED` - Player entity on health decrease
--   `PLAYER_DIED` - Player entity when health reaches zero
--   `DAMAGE_DEALT` - Combat system during active attack phase
+## Extending the System
 
-**Benefits:**
+To add new player abilities:
 
--   **Decoupling**: Systems don't need direct references
--   **Extensibility**: New systems can listen to existing events
--   **Audio/Visual Integration**: External systems can react to player actions
+1. Create a new system class implementing the `System` interface
+2. Add system creation in the factory function
+3. Register the system with the player
+4. Use events or direct references to integrate with other systems
 
-## State Management
-
-The `PlayerState` object tracks:
-
+Example:
 ```typescript
-interface PlayerState {
-    health: number;
-    maxHealth: number;
-    isAlive: boolean;
-    isClimbing: boolean;
-    isAttacking: boolean;
-    canJump: boolean;
-    facingDirection: 1 | -1;
+export class DashSystem implements System {
+  update(time: number, delta: number): void {
+    // Dash logic
+  }
 }
+
+// In factory
+const dashSystem = new DashSystem(player, inputSystem);
+player.registerSystem('dash', dashSystem);
 ```
 
-**State Updates:**
+## Design Benefits
 
--   Immutable updates via `setPlayerState()`
--   Automatic event emission on changes
--   Type-safe getter methods for common properties
--   Damage/healing methods with bounds checking
+- **Modularity** - Each system is independent and focused
+- **Testability** - Systems can be tested in isolation
+- **Extensibility** - Easy to add new abilities
+- **Maintainability** - Clear separation of concerns
+- **Reusability** - Systems can be reused or replaced
 
-## Key Design Patterns
-
-1. **Component-Based Architecture** - Systems handle specific concerns
-2. **Factory Pattern** - `createPlayer()` encapsulates complex construction
-3. **Registry Pattern** - `Map<string, System>` for system management
-4. **Observer Pattern** - Event bus for cross-system communication
-5. **State Pattern** - PlayerState object with immutable updates
-
-This architecture provides excellent modularity, testability, and extensibility while maintaining clear separation of concerns between input handling, movement, combat, climbing, and animation systems.
+For detailed information about each system, see the individual documentation pages linked above.

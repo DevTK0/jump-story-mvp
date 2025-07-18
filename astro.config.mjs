@@ -24,6 +24,10 @@ export default defineConfig({
                     link: "/",
                 },
                 {
+                    label: "AI",
+                    autogenerate: { directory: "ai" },
+                },
+                {
                     label: "Player",
                     autogenerate: { directory: "player" },
                 },
