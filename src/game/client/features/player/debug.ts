@@ -55,6 +55,13 @@ export class DebugSystem implements System {
   private graphics?: Phaser.GameObjects.Graphics;
   private stateText?: Phaser.GameObjects.Text;
   
+  // Scrollable debug window
+  private debugContainer?: Phaser.GameObjects.Container;
+  private debugBackground?: Phaser.GameObjects.Rectangle;
+  private debugTexts: Phaser.GameObjects.Text[] = [];
+  private scrollOffset = 0;
+  private maxLines = 15; // Maximum visible lines
+  
   constructor(player: Player, _inputSystem: InputSystem, scene: Phaser.Scene) {
     this.player = player;
     this.scene = scene;
@@ -149,16 +156,82 @@ export class DebugSystem implements System {
     // Create graphics object for rendering
     this.graphics = this.scene.add.graphics();
     
-    // Create state text
-    const [textX, textY] = DEBUG_CONFIG.ui.stateTextPosition;
-    this.stateText = this.scene.add.text(textX, textY, '', {
-      fontSize: `${DEBUG_CONFIG.ui.stateTextSize}px`,
-      color: DEBUG_CONFIG.colors.stateText,
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-      padding: { x: 8, y: 4 }
+    // Create scrollable debug window
+    this.createScrollableDebugWindow();
+    
+    // Set up scroll controls
+    this.setupScrollControls();
+  }
+  
+  private createScrollableDebugWindow(): void {
+    const windowWidth = 300;
+    const windowHeight = this.maxLines * 20 + 20; // 20px per line + padding
+    const windowX = 10;
+    const windowY = 10;
+    
+    // Create container for the debug window
+    this.debugContainer = this.scene.add.container(windowX, windowY);
+    this.debugContainer.setScrollFactor(0);
+    this.debugContainer.setDepth(1000);
+    
+    // Create background
+    this.debugBackground = this.scene.add.rectangle(0, 0, windowWidth, windowHeight, 0x000000, 0.8);
+    this.debugBackground.setOrigin(0, 0);
+    this.debugBackground.setStrokeStyle(2, 0x00ff00, 0.8);
+    this.debugContainer.add(this.debugBackground);
+    
+    // Create text objects for each line
+    for (let i = 0; i < this.maxLines; i++) {
+      const text = this.scene.add.text(10, 10 + i * 20, '', {
+        fontSize: '14px',
+        color: '#00ff00',
+        fontFamily: 'monospace'
+      });
+      text.setOrigin(0, 0);
+      this.debugTexts.push(text);
+      this.debugContainer.add(text);
+    }
+    
+    // Add scroll indicator
+    const scrollText = this.scene.add.text(windowWidth - 80, windowHeight - 15, 'Mouse: Scroll', {
+      fontSize: '10px',
+      color: '#888888',
+      fontFamily: 'monospace'
     });
-    this.stateText.setScrollFactor(0); // Fixed position relative to camera
-    this.stateText.setDepth(1000); // Ensure it's always on top
+    scrollText.setOrigin(0, 0);
+    this.debugContainer.add(scrollText);
+  }
+  
+  private setupScrollControls(): void {
+    // Set up mouse wheel scrolling
+    this.scene.input.on('wheel', (pointer: any, gameObjects: any, deltaX: number, deltaY: number, deltaZ: number) => {
+      if (!DebugState.getInstance().enabled) return;
+      
+      // Check if mouse is over the debug window
+      if (this.debugContainer && this.isMouseOverDebugWindow(pointer)) {
+        const scrollDirection = Math.sign(deltaY);
+        
+        if (scrollDirection > 0) {
+          // Scroll down
+          this.scrollOffset = Math.min(this.getTotalLines() - this.maxLines, this.scrollOffset + 1);
+        } else if (scrollDirection < 0) {
+          // Scroll up
+          this.scrollOffset = Math.max(0, this.scrollOffset - 1);
+        }
+      }
+    });
+  }
+  
+  private isMouseOverDebugWindow(pointer: any): boolean {
+    if (!this.debugContainer || !this.debugBackground) return false;
+    
+    // Get debug window bounds (container position + background bounds)
+    const containerBounds = this.debugContainer.getBounds();
+    
+    return pointer.x >= containerBounds.x && 
+           pointer.x <= containerBounds.x + containerBounds.width &&
+           pointer.y >= containerBounds.y && 
+           pointer.y <= containerBounds.y + containerBounds.height;
   }
   
   private disableDebugMode(): void {
@@ -173,23 +246,61 @@ export class DebugSystem implements System {
       this.stateText = undefined;
     }
     
+    // Clean up debug window
+    if (this.debugContainer) {
+      this.debugContainer.destroy();
+      this.debugContainer = undefined;
+    }
+    
+    this.debugTexts = [];
+    this.scrollOffset = 0;
+    
     // Clean up debug resources from all debuggable components
     this.debuggableComponents.forEach(component => {
       component.cleanupDebugResources?.();
     });
   }
   
+  private getTotalLines(): number {
+    // Collect debug info to count total lines
+    const debugInfo = this.debuggableComponents
+      .map(component => component.getDebugInfo?.() || {})
+      .reduce((acc, info) => ({ ...acc, ...info }), {});
+    
+    return Object.keys(debugInfo).length;
+  }
+  
   private updateStateDisplay(): void {
-    if (!this.stateText) return;
+    if (!this.debugContainer) return;
     
     // Collect debug info from all components
     const debugInfo = this.debuggableComponents
       .map(component => component.getDebugInfo?.() || {})
       .reduce((acc, info) => ({ ...acc, ...info }), {});
     
-    // Use formatter for better display
-    const formattedInfo = DebugInfoFormatter.format(debugInfo);
-    this.stateText.setText(formattedInfo);
+    // Convert to array of lines
+    const lines = Object.entries(debugInfo).map(([key, value]) => {
+      const valueStr = typeof value === 'object' ? JSON.stringify(value) : String(value);
+      return `${key}: ${valueStr}`;
+    });
+    
+    // Update visible text lines with scrolling
+    for (let i = 0; i < this.maxLines; i++) {
+      const lineIndex = i + this.scrollOffset;
+      const text = this.debugTexts[i];
+      
+      if (lineIndex < lines.length) {
+        text.setText(lines[lineIndex]);
+        text.setVisible(true);
+      } else {
+        text.setText('');
+        text.setVisible(false);
+      }
+    }
+    
+    // Clamp scroll offset if we scrolled too far
+    const maxScroll = Math.max(0, lines.length - this.maxLines);
+    this.scrollOffset = Math.min(this.scrollOffset, maxScroll);
   }
   
   public isDebugEnabled(): boolean {
