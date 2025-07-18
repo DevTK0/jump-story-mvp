@@ -1,85 +1,49 @@
 ---
-title: Stage System
+title: Stage
 ---
-
-## Architecture Overview
 
 ```d2
 direction: right
+
 MapLoader: {
-  loadMapAssets()
-  createMap()
-  createPhysicsFromGround()
-  createPhysicsFromPlatforms()
-  createClimbeablePhysics()
-  createBoundaryPhysics()
+  label: "MapLoader\n(Load & Process)"
 }
 
 MapData: {
-  ground: MapGround
-  platforms: MapPlatform
-  climbeable: MapClimbeable
-  boundaries: MapBoundary
-  chests: MapChest
-  tilemap: Tilemap
+  label: "MapData\n(Structured Container)"
 }
 
-MapLoader -> MapData: creates
+PhysicsGroups: {
+  label: "Physics Groups\n(Collision Bodies)"
+}
 
 GameScene: {
-  mapLoader: MapLoader
-  mapData: MapData
+  label: "Game Scene\n(Phaser)"
 }
 
+TiledMapEditor: {
+  label: "Tiled Map Editor\n(.tmj files)"
+}
+
+Tilemap: {
+  label: "Tilemap\n(Visual Layers)"
+}
+
+# Asset Flow
+TiledMapEditor -> MapLoader: provides .tmj files
+MapLoader -> MapData: creates structured data
+MapLoader -> PhysicsGroups: generates collision bodies
+MapLoader -> Tilemap: creates visual layers
+
+# Scene Integration
 GameScene -> MapLoader: uses
+MapLoader -> GameScene: returns MapData
 
-TiledMapEditor -> MapLoader: .tmj files
-
-MapLoader -> PhysicsGroups: creates
-PhysicsGroups: {
-  GroundGroup
-  PlatformGroup
-  ClimbeableGroup
-  BoundaryGroup
-}
-
+# Data Structure
+MapData -> PhysicsGroups: contains references
+MapData -> Tilemap: contains tilemap object
 ```
 
-## Component Explanation
+## Overview
 
-### MapLoader
-
-The central class responsible for loading and creating game maps. It handles:
-
--   Loading tilemap assets (.tmj files) and tileset images from the Tiled map editor
--   Creating visual layers from the tilemap data
--   Extracting collision objects from map layers
--   Generating physics bodies with appropriate collision properties
-
-### MapData
-
-A structured container that holds all map-related data after processing:
-
--   **ground**: Solid collision areas that block movement from all directions
--   **platforms**: One-way platforms that only collide from above
--   **climbeable**: Areas where players can climb (overlap detection only)
--   **boundaries**: Invisible walls that prevent players from leaving the map
--   **chests**: Interactive objects with custom properties
--   **tilemap**: The Phaser tilemap object for rendering
-
-### Physics Groups
-
-Each map element type gets its own static physics group with specific collision behaviors:
-
--   **GroundGroup**: Full collision from all directions (solid terrain)
--   **PlatformGroup**: One-way collision (only from above)
--   **ClimbeableGroup**: No collision, only overlap detection
--   **BoundaryGroup**: Full collision but invisible barriers
-
-### Integration Flow
-
-1. GameScene initializes MapLoader in the preload phase
-2. MapLoader loads the tilemap JSON and tileset images
-3. During create phase, MapLoader processes the tilemap to extract collision data
-4. Physics bodies are created for each element type with appropriate collision rules
-5. The complete MapData structure is returned for use by other game systems
+The stage system handles loading and processing of game levels from Tiled map editor files. The MapLoader loads tilemap assets and creates visual layers, physics bodies, and collision groups. MapData provides a structured container for all map-related data including ground, platforms, climbable areas, boundaries, and interactive objects. PhysicsGroups organize collision bodies by type with specific behaviors (solid terrain, one-way platforms, climbable areas, invisible barriers). The GameScene integrates with MapLoader to load complete level data during the create phase, enabling other game systems to interact with the environment.

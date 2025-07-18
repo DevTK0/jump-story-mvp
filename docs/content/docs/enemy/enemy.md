@@ -1,49 +1,48 @@
 ---
-title: Enemy System
+title: Enemy
 ---
 
 ```d2
+direction: right
+
 EnemyManager: {
-  shape: rectangle
-  "Spawns & manages enemies"
-  "Handles lifecycle & cleanup"
-  "Configurable spawn rates"
+  label: "EnemyManager\n(Spawn & Lifecycle)"
 }
 
 Enemy: {
-  shape: rectangle
-  "Individual enemy instance"
-  "Tracks target movement"
-  "Phaser physics sprite"
+  label: "Enemy\n(Individual Instance)"
 }
 
 Constants: {
-  shape: rectangle
-  "Configuration values"
-  "Speed, size, spawn rates"
-  "Physics properties"
+  label: "Constants\n(Configuration)"
 }
 
 Target: {
-  shape: rectangle
-  "Player or trackable object"
-  "Provides x, y coordinates"
+  label: "Target\n(Player/Trackable)"
 }
 
-EnemyManager -> Enemy: "Creates & destroys"
-Enemy -> Target: "Tracks position"
-EnemyManager -> Constants: "Uses spawn config"
-Enemy -> Constants: "Uses behavior config"
+GameScene: {
+  label: "Game Scene\n(Phaser)"
+}
+
+PhysicsGroup: {
+  label: "Physics Group\n(Object Pool)"
+}
+
+# Management Flow
+GameScene -> EnemyManager: creates
+EnemyManager -> PhysicsGroup: uses for pooling
+EnemyManager -> Enemy: spawns & destroys
+EnemyManager -> Constants: reads spawn config
+
+# Enemy Behavior
+Enemy -> Target: tracks position
+Enemy -> Constants: uses movement config
+
+# Targeting
+Target -> Enemy: provides coordinates
 ```
 
-## Enemy System Components
+## Overview
 
-The enemy system consists of four main components that work together to create and manage enemies in the game:
-
-**EnemyManager** - The central manager that handles enemy spawning, lifecycle management, and cleanup. It maintains a collection of active enemies and spawns new ones at configurable intervals from screen edges (top, left, right) while respecting maximum enemy limits.
-
-**Enemy** - Individual enemy instances that extend Phaser's physics sprite system. Each enemy tracks a target (typically the player) and moves toward it when within tracking range. Enemies have configurable speed, size, color, and tracking behavior with distance-based speed optimization.
-
-**Constants** - Configuration module containing all enemy-related constants including spawn rates, movement speeds, physics properties, and visual settings. This centralized configuration makes the system easily tunable.
-
-**Target** - Any object that provides x and y coordinates for enemies to track. Currently implemented as Phaser GameObjects but designed to be flexible for different target types.
+The enemy system manages hostile entities that track and pursue the player. The EnemyManager handles spawning, lifecycle management, and cleanup of enemies using object pooling. Individual Enemy instances extend Phaser's physics sprite system and track targets with configurable movement behavior. The Constants module provides centralized configuration for spawn rates, movement speeds, and physics properties. The Target represents any trackable object (typically the player) that provides position coordinates for enemies to pursue.

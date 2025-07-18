@@ -1,5 +1,5 @@
 ---
-title: Player Controller Overview
+title: Player Controller
 ---
 
 ```d2
