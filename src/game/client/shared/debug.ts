@@ -81,12 +81,8 @@ export class DebugState {
     }
 
     set enabled(value: boolean) {
-        const previousState = this._enabled;
         this._enabled = value;
         console.log(`Debug mode ${value ? "enabled" : "disabled"}`);
-        
-        // Emit debug events
-        DebugEventBus.getInstance().emitStateChanged(value, previousState);
     }
 
     toggle(): void {
@@ -144,37 +140,6 @@ export abstract class BaseDebugRenderer implements IDebuggable {
   protected abstract provideDebugInfo(): Record<string, any>;
 }
 
-/**
- * Event-based debug state management
- * Replaces polling-based debug toggle with event system
- */
-export enum DebugEvent {
-  STATE_CHANGED = 'debug:stateChanged',
-  ENABLED = 'debug:enabled',
-  DISABLED = 'debug:disabled',
-}
-
-export interface DebugStateChangedEvent {
-  enabled: boolean;
-  previousState: boolean;
-}
-
-export class DebugEventBus extends Phaser.Events.EventEmitter {
-  private static instance: DebugEventBus;
-
-  static getInstance(): DebugEventBus {
-    if (!DebugEventBus.instance) {
-      DebugEventBus.instance = new DebugEventBus();
-    }
-    return DebugEventBus.instance;
-  }
-
-  emitStateChanged(enabled: boolean, previousState: boolean): void {
-    const event: DebugStateChangedEvent = { enabled, previousState };
-    this.emit(DebugEvent.STATE_CHANGED, event);
-    this.emit(enabled ? DebugEvent.ENABLED : DebugEvent.DISABLED);
-  }
-}
 
 /**
  * Formats debug information for display
