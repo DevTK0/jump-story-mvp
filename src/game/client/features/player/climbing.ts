@@ -4,9 +4,202 @@ import { gameEvents, GameEvent } from "../../shared/events";
 import { Player } from "./Player";
 import { InputSystem } from "./input";
 import { MovementSystem } from "./movement";
-import { CLIMB_SPEED, CLIMB_CENTER_THRESHOLD, CLIMB_SNAP_SPEED } from "./constants";
+import { CLIMB_SPEED, CLIMB_CENTER_THRESHOLD, CLIMB_SNAP_SPEED, CLIMB_ALIGNMENT_TOLERANCE, CLIMB_SNAP_FPS } from "./constants";
 import type { IDebuggable } from "../../shared/debug";
 import { DEBUG_CONFIG, BaseDebugRenderer } from "../../shared/debug";
+
+// Utility functions for climbing calculations
+function getPlayerCenterX(player: Player): number {
+    if (!player.body) {
+        throw new Error("Player body is not initialized");
+    }
+    return player.body.x + player.body.width / 2;
+}
+
+function getClimbeableCenterX(area: Phaser.Physics.Arcade.StaticBody): number {
+    return area.x + area.width / 2;
+}
+
+function isValidStaticBody(body: any): body is Phaser.Physics.Arcade.StaticBody {
+    return body && typeof body.x === 'number' && typeof body.y === 'number' && 
+           typeof body.width === 'number' && typeof body.height === 'number';
+}
+
+// Physics management for climbing behavior
+class ClimbingPhysics {
+    private player: Player;
+    private scene: Phaser.Scene;
+    private originalGravity = 0;
+
+    constructor(player: Player, scene: Phaser.Scene) {
+        this.player = player;
+        this.scene = scene;
+        if (!player.body) {
+            throw new Error("Player body must be initialized before creating ClimbingPhysics");
+        }
+        this.originalGravity = player.body.gravity.y;
+    }
+
+    public enableClimbingPhysics(): void {
+        if (!this.player.body) {
+            throw new Error("Player body is not initialized");
+        }
+        
+        const body = this.player.body;
+        // Only update originalGravity if it hasn't been set yet (avoid overwriting during climbing)
+        if (this.originalGravity === 0 || !this.player.isClimbing) {
+            this.originalGravity = body.gravity.y;
+        }
+        body.setGravityY(0);
+        body.setVelocity(0, 0);
+    }
+
+    public disableClimbingPhysics(): void {
+        if (!this.player.body) {
+            throw new Error("Player body is not initialized");
+        }
+        
+        const body = this.player.body;
+        body.setGravityY(this.originalGravity);
+        body.setVelocity(0, 0);
+    }
+
+    public handleClimbingGravity(isClimbing: boolean, isOnGround: boolean): void {
+        if (!this.player.body) {
+            throw new Error("Player body is not initialized");
+        }
+        
+        const body = this.player.body;
+        
+        if (isClimbing && !isOnGround) {
+            body.setGravityY(0);
+            
+            const worldGravity = this.scene.physics.world.gravity.y;
+            if (worldGravity > 0) {
+                body.setAcceleration(body.acceleration.x, -worldGravity);
+            }
+        } else {
+            body.setGravityY(this.originalGravity);
+            body.setAcceleration(body.acceleration.x, 0);
+        }
+    }
+
+    public applyClimbingMovement(targetVelocityX: number, targetVelocityY: number): void {
+        if (!this.player.body) {
+            throw new Error("Player body is not initialized");
+        }
+        this.player.body.setVelocity(targetVelocityX, targetVelocityY);
+    }
+
+    public calculateSnapVelocity(currentClimbeableArea: Phaser.Physics.Arcade.StaticBody): { velocityX: number; isSnapping: boolean } {
+        const playerCenterX = getPlayerCenterX(this.player);
+        const climbeableCenterX = getClimbeableCenterX(currentClimbeableArea);
+        const distanceFromCenter = climbeableCenterX - playerCenterX;
+        
+        if (Math.abs(distanceFromCenter) > CLIMB_ALIGNMENT_TOLERANCE) {
+            let velocityX = Math.sign(distanceFromCenter) * CLIMB_SNAP_SPEED;
+            
+            if (Math.abs(velocityX) > Math.abs(distanceFromCenter * CLIMB_SNAP_FPS)) {
+                velocityX = distanceFromCenter * CLIMB_SNAP_FPS;
+            }
+            
+            return { velocityX, isSnapping: true };
+        }
+        
+        return { velocityX: 0, isSnapping: false };
+    }
+}
+
+// Collision detection and area management for climbing
+class ClimbingCollision {
+    private scene: Phaser.Scene;
+    private player: Player;
+    private climbeableGroup: Phaser.Physics.Arcade.Group | null = null;
+    private currentClimbeableArea: Phaser.Physics.Arcade.StaticBody | null = null;
+    private isInClimbeableArea = false;
+
+    constructor(player: Player, scene: Phaser.Scene) {
+        this.player = player;
+        this.scene = scene;
+    }
+
+    public setClimbeableGroup(group: Phaser.Physics.Arcade.Group): void {
+        this.climbeableGroup = group;
+        this.setupOverlapDetection();
+    }
+
+    public updateCollision(): void {
+        this.checkOverlap();
+    }
+
+    public isPlayerInClimbeableArea(): boolean {
+        return this.isInClimbeableArea;
+    }
+
+    public getCurrentClimbeableArea(): Phaser.Physics.Arcade.StaticBody | null {
+        return this.currentClimbeableArea;
+    }
+
+    public isPlayerNearCenter(): boolean {
+        if (!this.currentClimbeableArea) return false;
+        
+        const playerCenterX = getPlayerCenterX(this.player);
+        const climbeableCenterX = getClimbeableCenterX(this.currentClimbeableArea);
+        const distanceFromCenter = Math.abs(playerCenterX - climbeableCenterX);
+        const maxAllowedDistance = (this.currentClimbeableArea.width / 2) * CLIMB_CENTER_THRESHOLD;
+        
+        return distanceFromCenter <= maxAllowedDistance;
+    }
+
+    private setupOverlapDetection(): void {
+        if (!this.climbeableGroup) return;
+
+        this.scene.physics.add.overlap(
+            this.player,
+            this.climbeableGroup,
+            () => {
+                this.isInClimbeableArea = true;
+            },
+            undefined,
+            this.scene
+        );
+    }
+
+    private checkOverlap(): void {
+        if (!this.climbeableGroup) {
+            this.isInClimbeableArea = false;
+            this.currentClimbeableArea = null;
+            return;
+        }
+
+        if (!this.player.body) {
+            throw new Error("Player body is not initialized");
+        }
+
+        const playerBody = this.player.body;
+        this.isInClimbeableArea = false;
+        this.currentClimbeableArea = null;
+
+        for (const climbeableRect of this.climbeableGroup.children.entries) {
+            const climbeableBody = climbeableRect.body;
+            
+            if (isValidStaticBody(climbeableBody) && 
+                playerBody.x < climbeableBody.x + climbeableBody.width &&
+                playerBody.x + playerBody.width > climbeableBody.x &&
+                playerBody.y < climbeableBody.y + climbeableBody.height &&
+                playerBody.y + playerBody.height > climbeableBody.y) {
+                
+                this.isInClimbeableArea = true;
+                this.currentClimbeableArea = climbeableBody;
+                break;
+            }
+        }
+    }
+
+    public getClimbeableGroup(): Phaser.Physics.Arcade.Group | null {
+        return this.climbeableGroup;
+    }
+}
 
 export class ClimbingSystem
     extends BaseDebugRenderer
@@ -17,13 +210,11 @@ export class ClimbingSystem
     private movementSystem: MovementSystem;
     private scene: Phaser.Scene;
 
-    // Climbeable areas from tilemap
-    private climbeableGroup: Phaser.Physics.Arcade.Group | null = null;
+    // Component classes
+    private physics: ClimbingPhysics;
+    private collision: ClimbingCollision;
 
     // State
-    private originalGravity = 0;
-    private isInClimbeableArea = false;
-    private currentClimbeableArea: Phaser.Physics.Arcade.StaticBody | null = null;
     private isSnappingToCenter = false;
 
     constructor(
@@ -37,93 +228,84 @@ export class ClimbingSystem
         this.inputSystem = inputSystem;
         this.movementSystem = movementSystem;
         this.scene = scene;
-        this.originalGravity = this.player.body.gravity.y;
+        
+        // Initialize component classes
+        this.physics = new ClimbingPhysics(player, scene);
+        this.collision = new ClimbingCollision(player, scene);
     }
 
     // Set up climbeable areas from tilemap
     public setClimbeableGroup(group: Phaser.Physics.Arcade.Group): void {
-        this.climbeableGroup = group;
-        this.setupClimbeableOverlaps();
+        this.collision.setClimbeableGroup(group);
     }
 
     update(_time: number, _delta: number): void {
-        // Update climbeable area detection
-        this.checkClimbeableOverlap();
+        // Update collision detection
+        this.collision.updateCollision();
 
-        // Disable gravity when on climbeable surface (even when not actively climbing)
-        this.handleClimbeableGravity();
+        // Handle physics based on climbing state
+        const isOnGround = this.movementSystem.isOnGround();
+        this.physics.handleClimbingGravity(this.player.isClimbing, isOnGround);
 
         if (this.player.isClimbing) {
-            this.updateClimbing();
-            this.handleClimbingExit();
+            this.updateClimbingMovement();
+            this.checkClimbingExit();
         } else {
             this.checkClimbingStart();
         }
     }
 
     private checkClimbingStart(): void {
+        if (!this.collision.isPlayerInClimbeableArea()) return;
+        if (!this.collision.isPlayerNearCenter()) return;
+
         const inputState = this.inputSystem.getInputState();
         const onGround = this.movementSystem.isOnGround();
 
-        // Check for climbing initiation - player must be near center of climbable area
-        if (inputState.up && this.isInClimbeableArea && this.isPlayerNearClimbeableCenter()) {
-            this.startClimbing();
-        }
-
-        // Check for climbing descent from ground
-        if (inputState.down && onGround && this.isInClimbeableArea && this.isPlayerNearClimbeableCenter()) {
+        // Start climbing on up input or down input while on ground
+        if (inputState.up || (inputState.down && onGround)) {
             this.startClimbing();
         }
     }
 
-    private updateClimbing(): void {
+    private updateClimbingMovement(): void {
         if (!this.player.isClimbing) return;
 
-        const body = this.player.body;
-        const inputState = this.inputSystem.getInputState();
-        
-        let targetVelocityY = 0;
-        let targetVelocityX = 0;
-
-        // Handle snapping to center if just started climbing or still aligning
-        if (this.currentClimbeableArea) {
-            const playerCenterX = body.x + body.width / 2;
-            const climbeableCenterX = this.currentClimbeableArea.x + this.currentClimbeableArea.width / 2;
-            const distanceFromCenter = climbeableCenterX - playerCenterX;
-            
-            // Snap to center horizontally if not already aligned
-            if (Math.abs(distanceFromCenter) > 2) { // 2px tolerance
-                this.isSnappingToCenter = true;
-                targetVelocityX = Math.sign(distanceFromCenter) * CLIMB_SNAP_SPEED;
-                
-                // Limit snap distance to prevent overshooting
-                if (Math.abs(targetVelocityX) > Math.abs(distanceFromCenter * 60)) { // 60fps assumption
-                    targetVelocityX = distanceFromCenter * 60;
-                }
-            } else {
-                this.isSnappingToCenter = false;
-                targetVelocityX = 0;
-            }
+        const currentArea = this.collision.getCurrentClimbeableArea();
+        if (!currentArea) {
+            this.exitClimbing();
+            return;
         }
 
-        // Vertical climbing movement (only if not actively snapping)
-        if (!this.isSnappingToCenter || Math.abs(targetVelocityX) < 50) {
-            if (inputState.up) {
-                targetVelocityY = -CLIMB_SPEED;
-            } else if (inputState.down) {
-                targetVelocityY = CLIMB_SPEED;
-            }
-        }
+        // Calculate snapping velocity and handle horizontal alignment
+        const snapResult = this.physics.calculateSnapVelocity(currentArea);
+        this.isSnappingToCenter = snapResult.isSnapping;
 
-        body.setVelocity(targetVelocityX, targetVelocityY);
+        // Calculate vertical movement based on input
+        const verticalVelocity = this.calculateVerticalMovement();
 
-        // Exit climbing if no longer in climbeable area
-        if (!this.isInClimbeableArea) {
+        // Apply movement
+        this.physics.applyClimbingMovement(snapResult.velocityX, verticalVelocity);
+
+        // Exit if no longer in climbeable area
+        if (!this.collision.isPlayerInClimbeableArea()) {
             this.exitClimbing();
         }
     }
 
-    private handleClimbingExit(): void {
+    private calculateVerticalMovement(): number {
+        // Only allow vertical movement if not actively snapping horizontally
+        if (this.isSnappingToCenter) return 0;
+
+        const inputState = this.inputSystem.getInputState();
+        
+        if (inputState.up) return -CLIMB_SPEED;
+        if (inputState.down) return CLIMB_SPEED;
+        
+        return 0;
+    }
+
+    private checkClimbingExit(): void {
         const inputState = this.inputSystem.getInputState();
         const onGround = this.movementSystem.isOnGround();
 
@@ -135,31 +317,30 @@ export class ClimbingSystem
 
         // Jump off climbeable surface
         if (inputState.jump) {
-            const horizontalDir = this.inputSystem.getHorizontalDirection();
+            this.handleJumpExit();
+        }
+    }
 
-            this.exitClimbing();
+    private handleJumpExit(): void {
+        const horizontalDir = this.inputSystem.getHorizontalDirection();
 
-            // Apply jump
-            this.movementSystem.forceJump();
+        this.exitClimbing();
 
-            // Apply horizontal velocity
-            if (horizontalDir !== 0) {
-                this.movementSystem.setVelocity(
-                    horizontalDir * this.player.getSpeed()
-                );
-                this.player.facingDirection = horizontalDir as 1 | -1;
-            }
+        // Apply jump
+        this.movementSystem.forceJump();
+
+        // Apply horizontal velocity if moving
+        if (horizontalDir !== 0) {
+            this.movementSystem.setVelocity(
+                horizontalDir * this.player.getSpeed()
+            );
+            this.player.facingDirection = horizontalDir as 1 | -1;
         }
     }
 
     private startClimbing(): void {
         this.player.setPlayerState({ isClimbing: true });
-
-        // Store and disable gravity
-        const body = this.player.body;
-        this.originalGravity = body.gravity.y;
-        body.setGravityY(0);
-        body.setVelocity(0, 0);
+        this.physics.enableClimbingPhysics();
 
         gameEvents.emit(GameEvent.PLAYER_CLIMB_START, {
             climbableObject: this.player,
@@ -170,119 +351,18 @@ export class ClimbingSystem
         if (!this.player.isClimbing) return;
 
         this.player.setPlayerState({ isClimbing: false });
-
-        // Restore gravity
-        const body = this.player.body;
-        body.setGravityY(this.originalGravity);
-        body.setVelocity(0, 0);
+        this.physics.disableClimbingPhysics();
 
         gameEvents.emit(GameEvent.PLAYER_CLIMB_END);
     }
 
-    private setupClimbeableOverlaps(): void {
-        if (!this.climbeableGroup) return;
-
-        // Set up overlap detection for climbeable areas
-        this.scene.physics.add.overlap(
-            this.player,
-            this.climbeableGroup,
-            () => {
-                this.isInClimbeableArea = true;
-            },
-            undefined,
-            this.scene
-        );
-    }
-
-    private checkClimbeableOverlap(): void {
-        if (!this.climbeableGroup) {
-            this.isInClimbeableArea = false;
-            this.currentClimbeableArea = null;
-            return;
-        }
-
-        const playerBody = this.player.body;
-        this.isInClimbeableArea = false;
-        this.currentClimbeableArea = null;
-
-        // Check if player bounds overlap with any climbeable area bounds
-        for (const climbeableRect of this.climbeableGroup.children.entries) {
-            const climbeableBody = climbeableRect.body as Phaser.Physics.Arcade.StaticBody;
-            
-            if (climbeableBody && 
-                playerBody.x < climbeableBody.x + climbeableBody.width &&
-                playerBody.x + playerBody.width > climbeableBody.x &&
-                playerBody.y < climbeableBody.y + climbeableBody.height &&
-                playerBody.y + playerBody.height > climbeableBody.y) {
-                
-                this.isInClimbeableArea = true;
-                this.currentClimbeableArea = climbeableBody;
-                break;
-            }
-        }
-    }
-
-    private handleClimbeableGravity(): void {
-        const body = this.player.body;
-        const onGround = this.movementSystem.isOnGround();
-        
-        // Only handle gravity when actively climbing and not on ground
-        if (this.player.isClimbing && !onGround) {
-            // Completely disable all downward forces when climbing
-            body.setGravityY(0);
-            
-            // Counter any world gravity with upward acceleration (Y-axis only)
-            const worldGravity = this.scene.physics.world.gravity.y;
-            if (worldGravity > 0) {
-                // Keep existing X acceleration, only set Y acceleration
-                body.setAcceleration(body.acceleration.x, -worldGravity);
-            }
-        } else {
-            // Restore normal physics when not climbing or when on ground
-            body.setGravityY(this.originalGravity);
-            // Only clear Y acceleration, preserve any X acceleration
-            body.setAcceleration(body.acceleration.x, 0);
-        }
-    }
-
-    private isPlayerSupportedByClimbable(): boolean {
-        if (!this.currentClimbeableArea) return false;
-        
-        const body = this.player.body;
-        
-        // Check if player is moving upward (jumping/falling through)
-        if (body.velocity.y < -50) { // Upward velocity threshold
-            return false;
-        }
-        
-        // Check if player is close to the bottom of the climbable area
-        // This prevents gravity disable when just passing through the middle
-        const playerBottom = body.y + body.height;
-        const climbableBottom = this.currentClimbeableArea.y + this.currentClimbeableArea.height;
-        const distanceFromBottom = climbableBottom - playerBottom;
-        
-        // Only consider "supported" if within reasonable distance of bottom or moving slowly
-        return distanceFromBottom < 50 || Math.abs(body.velocity.y) < 50;
-    }
-
-    private isPlayerNearClimbeableCenter(): boolean {
-        if (!this.currentClimbeableArea) return false;
-        
-        const playerCenterX = this.player.body.x + this.player.body.width / 2;
-        const climbeableCenterX = this.currentClimbeableArea.x + this.currentClimbeableArea.width / 2;
-        const distanceFromCenter = Math.abs(playerCenterX - climbeableCenterX);
-        const maxAllowedDistance = (this.currentClimbeableArea.width / 2) * CLIMB_CENTER_THRESHOLD;
-        
-        return distanceFromCenter <= maxAllowedDistance;
-    }
-
     // Public API
     public isPlayerOnClimbeable(): boolean {
-        return this.isInClimbeableArea;
+        return this.collision.isPlayerInClimbeableArea();
     }
 
     public canGrabClimbeable(): boolean {
-        return this.isInClimbeableArea && !this.player.isClimbing;
+        return this.collision.isPlayerInClimbeableArea() && !this.player.isClimbing;
     }
 
     public forceExitClimbing(): void {
@@ -292,32 +372,28 @@ export class ClimbingSystem
     // Debug rendering implementation
     protected performDebugRender(graphics: Phaser.GameObjects.Graphics): void {
         // Draw climbeable areas
-        if (this.climbeableGroup) {
+        const climbeableGroup = this.collision.getClimbeableGroup();
+        if (climbeableGroup) {
             graphics.lineStyle(2, DEBUG_CONFIG.colors.climbeable, 0.8);
             graphics.fillStyle(DEBUG_CONFIG.colors.climbeable, 0.2);
 
-            this.climbeableGroup.children.entries.forEach((climbeable) => {
-                const body =
-                    climbeable.body as Phaser.Physics.Arcade.StaticBody;
-                if (body) {
+            climbeableGroup.children.entries.forEach((climbeable) => {
+                const body = climbeable.body;
+                if (isValidStaticBody(body)) {
                     graphics.fillRect(body.x, body.y, body.width, body.height);
-                    graphics.strokeRect(
-                        body.x,
-                        body.y,
-                        body.width,
-                        body.height
-                    );
+                    graphics.strokeRect(body.x, body.y, body.width, body.height);
                 }
             });
         }
     }
 
     protected provideDebugInfo(): Record<string, any> {
+        const climbeableGroup = this.collision.getClimbeableGroup();
+        
         return {
             "climb.climbing": this.player.isClimbing,
-            "climb.inArea": this.isInClimbeableArea,
-            "climb.supported": this.isPlayerSupportedByClimbable(),
-            "climb.nearCenter": this.isPlayerNearClimbeableCenter(),
+            "climb.inArea": this.collision.isPlayerInClimbeableArea(),
+            "climb.nearCenter": this.collision.isPlayerNearCenter(),
             "climb.snapping": this.isSnappingToCenter,
             "climb.bodyGravity": this.player.body.gravity.y,
             "climb.worldGravity": this.scene.physics.world.gravity.y,
@@ -325,7 +401,7 @@ export class ClimbingSystem
             "climb.velocityX": Math.round(this.player.body.velocity.x),
             "climb.accelY": Math.round(this.player.body.acceleration.y),
             "climb.accelX": Math.round(this.player.body.acceleration.x),
-            "climb.areas": this.climbeableGroup?.children.entries.length || 0,
+            "climb.areas": climbeableGroup?.children.entries.length || 0,
         };
     }
 }
