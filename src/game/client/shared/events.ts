@@ -26,7 +26,7 @@ export enum GameEvent {
 export interface GameEventData {
   [GameEvent.PLAYER_DAMAGED]: { damage: number; health: number };
   [GameEvent.PLAYER_DIED]: { position: { x: number; y: number } };
-  [GameEvent.PLAYER_ATTACKED]: { type: 'melee' | 'ranged'; direction: number };
+  [GameEvent.PLAYER_ATTACKED]: { type: 'melee' | 'ranged'; direction: number; attackType?: number };
   [GameEvent.PLAYER_JUMP]: { velocity: number };
   [GameEvent.PLAYER_CLIMB_START]: { climbableObject: Phaser.GameObjects.GameObject };
   [GameEvent.PLAYER_CLIMB_END]: void;

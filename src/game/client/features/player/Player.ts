@@ -22,6 +22,8 @@ export class Player extends Phaser.GameObjects.Sprite {
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
   private keys: {
     c: Phaser.Input.Keyboard.Key;
+    x: Phaser.Input.Keyboard.Key;
+    v: Phaser.Input.Keyboard.Key;
     z: Phaser.Input.Keyboard.Key;
   };
 
@@ -50,6 +52,8 @@ export class Player extends Phaser.GameObjects.Sprite {
     this.cursors = this.scene.input.keyboard!.createCursorKeys();
     this.keys = {
       c: this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.C),
+      x: this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.X),
+      v: this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.V),
       z: this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.Z),
     };
     

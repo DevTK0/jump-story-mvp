@@ -34,17 +34,41 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
   // Combat components
   private hitboxSprite: Phaser.Physics.Arcade.Sprite;
   
-  // Default configuration
-  private static readonly DEFAULT_CONFIG: AttackConfig = {
-    name: 'basic_sword',
-    startupMs: 80,
-    activeMs: 100,
-    recoveryMs: 120,
-    totalCooldownMs: 400,
-    arcStart: -30,
-    arcEnd: 45,
-    reach: 50,
-    damage: 10,
+  // Attack configurations for each attack type
+  private static readonly ATTACK_CONFIGS: Record<number, AttackConfig> = {
+    1: {
+      name: 'quick_slash',
+      startupMs: 60,
+      activeMs: 80,
+      recoveryMs: 100,
+      totalCooldownMs: 300,
+      arcStart: -30,
+      arcEnd: 45,
+      reach: 45,
+      damage: 8,
+    },
+    2: {
+      name: 'heavy_strike',
+      startupMs: 120,
+      activeMs: 150,
+      recoveryMs: 180,
+      totalCooldownMs: 600,
+      arcStart: -45,
+      arcEnd: 60,
+      reach: 60,
+      damage: 15,
+    },
+    3: {
+      name: 'combo_attack',
+      startupMs: 100,
+      activeMs: 120,
+      recoveryMs: 140,
+      totalCooldownMs: 450,
+      arcStart: -35,
+      arcEnd: 50,
+      reach: 55,
+      damage: 12,
+    },
   };
   
   constructor(
@@ -57,7 +81,7 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
     this.player = player;
     this.inputSystem = inputSystem;
     this.scene = scene;
-    this.config = config || CombatSystem.DEFAULT_CONFIG;
+    this.config = config || CombatSystem.ATTACK_CONFIGS[1];
     
     // Create hitbox for attack detection
     this.hitboxSprite = this.createHitbox();
@@ -79,12 +103,16 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
   
   update(_time: number, _delta: number): void {
     // Check for attack input
-    if (this.inputSystem.isJustPressed('attack')) {
-      this.tryAttack();
+    if (this.inputSystem.isJustPressed('attack1')) {
+      this.tryAttack(1);
+    } else if (this.inputSystem.isJustPressed('attack2')) {
+      this.tryAttack(2);
+    } else if (this.inputSystem.isJustPressed('attack3')) {
+      this.tryAttack(3);
     }
   }
   
-  private tryAttack(): boolean {
+  private tryAttack(attackType: number): boolean {
     if (this.isOnCooldown || this.player.isAttacking) {
       return false;
     }
@@ -102,44 +130,51 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
       }
     }
     
-    this.performAttack();
+    this.performAttack(attackType);
     return true;
   }
   
-  private performAttack(): void {
+  private performAttack(attackType: number): void {
+    // Get the specific attack configuration
+    const attackConfig = CombatSystem.ATTACK_CONFIGS[attackType];
+    
     const facing = this.player.facingDirection;
     const playerX = this.player.x;
     const playerY = this.player.y;
     
-    // Calculate attack position
+    // Calculate attack position using the specific attack's reach
     const attackX = facing === 1 
       ? playerX + ATTACK_EDGE_OFFSET 
       : playerX - ATTACK_EDGE_OFFSET;
     
-    // Position hitbox
+    // Position hitbox using the specific attack's reach
     const hitboxX = facing === 1
-      ? attackX + (this.config.reach * ATTACK_HITBOX_POSITION_MULTIPLIER)
-      : attackX - (this.config.reach * ATTACK_HITBOX_POSITION_MULTIPLIER);
+      ? attackX + (attackConfig.reach * ATTACK_HITBOX_POSITION_MULTIPLIER)
+      : attackX - (attackConfig.reach * ATTACK_HITBOX_POSITION_MULTIPLIER);
       
     this.hitboxSprite.setPosition(hitboxX, playerY);
+    
+    // Update hitbox size for this attack
+    this.hitboxSprite.setCircle(attackConfig.reach / 2);
     
     // Update player state
     this.player.setPlayerState({ isAttacking: true });
     this.isOnCooldown = true;
     
-    // Emit attack event
+    // Emit attack event with attack type information
     gameEvents.emit(GameEvent.PLAYER_ATTACKED, {
       type: 'melee',
       direction: facing,
+      attackType: attackType,
     });
     
-    // Attack phases
-    this.executeAttackPhases();
+    // Attack phases using the specific attack configuration
+    this.executeAttackPhases(attackConfig);
   }
   
-  private executeAttackPhases(): void {
+  private executeAttackPhases(attackConfig: AttackConfig): void {
     // Startup phase
-    this.scene.time.delayedCall(this.config.startupMs, () => {
+    this.scene.time.delayedCall(attackConfig.startupMs, () => {
       // Active phase - enable hitbox
       if (this.hitboxSprite.body) {
         this.hitboxSprite.body.enable = true;
@@ -151,36 +186,36 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
       gameEvents.emit(GameEvent.DAMAGE_DEALT, {
         source: 'player',
         target: 'enemy',
-        damage: this.config.damage,
+        damage: attackConfig.damage,
       });
       
       // Active phase duration
-      this.scene.time.delayedCall(this.config.activeMs, () => {
+      this.scene.time.delayedCall(attackConfig.activeMs, () => {
         // Disable hitbox
         if (this.hitboxSprite.body) {
           this.hitboxSprite.body.enable = false;
         }
         
         // Recovery phase
-        this.scene.time.delayedCall(this.config.recoveryMs, () => {
+        this.scene.time.delayedCall(attackConfig.recoveryMs, () => {
           this.player.setPlayerState({ isAttacking: false });
-          this.onAttackComplete();
+          this.onAttackComplete(attackConfig);
         });
       });
     });
   }
   
-  private onAttackComplete(): void {
+  private onAttackComplete(attackConfig: AttackConfig): void {
     // Schedule cooldown end
-    const cooldownRemaining = this.config.totalCooldownMs - this.getTotalAttackDuration();
+    const cooldownRemaining = attackConfig.totalCooldownMs - this.getTotalAttackDuration(attackConfig);
     
     this.scene.time.delayedCall(cooldownRemaining, () => {
       this.isOnCooldown = false;
     });
   }
   
-  private getTotalAttackDuration(): number {
-    return this.config.startupMs + this.config.activeMs + this.config.recoveryMs;
+  private getTotalAttackDuration(attackConfig: AttackConfig): number {
+    return attackConfig.startupMs + attackConfig.activeMs + attackConfig.recoveryMs;
   }
   
   // Public API

@@ -33,7 +33,9 @@ export interface InputState {
   up: boolean;
   down: boolean;
   jump: boolean;
-  attack: boolean;
+  attack1: boolean;
+  attack2: boolean; 
+  attack3: boolean;
 }
 
 export interface System {

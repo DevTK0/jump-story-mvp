@@ -16,7 +16,9 @@ export class InputSystem implements System {
       up: false,
       down: false,
       jump: false,
-      attack: false,
+      attack1: false,
+      attack2: false,
+      attack3: false,
     };
     
     this.previousInputState = { ...this.inputState };
@@ -37,7 +39,9 @@ export class InputSystem implements System {
       up: cursors.up.isDown,
       down: cursors.down.isDown,
       jump: cursors.space?.isDown || false,
-      attack: keys.z.isDown,
+      attack1: keys.x.isDown,
+      attack2: keys.c.isDown,
+      attack3: keys.v.isDown,
     };
     
     // Update facing direction based on input (unless climbing)
@@ -74,8 +78,9 @@ export class InputSystem implements System {
   
   // Special input checks
   public isDoubleJumpPressed(): boolean {
+    // Double jump is now on z key since c is used for attack2
     const keys = this.player.getKeys();
-    return Phaser.Input.Keyboard.JustDown(keys.c);
+    return Phaser.Input.Keyboard.JustDown(keys.z);
   }
   
   public isMovingHorizontally(): boolean {
