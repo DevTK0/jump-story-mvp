@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { System } from '../../shared/types';
 import { gameEvents, GameEvent } from '../../shared/events';
-import { Player } from './Player';
+import { Player } from './player';
 import { InputSystem } from './input';
 import { ATTACK_EDGE_OFFSET, ATTACK_HITBOX_POSITION_MULTIPLIER } from './constants';
 import type { IDebuggable } from '../../shared/debug';

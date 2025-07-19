@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PlaygroundScene } from './scenes/PlaygroundScene';
+import { PlaygroundScene } from './scenes/playground-scene';
 import { GAME_WIDTH, GAME_HEIGHT } from './features/stage';
 
 // Physics constants for game config

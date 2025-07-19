@@ -1,5 +1,5 @@
 import type { System } from '../../shared/types';
-import { Player } from './Player';
+import { Player } from './player';
 import { InputSystem } from './input';
 import type { IDebuggable } from '../../shared/debug';
 import { DEBUG_CONFIG, DebugState, ShadowState, BaseDebugRenderer, DebugInfoFormatter } from '../../shared/debug';

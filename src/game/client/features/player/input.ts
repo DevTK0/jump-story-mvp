@@ -1,5 +1,5 @@
 import type { System, InputState } from '../../shared/types';
-import { Player } from './Player';
+import { Player } from './player';
 
 export class InputSystem implements System {
   private player: Player;

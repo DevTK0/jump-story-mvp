@@ -1,6 +1,6 @@
 import type { System } from "../../shared/types";
 import { gameEvents, GameEvent } from "../../shared/events";
-import { Player } from "./Player";
+import { Player } from "./player";
 import { InputSystem } from "./input";
 import type { IDebuggable } from "../../shared/debug";
 import { DebugState, ShadowState, DEBUG_CONFIG, BaseDebugRenderer } from "../../shared/debug";

@@ -7,7 +7,7 @@ export {
     type MapClimbeable, 
     type MapBoundary, 
     type MapChest 
-} from './MapLoader';
+} from './map-loader';
 
 // Export stage constants
 export * from './constants';

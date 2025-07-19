@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { System } from "../../shared/types";
-import { Player } from "./Player";
+import { Player } from "./player";
 import { InputSystem } from "./input";
 import { gameEvents, GameEvent } from "../../shared/events";
 import {

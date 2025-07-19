@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { Enemy, type EnemyConfig, DEFAULT_ENEMY_CONFIG } from './Enemy';
+import { Enemy, type EnemyConfig, DEFAULT_ENEMY_CONFIG } from './enemy';
 import { ENEMY_MAX_COUNT, ENEMY_SPAWN_INTERVAL, ENEMY_SPAWN_MARGIN, ENEMY_INITIAL_SPAWN_COUNT, ENEMY_INITIAL_SPAWN_DELAY } from './constants';
 import { GAME_WIDTH, GAME_HEIGHT, GROUND_HEIGHT } from '../stage/constants';
 

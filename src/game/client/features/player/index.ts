@@ -1,5 +1,5 @@
 // Main player class
-export { Player, type PlayerConfig } from './Player';
+export { Player, type PlayerConfig } from './player';
 
 // Player systems
 export { InputSystem } from './input';
@@ -10,7 +10,7 @@ export { AnimationSystem } from './animations';
 export { DebugSystem } from './debug';
 
 // Factory function to create a fully configured player
-import { Player, type PlayerConfig } from './Player';
+import { Player, type PlayerConfig } from './player';
 import { InputSystem } from './input';
 import { MovementSystem } from './movement';
 import { ClimbingSystem } from './climbing';

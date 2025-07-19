@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import type { System } from "../../shared/types";
 import { gameEvents, GameEvent } from "../../shared/events";
-import { Player } from "./Player";
+import { Player } from "./player";
 import { InputSystem } from "./input";
 import { MovementSystem } from "./movement";
 import { CLIMB_SPEED, CLIMB_CENTER_THRESHOLD, CLIMB_SNAP_SPEED, CLIMB_ALIGNMENT_TOLERANCE, CLIMB_SNAP_FPS } from "./constants";
