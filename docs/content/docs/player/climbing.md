@@ -112,11 +112,18 @@ MapLoader -> ClimbingSystem: provide climbable areas
 
 ## Configuration
 
-Climbing behavior is controlled by constants in `constants.ts`:
+Climbing behavior is controlled by the climbing section in `config.ts`:
 
--   `CLIMB_SPEED`: Vertical movement speed (150)
--   `CLIMB_CENTER_THRESHOLD`: Required center alignment (0.7 = 70%)
--   `CLIMB_SNAP_SPEED`: Auto-centering speed (300)
+```typescript
+PLAYER_CONFIG.climbing = {
+    speed: 150,              // Vertical movement speed
+    centerThreshold: 0.7,    // Required center alignment (70%)
+    snapSpeed: 300,          // Auto-centering speed
+    checkDistance: 30,       // Distance to check for climbables below
+    exitJumpForceX: 100,     // Horizontal velocity on jump exit
+    exitJumpForceY: -200,    // Vertical velocity on jump exit
+}
+```
 
 ## Tilemap Setup
 
