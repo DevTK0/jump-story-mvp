@@ -1,8 +1,10 @@
 import type { System } from '../../shared/types';
-import { Player } from './player';
-import { InputSystem } from './input';
-import type { IDebuggable } from '../../shared/debug';
-import { DEBUG_CONFIG, DebugState, ShadowState, BaseDebugRenderer, DebugInfoFormatter } from '../../shared/debug';
+import { Player } from '../player/player';
+import { InputSystem } from '../player/input';
+import type { IDebuggable } from './debug-interfaces';
+import { DEBUG_CONFIG } from './config';
+import { DebugState } from './debug-state';
+import { BaseDebugRenderer } from './debug-renderer';
 
 /**
  * Debug wrapper for Player class since Player extends Phaser.GameObjects.Sprite
@@ -204,7 +206,7 @@ export class DebugSystem implements System {
   
   private setupScrollControls(): void {
     // Set up mouse wheel scrolling
-    this.scene.input.on('wheel', (pointer: any, gameObjects: any, deltaX: number, deltaY: number, deltaZ: number) => {
+    this.scene.input.on('wheel', (pointer: any, _gameObjects: any, _deltaX: number, deltaY: number, _deltaZ: number) => {
       if (!DebugState.getInstance().enabled) return;
       
       // Check if mouse is over the debug window

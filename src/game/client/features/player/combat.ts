@@ -3,9 +3,10 @@ import type { System } from '../../shared/types';
 import { gameEvents, GameEvent } from '../../shared/events';
 import { Player } from './player';
 import { InputSystem } from './input';
-import { ATTACK_EDGE_OFFSET, ATTACK_HITBOX_POSITION_MULTIPLIER } from './constants';
-import type { IDebuggable } from '../../shared/debug';
-import { DEBUG_CONFIG, BaseDebugRenderer } from '../../shared/debug';
+import { PLAYER_CONFIG } from './config';
+import type { IDebuggable } from '../debug/debug-interfaces';
+import { DEBUG_CONFIG } from '../debug/config';
+import { BaseDebugRenderer } from '../debug/debug-renderer';
 
 export interface AttackConfig {
   name: string;
@@ -144,13 +145,13 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
     
     // Calculate attack position using the specific attack's reach
     const attackX = facing === 1 
-      ? playerX + ATTACK_EDGE_OFFSET 
-      : playerX - ATTACK_EDGE_OFFSET;
+      ? playerX + PLAYER_CONFIG.attack.edgeOffset 
+      : playerX - PLAYER_CONFIG.attack.edgeOffset;
     
     // Position hitbox using the specific attack's reach
     const hitboxX = facing === 1
-      ? attackX + (attackConfig.reach * ATTACK_HITBOX_POSITION_MULTIPLIER)
-      : attackX - (attackConfig.reach * ATTACK_HITBOX_POSITION_MULTIPLIER);
+      ? attackX + (attackConfig.reach * PLAYER_CONFIG.attack.hitboxPositionMultiplier)
+      : attackX - (attackConfig.reach * PLAYER_CONFIG.attack.hitboxPositionMultiplier);
       
     this.hitboxSprite.setPosition(hitboxX, playerY);
     

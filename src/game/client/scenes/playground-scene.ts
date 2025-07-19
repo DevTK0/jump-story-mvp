@@ -2,13 +2,10 @@ import Phaser from "phaser";
 import { createPlayer, Player } from "../features/player";
 import { EnemyManager, DEFAULT_SPAWN_CONFIG } from "../features/enemy";
 import { MapLoader, type MapData } from "../features/stage";
-import {
-    PLAYER_SCALE,
-    PLAYER_HITBOX_WIDTH,
-    PLAYER_HITBOX_HEIGHT,
-} from "../features/player";
-import type { IDebuggable } from "../shared/debug";
-import { DEBUG_CONFIG, DebugState } from "../shared/debug";
+import { PLAYER_CONFIG } from "../features/player";
+import type { IDebuggable } from "../features/debug/debug-interfaces";
+import { DEBUG_CONFIG } from "../features/debug/config";
+import { DebugState } from "../features/debug/debug-state";
 
 // Scene-specific constants
 const COLOR_BACKGROUND = 0x2c3e50;
@@ -69,9 +66,9 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             texture: "soldier",
         });
         
-        this.player.setScale(PLAYER_SCALE);
+        this.player.setScale(PLAYER_CONFIG.movement.scale);
         this.player.body.setCollideWorldBounds(true);
-        this.player.body.setSize(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT);
+        this.player.body.setSize(PLAYER_CONFIG.movement.hitboxWidth, PLAYER_CONFIG.movement.hitboxHeight);
 
         // Set camera to follow player
         this.cameras.main.startFollow(this.player);

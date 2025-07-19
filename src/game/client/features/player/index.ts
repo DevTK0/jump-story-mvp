@@ -7,7 +7,7 @@ export { MovementSystem } from './movement';
 export { ClimbingSystem } from './climbing';
 export { CombatSystem, type AttackConfig } from './combat';
 export { AnimationSystem } from './animations';
-export { DebugSystem } from './debug';
+export { DebugSystem } from '../debug';
 
 // Factory function to create a fully configured player
 import { Player, type PlayerConfig } from './player';
@@ -16,7 +16,7 @@ import { MovementSystem } from './movement';
 import { ClimbingSystem } from './climbing';
 import { CombatSystem, type AttackConfig } from './combat';
 import { AnimationSystem } from './animations';
-import { DebugSystem } from './debug';
+import { DebugSystem } from '../debug';
 
 export interface PlayerFactoryConfig extends PlayerConfig {
   attackConfig?: AttackConfig;
@@ -50,4 +50,4 @@ export function createPlayer(config: PlayerFactoryConfig): Player {
 export type { System } from '../../shared/types';
 
 // Export player constants
-export * from './constants';
+export { PLAYER_CONFIG } from './config';

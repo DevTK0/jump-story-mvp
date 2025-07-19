@@ -4,9 +4,10 @@ import { gameEvents, GameEvent } from "../../shared/events";
 import { Player } from "./player";
 import { InputSystem } from "./input";
 import { MovementSystem } from "./movement";
-import { CLIMB_SPEED, CLIMB_CENTER_THRESHOLD, CLIMB_SNAP_SPEED, CLIMB_ALIGNMENT_TOLERANCE, CLIMB_SNAP_FPS } from "./constants";
-import type { IDebuggable } from "../../shared/debug";
-import { DEBUG_CONFIG, BaseDebugRenderer } from "../../shared/debug";
+import { PLAYER_CONFIG } from "./config";
+import type { IDebuggable } from "../debug/debug-interfaces";
+import { DEBUG_CONFIG } from "../debug/config";
+import { BaseDebugRenderer } from "../debug/debug-renderer";
 
 // Utility functions for climbing calculations
 function getPlayerCenterX(player: Player): number {
@@ -96,11 +97,11 @@ class ClimbingPhysics {
         const climbeableCenterX = getClimbeableCenterX(currentClimbeableArea);
         const distanceFromCenter = climbeableCenterX - playerCenterX;
         
-        if (Math.abs(distanceFromCenter) > CLIMB_ALIGNMENT_TOLERANCE) {
-            let velocityX = Math.sign(distanceFromCenter) * CLIMB_SNAP_SPEED;
+        if (Math.abs(distanceFromCenter) > PLAYER_CONFIG.climbing.alignmentTolerance) {
+            let velocityX = Math.sign(distanceFromCenter) * PLAYER_CONFIG.climbing.snapSpeed;
             
-            if (Math.abs(velocityX) > Math.abs(distanceFromCenter * CLIMB_SNAP_FPS)) {
-                velocityX = distanceFromCenter * CLIMB_SNAP_FPS;
+            if (Math.abs(velocityX) > Math.abs(distanceFromCenter * PLAYER_CONFIG.climbing.snapFps)) {
+                velocityX = distanceFromCenter * PLAYER_CONFIG.climbing.snapFps;
             }
             
             return { velocityX, isSnapping: true };
@@ -146,7 +147,7 @@ class ClimbingCollision {
         const playerCenterX = getPlayerCenterX(this.player);
         const climbeableCenterX = getClimbeableCenterX(this.currentClimbeableArea);
         const distanceFromCenter = Math.abs(playerCenterX - climbeableCenterX);
-        const maxAllowedDistance = (this.currentClimbeableArea.width / 2) * CLIMB_CENTER_THRESHOLD;
+        const maxAllowedDistance = (this.currentClimbeableArea.width / 2) * PLAYER_CONFIG.climbing.centerThreshold;
         
         return distanceFromCenter <= maxAllowedDistance;
     }
@@ -214,7 +215,7 @@ class ClimbingCollision {
                 const isBelow = body.y >= playerBottom && body.y <= playerBottom + distance;
                 // Check horizontal alignment with center threshold
                 const climbeableCenterX = getClimbeableCenterX(body);
-                const maxAllowedDistance = (body.width / 2) * CLIMB_CENTER_THRESHOLD;
+                const maxAllowedDistance = (body.width / 2) * PLAYER_CONFIG.climbing.centerThreshold;
                 const isAligned = Math.abs(playerCenterX - climbeableCenterX) <= maxAllowedDistance;
                 
                 if (isBelow && isAligned) {
@@ -343,8 +344,8 @@ export class ClimbingSystem
 
         const inputState = this.inputSystem.getInputState();
         
-        if (inputState.up) return -CLIMB_SPEED;
-        if (inputState.down) return CLIMB_SPEED;
+        if (inputState.up) return -PLAYER_CONFIG.climbing.speed;
+        if (inputState.down) return PLAYER_CONFIG.climbing.speed;
         
         return 0;
     }

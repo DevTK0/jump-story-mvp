@@ -1,14 +1,14 @@
 import Phaser from 'phaser';
 import { PlaygroundScene } from './scenes/playground-scene';
-import { GAME_WIDTH, GAME_HEIGHT } from './features/stage';
+import { STAGE_CONFIG } from './features/stage';
 
 // Physics constants for game config
 const PHYSICS_GRAVITY_Y = 900;
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  width: GAME_WIDTH,
-  height: GAME_HEIGHT,
+  width: STAGE_CONFIG.world.width,
+  height: STAGE_CONFIG.world.height,
   backgroundColor: '#87CEEB',
   scene: PlaygroundScene,
   parent: 'game-container',

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { PlayerState, System } from '../../shared/types';
 import { gameEvents, GameEvent } from '../../shared/events';
-import { PLAYER_SPEED, PLAYER_JUMP_SPEED } from './constants';
+import { PLAYER_CONFIG } from './config';
 
 export interface PlayerConfig {
   scene: Phaser.Scene;
@@ -163,11 +163,11 @@ export class Player extends Phaser.GameObjects.Sprite {
   
   // Config accessors
   public getSpeed(): number {
-    return PLAYER_SPEED;
+    return PLAYER_CONFIG.movement.speed;
   }
   
   public getJumpSpeed(): number {
-    return PLAYER_JUMP_SPEED;
+    return PLAYER_CONFIG.movement.jumpSpeed;
   }
   
   

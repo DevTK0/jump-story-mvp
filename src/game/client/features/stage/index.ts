@@ -10,4 +10,4 @@ export {
 } from './map-loader';
 
 // Export stage constants
-export * from './constants';
+export { STAGE_CONFIG } from './config';

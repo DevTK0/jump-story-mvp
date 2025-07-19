@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ENEMY_SIZE, ENEMY_SPEED, ENEMY_MAX_SPEED, ENEMY_TRACKING_RANGE, COLOR_ENEMY, PHYSICS_DRAG, PHYSICS_BOUNCE } from './constants';
+import { ENEMY_CONFIG } from './config';
 
 export interface EnemyConfig {
   speed: number;
@@ -33,8 +33,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       body.setSize(this.config.size, this.config.size);
       body.setCollideWorldBounds(true);
       body.setGravityY(0);
-      body.setDrag(PHYSICS_DRAG);
-      body.setBounce(PHYSICS_BOUNCE);
+      body.setDrag(ENEMY_CONFIG.physics.drag);
+      body.setBounce(ENEMY_CONFIG.physics.bounce);
     }
   }
 
@@ -106,9 +106,9 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 }
 
 export const DEFAULT_ENEMY_CONFIG: EnemyConfig = {
-  speed: ENEMY_SPEED,
-  size: ENEMY_SIZE,
-  color: COLOR_ENEMY,
-  trackingRange: ENEMY_TRACKING_RANGE,
-  maxSpeed: ENEMY_MAX_SPEED
+  speed: ENEMY_CONFIG.properties.speed,
+  size: ENEMY_CONFIG.properties.size,
+  color: ENEMY_CONFIG.visual.color,
+  trackingRange: ENEMY_CONFIG.properties.trackingRange,
+  maxSpeed: ENEMY_CONFIG.properties.maxSpeed
 };

@@ -3,11 +3,7 @@ import type { System } from "../../shared/types";
 import { Player } from "./player";
 import { InputSystem } from "./input";
 import { gameEvents, GameEvent } from "../../shared/events";
-import {
-    ANIMATION_SOLDIER_IDLE_FRAMERATE,
-    ANIMATION_SOLDIER_WALK_FRAMERATE,
-    ANIMATION_SOLDIER_ATTACK_FRAMERATE,
-} from "./constants";
+import { PLAYER_CONFIG } from "./config";
 
 interface PlayerAnimationConfig {
     key: string;
@@ -46,35 +42,35 @@ export class AnimationSystem implements System {
                 key: "soldier-idle-anim",
                 spriteKey: "soldier",
                 frames: { start: 0, end: 5 },
-                frameRate: ANIMATION_SOLDIER_IDLE_FRAMERATE,
+                frameRate: PLAYER_CONFIG.animations.soldier.idle.framerate,
                 repeat: -1,
             },
             {
                 key: "soldier-walk-anim",
                 spriteKey: "soldier",
                 frames: { start: 9, end: 16 },
-                frameRate: ANIMATION_SOLDIER_WALK_FRAMERATE,
+                frameRate: PLAYER_CONFIG.animations.soldier.walk.framerate,
                 repeat: -1,
             },
             {
                 key: "soldier-attack1-anim",
                 spriteKey: "soldier",
                 frames: { start: 18, end: 23 },
-                frameRate: ANIMATION_SOLDIER_ATTACK_FRAMERATE,
+                frameRate: PLAYER_CONFIG.animations.soldier.attack.framerate,
                 repeat: 0,
             },
             {
                 key: "soldier-attack2-anim",
                 spriteKey: "soldier",
                 frames: { start: 27, end: 32 },
-                frameRate: ANIMATION_SOLDIER_ATTACK_FRAMERATE,
+                frameRate: PLAYER_CONFIG.animations.soldier.attack.framerate,
                 repeat: 0,
             },
             {
                 key: "soldier-attack3-anim",
                 spriteKey: "soldier",
                 frames: { start: 36, end: 45 },
-                frameRate: ANIMATION_SOLDIER_ATTACK_FRAMERATE,
+                frameRate: PLAYER_CONFIG.animations.soldier.attack.framerate,
                 repeat: 0,
             },
         ];

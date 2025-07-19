@@ -1,5 +1,5 @@
-import type { TrajectoryPoint } from '../../../shared/debug';
-import { DEBUG_CONFIG } from '../../../shared/debug';
+import type { TrajectoryPoint } from '../../debug/debug-interfaces';
+import { DEBUG_CONFIG } from '../../debug/config';
 
 /**
  * Manages shadow sprite rendering for movement trajectory visualization

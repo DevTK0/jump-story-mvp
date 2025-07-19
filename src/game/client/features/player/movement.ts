@@ -2,8 +2,10 @@ import type { System } from "../../shared/types";
 import { gameEvents, GameEvent } from "../../shared/events";
 import { Player } from "./player";
 import { InputSystem } from "./input";
-import type { IDebuggable } from "../../shared/debug";
-import { DebugState, ShadowState, DEBUG_CONFIG, BaseDebugRenderer } from "../../shared/debug";
+import type { IDebuggable } from "../debug/debug-interfaces";
+import { DebugState, ShadowState } from "../debug/debug-state";
+import { DEBUG_CONFIG } from "../debug/config";
+import { BaseDebugRenderer } from "../debug/debug-renderer";
 import { ShadowTrajectoryRenderer } from "./effects/shadow";
 
 export class MovementSystem extends BaseDebugRenderer implements System, IDebuggable {

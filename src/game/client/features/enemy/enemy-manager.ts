@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { Enemy, type EnemyConfig, DEFAULT_ENEMY_CONFIG } from './enemy';
-import { ENEMY_MAX_COUNT, ENEMY_SPAWN_INTERVAL, ENEMY_SPAWN_MARGIN, ENEMY_INITIAL_SPAWN_COUNT, ENEMY_INITIAL_SPAWN_DELAY } from './constants';
-import { GAME_WIDTH, GAME_HEIGHT, GROUND_HEIGHT } from '../stage/constants';
+import { ENEMY_CONFIG } from './config';
+import { STAGE_CONFIG } from '../stage/config';
 
 export interface EnemySpawnConfig {
   maxEnemies: number;
@@ -24,9 +24,9 @@ export class EnemyManager {
     this.scene = scene;
     this.target = target;
     this.spawnConfig = {
-      maxEnemies: ENEMY_MAX_COUNT,
-      spawnIntervalMs: ENEMY_SPAWN_INTERVAL,
-      spawnMargin: ENEMY_SPAWN_MARGIN,
+      maxEnemies: ENEMY_CONFIG.spawning.maxCount,
+      spawnIntervalMs: ENEMY_CONFIG.spawning.interval,
+      spawnMargin: ENEMY_CONFIG.spawning.margin,
       enemyConfig: DEFAULT_ENEMY_CONFIG,
       ...spawnConfig
     };
@@ -55,8 +55,8 @@ export class EnemyManager {
   }
 
   private spawnInitialEnemies(): void {
-    for (let i = 0; i < Math.min(ENEMY_INITIAL_SPAWN_COUNT, this.spawnConfig.maxEnemies); i++) {
-      const timer = this.scene.time.delayedCall(i * ENEMY_INITIAL_SPAWN_DELAY, () => {
+    for (let i = 0; i < Math.min(ENEMY_CONFIG.spawning.initialCount, this.spawnConfig.maxEnemies); i++) {
+      const timer = this.scene.time.delayedCall(i * ENEMY_CONFIG.spawning.initialDelay, () => {
         this.trySpawnEnemy();
       });
       this.initialSpawnTimers.push(timer);
@@ -73,11 +73,11 @@ export class EnemyManager {
   }
 
   private getRandomSpawnPosition(): { x: number, y: number } {
-    const gameWidth = GAME_WIDTH;
-    const gameHeight = GAME_HEIGHT;
+    const gameWidth = STAGE_CONFIG.world.width;
+    const gameHeight = STAGE_CONFIG.world.height;
     const margin = this.spawnConfig.spawnMargin;
-    const groundY = gameHeight - GROUND_HEIGHT;
-    const maxSpawnY = groundY - GROUND_HEIGHT;
+    const groundY = gameHeight - STAGE_CONFIG.ground.height;
+    const maxSpawnY = groundY - STAGE_CONFIG.ground.height;
     
     const side = Phaser.Math.Between(0, 2); // Only use top, left, right (no bottom spawning)
     
@@ -169,8 +169,8 @@ export class EnemyManager {
 }
 
 export const DEFAULT_SPAWN_CONFIG: EnemySpawnConfig = {
-  maxEnemies: ENEMY_MAX_COUNT,
-  spawnIntervalMs: ENEMY_SPAWN_INTERVAL,
-  spawnMargin: ENEMY_SPAWN_MARGIN,
+  maxEnemies: ENEMY_CONFIG.spawning.maxCount,
+  spawnIntervalMs: ENEMY_CONFIG.spawning.interval,
+  spawnMargin: ENEMY_CONFIG.spawning.margin,
   enemyConfig: DEFAULT_ENEMY_CONFIG
 };
