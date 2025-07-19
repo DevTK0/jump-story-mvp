@@ -96,7 +96,7 @@ export class MapLoader {
         ]);
         tilemap.createLayer("Props", propsTileset!);
         tilemap.createLayer("Chests", propsTileset!);
-        tilemap.createLayer("Platform", propsTileset!);
+        tilemap.createLayer("Platform", [groundTileset!, propsTileset!]);
         tilemap.createLayer("Climbeable", propsTileset!);
         
         // Set collision for ground tiles (exclude empty tiles with ID 0) - Traditional solid collision
