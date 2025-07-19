@@ -3,156 +3,126 @@ title: Climbing
 ---
 
 ```d2
+ClimbingSystem: {
+  shape: class
 
-shape: sequence_diagram
-GameLoop: "Game Loop"
-ClimbingSystem: "ClimbingSystem"
-InputSystem: "InputSystem"
-MovementSystem: "MovementSystem"
-Player: "Player"
-ClimbableGroup: "Climbable Areas"
-GameEvents: "Game Events"
+  physics: ClimbingPhysics
+  collision: ClimbingCollision
 
-# Every Frame Flow
-GameLoop -> ClimbingSystem: update()
-ClimbingSystem -> ClimbingSystem: checkClimbeableOverlap()
-ClimbingSystem -> ClimbableGroup: check physics overlap
-ClimbableGroup -> ClimbingSystem: isInClimbeableArea = true/false
+  setClimbeableGroup(group): void
+  isPlayerOnClimbeable(): boolean
+  forceExitClimbing(): void
+}
 
-# State Check
-ClimbingSystem -> Player: check isClimbing
+ClimbingPhysics: {
+  shape: class
 
-# NOT CLIMBING: Check for climbing start
-ClimbingSystem -> InputSystem: getInputState()
-InputSystem -> ClimbingSystem: input.up || input.down
-ClimbingSystem -> MovementSystem: isOnGround()
-MovementSystem -> ClimbingSystem: onGround = true/false
+  enableClimbingPhysics(): void
+  disableClimbingPhysics(): void
+  calculateSnapVelocity(area): (velocityX, isSnapping)
+  applyClimbingMovement(vx, vy): void
+}
 
-# CONDITIONAL: Start climbing if conditions met
-ClimbingSystem -> ClimbingSystem: IF (input.up && isInClimbeableArea) OR\n(input.down && onGround && isInClimbeableArea)
-ClimbingSystem -> Player: setPlayerState(isClimbing: true)
-ClimbingSystem -> Player: body.setGravityY(0)
-ClimbingSystem -> GameEvents: emit(PLAYER_CLIMB_START)
+ClimbingCollision: {
+  shape: class
 
-# CLIMBING: Movement and exit handling
-ClimbingSystem -> InputSystem: getInputState()
-InputSystem -> ClimbingSystem: movement input
-ClimbingSystem -> Player: body.setVelocity(0, targetVelocityY)
+  setClimbeableGroup(group): void
+  isPlayerInClimbeableArea(): boolean
+  getCurrentClimbeableArea(): StaticBody | null
+  checkClimbableBelow(distance?): StaticBody | null
+}
 
-# Exit via jump
-ClimbingSystem -> InputSystem: check input.jump
-ClimbingSystem -> MovementSystem: forceJump()
-ClimbingSystem -> Player: setPlayerState(isClimbing: false)
-ClimbingSystem -> Player: body.setGravityY(originalGravity)
-ClimbingSystem -> GameEvents: emit(PLAYER_CLIMB_END)
+ClimbingSystem -> ClimbingPhysics: has
+ClimbingSystem -> ClimbingCollision: has
 ```
 
 ## Overview
 
-The ClimbingSystem enables players to climb designated areas with gravity control and specialized movement. It uses tilemap-based detection to identify climbable areas, managing gravity suspension, climbing movement, and seamless transitions between climbing and normal movement states.
+The ClimbingSystem enables players to climb ladders and similar objects. It has two main components: ClimbingPhysics manages gravity and movement calculations, while ClimbingCollision detects climbable areas and handles overlap checking.
 
-## Key Features
+## Components
 
--   **Tilemap Integration**: Detects climbable areas from map data
--   **Gravity Management**: Disables gravity while climbing
--   **Vertical Movement**: Up/down arrow controls during climb
--   **Jump Dismount**: Jump off with directional control
--   **Boundary Enforcement**: Prevents climbing outside designated areas
+### ClimbingPhysics
 
-## Implementation Details
+-   Disables gravity during climbing and restores it when exiting
+-   Automatically centers player on ladder for smooth climbing
+-   Handles vertical movement based on UP/DOWN input
 
-### Climbing Detection
+### ClimbingCollision
 
-The system uses tilemap-based climbing detection through Phaser.Physics.Arcade.Group for climbable areas.
+-   Detects when player overlaps with climbable areas
+-   Checks if player is properly positioned to start climbing
+-   Detects ladders below player for platform edge climbing
 
-### Core Methods
+### ClimbableGroup
 
-```typescript
-setClimbeableGroup(group: Phaser.Physics.Arcade.Group): void
-```
+-   Physics group containing ladder collision rectangles from the tilemap
+-   Set up in your scene and passed to the climbing system
 
-Sets the physics group containing climbable area rectangles from tilemap.
+## Usage
 
-```typescript
-isPlayerOnClimbeable(): boolean
-```
-
-Checks if player is currently overlapping a climbable area.
+### Setting Up Climbable Areas
 
 ```typescript
-forceExitClimbing(): void
-```
-
-Forces player to stop climbing (used by other systems).
-
-### Climbing States
-
-1. **Entry Conditions**:
-
-    - Press UP while in climbable area
-    - Press DOWN while grounded in climbable area
-
-2. **During Climbing**:
-
-    - Gravity set to 0
-    - Vertical movement with UP/DOWN keys
-    - Horizontal movement disabled
-    - Other systems check `player.isClimbing`
-
-3. **Exit Conditions**:
-    - Press JUMP to dismount with optional horizontal velocity
-    - Leave climbable area
-
-## Usage Example
-
-```typescript
-// Set up climbable areas from tilemap
-const climbableGroup = scene.physics.add.group();
-// Add rectangles from tilemap layer to group
-
-const player = createPlayer(config);
-const climbingSystem = player.getSystem<ClimbingSystem>("climbing");
-
-// Register climbable areas
+// In your scene
+const climbableGroup = this.mapLoader.createClimbeablePhysics(
+    mapData.climbeable
+);
+const climbingSystem = player.getSystem("climbing");
 climbingSystem.setClimbeableGroup(climbableGroup);
-
-// Check if player can start climbing
-if (climbingSystem.canGrabClimbeable()) {
-    // Player is in position to climb
-}
-
-// Force exit from climbing (e.g., from damage)
-climbingSystem.forceExitClimbing();
 ```
 
-## Integration Points
+### Entry Conditions
 
-### Events Emitted
+-   **Climbing up**: Press UP while overlapping a ladder
+-   **Climbing down**: Press DOWN while grounded (detects overlapping ladders or ladders below)
 
--   `PLAYER_CLIMB_START`: Fired when climbing begins
+### During Climbing
+
+-   Gravity is disabled, player can move up/down with arrow keys
+-   Player automatically centers on ladder
+-   Horizontal movement is disabled
+
+### Exit Conditions
+
+-   Press JUMP to dismount (with optional horizontal momentum)
+-   Move outside the climbable area boundary
+-   Press LEFT/RIGHT while grounded
+
+## Events
+
+The system emits events for other systems to react to:
+
+-   `PLAYER_CLIMB_START`: Fired when climbing begins (for animations, audio)
 -   `PLAYER_CLIMB_END`: Fired when climbing ends
 
-### System Coordination
+## Integration
 
--   **MovementSystem**: Disabled during climbing
--   **InputSystem**: Provides climb direction input
--   **AnimationSystem**: Can switch to climbing animations
+```d2
+ClimbingSystem -> InputSystem: get input state
+ClimbingSystem -> MovementSystem: check ground state
+ClimbingSystem -> Player: control physics and state
+ClimbingSystem -> GameEvents: emit climb events
 
-### State Management
+GameEvents -> AnimationSystem: PLAYER_CLIMB_START/END
+GameEvents -> AudioSystem: PLAYER_CLIMB_START/END
 
--   Sets `player.isClimbing` flag
--   Stores and restores gravity settings
--   Manages climbing key states for smooth movement
+MapLoader -> ClimbingSystem: provide climbable areas
+```
 
 ## Configuration
 
-### Constants
+Climbing behavior is controlled by constants in `constants.ts`:
 
--   `CLIMB_SPEED`: Default climbing velocity (150)
+-   `CLIMB_SPEED`: Vertical movement speed (150)
+-   `CLIMB_CENTER_THRESHOLD`: Required center alignment (0.7 = 70%)
+-   `CLIMB_SNAP_SPEED`: Auto-centering speed (300)
 
-## Best Practices
+## Tilemap Setup
 
-1. **Tilemap Setup**: Use object layers to define climbable rectangles
-2. **Visual Indicators**: Add visual elements to show climbable areas
-3. **Smooth Transitions**: Ensure animations sync with climb state changes
-4. **Jump Dismount**: Allows strategic movement options for players
+Create climbable areas in Tiled editor:
+
+1. Add an object layer called "Climbeable"
+2. Draw rectangles over ladder graphics
+3. The MapLoader will convert these to physics bodies
+4. Position ladders close to platform edges for smooth climbing
