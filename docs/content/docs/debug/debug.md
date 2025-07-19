@@ -2,46 +2,67 @@
 title: Debug
 ---
 
-```d2
-Debug System Architecture {
-  Debug State Manager {
-    DebugState: Global singleton state
-    ShadowState: Shadow effect state
-  }
-
-  Debug Components {
-    IDebuggable: Interface for debug rendering and cleanup
-    BaseDebugRenderer: Abstract base class
-  }
-
-  Debug Systems {
-    DebugSystem: Main orchestrator
-    PlayerDebugWrapper: Player debug adapter
-    MovementSystem: Movement debug info
-    CombatSystem: Combat debug info
-    ClimbingSystem: Climbing debug info
-  }
-
-  Debug Configuration {
-    DEBUG_CONFIG: Centralized settings
-    Colors: Visual debug colors
-    UI: Layout and positioning
-    Input: Keyboard controls
-    Trajectory: Movement tracking
-  }
-
-  Debug State Manager -> Debug Systems: State updates
-  Debug Systems -> Debug Components: Implements interfaces
-  Debug Configuration -> Debug Systems: Configuration settings
-  DebugSystem -> Debug Components: Collects and renders
+```d2 layout="elk"
+DebugState: {
+  shape: class
+  +enabled: boolean
+  +toggle(): void
+  +getInstance(): DebugState
 }
-```
 
-## Overview
+ShadowState: {
+  shape: class
+  +enabled: boolean
+  +toggle(): void
+  +getInstance(): ShadowState
+}
+
+IDebuggable: {
+  shape: class
+  +renderDebug?(graphics): void
+  +getDebugInfo?(): Record<string, any>
+  +isDebugEnabled?(): boolean
+  +cleanupDebugResources?(): void
+}
+
+BaseDebugRenderer: {
+  shape: class
+  +renderDebug(graphics): void
+  +getDebugInfo(): Record<string, any>
+  +isDebugEnabled(): boolean
+  # performDebugRender(graphics): void
+  # provideDebugInfo(): Record<string, any>
+}
+
+DebugSystem: {
+  shape: class
+  -debuggableComponents: "IDebuggable[]"
+  -graphics: Graphics
+  -debugContainer: Container
+  +update(time, delta): void
+  +refreshDebuggableComponents(): void
+  +enableDebugMode(): void
+  +disableDebugMode(): void
+}
+
+PlayerDebugWrapper: {
+  shape: class
+  -player: Player
+  +performDebugRender(graphics): void
+  +provideDebugInfo(): Record<string, any>
+}
+
+BaseDebugRenderer -> IDebuggable: implements
+DebugSystem -> IDebuggable: manages
+PlayerDebugWrapper -> BaseDebugRenderer: extends
+DebugSystem -> DebugState: uses
+DebugSystem -> ShadowState: uses
+
+```
 
 The debug system provides comprehensive runtime debugging capabilities for the game. It uses a modular architecture where any component can implement debug interfaces to provide visual debugging information and runtime data inspection.
 
-## Core Components
+## Components
 
 ### Debug State Management
 
@@ -63,75 +84,122 @@ The debug system provides comprehensive runtime debugging capabilities for the g
 
 -   **DEBUG_CONFIG**: Centralized configuration object containing all debug settings including colors, UI parameters, input bindings, and trajectory tracking options
 
-## Key Features
+### Features
 
-### Visual Debug Rendering
+The debug system provides these capabilities:
 
--   Player hitbox visualization (green outline)
--   Attack hitbox visualization (orange outline)
--   Velocity vectors with directional arrows
--   Climbeable area highlighting
--   Collision detection visualization
--   Movement trajectory tracking with shadow effects
+-   **Visual Debug Rendering**: Player hitbox visualization, attack hitbox visualization, velocity vectors with directional arrows, climbeable area highlighting, collision detection visualization, movement trajectory tracking with shadow effects
+-   **Runtime Debug Information**: Player position and health status, movement state, combat state, physics body information, system-specific debug data from each component
+-   **Input Controls**: Debug toggle configured via `DEBUG_CONFIG.input.toggleKey`, shadow effect control via `ShadowState.getInstance().toggle()`
+-   **State-Based Architecture**: Debug state checked via polling when components need to render debug info, components query `DebugState.getInstance().enabled` directly
 
-### Runtime Debug Information
+## Usage
 
--   Player position and health status
--   Movement state (facing direction, can jump, is climbing)
--   Combat state (is attacking, cooldown status)
--   Physics body information (hitbox dimensions)
--   System-specific debug data from each component
+### Enabling Debug Mode
 
-### Input Controls
+Debug is toggled via keyboard input (configured in DEBUG_CONFIG)
 
--   **'D' Key**: Toggle debug mode on/off
--   **Shadow Effect**: Can be controlled programmatically via `ShadowState.getInstance().toggle()`
+When enabled, you'll see:
 
-### State-Based Architecture
-
--   Debug state is checked via polling when components need to render debug info
--   Components query `DebugState.getInstance().enabled` directly
--   Simple and reliable approach with no subscription management needed
-
-## Usage for New Developers
+-   Visual debug overlays (hitboxes, velocity vectors, collision areas)
+-   Runtime debug information in a scrollable window
+-   System-specific debug data from all registered components
 
 ### Adding Debug Support to New Components
 
-1. **Implement IDebuggable interface**:
+```typescript
+import { DEBUG_CONFIG } from '../debug/config'; // [!code ++]
+import { BaseDebugRenderer } from '../debug/debug-renderer'; // [!code ++]
+import type { IDebuggable } from '../debug/debug-interfaces'; // [!code ++]
 
-    ```typescript
-    export class MySystem extends BaseDebugRenderer implements IDebuggable {
-        protected performDebugRender(
-            graphics: Phaser.GameObjects.Graphics
-        ): void {
-            // Your debug rendering logic
-        }
+export class MySystem extends BaseDebugRenderer implements IDebuggable { // [!code ++]
+    ...
 
-        protected provideDebugInfo(): Record<string, any> {
-            return {
-                myProperty: this.someValue,
-                myState: this.currentState,
-            };
-        }
-
-        cleanupDebugResources?(): void {
-            // Clean up debug-only sprites, graphics, etc. (optional)
-        }
+    protected performDebugRender(graphics: Phaser.GameObjects.Graphics): void { // [!code ++]
+        // Draw visual debug information
+        graphics.lineStyle(2, DEBUG_CONFIG.colors.hitbox);
+        graphics.strokeRect(this.x, this.y, this.width, this.height);
     }
-    ```
 
-2. **Extend BaseDebugRenderer**: This eliminates the need to manually check debug state in each component.
+    protected provideDebugInfo(): Record<string, any> { // [!code ++]
+        return {
+            state: this.currentState,
+            position: { x: this.x, y: this.y },
+            isActive: this.active,
+        };
+    }
+}
+```
 
-3. **Add to DebugSystem**: The system automatically collects components that implement IDebuggable.
+The DebugSystem automatically discovers and manages components that implement `IDebuggable`.
 
-### Configuring Debug Visuals
+## Integration
 
-Modify `DEBUG_CONFIG` in `shared/debug.ts` to customize:
+The debug system integrates with multiple game components through the IDebuggable interface:
 
--   Debug colors for different visual elements
--   UI positioning and sizing
--   Input key bindings
--   Trajectory tracking parameters
--   Performance settings (sample rates, point limits)
+```d2 layout="elk"
+# External System Integration
+PlayerFactory -> DebugSystem: creates and registers
+Player -> DebugSystem: system registration
+DebugSystem -> Player: discovers systems
 
-The debug system is designed to be completely disableable at runtime while providing powerful introspection capabilities during development.
+# Component Integration
+DebugSystem -> MovementSystem: collects debug info
+DebugSystem -> CombatSystem: collects debug info
+DebugSystem -> ClimbingSystem: collects debug info
+DebugSystem -> PlaygroundScene: scene-level debugging
+
+# Engine Integration
+DebugSystem -> Phaser.Input: keyboard controls
+DebugSystem -> Phaser.Graphics: visual rendering
+DebugSystem -> Phaser.Container: UI management
+
+# State Management
+DebugSystem -> DebugState: global debug toggle
+DebugSystem -> ShadowState: shadow effects
+```
+
+**Key Integration Points:**
+
+-   **Player Factory**: Creates DebugSystem instance and registers it with Player (player/index.ts)
+-   **System Discovery**: DebugSystem automatically discovers all components implementing IDebuggable (debug/debug-system.ts)
+-   **Component Registration**: All major player systems (Movement, Combat, Climbing) extend BaseDebugRenderer for consistent debug behavior
+-   **Scene Integration**: PlaygroundScene implements IDebuggable for scene-level debugging (scenes/playground-scene.ts)
+-   **Input Handling**: Integrates with Phaser keyboard input for debug toggle controls (debug/debug-system.ts)
+
+## Configuration
+
+Debug behavior is controlled by the DEBUG_CONFIG object in `debug/config.ts`:
+
+```typescript
+export const DEBUG_CONFIG = {
+    trajectory: {
+        maxPoints: 60, // Maximum trajectory points (1 second at 60fps)
+        sampleRate: 2, // Sample every 2 frames for performance
+        shadowSkipRate: 4, // Show every 4th point for shadows
+        shadowAlphaRange: [0.3, 0.7], // Alpha range for shadow effects
+        shadowTint: 0x666666, // Gray tint for shadows
+    },
+    colors: {
+        hitbox: 0x00ff00, // Green for player hitbox
+        attackHitbox: 0xff8800, // Orange for attack hitbox
+        velocity: 0xffff00, // Yellow for velocity vectors
+        collision: 0x4444ff, // Blue for collision boundaries
+        climbeable: 0x00ff00, // Green for climbeable areas
+        stateText: "#00ff00", // Green for debug text
+    },
+    ui: {
+        stateTextSize: 16, // Font size for debug text
+        stateTextPosition: [10, 10], // Text position on screen
+        velocityScale: 0.5, // Scale factor for velocity arrows
+        collisionCheckRadius: 400, // Radius for collision detection
+        hitboxAlpha: 0.5, // Transparency for hitboxes
+        arrowLength: 8, // Length of velocity arrows
+        arrowAngle: Math.PI / 6, // Angle of arrow heads
+        centerPointRadius: 3, // Radius of center point markers
+    },
+    input: {
+        toggleKey: Phaser.Input.Keyboard.KeyCodes.D, // Debug toggle key
+    },
+};
+```
