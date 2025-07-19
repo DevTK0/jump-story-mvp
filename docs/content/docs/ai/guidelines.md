@@ -23,6 +23,7 @@ ClimbingSystem: {
 ## Configuration
 ````
 
+-   Use the above code snippet as a template for the docs (don't include the quad backticks `)
 -   Always start with a d2 class diagram for docs. A class diagram must be of `shape: class`
 -   Include all the sections in the code snippet above.
 -   Add additional sections as necessary.
@@ -43,6 +44,7 @@ ClimbingSystem: {
     -   The Configuration is an exception to this. Include the current defaults.
 -   Make sure to have an Integration section that shows all of the external components and how they are related to the internal components.
     -   Use a d2 diagram to explain the relationships visually instead of using text. The d2 diagram should follow all the rules in the d2 section.
+    -   The integration section should not be a class diagram.
 
 ## Conventions
 
