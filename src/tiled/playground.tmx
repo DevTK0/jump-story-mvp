@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="1" nextlayerid="11" nextobjectid="23">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="1" nextlayerid="11" nextobjectid="30">
  <editorsettings>
-  <export target="../src/assets/maps/map1.tmj" format="json"/>
+  <export target="../../public/assets/maps/playground.tmj" format="json"/>
  </editorsettings>
  <tileset firstgid="1" name="TX Tileset Ground" tilewidth="32" tileheight="32" tilecount="256" columns="16">
-  <image source="../src/assets/textures/TX Tileset Ground.png" width="512" height="512"/>
+  <image source="../../public/assets/textures/TX Tileset Ground.png" width="512" height="512"/>
  </tileset>
  <tileset firstgid="257" name="TX Village Props" tilewidth="32" tileheight="32" tilecount="1024" columns="32">
-  <image source="../src/assets/textures/TX Village Props.png" width="1024" height="1024"/>
+  <image source="../../public/assets/textures/TX Village Props.png" width="1024" height="1024"/>
  </tileset>
  <objectgroup id="2" name="Ground">
   <object id="2" x="96" y="448" width="864" height="128"/>
+  <object id="23" x="192" y="0" width="672" height="32"/>
  </objectgroup>
  <objectgroup id="6" name="Chests">
   <object id="10" x="288" y="288" width="32" height="32">
@@ -21,20 +22,56 @@
  </objectgroup>
  <objectgroup id="4" name="Climbeable">
   <object id="17" x="768" y="160" width="32" height="288"/>
+  <object id="24" x="832" y="32" width="32" height="128"/>
+  <object id="25" x="640" y="32" width="32" height="128"/>
+  <object id="26" x="352" y="32" width="32" height="96"/>
+  <object id="27" x="192" y="32" width="32" height="224"/>
  </objectgroup>
- <objectgroup id="8" name="Boundary">
-  <object id="12" x="0" y="-192" width="992" height="32"/>
-  <object id="13" x="960" y="0" width="32" height="640"/>
-  <object id="14" x="0" y="0" width="32" height="640"/>
-  <object id="15" x="0" y="608" width="992" height="32"/>
- </objectgroup>
+ <objectgroup id="8" name="Boundary"/>
  <objectgroup id="10" name="Platform">
-  <object id="18" x="192" y="320" width="192" height="32"/>
+  <object id="18" x="192" y="320" width="224" height="32"/>
   <object id="19" x="704" y="160" width="160" height="32"/>
   <object id="20" x="448" y="224" width="192" height="32"/>
  </objectgroup>
  <layer id="5" name="Props" width="30" height="20">
-  <data encoding="csv"/>
+  <data encoding="csv">
+   <chunk x="0" y="0" width="16" height="16">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,636,637,
+0,0,0,0,0,0,0,375,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,407,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,439,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,815,816,817,0,
+0,0,0,0,750,751,0,0,0,844,845,750,847,848,849,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+</chunk>
+   <chunk x="16" y="0" width="16" height="16">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,508,509,510,0,0,0,0,0,0,0,0,0,0,0,0,
+0,540,541,542,0,0,0,0,0,0,0,0,0,0,0,0,
+638,572,573,574,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,731,732,733,734,735,0,
+0,0,0,0,0,0,0,0,0,0,763,764,765,766,767,0,
+0,0,0,0,0,0,0,0,0,0,795,796,797,798,799,0,
+0,0,889,890,891,892,0,0,0,0,827,828,829,830,831,0,
+749,920,921,922,923,924,0,0,0,0,859,860,861,862,863,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+</chunk>
+  </data>
  </layer>
  <layer id="7" name="Chests" width="30" height="20">
   <data encoding="csv"/>
@@ -128,7 +165,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,225,226,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,225,226,226,226,226,227,0,0,0,0,
+0,0,0,0,0,0,225,226,226,226,226,226,227,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -140,7 +177,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,508,509,510,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,225,226,226,226,227,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 226,226,226,227,0,0,0,0,0,0,0,0,0,0,0,0,
