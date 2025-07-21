@@ -14,6 +14,9 @@ importers:
       '@browserbasehq/stagehand':
         specifier: ^2.4.0
         version: 2.4.0(deepmerge@4.3.1)(dotenv@16.6.1)(react@19.1.0)(zod@3.25.67)
+      '@clockworklabs/spacetimedb-sdk':
+        specifier: ^1.2.2
+        version: 1.2.2(undici@6.21.3)
       '@fontsource/geist-mono':
         specifier: ^5.2.6
         version: 5.2.6
@@ -295,6 +298,12 @@ packages:
 
   '@capsizecss/unpack@2.4.0':
     resolution: {integrity: sha512-GrSU71meACqcmIUxPYOJvGKF0yryjN/L1aCuE9DViCTJI7bfkjgYDPD1zbNDcINJwSSP6UaBZY9GAbYDO7re0Q==}
+
+  '@clockworklabs/spacetimedb-sdk@1.2.2':
+    resolution: {integrity: sha512-YuDiLju2UG/V9VqqS2Fk1eRo8YLjDxxDcfSMGTevoW6Ao/qsIo4izIw1IxIqN50+V7IzuavniyPOm+Lg/6PDYA==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      undici: ^6.19.2
 
   '@ctrl/tinycolor@4.1.0':
     resolution: {integrity: sha512-WyOx8cJQ+FQus4Mm4uPIZA64gbk3Wxh0so5Lcii0aJifqwoVOlfFtorjLE0Hen4OYyHZMXDWqMmaQemBhgxFRQ==}
@@ -2529,6 +2538,10 @@ packages:
   undici-types@7.8.0:
     resolution: {integrity: sha512-9UJ2xGDvQ43tYyVMpuHlsgApydB8ZKfVYTsLDhXkFL/6gfkp+U8xTGdh8pMJv1SpZna0zxG1DwsKZsreLbXBxw==}
 
+  undici@6.21.3:
+    resolution: {integrity: sha512-gBLkYIlEnSp8pFbT64yFgGE6UIB9tAkhukC23PmMDCe5Nd+cRqKxSjw5y54MK2AZMgZfJWMaNE4nYUHgi1XEOw==}
+    engines: {node: '>=18.17'}
+
   unicode-properties@1.4.1:
     resolution: {integrity: sha512-CLjCCLQ6UuMxWnbIylkisbRj31qxHPAurvena/0iwSVbQ2G1VY5/HjV0IRabOEbDHlzZlRdCrD4NhB0JtU40Pg==}
 
@@ -3297,6 +3310,11 @@ snapshots:
       fontkit: 2.0.4
     transitivePeerDependencies:
       - encoding
+
+  '@clockworklabs/spacetimedb-sdk@1.2.2(undici@6.21.3)':
+    dependencies:
+      base64-js: 1.5.1
+      undici: 6.21.3
 
   '@ctrl/tinycolor@4.1.0': {}
 
@@ -4840,6 +4858,7 @@ snapshots:
       starlight-auto-sidebar: 0.1.2(@astrojs/starlight@0.35.0(astro@5.12.0(@types/node@24.0.8)(rollup@4.44.1)(tsx@4.20.3)(typescript@5.8.3)))
       starlight-image-zoom: 0.13.0(@astrojs/starlight@0.35.0(astro@5.12.0(@types/node@24.0.8)(rollup@4.44.1)(tsx@4.20.3)(typescript@5.8.3)))
       starlight-theme-black: 0.6.0(@astrojs/starlight@0.35.0(astro@5.12.0(@types/node@24.0.8)(rollup@4.44.1)(tsx@4.20.3)(typescript@5.8.3)))
+      starlight-theme-nova: 0.9.0(@astrojs/starlight@0.35.0(astro@5.12.0(@types/node@24.0.8)(rollup@4.44.1)(tsx@4.20.3)(typescript@5.8.3)))(typescript@5.8.3)
     transitivePeerDependencies:
       - '@azure/app-configuration'
       - '@azure/cosmos'
@@ -6191,6 +6210,8 @@ snapshots:
   undici-types@5.26.5: {}
 
   undici-types@7.8.0: {}
+
+  undici@6.21.3: {}
 
   unicode-properties@1.4.1:
     dependencies:

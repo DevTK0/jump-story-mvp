@@ -22,6 +22,7 @@
   "dependencies": {
     "@astrojs/starlight": "^0.35.0",
     "@browserbasehq/stagehand": "^2.4.0",
+    "@clockworklabs/spacetimedb-sdk": "^1.2.2",
     "@fontsource/geist-mono": "^5.2.6",
     "@fontsource/geist-sans": "^5.2.5",
     "astro": "^5.12.0",
