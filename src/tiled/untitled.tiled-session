@@ -3,8 +3,9 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "",
+    "activeFile": "playground.tmx",
     "expandedProjectPaths": [
+        "."
     ],
     "fileStates": {
         "": {
@@ -34,16 +35,32 @@
         "map1.tmx#TX Village Props": {
             "scaleInDock": 1,
             "scaleInEditor": 1
+        },
+        "playground.tmx": {
+            "scale": 0.7958,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 112.46544357878867,
+                "y": 303.4682080924856
+            }
+        },
+        "playground.tmx#TX Tileset Ground": {
+            "scaleInDock": 1
+        },
+        "playground.tmx#TX Village Props": {
+            "scaleInDock": 1
         }
     },
-    "last.exportedFilePath": "/Users/terence/Development/games/jump-story-mvp/src/assets/maps",
+    "last.exportedFilePath": "/Users/terence/Development/games/jump-story-mvp/public/assets/maps",
     "last.imagePath": "/Users/terence/Development/games/jump-story-mvp/src/assets/textures",
     "map.lastUsedExportFilter": "JSON map files (*.tmj *.json)",
     "map.lastUsedFormat": "tmx",
     "openFiles": [
+        "playground.tmx"
     ],
-    "project": "",
+    "project": "untitled.tiled-project",
     "recentFiles": [
+        "playground.tmx",
         "/Users/terence/Development/games/jump-story-mvp/src/assets/tileset/TX Village Props.tsx",
         "/Users/terence/Development/games/jump-story-mvp/src/assets/tileset/TX Tileset Ground.tsx",
         "map1.tmx"

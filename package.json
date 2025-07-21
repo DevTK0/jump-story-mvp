@@ -11,8 +11,8 @@
     "docs:dev": "astro dev",
     "docs:build": "astro build",
     "docs:preview": "astro preview",
-    "test:load": "tsx src/tests/stagehand-screenshot-test.ts",
-    "test:climb": "tsx src/tests/stagehand-climbing-test.ts",
+    "test:load": "tsx scripts/tests/stagehand-load-test.ts",
+    "test:climb": "tsx scripts/tests/stagehand-climbing-test.ts",
     "mcp:stagehand": "npx @browserbasehq/mcp-stagehand"
   },
   "keywords": [],
