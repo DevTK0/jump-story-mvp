@@ -34,36 +34,29 @@ import {
 } from "@clockworklabs/spacetimedb-sdk";
 
 // Import and reexport all reducer arg types
+import { CleanupInactivePlayers } from "./cleanup_inactive_players_reducer.ts";
+export { CleanupInactivePlayers };
 import { Connect } from "./connect_reducer.ts";
 export { Connect };
 import { Debug } from "./debug_reducer.ts";
 export { Debug };
+import { Disconnect } from "./disconnect_reducer.ts";
+export { Disconnect };
+import { UpdatePlayerPosition } from "./update_player_position_reducer.ts";
+export { UpdatePlayerPosition };
 
 // Import and reexport all table handle types
-import { EntityTableHandle } from "./entity_table.ts";
-export { EntityTableHandle };
 import { PlayerTableHandle } from "./player_table.ts";
 export { PlayerTableHandle };
 
 // Import and reexport all types
 import { DbVector2 } from "./db_vector_2_type.ts";
 export { DbVector2 };
-import { Entity } from "./entity_type.ts";
-export { Entity };
 import { Player } from "./player_type.ts";
 export { Player };
 
 const REMOTE_MODULE = {
   tables: {
-    entity: {
-      tableName: "entity",
-      rowType: Entity.getTypeScriptAlgebraicType(),
-      primaryKey: "entityId",
-      primaryKeyInfo: {
-        colName: "entityId",
-        colType: Entity.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
-      },
-    },
     player: {
       tableName: "player",
       rowType: Player.getTypeScriptAlgebraicType(),
@@ -75,6 +68,10 @@ const REMOTE_MODULE = {
     },
   },
   reducers: {
+    CleanupInactivePlayers: {
+      reducerName: "CleanupInactivePlayers",
+      argsType: CleanupInactivePlayers.getTypeScriptAlgebraicType(),
+    },
     Connect: {
       reducerName: "Connect",
       argsType: Connect.getTypeScriptAlgebraicType(),
@@ -82,6 +79,14 @@ const REMOTE_MODULE = {
     Debug: {
       reducerName: "Debug",
       argsType: Debug.getTypeScriptAlgebraicType(),
+    },
+    Disconnect: {
+      reducerName: "Disconnect",
+      argsType: Disconnect.getTypeScriptAlgebraicType(),
+    },
+    UpdatePlayerPosition: {
+      reducerName: "UpdatePlayerPosition",
+      argsType: UpdatePlayerPosition.getTypeScriptAlgebraicType(),
     },
   },
   versionInfo: {
@@ -113,12 +118,27 @@ const REMOTE_MODULE = {
 
 // A type representing all the possible variants of a reducer.
 export type Reducer = never
+| { name: "CleanupInactivePlayers", args: CleanupInactivePlayers }
 | { name: "Connect", args: Connect }
 | { name: "Debug", args: Debug }
+| { name: "Disconnect", args: Disconnect }
+| { name: "UpdatePlayerPosition", args: UpdatePlayerPosition }
 ;
 
 export class RemoteReducers {
   constructor(private connection: DbConnectionImpl, private setCallReducerFlags: SetReducerFlags) {}
+
+  cleanupInactivePlayers() {
+    this.connection.callReducer("CleanupInactivePlayers", new Uint8Array(0), this.setCallReducerFlags.cleanupInactivePlayersFlags);
+  }
+
+  onCleanupInactivePlayers(callback: (ctx: ReducerEventContext) => void) {
+    this.connection.onReducer("CleanupInactivePlayers", callback);
+  }
+
+  removeOnCleanupInactivePlayers(callback: (ctx: ReducerEventContext) => void) {
+    this.connection.offReducer("CleanupInactivePlayers", callback);
+  }
 
   onConnect(callback: (ctx: ReducerEventContext) => void) {
     this.connection.onReducer("Connect", callback);
@@ -140,22 +160,52 @@ export class RemoteReducers {
     this.connection.offReducer("Debug", callback);
   }
 
+  onDisconnect(callback: (ctx: ReducerEventContext) => void) {
+    this.connection.onReducer("Disconnect", callback);
+  }
+
+  removeOnDisconnect(callback: (ctx: ReducerEventContext) => void) {
+    this.connection.offReducer("Disconnect", callback);
+  }
+
+  updatePlayerPosition(x: number, y: number) {
+    const __args = { x, y };
+    let __writer = new BinaryWriter(1024);
+    UpdatePlayerPosition.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("UpdatePlayerPosition", __argsBuffer, this.setCallReducerFlags.updatePlayerPositionFlags);
+  }
+
+  onUpdatePlayerPosition(callback: (ctx: ReducerEventContext, x: number, y: number) => void) {
+    this.connection.onReducer("UpdatePlayerPosition", callback);
+  }
+
+  removeOnUpdatePlayerPosition(callback: (ctx: ReducerEventContext, x: number, y: number) => void) {
+    this.connection.offReducer("UpdatePlayerPosition", callback);
+  }
+
 }
 
 export class SetReducerFlags {
+  cleanupInactivePlayersFlags: CallReducerFlags = 'FullUpdate';
+  cleanupInactivePlayers(flags: CallReducerFlags) {
+    this.cleanupInactivePlayersFlags = flags;
+  }
+
   debugFlags: CallReducerFlags = 'FullUpdate';
   debug(flags: CallReducerFlags) {
     this.debugFlags = flags;
+  }
+
+  updatePlayerPositionFlags: CallReducerFlags = 'FullUpdate';
+  updatePlayerPosition(flags: CallReducerFlags) {
+    this.updatePlayerPositionFlags = flags;
   }
 
 }
 
 export class RemoteTables {
   constructor(private connection: DbConnectionImpl) {}
-
-  get entity(): EntityTableHandle {
-    return new EntityTableHandle(this.connection.clientCache.getOrCreateTable<Entity>(REMOTE_MODULE.tables.entity));
-  }
 
   get player(): PlayerTableHandle {
     return new PlayerTableHandle(this.connection.clientCache.getOrCreateTable<Player>(REMOTE_MODULE.tables.player));

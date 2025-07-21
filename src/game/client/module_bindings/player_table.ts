@@ -33,6 +33,8 @@ import {
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
 import { Player } from "./player_type";
+import { DbVector2 as __DbVector2 } from "./db_vector_2_type";
+
 import { type EventContext, type Reducer, RemoteReducers, RemoteTables } from ".";
 
 /**

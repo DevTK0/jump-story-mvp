@@ -24,6 +24,7 @@ const CAMERA_SHAKE_INTENSITY = 0.03;
 export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     private player!: Player;
     private identity!: Identity;
+    private dbConnection!: DbConnection;
 
     // System managers
     private enemyManager!: EnemyManager;
@@ -60,6 +61,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             token: string
         ) => {
             this.identity = identity;
+            this.dbConnection = conn;
             localStorage.setItem("auth_token", token);
             console.log(
                 "Connected to SpacetimeDB with identity:",
@@ -69,6 +71,14 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             conn.subscriptionBuilder()
                 .onApplied(handleSubscriptionApplied)
                 .subscribeToAllTables();
+                
+            // Set database connection on player's movement system if it exists
+            if (this.player) {
+                const movementSystem = this.player.getSystem('movement') as any;
+                if (movementSystem && movementSystem.setDbConnection) {
+                    movementSystem.setDbConnection(conn);
+                }
+            }
         };
 
         const handleSubscriptionApplied = (_ctx: SubscriptionEventContext) => {
@@ -122,6 +132,14 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
 
         // Set camera bounds to match tilemap dimensions
         this.cameras.main.setBounds(0, 0, mapWidth, mapHeight);
+        
+        // Set database connection on player's movement system if connection exists
+        if (this.dbConnection) {
+            const movementSystem = this.player.getSystem('movement') as any;
+            if (movementSystem && movementSystem.setDbConnection) {
+                movementSystem.setDbConnection(this.dbConnection);
+            }
+        }
 
         // Set up map-based collisions
         const groundGroup = this.mapLoader.createPhysicsFromGround(

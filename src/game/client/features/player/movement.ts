@@ -7,6 +7,7 @@ import { DebugState, ShadowState } from "../debug/debug-state";
 import { DEBUG_CONFIG } from "../debug/config";
 import { BaseDebugRenderer } from "../debug/debug-renderer";
 import { ShadowTrajectoryRenderer } from "./effects/shadow";
+import { DbConnection } from "../../module_bindings";
 
 export class MovementSystem extends BaseDebugRenderer implements System, IDebuggable {
     private player: Player;
@@ -17,12 +18,24 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
 
     // Shadow trajectory renderer
     private shadowRenderer: ShadowTrajectoryRenderer;
+    
+    // Position synchronization
+    private lastSyncedPosition = { x: 0, y: 0 };
+    private lastSyncTime = 0;
+    private syncThreshold = 10; // pixels
+    private syncInterval = 200; // milliseconds
+    private dbConnection: DbConnection | null = null;
 
     constructor(player: Player, inputSystem: InputSystem) {
         super();
         this.player = player;
         this.inputSystem = inputSystem;
         this.shadowRenderer = new ShadowTrajectoryRenderer(player.scene);
+        this.lastSyncedPosition = { x: player.x, y: player.y };
+    }
+    
+    public setDbConnection(connection: DbConnection): void {
+        this.dbConnection = connection;
     }
 
     update(time: number, _delta: number): void {
@@ -70,6 +83,28 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
             // Clear trajectory when both debug and shadow are disabled
             this.shadowRenderer.clearTrajectory();
             this.shadowRenderer.cleanupSprites();
+        }
+        
+        // Sync position to SpacetimeDB if needed
+        this.syncPositionIfNeeded(time);
+    }
+    
+    private syncPositionIfNeeded(time: number): void {
+        if (!this.dbConnection) return;
+        
+        // Check if enough time has passed since last sync
+        if (time - this.lastSyncTime < this.syncInterval) return;
+        
+        // Check if position has changed significantly
+        const currentX = this.player.x;
+        const currentY = this.player.y;
+        const deltaX = Math.abs(currentX - this.lastSyncedPosition.x);
+        const deltaY = Math.abs(currentY - this.lastSyncedPosition.y);
+        
+        if (deltaX > this.syncThreshold || deltaY > this.syncThreshold) {
+            this.dbConnection.reducers.updatePlayerPosition(currentX, currentY);
+            this.lastSyncedPosition = { x: currentX, y: currentY };
+            this.lastSyncTime = time;
         }
     }
 
