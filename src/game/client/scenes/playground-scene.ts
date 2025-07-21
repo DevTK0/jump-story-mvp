@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { createPlayer, Player } from "../features/player";
 import { EnemyManager, DEFAULT_SPAWN_CONFIG } from "../features/enemy";
 import { MapLoader, type MapData } from "../features/stage";
+import { PeerManager } from "../features/peers";
 import { PLAYER_CONFIG } from "../features/player";
 import type { IDebuggable } from "../features/debug/debug-interfaces";
 import { DEBUG_CONFIG } from "../features/debug/config";
@@ -30,6 +31,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     private enemyManager!: EnemyManager;
     private mapLoader!: MapLoader;
     private mapData!: MapData;
+    private peerManager!: PeerManager;
 
     constructor() {
         super({ key: "playground" });
@@ -79,6 +81,15 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
                     movementSystem.setDbConnection(conn);
                 }
             }
+            
+            // Initialize peer manager and set up player table event handlers
+            this.peerManager = new PeerManager(this);
+            this.peerManager.setLocalPlayerIdentity(identity);
+            
+            // Set up peer event handlers
+            conn.db.player.onInsert(this.peerManager.onPlayerInsert);
+            conn.db.player.onUpdate(this.peerManager.onPlayerUpdate);
+            conn.db.player.onDelete(this.peerManager.onPlayerDelete);
         };
 
         const handleSubscriptionApplied = (_ctx: SubscriptionEventContext) => {
@@ -249,6 +260,11 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
 
         // Update enemy system
         this.enemyManager.update();
+        
+        // Update peer system for smooth interpolation
+        if (this.peerManager) {
+            this.peerManager.update();
+        }
     }
 
     // Debug methods
@@ -366,10 +382,18 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             mapSize: this.mapData
                 ? `${this.mapData.tilemap.widthInPixels}x${this.mapData.tilemap.heightInPixels}`
                 : "N/A",
+            peers: this.peerManager ? this.peerManager.getPeerCount() : 0,
         };
     }
 
     isDebugEnabled(): boolean {
         return DebugState.getInstance().enabled;
+    }
+
+    shutdown(): void {
+        // Clean up peer manager
+        if (this.peerManager) {
+            this.peerManager.destroy();
+        }
     }
 }

@@ -15,6 +15,7 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
 
     // Movement state
     private hasUsedDoubleJump = false;
+    private wasOnGround = false; // Track ground contact state
 
     // Shadow trajectory renderer
     private shadowRenderer: ShadowTrajectoryRenderer;
@@ -32,6 +33,7 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
         this.inputSystem = inputSystem;
         this.shadowRenderer = new ShadowTrajectoryRenderer(player.scene);
         this.lastSyncedPosition = { x: player.x, y: player.y };
+        this.wasOnGround = player.body?.onFloor() || false;
     }
     
     public setDbConnection(connection: DbConnection): void {
@@ -39,34 +41,43 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
     }
 
     update(time: number, _delta: number): void {
-        // Don't move if climbing (handled by climbing system)
-        if (this.player.isClimbing) {
-            return;
-        }
+        let forceSyncOnGroundContact = false;
+        
+        // Handle movement physics (skip if climbing, but still do position sync)
+        if (!this.player.isClimbing) {
+            const body = this.player.body;
+            const onGround = body.onFloor();
+            const inputState = this.inputSystem.getInputState();
 
-        const body = this.player.body;
-        const onGround = body.onFloor();
-        const inputState = this.inputSystem.getInputState();
-
-        // Horizontal movement (only when on ground)
-        if (onGround) {
-            const horizontalDir = this.inputSystem.getHorizontalDirection();
-            if (horizontalDir !== 0) {
-                body.setVelocityX(horizontalDir * this.player.getSpeed());
-            } else {
-                body.setVelocityX(0);
+            // Check for ground contact transition (landing)
+            if (onGround && !this.wasOnGround) {
+                forceSyncOnGroundContact = true;
+                console.log("Player landed - forcing position sync");
             }
+            this.wasOnGround = onGround;
+
+            // Horizontal movement (only when on ground)
+            if (onGround) {
+                const horizontalDir = this.inputSystem.getHorizontalDirection();
+                if (horizontalDir !== 0) {
+                    body.setVelocityX(horizontalDir * this.player.getSpeed());
+                } else {
+                    body.setVelocityX(0);
+                }
+            }
+
+            // Regular jump
+            if (inputState.jump && onGround) {
+                this.jump();
+                forceSyncOnGroundContact = true; // Force sync on jump takeoff too
+                console.log("Player jumped - forcing position sync");
+            }
+
+            // Double jump
+            this.handleDoubleJump();
         }
 
-        // Regular jump
-        if (inputState.jump && onGround) {
-            this.jump();
-        }
-
-        // Double jump
-        this.handleDoubleJump();
-
-        // Sample trajectory for debug mode OR shadow effect
+        // Sample trajectory for debug mode OR shadow effect (always do this)
         const shouldShowShadow = DebugState.getInstance().enabled || ShadowState.getInstance().enabled;
         if (shouldShowShadow) {
             this.shadowRenderer.sampleTrajectory(
@@ -85,26 +96,31 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
             this.shadowRenderer.cleanupSprites();
         }
         
-        // Sync position to SpacetimeDB if needed
-        this.syncPositionIfNeeded(time);
+        // Sync position to SpacetimeDB if needed (ALWAYS do this, even when climbing)
+        this.syncPositionIfNeeded(time, forceSyncOnGroundContact);
     }
     
-    private syncPositionIfNeeded(time: number): void {
+    private syncPositionIfNeeded(time: number, forceSync: boolean = false): void {
         if (!this.dbConnection) return;
         
-        // Check if enough time has passed since last sync
-        if (time - this.lastSyncTime < this.syncInterval) return;
-        
-        // Check if position has changed significantly
         const currentX = this.player.x;
         const currentY = this.player.y;
         const deltaX = Math.abs(currentX - this.lastSyncedPosition.x);
         const deltaY = Math.abs(currentY - this.lastSyncedPosition.y);
         
-        if (deltaX > this.syncThreshold || deltaY > this.syncThreshold) {
+        // Force sync on ground contact, or check normal conditions
+        const shouldSync = forceSync || 
+            (time - this.lastSyncTime >= this.syncInterval && 
+             (deltaX > this.syncThreshold || deltaY > this.syncThreshold));
+        
+        if (shouldSync) {
             this.dbConnection.reducers.updatePlayerPosition(currentX, currentY);
             this.lastSyncedPosition = { x: currentX, y: currentY };
             this.lastSyncTime = time;
+            
+            if (forceSync) {
+                console.log(`Forced position sync on ground contact: (${currentX}, ${currentY})`);
+            }
         }
     }
 
