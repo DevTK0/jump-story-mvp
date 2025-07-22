@@ -19,17 +19,6 @@
                  "y":448
                 }, 
                 {
-                 "height":32,
-                 "id":23,
-                 "name":"",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":672,
-                 "x":192,
-                 "y":0
-                }, 
-                {
                  "height":288,
                  "id":30,
                  "name":"",
@@ -39,6 +28,125 @@
                  "width":32,
                  "x":96,
                  "y":160
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":11,
+         "name":"Enemies",
+         "objects":[
+                {
+                 "height":32,
+                 "id":31,
+                 "name":"orc 4",
+                 "properties":[
+                        {
+                         "name":"enemy",
+                         "type":"string",
+                         "value":"orc"
+                        }, 
+                        {
+                         "name":"number",
+                         "type":"string",
+                         "value":"4"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"spawn"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":160,
+                 "x":704,
+                 "y":128
+                }, 
+                {
+                 "height":32,
+                 "id":32,
+                 "name":"orc 3",
+                 "properties":[
+                        {
+                         "name":"enemy",
+                         "type":"string",
+                         "value":"orc"
+                        }, 
+                        {
+                         "name":"number",
+                         "type":"string",
+                         "value":"3"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"spawn"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":128,
+                 "x":832,
+                 "y":416
+                }, 
+                {
+                 "height":32,
+                 "id":33,
+                 "name":"orc 2",
+                 "properties":[
+                        {
+                         "name":"enemy",
+                         "type":"string",
+                         "value":"orc"
+                        }, 
+                        {
+                         "name":"number",
+                         "type":"string",
+                         "value":"2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"spawn"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":832,
+                 "x":128,
+                 "y":416
+                }, 
+                {
+                 "height":32,
+                 "id":34,
+                 "name":"orc 1",
+                 "properties":[
+                        {
+                         "name":"enemy",
+                         "type":"string",
+                         "value":"orc"
+                        }, 
+                        {
+                         "name":"number",
+                         "type":"string",
+                         "value":"1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"spawn"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":256,
+                 "x":128,
+                 "y":416
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -89,50 +197,6 @@
                  "width":32,
                  "x":768,
                  "y":160
-                }, 
-                {
-                 "height":128,
-                 "id":24,
-                 "name":"",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":32,
-                 "x":832,
-                 "y":32
-                }, 
-                {
-                 "height":128,
-                 "id":25,
-                 "name":"",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":32,
-                 "x":640,
-                 "y":32
-                }, 
-                {
-                 "height":96,
-                 "id":26,
-                 "name":"",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":32,
-                 "x":352,
-                 "y":32
-                }, 
-                {
-                 "height":224,
-                 "id":27,
-                 "name":"",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":32,
-                 "x":192,
-                 "y":32
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -463,8 +527,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":11,
- "nextobjectid":31,
+ "nextlayerid":12,
+ "nextobjectid":35,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",
