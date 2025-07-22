@@ -17,25 +17,43 @@ export class EnemyManager {
         this.enemyGroup = this.scene.physics.add.group();
     }
 
-
     private setupEnemyAnimations(): void {
         // Create orc idle animation
-        if (!this.scene.anims.exists('orc-idle-anim')) {
+        if (!this.scene.anims.exists("orc-idle-anim")) {
             this.scene.anims.create({
-                key: 'orc-idle-anim',
-                frames: this.scene.anims.generateFrameNumbers('orc', { start: 0, end: 5 }),
+                key: "orc-idle-anim",
+                frames: this.scene.anims.generateFrameNumbers("orc", {
+                    start: 0,
+                    end: 5,
+                }),
                 frameRate: 8,
-                repeat: -1
+                repeat: -1,
             });
         }
-        
-        // Create additional orc animations if needed
-        if (!this.scene.anims.exists('orc-walk-anim')) {
+
+        // Create orc walk animation
+        if (!this.scene.anims.exists("orc-walk-anim")) {
             this.scene.anims.create({
-                key: 'orc-walk-anim', 
-                frames: this.scene.anims.generateFrameNumbers('orc', { start: 9, end: 16 }),
+                key: "orc-walk-anim",
+                frames: this.scene.anims.generateFrameNumbers("orc", {
+                    start: 9,
+                    end: 16,
+                }),
                 frameRate: 10,
-                repeat: -1
+                repeat: -1,
+            });
+        }
+
+        // Create orc hit animation
+        if (!this.scene.anims.exists("orc-hit-anim")) {
+            this.scene.anims.create({
+                key: "orc-hit-anim",
+                frames: this.scene.anims.generateFrameNumbers("orc", {
+                    start: 32,
+                    end: 36,
+                }),
+                frameRate: 15,
+                repeat: 0, // Play once
             });
         }
     }
@@ -69,10 +87,10 @@ export class EnemyManager {
 
     private spawnServerEnemy(serverEnemy: ServerEnemy): void {
         console.log("enemy: ", serverEnemy);
-        
+
         // Use orc spritesheet directly based on enemyType
         const spriteKey = serverEnemy.enemyType; // "orc"
-        
+
         // Create enemy sprite using the spritesheet
         const sprite = this.scene.physics.add.sprite(
             serverEnemy.position.x,
@@ -84,10 +102,14 @@ export class EnemyManager {
         sprite.setOrigin(0.5, 0.5);
         sprite.setScale(3); // Match player scale (PLAYER_CONFIG.movement.scale)
         sprite.setDepth(5);
-        
+
+        // Ensure no tint or blend mode interference
+        sprite.clearTint();
+        sprite.setBlendMode(Phaser.BlendModes.NORMAL);
+
         // Set initial frame to first frame of idle animation
         sprite.setFrame(0);
-        
+
         // Play idle animation
         sprite.play(`${spriteKey}-idle-anim`);
 
@@ -105,6 +127,33 @@ export class EnemyManager {
 
         // Store reference
         this.enemies.set(serverEnemy.enemyId, sprite);
+    }
+
+    public playHitAnimation(enemyId: number): void {
+        const sprite = this.enemies.get(enemyId);
+        if (sprite) {
+            // Play hit animation
+            sprite.play("orc-hit-anim");
+
+            // Return to idle after hit animation completes
+            sprite.once("animationcomplete", () => {
+                if (sprite.active) {
+                    // Check if sprite still exists
+                    sprite.play("orc-idle-anim");
+                }
+            });
+        }
+    }
+
+    public getEnemyIdFromSprite(
+        sprite: Phaser.Physics.Arcade.Sprite
+    ): number | null {
+        for (const [enemyId, enemySprite] of this.enemies) {
+            if (enemySprite === sprite) {
+                return enemyId;
+            }
+        }
+        return null;
     }
 
     private despawnServerEnemy(enemyId: number): void {
@@ -127,11 +176,9 @@ export class EnemyManager {
         }
     }
 
-
     public getEnemyGroup(): Phaser.Physics.Arcade.Group {
         return this.enemyGroup;
     }
-
 
     public destroy(): void {
         this.enemies.forEach((sprite) => {
@@ -141,4 +188,3 @@ export class EnemyManager {
         this.enemyGroup.destroy();
     }
 }
-

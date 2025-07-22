@@ -266,10 +266,13 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         // Visual feedback for successful hit
         this.cameras.main.shake(CAMERA_SHAKE_DURATION, CAMERA_SHAKE_INTENSITY);
 
-        // Find the enemy ID from the sprite (we'll need to modify this when we have proper server enemies)
-        // For now, just remove the sprite locally - server will handle actual enemy destruction
-        console.log('Enemy hit!', enemy);
-        // TODO: Call server reducer to damage/destroy enemy
+        // Get enemy ID from sprite and play hit animation
+        const enemyId = this.enemyManager.getEnemyIdFromSprite(enemy);
+        if (enemyId !== null) {
+            this.enemyManager.playHitAnimation(enemyId);
+            console.log('Enemy hit!', enemyId);
+            // TODO: Call server reducer to damage/destroy enemy
+        }
     };
 
     update(time: number, delta: number): void {
