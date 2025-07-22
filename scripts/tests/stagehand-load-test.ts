@@ -10,7 +10,7 @@ async function singleInstanceTest(instanceId: number): Promise<void> {
 
     try {
         console.log(
-            `[Instance ${instanceId}] Starting 5-minute movement test...`
+            `[Instance ${instanceId}] Starting 5-minute movement + attack test...`
         );
 
         // Initialize the browser
@@ -33,20 +33,45 @@ async function singleInstanceTest(instanceId: number): Promise<void> {
         const testDuration = 200 * 10000; // 3 minutes in milliseconds
         const startTime = Date.now();
         let direction = "left"; // Start with left movement
+        const attackKeys = ["KeyX", "KeyC", "KeyV"]; // Attack1, Attack2, Attack3
 
         console.log(
-            `[Instance ${instanceId}] Starting 3-minute left/right movement loop...`
+            `[Instance ${instanceId}] Starting 3-minute movement + attack loop...`
         );
 
         while (Date.now() - startTime < testDuration) {
             if (direction === "left") {
                 await stagehand.page.keyboard.down("ArrowLeft");
-                await stagehand.page.waitForTimeout(5000); // Move left for 5 seconds
+
+                // Perform random attacks while moving left
+                for (let i = 0; i < 10; i++) {
+                    // 10 attacks over 5 seconds
+                    const randomAttack =
+                        attackKeys[
+                            Math.floor(Math.random() * attackKeys.length)
+                        ];
+                    await stagehand.page.keyboard.down(randomAttack);
+                    await stagehand.page.waitForTimeout(500); // Wait 0.5 seconds between attacks
+                    await stagehand.page.keyboard.up(randomAttack);
+                }
+
                 await stagehand.page.keyboard.up("ArrowLeft");
                 direction = "right";
             } else {
                 await stagehand.page.keyboard.down("ArrowRight");
-                await stagehand.page.waitForTimeout(5000); // Move right for 5 seconds
+
+                // Perform random attacks while moving right
+                for (let i = 0; i < 10; i++) {
+                    // 10 attacks over 5 seconds
+                    const randomAttack =
+                        attackKeys[
+                            Math.floor(Math.random() * attackKeys.length)
+                        ];
+                    await stagehand.page.keyboard.down(randomAttack);
+                    await stagehand.page.waitForTimeout(500); // Wait 0.5 seconds between attacks
+                    await stagehand.page.keyboard.up(randomAttack);
+                }
+
                 await stagehand.page.keyboard.up("ArrowRight");
                 direction = "left";
             }
@@ -59,11 +84,11 @@ async function singleInstanceTest(instanceId: number): Promise<void> {
         await stagehand.page.keyboard.up("Space");
 
         console.log(
-            `[Instance ${instanceId}] ✅ 3-minute movement test completed successfully!`
+            `[Instance ${instanceId}] ✅ 3-minute movement + attack test completed successfully!`
         );
     } catch (error) {
         console.error(
-            `[Instance ${instanceId}] ❌ Error during movement test:`,
+            `[Instance ${instanceId}] ❌ Error during movement + attack test:`,
             error
         );
 
