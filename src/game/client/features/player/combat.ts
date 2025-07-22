@@ -184,9 +184,11 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
     this.executeAttackPhases(attackConfig);
   }
   
-  private executeAttackPhases(attackConfig: AttackConfig): void {
-    // Startup phase
-    this.scene.time.delayedCall(attackConfig.startupMs, () => {
+  private async executeAttackPhases(attackConfig: AttackConfig): Promise<void> {
+    try {
+      // Startup phase
+      await this.delay(attackConfig.startupMs);
+      
       // Active phase - enable hitbox
       if (this.hitboxSprite.body) {
         this.hitboxSprite.body.enable = true;
@@ -202,35 +204,61 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
       });
       
       // Active phase duration
-      this.scene.time.delayedCall(attackConfig.activeMs, () => {
-        // Disable hitbox
-        if (this.hitboxSprite.body) {
-          this.hitboxSprite.body.enable = false;
-        }
-        
-        // Recovery phase
-        this.scene.time.delayedCall(attackConfig.recoveryMs, () => {
-          this.player.setPlayerState({ isAttacking: false });
-          
-          // State machine will automatically handle transition back to appropriate state
-          
-          this.onAttackComplete(attackConfig);
-        });
-      });
-    });
+      await this.delay(attackConfig.activeMs);
+      
+      // Disable hitbox
+      if (this.hitboxSprite.body) {
+        this.hitboxSprite.body.enable = false;
+      }
+      
+      // Recovery phase
+      await this.delay(attackConfig.recoveryMs);
+      
+      this.player.setPlayerState({ isAttacking: false });
+      
+      // State machine will automatically handle transition back to appropriate state
+      
+      this.onAttackComplete(attackConfig);
+    } catch (error) {
+      // Handle any errors in attack execution
+      console.warn('Attack execution interrupted:', error);
+      this.cleanupAttack();
+    }
   }
   
-  private onAttackComplete(attackConfig: AttackConfig): void {
+  private async onAttackComplete(attackConfig: AttackConfig): Promise<void> {
     // Schedule cooldown end
     const cooldownRemaining = attackConfig.totalCooldownMs - this.getTotalAttackDuration(attackConfig);
     
-    this.scene.time.delayedCall(cooldownRemaining, () => {
-      this.isOnCooldown = false;
-    });
+    await this.delay(cooldownRemaining);
+    this.isOnCooldown = false;
   }
   
   private getTotalAttackDuration(attackConfig: AttackConfig): number {
     return attackConfig.startupMs + attackConfig.activeMs + attackConfig.recoveryMs;
+  }
+
+  /**
+   * Promise-based delay utility for async attack patterns
+   */
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => {
+      this.scene.time.delayedCall(ms, resolve);
+    });
+  }
+
+  /**
+   * Clean up attack state when attack is interrupted
+   */
+  private cleanupAttack(): void {
+    // Disable hitbox
+    if (this.hitboxSprite.body) {
+      this.hitboxSprite.body.enable = false;
+    }
+    
+    // Reset player state
+    this.player.setPlayerState({ isAttacking: false });
+    this.isOnCooldown = false;
   }
   
   // Public API

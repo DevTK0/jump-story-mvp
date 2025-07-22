@@ -43,7 +43,7 @@ export class AnimationSystem implements System {
 
     private bindEvents(): void {
         // Listen for combat events to handle attack animations
-        gameEvents.on(GameEvent.PLAYER_ATTACKED, (data: any) => {
+        gameEvents.on(GameEvent.PLAYER_ATTACKED, async (data: any) => {
             this.isPlayingAttackAnimation = true;
 
             // Play the appropriate attack animation based on attack type
@@ -51,14 +51,15 @@ export class AnimationSystem implements System {
             const animationType = `attack${attackType}` as any;
             this.animationManager.play(animationType, false);
 
-            // Listen for attack complete to reset flag
-            const onAttackComplete = () => {
+            try {
+                // Use timing from centralized definitions
+                const attackDuration = ANIMATION_TIMINGS.ATTACK_DURATIONS[animationType as keyof typeof ANIMATION_TIMINGS.ATTACK_DURATIONS] || 300;
+                await this.delay(attackDuration);
                 this.isPlayingAttackAnimation = false;
-            };
-            
-            // Use timing from centralized definitions
-            const attackDuration = ANIMATION_TIMINGS.ATTACK_DURATIONS[animationType as keyof typeof ANIMATION_TIMINGS.ATTACK_DURATIONS] || 300;
-            setTimeout(onAttackComplete, attackDuration);
+            } catch (error) {
+                console.warn('Attack animation interrupted:', error);
+                this.isPlayingAttackAnimation = false;
+            }
         });
     }
 
@@ -198,27 +199,10 @@ export class AnimationSystem implements System {
         this.animationManager.play('hurt', false);
 
         // Reset hurt animation flag and re-enable movement after animation completes
-        const onHurtComplete = () => {
-            this.isPlayingHurtAnimation = false;
-            // Re-enable movement after hurt animation
-            if (movementSystem && movementSystem.setMovementDisabled) {
-                movementSystem.setMovementDisabled(false);
-            }
-            // Re-enable climbing after hurt animation
-            if (climbingSystem && climbingSystem.setClimbingDisabled) {
-                climbingSystem.setClimbingDisabled(false);
-            }
-        };
-        setTimeout(onHurtComplete, ANIMATION_TIMINGS.HURT_DURATION);
+        this.handleHurtAnimationComplete(movementSystem, climbingSystem);
 
         // End invulnerability after 1 second
-        if (this.invulnerabilityTimer) {
-            clearTimeout(this.invulnerabilityTimer);
-        }
-        this.invulnerabilityTimer = window.setTimeout(() => {
-            this.isInvulnerable = false;
-            this.player.clearTint(); // Remove flashing effect
-        }, ANIMATION_TIMINGS.INVULNERABILITY_DURATION);
+        this.handleInvulnerabilityEnd();
 
         return true;
     }
@@ -248,6 +232,56 @@ export class AnimationSystem implements System {
 
     public isPlayerInvulnerable(): boolean {
         return this.isInvulnerable;
+    }
+
+    /**
+     * Promise-based delay utility for async animation patterns
+     */
+    private delay(ms: number): Promise<void> {
+        return new Promise((resolve) => {
+            setTimeout(resolve, ms);
+        });
+    }
+
+    /**
+     * Handle hurt animation completion asynchronously
+     */
+    private async handleHurtAnimationComplete(movementSystem: any, climbingSystem: any): Promise<void> {
+        try {
+            await this.delay(ANIMATION_TIMINGS.HURT_DURATION);
+            
+            this.isPlayingHurtAnimation = false;
+            // Re-enable movement after hurt animation
+            if (movementSystem && movementSystem.setMovementDisabled) {
+                movementSystem.setMovementDisabled(false);
+            }
+            // Re-enable climbing after hurt animation
+            if (climbingSystem && climbingSystem.setClimbingDisabled) {
+                climbingSystem.setClimbingDisabled(false);
+            }
+        } catch (error) {
+            console.warn('Hurt animation completion interrupted:', error);
+            this.isPlayingHurtAnimation = false;
+        }
+    }
+
+    /**
+     * Handle invulnerability end asynchronously
+     */
+    private async handleInvulnerabilityEnd(): Promise<void> {
+        if (this.invulnerabilityTimer) {
+            clearTimeout(this.invulnerabilityTimer);
+        }
+
+        try {
+            await this.delay(ANIMATION_TIMINGS.INVULNERABILITY_DURATION);
+            this.isInvulnerable = false;
+            this.player.clearTint(); // Remove flashing effect
+        } catch (error) {
+            console.warn('Invulnerability end interrupted:', error);
+            this.isInvulnerable = false;
+            this.player.clearTint();
+        }
     }
 
     destroy(): void {
