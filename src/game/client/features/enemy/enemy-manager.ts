@@ -1,14 +1,17 @@
 import Phaser from "phaser";
 import { DbConnection, Enemy as ServerEnemy } from "../../module_bindings";
+import { AnimationFactory, ANIMATION_DEFINITIONS } from "../animations";
 
 export class EnemyManager {
     private scene: Phaser.Scene;
     private dbConnection: DbConnection | null = null;
     private enemies = new Map<number, Phaser.Physics.Arcade.Sprite>();
     private enemyGroup!: Phaser.Physics.Arcade.Group;
+    private animationFactory: AnimationFactory;
 
     constructor(scene: Phaser.Scene) {
         this.scene = scene;
+        this.animationFactory = new AnimationFactory(scene);
         this.setupEnemyGroup();
         this.setupEnemyAnimations();
     }
@@ -18,44 +21,11 @@ export class EnemyManager {
     }
 
     private setupEnemyAnimations(): void {
-        // Create orc idle animation
-        if (!this.scene.anims.exists("orc-idle-anim")) {
-            this.scene.anims.create({
-                key: "orc-idle-anim",
-                frames: this.scene.anims.generateFrameNumbers("orc", {
-                    start: 0,
-                    end: 5,
-                }),
-                frameRate: 8,
-                repeat: -1,
-            });
-        }
-
-        // Create orc walk animation
-        if (!this.scene.anims.exists("orc-walk-anim")) {
-            this.scene.anims.create({
-                key: "orc-walk-anim",
-                frames: this.scene.anims.generateFrameNumbers("orc", {
-                    start: 9,
-                    end: 16,
-                }),
-                frameRate: 10,
-                repeat: -1,
-            });
-        }
-
-        // Create orc hit animation
-        if (!this.scene.anims.exists("orc-hit-anim")) {
-            this.scene.anims.create({
-                key: "orc-hit-anim",
-                frames: this.scene.anims.generateFrameNumbers("orc", {
-                    start: 32,
-                    end: 36,
-                }),
-                frameRate: 15,
-                repeat: 0, // Play once
-            });
-        }
+        // Register orc animations using centralized definitions
+        this.animationFactory.registerSpriteAnimations('orc', ANIMATION_DEFINITIONS.orc);
+        
+        // Create all orc animations
+        this.animationFactory.createSpriteAnimations('orc');
     }
 
     public setDbConnection(connection: DbConnection): void {

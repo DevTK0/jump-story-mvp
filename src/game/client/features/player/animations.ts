@@ -3,25 +3,16 @@ import type { System } from "../../shared/types";
 import { Player } from "./player";
 import { InputSystem } from "./input";
 import { gameEvents, GameEvent } from "../../shared/events";
-import { PLAYER_CONFIG } from "./config";
-
-interface PlayerAnimationConfig {
-    key: string;
-    spriteKey: string;
-    frames: { start: number; end: number };
-    frameRate: number;
-    repeat: number;
-}
+import { AnimationFactory, AnimationManager, ANIMATION_DEFINITIONS, ANIMATION_TIMINGS } from "../animations";
 
 export class AnimationSystem implements System {
     private player: Player;
-    private scene: Phaser.Scene;
 
-    // Animation configurations
-    private animations: Map<string, PlayerAnimationConfig> = new Map();
+    // Animation factory and manager
+    private animationFactory: AnimationFactory;
+    private animationManager: AnimationManager;
 
     // State tracking
-    private currentAnimation: string | null = null;
     private isPlayingAttackAnimation = false;
     private isPlayingHurtAnimation = false;
     private isInvulnerable = false;
@@ -33,76 +24,21 @@ export class AnimationSystem implements System {
         scene: Phaser.Scene
     ) {
         this.player = player;
-        this.scene = scene;
+
+        // Initialize animation factory and manager
+        this.animationFactory = new AnimationFactory(scene);
+        this.animationManager = new AnimationManager(this.animationFactory, player);
 
         this.setupAnimations();
         this.bindEvents();
     }
 
     private setupAnimations(): void {
-        const soldierAnimations: PlayerAnimationConfig[] = [
-            {
-                key: "soldier-idle-anim",
-                spriteKey: "soldier",
-                frames: { start: 0, end: 5 },
-                frameRate: PLAYER_CONFIG.animations.soldier.idle.framerate,
-                repeat: -1,
-            },
-            {
-                key: "soldier-walk-anim",
-                spriteKey: "soldier",
-                frames: { start: 9, end: 16 },
-                frameRate: PLAYER_CONFIG.animations.soldier.walk.framerate,
-                repeat: -1,
-            },
-            {
-                key: "soldier-attack1-anim",
-                spriteKey: "soldier",
-                frames: { start: 18, end: 23 },
-                frameRate: PLAYER_CONFIG.animations.soldier.attack.framerate,
-                repeat: 0,
-            },
-            {
-                key: "soldier-attack2-anim",
-                spriteKey: "soldier",
-                frames: { start: 27, end: 32 },
-                frameRate: PLAYER_CONFIG.animations.soldier.attack.framerate,
-                repeat: 0,
-            },
-            {
-                key: "soldier-attack3-anim",
-                spriteKey: "soldier",
-                frames: { start: 36, end: 45 },
-                frameRate: PLAYER_CONFIG.animations.soldier.attack.framerate,
-                repeat: 0,
-            },
-            {
-                key: "soldier-hurt-anim",
-                spriteKey: "soldier",
-                frames: { start: 45, end: 49 }, // Assuming hurt frames are at 54-58
-                frameRate: 15,
-                repeat: 0,
-            },
-        ];
-
-        // Create animations in Phaser and store configs
-        soldierAnimations.forEach((config) => {
-            this.createAnimation(config);
-        });
-    }
-
-    private createAnimation(config: PlayerAnimationConfig): void {
-        this.scene.anims.create({
-            key: config.key,
-            frames: this.scene.anims.generateFrameNumbers(
-                config.spriteKey,
-                config.frames
-            ),
-            frameRate: config.frameRate,
-            repeat: config.repeat,
-        });
-
-        this.animations.set(config.key, config);
+        // Register soldier animations using centralized definitions
+        this.animationFactory.registerSpriteAnimations('soldier', ANIMATION_DEFINITIONS.soldier);
+        
+        // Create all soldier animations
+        this.animationFactory.createSpriteAnimations('soldier');
     }
 
     private bindEvents(): void {
@@ -112,16 +48,17 @@ export class AnimationSystem implements System {
 
             // Play the appropriate attack animation based on attack type
             const attackType = data.attackType || 1;
-            const animationKey = `soldier-attack${attackType}-anim`;
-            this.playAnimation(animationKey);
+            const animationType = `attack${attackType}` as any;
+            this.animationManager.play(animationType, false);
 
             // Listen for attack complete to reset flag
             const onAttackComplete = () => {
                 this.isPlayingAttackAnimation = false;
-                // Don't need to remove listener since we used 'once'
             };
-            // For now, just use a timeout since we don't have the actual event
-            setTimeout(onAttackComplete, 300);
+            
+            // Use timing from centralized definitions
+            const attackDuration = ANIMATION_TIMINGS.ATTACK_DURATIONS[animationType as keyof typeof ANIMATION_TIMINGS.ATTACK_DURATIONS] || 300;
+            setTimeout(onAttackComplete, attackDuration);
         });
     }
 
@@ -136,66 +73,50 @@ export class AnimationSystem implements System {
         }
 
         // Determine appropriate animation based on state
-        const targetAnimation = this.determineAnimation();
+        const targetAnimationType = this.determineAnimationType();
 
         // Only change if different from current
-        if (targetAnimation !== this.currentAnimation) {
-            this.playAnimation(targetAnimation);
+        const currentKey = this.animationManager.getCurrentAnimation();
+        const targetKey = this.animationFactory.getAnimationKey('soldier', targetAnimationType);
+        if (targetKey !== currentKey) {
+            this.animationManager.play(targetAnimationType);
         }
     }
 
-    private determineAnimation(): string {
+    private determineAnimationType(): 'idle' | 'walk' {
         const body = this.player.body;
 
         // Climbing animations (if we have them)
         if (this.player.isClimbing) {
             // For now, use idle while climbing
-            return "soldier-idle-anim";
+            return 'idle';
         }
 
         // Ground-based animations
         if (Math.abs(body.velocity.x) > 0.1) {
-            return "soldier-walk-anim";
+            return 'walk';
         } else {
-            return "soldier-idle-anim";
-        }
-    }
-
-    private playAnimation(animationKey: string): void {
-        if (this.animations.has(animationKey)) {
-            this.player.play(animationKey);
-            this.currentAnimation = animationKey;
-        } else {
-            console.warn(`Animation '${animationKey}' not found`);
+            return 'idle';
         }
     }
 
     // Public API
     public createCustomAnimation(
-        key: string,
         spriteKey: string,
+        animationType: string,
         frames: { start: number; end: number },
         frameRate: number,
         repeat: number = -1
     ): void {
-        const config: PlayerAnimationConfig = {
-            key,
-            spriteKey,
-            frames,
-            frameRate,
-            repeat,
-        };
-
-        this.createAnimation(config);
+        this.animationFactory.createCustomAnimation(spriteKey, animationType, frames, frameRate, repeat);
     }
 
     public forcePlayAnimation(animationKey: string): void {
-        this.playAnimation(animationKey);
+        this.animationManager.playByKey(animationKey, false);
     }
 
     public stopAnimation(): void {
-        this.player.anims.stop();
-        this.currentAnimation = null;
+        this.animationManager.stop();
     }
 
     public pauseAnimation(): void {
@@ -217,11 +138,11 @@ export class AnimationSystem implements System {
     }
 
     public getCurrentAnimation(): string | null {
-        return this.player.anims.currentAnim?.key || null;
+        return this.animationManager.getCurrentAnimation();
     }
 
     public hasAnimation(key: string): boolean {
-        return this.animations.has(key);
+        return this.animationFactory.hasAnimation(key);
     }
 
     public playHurtAnimation(knockbackDirection?: { x: number; y: number }): boolean {
@@ -274,7 +195,7 @@ export class AnimationSystem implements System {
         // Add visual feedback during invulnerability (flashing effect)
         this.startInvulnerabilityFlash();
 
-        this.playAnimation("soldier-hurt-anim");
+        this.animationManager.play('hurt', false);
 
         // Reset hurt animation flag and re-enable movement after animation completes
         const onHurtComplete = () => {
@@ -288,7 +209,7 @@ export class AnimationSystem implements System {
                 climbingSystem.setClimbingDisabled(false);
             }
         };
-        setTimeout(onHurtComplete, 400);
+        setTimeout(onHurtComplete, ANIMATION_TIMINGS.HURT_DURATION);
 
         // End invulnerability after 1 second
         if (this.invulnerabilityTimer) {
@@ -297,14 +218,14 @@ export class AnimationSystem implements System {
         this.invulnerabilityTimer = window.setTimeout(() => {
             this.isInvulnerable = false;
             this.player.clearTint(); // Remove flashing effect
-        }, 1000);
+        }, ANIMATION_TIMINGS.INVULNERABILITY_DURATION);
 
         return true;
     }
 
     private startInvulnerabilityFlash(): void {
         let flashCount = 0;
-        const maxFlashes = 10; // Flash 10 times over 1 second
+        const maxFlashes = ANIMATION_TIMINGS.MAX_FLASHES;
         
         const flashInterval = setInterval(() => {
             if (flashCount >= maxFlashes || !this.isInvulnerable) {
@@ -322,7 +243,7 @@ export class AnimationSystem implements System {
             }
             
             flashCount++;
-        }, 100); // Flash every 100ms
+        }, ANIMATION_TIMINGS.FLASH_INTERVAL);
     }
 
     public isPlayerInvulnerable(): boolean {
@@ -337,6 +258,6 @@ export class AnimationSystem implements System {
         
         // Clean up event listeners
         gameEvents.off(GameEvent.PLAYER_ATTACKED);
-        this.animations.clear();
+        this.animationFactory.clear();
     }
 }
