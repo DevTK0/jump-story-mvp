@@ -59,14 +59,23 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
                 const horizontalDir = this.inputSystem.getHorizontalDirection();
                 if (horizontalDir !== 0) {
                     body.setVelocityX(horizontalDir * this.player.getSpeed());
+                    // Transition to walk state if not already walking or attacking
+                    if (!this.player.isInState("Walk") && !this.player.isAttacking) {
+                        this.player.transitionToState("Walk");
+                    }
                 } else {
                     body.setVelocityX(0);
+                    // Transition to idle state if not already idle or attacking
+                    if (!this.player.isInState("Idle") && !this.player.isAttacking) {
+                        this.player.transitionToState("Idle");
+                    }
                 }
             }
 
             // Regular jump
             if (inputState.jump && onGround) {
                 this.jump();
+                this.player.transitionToState("Jump");
                 forceSyncOnGroundContact = true; // Force sync on jump takeoff too
                 console.log("Player jumped - forcing position sync");
             }
@@ -103,21 +112,8 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
     }
     
     private determineMovementState(): PlayerState {
-        // Don't override attack states or other special states from other systems
-        if (this.player.isAttacking) {
-            return this.syncManager.getCurrentState(); // Keep current state if attacking
-        }
-
-        if (this.player.isClimbing) {
-            return { tag: "Climbing" };
-        }
-
-        const body = this.player.body;
-        if (Math.abs(body.velocity.x) > 0.1) {
-            return { tag: "Walk" };
-        } else {
-            return { tag: "Idle" };
-        }
+        // Use the state machine's current DB state
+        return this.player.getStateMachine().getCurrentDbState();
     }
 
     private jump(): void {

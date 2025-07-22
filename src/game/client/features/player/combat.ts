@@ -7,8 +7,6 @@ import { PLAYER_CONFIG } from './config';
 import type { IDebuggable } from '../debug/debug-interfaces';
 import { DEBUG_CONFIG } from '../debug/config';
 import { BaseDebugRenderer } from '../debug/debug-renderer';
-import { PlayerState } from '../../module_bindings';
-import { SyncManager } from './sync-manager';
 
 export interface AttackConfig {
   name: string;
@@ -36,9 +34,6 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
   
   // Combat components
   private hitboxSprite: Phaser.Physics.Arcade.Sprite;
-
-  // Synchronization
-  private syncManager: SyncManager | null = null;
   
   // Attack configurations for each attack type
   private static readonly ATTACK_CONFIGS: Record<number, AttackConfig> = {
@@ -93,8 +88,9 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
     this.hitboxSprite = this.createHitbox();
   }
 
-  public setSyncManager(syncManager: SyncManager): void {
-    this.syncManager = syncManager;
+  // No longer needed since we use state machine
+  public setSyncManager(_syncManager: any): void {
+    // State machine handles synchronization now
   }
   
   private createHitbox(): Phaser.Physics.Arcade.Sprite {
@@ -171,24 +167,10 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
     this.player.setPlayerState({ isAttacking: true });
     this.isOnCooldown = true;
     
-    // Sync attack state to SpacetimeDB
-    if (this.syncManager) {
-      let attackState: PlayerState;
-      switch (attackType) {
-        case 1:
-          attackState = { tag: "Attack1" };
-          break;
-        case 2:
-          attackState = { tag: "Attack2" };
-          break;
-        case 3:
-          attackState = { tag: "Attack3" };
-          break;
-        default:
-          console.warn(`Unknown attack type: ${attackType}, defaulting to Unknown state`);
-          attackState = { tag: "Unknown" };
-      }
-      this.syncManager.syncState(attackState);
+    // Transition to attack state using state machine
+    const attackStateName = `Attack${attackType}`;
+    if (this.player.getStateMachine().canTransitionTo(attackStateName)) {
+      this.player.transitionToState(attackStateName);
     }
     
     // Emit attack event with attack type information
@@ -230,10 +212,7 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
         this.scene.time.delayedCall(attackConfig.recoveryMs, () => {
           this.player.setPlayerState({ isAttacking: false });
           
-          // Sync back to idle state
-          if (this.syncManager) {
-            this.syncManager.syncState({ tag: "Idle" });
-          }
+          // State machine will automatically handle transition back to appropriate state
           
           this.onAttackComplete(attackConfig);
         });

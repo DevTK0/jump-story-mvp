@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import type { PlayerState, System } from '../../shared/types';
 import { gameEvents, GameEvent } from '../../shared/events';
 import { PLAYER_CONFIG } from './config';
+import { PlayerStateMachine } from './state-machine';
 
 export interface PlayerConfig {
   scene: Phaser.Scene;
@@ -14,6 +15,7 @@ export interface PlayerConfig {
 export class Player extends Phaser.GameObjects.Sprite {
   private playerState: PlayerState;
   private systems: Map<string, System> = new Map();
+  private stateMachine: PlayerStateMachine;
   
   // Physics body reference for convenience
   public body!: Phaser.Physics.Arcade.Body;
@@ -59,6 +61,9 @@ export class Player extends Phaser.GameObjects.Sprite {
     
     // Setup physics properties
     this.setupPhysics();
+    
+    // Initialize state machine
+    this.stateMachine = new PlayerStateMachine(this);
   }
   
   private setupPhysics(): void {
@@ -77,6 +82,9 @@ export class Player extends Phaser.GameObjects.Sprite {
   
   public update(time: number, delta: number): void {
     if (!this.playerState.isAlive) return;
+    
+    // Update state machine
+    this.stateMachine.update(time, delta);
     
     // Update all registered systems
     for (const system of this.systems.values()) {
@@ -136,6 +144,23 @@ export class Player extends Phaser.GameObjects.Sprite {
   
   public get isAlive(): boolean {
     return this.playerState.isAlive;
+  }
+  
+  // State machine methods
+  public getStateMachine(): PlayerStateMachine {
+    return this.stateMachine;
+  }
+  
+  public getCurrentStateName(): string {
+    return this.stateMachine.getCurrentStateName();
+  }
+  
+  public transitionToState(stateName: string): boolean {
+    return this.stateMachine.transitionTo(stateName);
+  }
+  
+  public isInState(stateName: string): boolean {
+    return this.stateMachine.isInState(stateName);
   }
   
   public takeDamage(amount: number): void {

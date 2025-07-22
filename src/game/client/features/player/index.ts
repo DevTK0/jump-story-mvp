@@ -9,6 +9,7 @@ export { CombatSystem, type AttackConfig } from './combat';
 export { AnimationSystem } from './animations';
 export { DebugSystem } from '../debug';
 export { SyncManager, type SyncConfig } from './sync-manager';
+export { PlayerStateMachine, PlayerState } from './state-machine';
 
 // Factory function to create a fully configured player
 import { Player, type PlayerConfig } from './player';
