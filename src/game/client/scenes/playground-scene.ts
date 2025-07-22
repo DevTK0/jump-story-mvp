@@ -7,7 +7,7 @@ import { PLAYER_CONFIG } from "../features/player";
 import type { IDebuggable } from "../features/debug/debug-interfaces";
 import { DEBUG_CONFIG } from "../features/debug/config";
 import { DebugState } from "../features/debug/debug-state";
-import { DatabaseConnectionManager } from "../managers";
+import { DatabaseConnectionManager, CollisionSetupManager, type CollisionGroups } from "../managers";
 import { DbConnection } from "../module_bindings";
 import { Identity } from "@clockworklabs/spacetimedb-sdk";
 
@@ -29,6 +29,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     private mapLoader!: MapLoader;
     private mapData!: MapData;
     private peerManager!: PeerManager;
+    private collisionSetupManager!: CollisionSetupManager;
 
     constructor() {
         super({ key: "playground" });
@@ -114,54 +115,20 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             this.setupPlayerSystems(dbConnection);
         }
 
-        // Set up map-based collisions
-        const groundGroup = this.mapLoader.createPhysicsFromGround(
-            this.mapData.ground
-        );
-        const platformGroup = this.mapLoader.createPhysicsFromPlatforms(
-            this.mapData.platforms
-        );
-        const climbeableGroup = this.mapLoader.createClimbeablePhysics(
-            this.mapData.climbeable
-        );
-        const boundaryGroup = this.mapLoader.createBoundaryPhysics(
-            this.mapData.boundaries
-        );
+        // Initialize collision setup manager
+        this.collisionSetupManager = new CollisionSetupManager(this);
 
-        // Add collision between player and ground (traditional solid collision)
-        this.physics.add.collider(this.player, groundGroup);
+        // Create collision groups from map data
+        const collisionGroups: CollisionGroups = {
+            ground: this.mapLoader.createPhysicsFromGround(this.mapData.ground),
+            platforms: this.mapLoader.createPhysicsFromPlatforms(this.mapData.platforms),
+            climbeable: this.mapLoader.createClimbeablePhysics(this.mapData.climbeable),
+            boundaries: this.mapLoader.createBoundaryPhysics(this.mapData.boundaries)
+        };
 
-        // Add one-way collision between player and platforms (can jump through from below)
-        this.physics.add.collider(
-            this.player,
-            platformGroup,
-            undefined,
-            (player: any, platform: any) => {
-                const playerBody = player.body as Phaser.Physics.Arcade.Body;
-                const platformBody =
-                    platform.body as Phaser.Physics.Arcade.StaticBody;
-
-                // Only allow collision if player is coming from above (falling down)
-                return (
-                    playerBody.velocity.y > 0 && playerBody.y < platformBody.y
-                );
-            }
-        );
-
-        // Add collision between player and boundaries
-        this.physics.add.collider(this.player, boundaryGroup);
-
-        // Add overlap for climbeable interaction (pass-through, no collision)
-        this.physics.add.overlap(this.player, climbeableGroup, () => {
-            // Climbeable interaction will be handled by ClimbingSystem
-            // Player can pass through climbeable surfaces
-        });
-
-        // Configure player climbing system with map data
+        // Get systems for collision setup
         const climbingSystem = this.player.getSystem("climbing");
-        if (climbingSystem) {
-            (climbingSystem as any).setClimbeableGroup(climbeableGroup);
-        }
+        const combatSystem = this.player.getSystem("combat");
 
         // Initialize enemy manager
         this.enemyManager = new EnemyManager(this);
@@ -172,49 +139,17 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             this.enemyManager.setDbConnection(dbConn);
         }
 
-        // Get combat system for attack collision
-        const combatSystem = this.player.getSystem("combat");
-
-        // Set up attack collision detection with enemies
-        if (combatSystem) {
-            this.physics.add.overlap(
-                (combatSystem as any).getHitboxSprite(),
-                this.enemyManager.getEnemyGroup(),
-                this.onAttackHitEnemy,
-                undefined,
-                this
-            );
-        }
-
-        // Set up enemy collision with ground, platforms, and boundaries
-        this.physics.add.collider(
-            this.enemyManager.getEnemyGroup(),
-            groundGroup
-        );
-        this.physics.add.collider(
-            this.enemyManager.getEnemyGroup(),
-            platformGroup,
-            undefined,
-            (enemy: any, platform: any) => {
-                const enemyBody = enemy.body as Phaser.Physics.Arcade.Body;
-                const platformBody =
-                    platform.body as Phaser.Physics.Arcade.StaticBody;
-
-                // Only allow collision if enemy is coming from above (falling down)
-                return enemyBody.velocity.y > 0 && enemyBody.y < platformBody.y;
-            }
-        );
-        this.physics.add.collider(
-            this.enemyManager.getEnemyGroup(),
-            boundaryGroup
-        );
-
-        // Set up player-enemy collision for hurt animation
-        this.physics.add.overlap(
+        // Set up all collisions using the CollisionSetupManager
+        this.collisionSetupManager.setupAllCollisions(
             this.player,
-            this.enemyManager.getEnemyGroup(),
-            this.onPlayerTouchEnemy,
-            undefined,
+            this.enemyManager,
+            collisionGroups,
+            combatSystem,
+            climbingSystem,
+            {
+                onPlayerTouchEnemy: this.onPlayerTouchEnemy,
+                onAttackHitEnemy: this.onAttackHitEnemy
+            },
             this
         );
     }
