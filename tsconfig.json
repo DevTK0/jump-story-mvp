@@ -17,9 +17,13 @@
         "forceConsistentCasingInFileNames": true,
         "skipLibCheck": true,
         "strictNullChecks": true, // add if using `base` template
-        "allowJs": true // required, and included with all Astro templates
+        "allowJs": true, // required, and included with all Astro templates
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["libs/*"]
+        }
     },
-    "include": ["src/**/*", "test.ts", "scripts/clear-logs.ts"],
+    "include": ["apps/**/*", "libs/**/*", "test.ts", "scripts/clear-logs.ts"],
     "exclude": ["node_modules", "dist"],
     "extends": "astro/tsconfigs/base"
 }

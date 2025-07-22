@@ -11,7 +11,7 @@ import { join } from "path";
 import {
     DbConnection,
     type ErrorContext,
-} from "../src/game/client/module_bindings";
+} from "../libs/spacetime/client";
 import { Identity } from "@clockworklabs/spacetimedb-sdk";
 
 async function initializeEnemyRoutes() {
@@ -23,7 +23,7 @@ async function initializeEnemyRoutes() {
         // Read the tilemap JSON file
         const tilemapPath = join(
             process.cwd(),
-            "public/assets/maps/playground.tmj"
+            "apps/playground/maps/playground.tmj"
         );
         const tilemapContent = readFileSync(tilemapPath, "utf8");
 

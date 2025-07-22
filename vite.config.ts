@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import path from "path";
 
 export default defineConfig(({ command }) => ({
     base: command === "build" ? "/jump-story-mvp/" : "/",
@@ -12,4 +13,9 @@ export default defineConfig(({ command }) => ({
         sourcemap: true,
     },
     publicDir: "public",
+    resolve: {
+        alias: {
+            "@": path.resolve(__dirname, "./libs"),
+        },
+    },
 }));
