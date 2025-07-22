@@ -4,7 +4,21 @@ using System.Collections.Generic;
 
 public static partial class Module
 {
-    [Table(Name = "player", Public = true)]
+    [SpacetimeDB.Type]
+    public enum PlayerState : byte
+    {
+        Idle,
+        Walk,
+        Attack1,
+        Attack2,
+        Attack3,
+        Climbing,
+        Damaged,
+        Dead,
+        Unknown
+    }
+
+    [Table(Name = "Player", Public = true)]
     public partial struct Player
     {
         [PrimaryKey]
@@ -13,6 +27,8 @@ public static partial class Module
         public uint player_id;
         public string name;
         public DbVector2 position;
+        public PlayerState state;
+        public long state_timestamp;
         public Timestamp last_active;
     }
 
@@ -39,19 +55,55 @@ public static partial class Module
     [Reducer]
     public static void UpdatePlayerPosition(ReducerContext ctx, float x, float y)
     {
-        var player = ctx.Db.player.identity.Find(ctx.Sender);
+        var player = ctx.Db.Player.identity.Find(ctx.Sender);
         if (player is not null)
         {
-            ctx.Db.player.identity.Update(new Player
+            ctx.Db.Player.identity.Update(new Player
             {
                 identity = player.Value.identity,
                 player_id = player.Value.player_id,
                 name = player.Value.name,
                 position = new DbVector2(x, y),
+                state = player.Value.state,
+                state_timestamp = player.Value.state_timestamp,
                 last_active = ctx.Timestamp
             });
             Log.Info($"Updated position for {ctx.Sender} to ({x}, {y})");
         }
+    }
+
+    [Reducer]
+    public static void UpdatePlayerState(ReducerContext ctx, PlayerState newState)
+    {
+        var player = ctx.Db.Player.identity.Find(ctx.Sender);
+        if (player is not null)
+        {
+            // Basic validation - prevent attacking while already attacking
+            if (IsAttackState(newState) && IsAttackState(player.Value.state))
+            {
+                Log.Info($"Player {ctx.Sender} tried to attack while already attacking");
+                return;
+            }
+
+            ctx.Db.Player.identity.Update(new Player
+            {
+                identity = player.Value.identity,
+                player_id = player.Value.player_id,
+                name = player.Value.name,
+                position = player.Value.position,
+                state = newState,
+                state_timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                last_active = ctx.Timestamp
+            });
+            Log.Info($"Updated state for {ctx.Sender} to {newState}");
+        }
+    }
+
+    private static bool IsAttackState(PlayerState state)
+    {
+        return state == PlayerState.Attack1 || 
+               state == PlayerState.Attack2 || 
+               state == PlayerState.Attack3;
     }
 
     [Reducer(ReducerKind.ClientConnected)]
@@ -65,9 +117,11 @@ public static partial class Module
             identity = ctx.Sender,
             name = "Player",
             position = new DbVector2(0, 0),
+            state = PlayerState.Idle,
+            state_timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
             last_active = ctx.Timestamp
         };
-        ctx.Db.player.Insert(newPlayer);
+        ctx.Db.Player.Insert(newPlayer);
     }
 
     [Reducer(ReducerKind.ClientDisconnected)]
@@ -76,10 +130,10 @@ public static partial class Module
         Log.Info($"{ctx.Sender} disconnected.");
         
         // Remove player from database when they disconnect
-        var player = ctx.Db.player.identity.Find(ctx.Sender);
+        var player = ctx.Db.Player.identity.Find(ctx.Sender);
         if (player is not null)
         {
-            ctx.Db.player.identity.Delete(ctx.Sender);
+            ctx.Db.Player.identity.Delete(ctx.Sender);
             Log.Info($"Removed player {ctx.Sender} from database");
         }
     }
@@ -91,14 +145,14 @@ public static partial class Module
         // In production, this would have time-based logic
         var playersToRemove = new List<Identity>();
         
-        foreach (var player in ctx.Db.player.Iter())
+        foreach (var player in ctx.Db.Player.Iter())
         {
             playersToRemove.Add(player.identity);
         }
         
         foreach (var identity in playersToRemove)
         {
-            ctx.Db.player.identity.Delete(identity);
+            ctx.Db.Player.identity.Delete(identity);
             Log.Info($"Cleaned up player {identity}");
         }
         

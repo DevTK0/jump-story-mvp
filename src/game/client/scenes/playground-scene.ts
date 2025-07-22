@@ -74,11 +74,16 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
                 .onApplied(handleSubscriptionApplied)
                 .subscribeToAllTables();
 
-            // Set database connection on player's movement system if it exists
+            // Set database connection on player's systems if they exist
             if (this.player) {
                 const movementSystem = this.player.getSystem("movement") as any;
                 if (movementSystem && movementSystem.setDbConnection) {
                     movementSystem.setDbConnection(conn);
+                }
+
+                const combatSystem = this.player.getSystem("combat") as any;
+                if (combatSystem && combatSystem.setDbConnection) {
+                    combatSystem.setDbConnection(conn);
                 }
             }
 
@@ -144,11 +149,16 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         // Set camera bounds to match tilemap dimensions
         this.cameras.main.setBounds(0, 0, mapWidth, mapHeight);
 
-        // Set database connection on player's movement system if connection exists
+        // Set database connection on player's systems if connection exists
         if (this.dbConnection) {
             const movementSystem = this.player.getSystem("movement") as any;
             if (movementSystem && movementSystem.setDbConnection) {
                 movementSystem.setDbConnection(this.dbConnection);
+            }
+
+            const combatSystem = this.player.getSystem("combat") as any;
+            if (combatSystem && combatSystem.setDbConnection) {
+                combatSystem.setDbConnection(this.dbConnection);
             }
         }
 

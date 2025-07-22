@@ -33,12 +33,13 @@ import {
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
 import { Player } from "./player_type";
+import { PlayerState as __PlayerState } from "./player_state_type";
 import { DbVector2 as __DbVector2 } from "./db_vector_2_type";
 
 import { type EventContext, type Reducer, RemoteReducers, RemoteTables } from ".";
 
 /**
- * Table handle for the table `player`.
+ * Table handle for the table `Player`.
  *
  * Obtain a handle from the [`player`] property on [`RemoteTables`],
  * like `ctx.db.player`.
@@ -62,7 +63,7 @@ export class PlayerTableHandle {
     return this.tableCache.iter();
   }
   /**
-   * Access to the `identity` unique index on the table `player`,
+   * Access to the `identity` unique index on the table `Player`,
    * which allows point queries on the field of the same name
    * via the [`PlayerIdentityUnique.find`] method.
    *
@@ -70,7 +71,7 @@ export class PlayerTableHandle {
    * but to directly chain method calls,
    * like `ctx.db.player.identity().find(...)`.
    *
-   * Get a handle on the `identity` unique index on the table `player`.
+   * Get a handle on the `identity` unique index on the table `Player`.
    */
   identity = {
     // Find the subscribed row whose `identity` column value is equal to `col_val`,
@@ -84,7 +85,7 @@ export class PlayerTableHandle {
     },
   };
   /**
-   * Access to the `playerId` unique index on the table `player`,
+   * Access to the `playerId` unique index on the table `Player`,
    * which allows point queries on the field of the same name
    * via the [`PlayerPlayerIdUnique.find`] method.
    *
@@ -92,7 +93,7 @@ export class PlayerTableHandle {
    * but to directly chain method calls,
    * like `ctx.db.player.playerId().find(...)`.
    *
-   * Get a handle on the `playerId` unique index on the table `player`.
+   * Get a handle on the `playerId` unique index on the table `Player`.
    */
   playerId = {
     // Find the subscribed row whose `playerId` column value is equal to `col_val`,

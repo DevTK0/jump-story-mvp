@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import type { Player as PlayerData } from "../../module_bindings";
+import { PlayerState } from "../../module_bindings";
 import { PLAYER_CONFIG } from "../player/config";
 
 export interface PeerConfig {
@@ -17,6 +18,7 @@ export class Peer extends Phaser.GameObjects.Sprite {
 
     // Animation tracking
     private currentAnimation: string | null = null;
+    private isPlayingAttackAnimation = false;
 
     constructor(config: PeerConfig) {
         // Create soldier sprite with initial frame
@@ -52,11 +54,11 @@ export class Peer extends Phaser.GameObjects.Sprite {
         // Create name label
         this.createNameLabel();
 
-        // Start with idle animation
-        this.playAnimation("soldier-idle-anim");
+        // Start with appropriate animation based on state
+        this.playAnimation(this.determineAnimation());
 
         console.log(
-            `Created peer sprite for ${this.playerData.name} at (${this.x}, ${this.y}) with scale ${PLAYER_CONFIG.movement.scale}`
+            `Created peer sprite for ${this.playerData.name} at (${this.x}, ${this.y}) with scale ${PLAYER_CONFIG.movement.scale} in state ${this.playerData.state.tag}`
         );
     }
 
@@ -81,28 +83,60 @@ export class Peer extends Phaser.GameObjects.Sprite {
             this.scene.anims.exists(animationKey) &&
             this.currentAnimation !== animationKey
         ) {
-            this.play(animationKey);
-            this.currentAnimation = animationKey;
+            // Check if this is an attack animation
+            const isAttackAnim = animationKey.includes("attack");
+            
+            if (isAttackAnim) {
+                this.isPlayingAttackAnimation = true;
+                this.play(animationKey);
+                this.currentAnimation = animationKey;
+                
+                // Listen for animation complete to reset attack flag
+                this.once('animationcomplete', () => {
+                    this.isPlayingAttackAnimation = false;
+                    console.log(`Attack animation ${animationKey} completed for peer ${this.playerData.name}`);
+                });
+            } else {
+                // Don't interrupt attack animations with other animations
+                if (!this.isPlayingAttackAnimation) {
+                    this.play(animationKey);
+                    this.currentAnimation = animationKey;
+                }
+            }
         }
     }
 
     private determineAnimation(): string {
-        // Check if peer is moving based on target position change
-        const distance = Phaser.Math.Distance.Between(
-            this.x,
-            this.y,
-            this.targetPosition.x,
-            this.targetPosition.y
-        );
-
-        if (distance > 2) {
-            return "soldier-walk-anim";
-        } else {
-            return "soldier-idle-anim";
+        // Use state to determine animation
+        switch (this.playerData.state.tag) {
+            case "Attack1":
+                return "soldier-attack1-anim";
+            case "Attack2":
+                return "soldier-attack2-anim";
+            case "Attack3":
+                return "soldier-attack3-anim";
+            case "Walk":
+                return "soldier-walk-anim";
+            case "Climbing":
+                // For now, use idle for climbing (can add climbing animation later)
+                return "soldier-idle-anim";
+            case "Damaged":
+                // For now, use idle for damaged (can add damage animation later)
+                return "soldier-idle-anim";
+            case "Dead":
+                // For now, use idle for dead (can add death animation later)
+                return "soldier-idle-anim";
+            case "Idle":
+                return "soldier-idle-anim";
+            case "Unknown":
+            default:
+                console.warn(`Peer ${this.playerData.name} has unknown state: ${this.playerData.state.tag}`);
+                return "soldier-idle-anim";
         }
     }
 
     public updateFromData(playerData: PlayerData): void {
+        const previousState = this.playerData?.state?.tag;
         this.playerData = playerData;
 
         // Update target position for interpolation
@@ -141,6 +175,14 @@ export class Peer extends Phaser.GameObjects.Sprite {
                     `Updated peer ${this.playerData.name} target to (${newTargetX}, ${newTargetY})`
                 );
             }
+        }
+
+        // Check if state changed and update animation accordingly
+        if (previousState !== playerData.state.tag) {
+            console.log(`Peer ${this.playerData.name} state changed from ${previousState} to ${playerData.state.tag}`);
+            // Force animation update for state changes (especially attacks)
+            const newAnimation = this.determineAnimation();
+            this.playAnimation(newAnimation);
         }
     }
 

@@ -7,6 +7,7 @@ import { PLAYER_CONFIG } from './config';
 import type { IDebuggable } from '../debug/debug-interfaces';
 import { DEBUG_CONFIG } from '../debug/config';
 import { BaseDebugRenderer } from '../debug/debug-renderer';
+import { DbConnection, PlayerState } from '../../module_bindings';
 
 export interface AttackConfig {
   name: string;
@@ -34,6 +35,9 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
   
   // Combat components
   private hitboxSprite: Phaser.Physics.Arcade.Sprite;
+
+  // SpacetimeDB connection
+  private dbConnection: DbConnection | null = null;
   
   // Attack configurations for each attack type
   private static readonly ATTACK_CONFIGS: Record<number, AttackConfig> = {
@@ -86,6 +90,10 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
     
     // Create hitbox for attack detection
     this.hitboxSprite = this.createHitbox();
+  }
+
+  public setDbConnection(connection: DbConnection): void {
+    this.dbConnection = connection;
   }
   
   private createHitbox(): Phaser.Physics.Arcade.Sprite {
@@ -162,6 +170,27 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
     this.player.setPlayerState({ isAttacking: true });
     this.isOnCooldown = true;
     
+    // Sync attack state to SpacetimeDB
+    if (this.dbConnection) {
+      let attackState: PlayerState;
+      switch (attackType) {
+        case 1:
+          attackState = PlayerState.Attack1;
+          break;
+        case 2:
+          attackState = PlayerState.Attack2;
+          break;
+        case 3:
+          attackState = PlayerState.Attack3;
+          break;
+        default:
+          console.warn(`Unknown attack type: ${attackType}, defaulting to Unknown state`);
+          attackState = PlayerState.Unknown;
+      }
+      this.dbConnection.reducers.updatePlayerState(attackState);
+      console.log(`Synced attack state: ${attackState.tag}`);
+    }
+    
     // Emit attack event with attack type information
     gameEvents.emit(GameEvent.PLAYER_ATTACKED, {
       type: 'melee',
@@ -200,6 +229,13 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
         // Recovery phase
         this.scene.time.delayedCall(attackConfig.recoveryMs, () => {
           this.player.setPlayerState({ isAttacking: false });
+          
+          // Sync back to idle state
+          if (this.dbConnection) {
+            this.dbConnection.reducers.updatePlayerState(PlayerState.Idle);
+            console.log('Attack completed - synced back to Idle state');
+          }
+          
           this.onAttackComplete(attackConfig);
         });
       });

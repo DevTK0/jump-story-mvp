@@ -44,6 +44,8 @@ import { Disconnect } from "./disconnect_reducer.ts";
 export { Disconnect };
 import { UpdatePlayerPosition } from "./update_player_position_reducer.ts";
 export { UpdatePlayerPosition };
+import { UpdatePlayerState } from "./update_player_state_reducer.ts";
+export { UpdatePlayerState };
 
 // Import and reexport all table handle types
 import { PlayerTableHandle } from "./player_table.ts";
@@ -54,11 +56,13 @@ import { DbVector2 } from "./db_vector_2_type.ts";
 export { DbVector2 };
 import { Player } from "./player_type.ts";
 export { Player };
+import { PlayerState } from "./player_state_type.ts";
+export { PlayerState };
 
 const REMOTE_MODULE = {
   tables: {
-    player: {
-      tableName: "player",
+    Player: {
+      tableName: "Player",
       rowType: Player.getTypeScriptAlgebraicType(),
       primaryKey: "identity",
       primaryKeyInfo: {
@@ -87,6 +91,10 @@ const REMOTE_MODULE = {
     UpdatePlayerPosition: {
       reducerName: "UpdatePlayerPosition",
       argsType: UpdatePlayerPosition.getTypeScriptAlgebraicType(),
+    },
+    UpdatePlayerState: {
+      reducerName: "UpdatePlayerState",
+      argsType: UpdatePlayerState.getTypeScriptAlgebraicType(),
     },
   },
   versionInfo: {
@@ -123,6 +131,7 @@ export type Reducer = never
 | { name: "Debug", args: Debug }
 | { name: "Disconnect", args: Disconnect }
 | { name: "UpdatePlayerPosition", args: UpdatePlayerPosition }
+| { name: "UpdatePlayerState", args: UpdatePlayerState }
 ;
 
 export class RemoteReducers {
@@ -184,6 +193,22 @@ export class RemoteReducers {
     this.connection.offReducer("UpdatePlayerPosition", callback);
   }
 
+  updatePlayerState(newState: PlayerState) {
+    const __args = { newState };
+    let __writer = new BinaryWriter(1024);
+    UpdatePlayerState.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("UpdatePlayerState", __argsBuffer, this.setCallReducerFlags.updatePlayerStateFlags);
+  }
+
+  onUpdatePlayerState(callback: (ctx: ReducerEventContext, newState: PlayerState) => void) {
+    this.connection.onReducer("UpdatePlayerState", callback);
+  }
+
+  removeOnUpdatePlayerState(callback: (ctx: ReducerEventContext, newState: PlayerState) => void) {
+    this.connection.offReducer("UpdatePlayerState", callback);
+  }
+
 }
 
 export class SetReducerFlags {
@@ -202,13 +227,18 @@ export class SetReducerFlags {
     this.updatePlayerPositionFlags = flags;
   }
 
+  updatePlayerStateFlags: CallReducerFlags = 'FullUpdate';
+  updatePlayerState(flags: CallReducerFlags) {
+    this.updatePlayerStateFlags = flags;
+  }
+
 }
 
 export class RemoteTables {
   constructor(private connection: DbConnectionImpl) {}
 
   get player(): PlayerTableHandle {
-    return new PlayerTableHandle(this.connection.clientCache.getOrCreateTable<Player>(REMOTE_MODULE.tables.player));
+    return new PlayerTableHandle(this.connection.clientCache.getOrCreateTable<Player>(REMOTE_MODULE.tables.Player));
   }
 }
 

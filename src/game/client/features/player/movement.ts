@@ -7,7 +7,7 @@ import { DebugState, ShadowState } from "../debug/debug-state";
 import { DEBUG_CONFIG } from "../debug/config";
 import { BaseDebugRenderer } from "../debug/debug-renderer";
 import { ShadowTrajectoryRenderer } from "./effects/shadow";
-import { DbConnection } from "../../module_bindings";
+import { DbConnection, PlayerState } from "../../module_bindings";
 
 export class MovementSystem extends BaseDebugRenderer implements System, IDebuggable {
     private player: Player;
@@ -26,6 +26,10 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
     private syncThreshold = 10; // pixels
     private syncInterval = 200; // milliseconds
     private dbConnection: DbConnection | null = null;
+
+    // State synchronization
+    private currentPlayerState: PlayerState = PlayerState.Idle;
+    private lastStateUpdateTime = 0;
 
     constructor(player: Player, inputSystem: InputSystem) {
         super();
@@ -98,6 +102,9 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
         
         // Sync position to SpacetimeDB if needed (ALWAYS do this, even when climbing)
         this.syncPositionIfNeeded(time, forceSyncOnGroundContact);
+
+        // Sync state to SpacetimeDB if needed
+        this.syncStateIfNeeded(time);
     }
     
     private syncPositionIfNeeded(time: number, forceSync: boolean = false): void {
@@ -121,6 +128,38 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
             if (forceSync) {
                 console.log(`Forced position sync on ground contact: (${currentX}, ${currentY})`);
             }
+        }
+    }
+
+    private syncStateIfNeeded(time: number): void {
+        if (!this.dbConnection) return;
+
+        const newState = this.determineMovementState();
+        
+        // Only sync if state actually changed (don't spam with same state)
+        if (newState.tag !== this.currentPlayerState.tag) {
+            this.dbConnection.reducers.updatePlayerState(newState);
+            this.currentPlayerState = newState;
+            this.lastStateUpdateTime = time;
+            console.log(`Updated player state to: ${newState.tag}`);
+        }
+    }
+
+    private determineMovementState(): PlayerState {
+        // Don't override attack states or other special states from other systems
+        if (this.player.isAttacking) {
+            return this.currentPlayerState; // Keep current state if attacking
+        }
+
+        if (this.player.isClimbing) {
+            return PlayerState.Climbing;
+        }
+
+        const body = this.player.body;
+        if (Math.abs(body.velocity.x) > 0.1) {
+            return PlayerState.Walk;
+        } else {
+            return PlayerState.Idle;
         }
     }
 
