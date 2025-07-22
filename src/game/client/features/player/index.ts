@@ -11,41 +11,34 @@ export { DebugSystem } from '../debug';
 export { SyncManager, type SyncConfig } from './sync-manager';
 export { PlayerStateMachine, PlayerState } from './state-machine';
 
-// Factory function to create a fully configured player
+// Builder pattern for flexible player creation
+export { PlayerBuilder } from './player-builder';
+
+// Legacy factory function - maintained for backward compatibility
 import { Player, type PlayerConfig } from './player';
-import { InputSystem } from './input';
-import { MovementSystem } from './movement';
-import { ClimbingSystem } from './climbing';
-import { CombatSystem, type AttackConfig } from './combat';
-import { AnimationSystem } from './animations';
-import { DebugSystem } from '../debug';
+import { PlayerBuilder } from './player-builder';
+import type { AttackConfig } from './combat';
 
 export interface PlayerFactoryConfig extends PlayerConfig {
   attackConfig?: AttackConfig;
 }
 
+/**
+ * @deprecated Use PlayerBuilder for more flexible player creation.
+ * This function is maintained for backward compatibility.
+ */
 export function createPlayer(config: PlayerFactoryConfig): Player {
-  // Create the player instance
-  const player = new Player(config);
+  // Use the new builder pattern internally while maintaining the same API
+  const builder = new PlayerBuilder(config.scene)
+    .setPosition(config.x, config.y)
+    .setTexture(config.texture, config.frame)
+    .withAllSystems(); // Maintain full-system behavior for backward compatibility
   
-  // Create all systems
-  const inputSystem = new InputSystem(player);
-  const movementSystem = new MovementSystem(player, inputSystem);
-  const climbingSystem = new ClimbingSystem(player, inputSystem, movementSystem, config.scene);
-  const combatSystem = new CombatSystem(player, inputSystem, config.scene, config.attackConfig);
-  const animationSystem = new AnimationSystem(player, inputSystem, config.scene);
-  const debugSystem = new DebugSystem(player, inputSystem, config.scene);
+  if (config.attackConfig) {
+    builder.withCombat(config.attackConfig);
+  }
   
-  
-  // Register systems with the player
-  player.registerSystem('input', inputSystem);
-  player.registerSystem('movement', movementSystem);
-  player.registerSystem('climbing', climbingSystem);
-  player.registerSystem('combat', combatSystem);
-  player.registerSystem('animations', animationSystem);
-  player.registerSystem('debug', debugSystem);
-  
-  return player;
+  return builder.build();
 }
 
 // Type exports

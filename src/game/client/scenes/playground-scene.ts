@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { createPlayer, Player } from "../features/player";
+import { Player, PlayerBuilder } from "../features/player";
 import { EnemyManager } from "../features/enemy";
 import { MapLoader, type MapData } from "../features/stage";
 import { PeerManager } from "../features/peer";
@@ -7,7 +7,7 @@ import { PLAYER_CONFIG } from "../features/player";
 import type { IDebuggable } from "../features/debug/debug-interfaces";
 import { DEBUG_CONFIG } from "../features/debug/config";
 import { DebugState } from "../features/debug/debug-state";
-import { DatabaseConnectionManager, CollisionSetupManager, InteractionHandler, type CollisionGroups } from "../managers";
+import { DatabaseConnectionBuilder, CollisionSetupManager, InteractionHandler, type CollisionGroups } from "../managers";
 import { DbConnection } from "../module_bindings";
 import { Identity } from "@clockworklabs/spacetimedb-sdk";
 
@@ -22,7 +22,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     private player!: Player;
     
     // Database connection
-    private dbConnectionManager!: DatabaseConnectionManager;
+    private dbConnectionManager!: import("../managers").DatabaseConnectionManager;
 
     // System managers
     private enemyManager!: EnemyManager;
@@ -56,19 +56,15 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     }
 
     create(): void {
-        // Initialize database connection manager
-        this.dbConnectionManager = new DatabaseConnectionManager(
-            {
-                uri: "ws://localhost:3000",
-                moduleName: "jump-story"
-            },
-            {
-                onConnect: this.handleDatabaseConnect.bind(this),
-                onDisconnect: () => console.log("Disconnected from SpacetimeDB"),
-                onError: (_ctx, err) => console.error("Error connecting to SpacetimeDB:", err),
-                onSubscriptionApplied: (_ctx) => console.log("Subscription applied!")
-            }
-        );
+        // Initialize database connection manager using Builder pattern
+        this.dbConnectionManager = new DatabaseConnectionBuilder()
+            .setUri("ws://localhost:3000")
+            .setModuleName("jump-story")
+            .onConnect(this.handleDatabaseConnect.bind(this))
+            .onDisconnect(() => console.log("Disconnected from SpacetimeDB"))
+            .onError((_ctx, err) => console.error("Error connecting to SpacetimeDB:", err))
+            .onSubscriptionApplied((_ctx) => console.log("Subscription applied!"))
+            .build();
 
         // Start database connection
         this.dbConnectionManager.connect().catch(err => {
@@ -86,13 +82,12 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         const mapHeight = this.mapData.tilemap.heightInPixels;
         this.physics.world.setBounds(0, 0, mapWidth, mapHeight);
 
-        // Create player using new feature-first architecture
-        this.player = createPlayer({
-            scene: this,
-            x: 2200,
-            y: 0,
-            texture: "soldier",
-        });
+        // Create player using Builder pattern
+        this.player = new PlayerBuilder(this)
+            .setPosition(2200, 0)
+            .setTexture("soldier")
+            .withAllSystems()
+            .build();
 
         this.player.setScale(PLAYER_CONFIG.movement.scale);
         this.player.body.setCollideWorldBounds(true);
