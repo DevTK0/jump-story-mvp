@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import type { Player as PlayerData } from "../../module_bindings";
-import { PlayerState } from "../../module_bindings";
 import { PLAYER_CONFIG } from "../player/config";
 
 export interface PeerConfig {

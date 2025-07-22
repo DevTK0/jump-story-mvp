@@ -247,6 +247,7 @@ export class ClimbingSystem
 
     // State
     private isSnappingToCenter = false;
+    private climbingDisabled = false; // For hurt state
 
     constructor(
         player: Player,
@@ -287,6 +288,11 @@ export class ClimbingSystem
     }
 
     private checkClimbingStart(): void {
+        // Don't start climbing if disabled (e.g., during hurt state)
+        if (this.climbingDisabled) {
+            return;
+        }
+        
         const inputState = this.inputSystem.getInputState();
         const onGround = this.movementSystem.isOnGround();
 
@@ -412,6 +418,14 @@ export class ClimbingSystem
 
     public forceExitClimbing(): void {
         this.exitClimbing();
+    }
+
+    public setClimbingDisabled(disabled: boolean): void {
+        this.climbingDisabled = disabled;
+        // If we're disabling climbing and currently climbing, exit climbing
+        if (disabled && this.player.isClimbing) {
+            this.exitClimbing();
+        }
     }
 
     // Debug rendering implementation

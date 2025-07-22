@@ -24,7 +24,6 @@ const CAMERA_SHAKE_INTENSITY = 0.03;
 
 export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     private player!: Player;
-    private identity!: Identity; // Used by peer manager
     private dbConnection!: DbConnection;
 
     // System managers
@@ -62,7 +61,6 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             identity: Identity,
             token: string
         ) => {
-            this.identity = identity;
             this.dbConnection = conn;
             localStorage.setItem("auth_token", token);
             console.log(
@@ -287,14 +285,29 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         }
     };
 
-    private onPlayerTouchEnemy = (_player: any, _enemy: any): void => {
-        // Get the animation system and check/trigger hurt animation
+    private onPlayerTouchEnemy = (player: any, enemy: any): void => {
+        // Calculate knockback direction (away from enemy)
+        const playerPos = { x: player.x, y: player.y };
+        const enemyPos = { x: enemy.x, y: enemy.y };
+        
+        // Calculate direction from enemy to player (away from enemy)
+        const deltaX = playerPos.x - enemyPos.x;
+        const deltaY = playerPos.y - enemyPos.y;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        
+        // Normalize direction (prevent division by zero)
+        const knockbackDirection = {
+            x: distance > 0 ? deltaX / distance : 1, // Default right if same position
+            y: distance > 0 ? deltaY / distance : 0
+        };
+        
+        // Get the animation system and check/trigger hurt animation with knockback
         const animationSystem = this.player.getSystem("animations") as any;
         if (animationSystem && animationSystem.playHurtAnimation) {
             // Only trigger hurt if not already invulnerable
-            const wasHurt = animationSystem.playHurtAnimation();
+            const wasHurt = animationSystem.playHurtAnimation(knockbackDirection);
             if (wasHurt) {
-                console.log('Player hurt by enemy!');
+                console.log('Player hurt by enemy! Knockback direction:', knockbackDirection);
                 // TODO: Call server reducer to damage player
             }
         }

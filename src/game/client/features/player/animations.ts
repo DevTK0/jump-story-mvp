@@ -224,7 +224,7 @@ export class AnimationSystem implements System {
         return this.animations.has(key);
     }
 
-    public playHurtAnimation(): boolean {
+    public playHurtAnimation(knockbackDirection?: { x: number; y: number }): boolean {
         // Don't play hurt animation if already invulnerable
         if (this.isInvulnerable) {
             return false;
@@ -233,14 +233,60 @@ export class AnimationSystem implements System {
         this.isPlayingHurtAnimation = true;
         this.isInvulnerable = true;
 
+        // Disable movement input during hurt state
+        const movementSystem = this.player.getSystem("movement") as any;
+        if (movementSystem && movementSystem.setMovementDisabled) {
+            movementSystem.setMovementDisabled(true);
+        }
+        
+        // Disable climbing input and exit climbing if currently climbing
+        const climbingSystem = this.player.getSystem("climbing") as any;
+        if (climbingSystem) {
+            if (climbingSystem.setClimbingDisabled) {
+                climbingSystem.setClimbingDisabled(true);
+            }
+            // exitClimbing is automatically called by setClimbingDisabled if currently climbing
+        }
+
+        // Apply knockback if direction provided
+        if (knockbackDirection && this.player.body) {
+            const body = this.player.body as Phaser.Physics.Arcade.Body;
+            const knockbackForce = 200; // Reduced knockback strength
+            
+            // For ground-based knockback, prioritize horizontal movement with small upward boost
+            const isGroundKnockback = Math.abs(knockbackDirection.y) < 0.3; // Mostly horizontal
+            
+            if (isGroundKnockback) {
+                // Ground knockback: moderate horizontal push + small upward boost
+                body.setVelocity(
+                    knockbackDirection.x * knockbackForce,
+                    -100 // Small upward velocity to lift off ground slightly
+                );
+            } else {
+                // Air knockback: use full direction
+                body.setVelocity(
+                    knockbackDirection.x * knockbackForce,
+                    knockbackDirection.y * knockbackForce
+                );
+            }
+        }
+
         // Add visual feedback during invulnerability (flashing effect)
         this.startInvulnerabilityFlash();
 
         this.playAnimation("soldier-hurt-anim");
 
-        // Reset hurt animation flag after animation completes
+        // Reset hurt animation flag and re-enable movement after animation completes
         const onHurtComplete = () => {
             this.isPlayingHurtAnimation = false;
+            // Re-enable movement after hurt animation
+            if (movementSystem && movementSystem.setMovementDisabled) {
+                movementSystem.setMovementDisabled(false);
+            }
+            // Re-enable climbing after hurt animation
+            if (climbingSystem && climbingSystem.setClimbingDisabled) {
+                climbingSystem.setClimbingDisabled(false);
+            }
         };
         setTimeout(onHurtComplete, 400);
 

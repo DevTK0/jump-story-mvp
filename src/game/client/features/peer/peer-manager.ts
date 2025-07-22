@@ -16,7 +16,7 @@ export class PeerManager {
         this.localPlayerIdentity = identity;
     }
 
-    public onPlayerInsert = (ctx: EventContext, playerData: PlayerData): void => {
+    public onPlayerInsert = (_ctx: EventContext, playerData: PlayerData): void => {
         // Don't create peer for local player
         if (this.localPlayerIdentity && playerData.identity.isEqual(this.localPlayerIdentity)) {
             return;
@@ -36,7 +36,7 @@ export class PeerManager {
         console.log(`Created peer for player: ${playerData.name} (${identityString})`);
     };
 
-    public onPlayerUpdate = (ctx: EventContext, oldPlayerData: PlayerData, newPlayerData: PlayerData): void => {
+    public onPlayerUpdate = (_ctx: EventContext, _oldPlayerData: PlayerData, newPlayerData: PlayerData): void => {
         // Don't update local player
         if (this.localPlayerIdentity && newPlayerData.identity.isEqual(this.localPlayerIdentity)) {
             return;
@@ -50,7 +50,7 @@ export class PeerManager {
         }
     };
 
-    public onPlayerDelete = (ctx: EventContext, playerData: PlayerData): void => {
+    public onPlayerDelete = (_ctx: EventContext, playerData: PlayerData): void => {
         const identityString = playerData.identity.toHexString();
         const peer = this.peers.get(identityString);
         

@@ -175,17 +175,17 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
       let attackState: PlayerState;
       switch (attackType) {
         case 1:
-          attackState = PlayerState.Attack1;
+          attackState = { tag: "Attack1" };
           break;
         case 2:
-          attackState = PlayerState.Attack2;
+          attackState = { tag: "Attack2" };
           break;
         case 3:
-          attackState = PlayerState.Attack3;
+          attackState = { tag: "Attack3" };
           break;
         default:
           console.warn(`Unknown attack type: ${attackType}, defaulting to Unknown state`);
-          attackState = PlayerState.Unknown;
+          attackState = { tag: "Unknown" };
       }
       this.dbConnection.reducers.updatePlayerState(attackState);
       console.log(`Synced attack state: ${attackState.tag}`);
@@ -232,7 +232,7 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
           
           // Sync back to idle state
           if (this.dbConnection) {
-            this.dbConnection.reducers.updatePlayerState(PlayerState.Idle);
+            this.dbConnection.reducers.updatePlayerState({ tag: "Idle" });
             console.log('Attack completed - synced back to Idle state');
           }
           

@@ -16,6 +16,7 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
     // Movement state
     private hasUsedDoubleJump = false;
     private wasOnGround = false; // Track ground contact state
+    private movementDisabled = false; // For hurt state knockback
 
     // Shadow trajectory renderer
     private shadowRenderer: ShadowTrajectoryRenderer;
@@ -28,8 +29,7 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
     private dbConnection: DbConnection | null = null;
 
     // State synchronization
-    private currentPlayerState: PlayerState = PlayerState.Idle;
-    private lastStateUpdateTime = 0;
+    private currentPlayerState: PlayerState = { tag: "Idle" };
 
     constructor(player: Player, inputSystem: InputSystem) {
         super();
@@ -47,8 +47,8 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
     update(time: number, _delta: number): void {
         let forceSyncOnGroundContact = false;
         
-        // Handle movement physics (skip if climbing, but still do position sync)
-        if (!this.player.isClimbing) {
+        // Handle movement physics (skip if climbing or movement disabled, but still do position sync)
+        if (!this.player.isClimbing && !this.movementDisabled) {
             const body = this.player.body;
             const onGround = body.onFloor();
             const inputState = this.inputSystem.getInputState();
@@ -131,7 +131,7 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
         }
     }
 
-    private syncStateIfNeeded(time: number): void {
+    private syncStateIfNeeded(_time: number): void {
         if (!this.dbConnection) return;
 
         const newState = this.determineMovementState();
@@ -140,7 +140,6 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
         if (newState.tag !== this.currentPlayerState.tag) {
             this.dbConnection.reducers.updatePlayerState(newState);
             this.currentPlayerState = newState;
-            this.lastStateUpdateTime = time;
             console.log(`Updated player state to: ${newState.tag}`);
         }
     }
@@ -152,14 +151,14 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
         }
 
         if (this.player.isClimbing) {
-            return PlayerState.Climbing;
+            return { tag: "Climbing" };
         }
 
         const body = this.player.body;
         if (Math.abs(body.velocity.x) > 0.1) {
-            return PlayerState.Walk;
+            return { tag: "Walk" };
         } else {
-            return PlayerState.Idle;
+            return { tag: "Idle" };
         }
     }
 
@@ -298,6 +297,10 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
     }
 
     // Clean up all resources
+    public setMovementDisabled(disabled: boolean): void {
+        this.movementDisabled = disabled;
+    }
+
     destroy(): void {
         this.shadowRenderer.destroy();
     }
