@@ -42,18 +42,32 @@ import { Debug } from "./debug_reducer.ts";
 export { Debug };
 import { Disconnect } from "./disconnect_reducer.ts";
 export { Disconnect };
+import { InitializeEnemyRoutes } from "./initialize_enemy_routes_reducer.ts";
+export { InitializeEnemyRoutes };
+import { SpawnAllEnemies } from "./spawn_all_enemies_reducer.ts";
+export { SpawnAllEnemies };
 import { UpdatePlayerPosition } from "./update_player_position_reducer.ts";
 export { UpdatePlayerPosition };
 import { UpdatePlayerState } from "./update_player_state_reducer.ts";
 export { UpdatePlayerState };
 
 // Import and reexport all table handle types
+import { EnemyTableHandle } from "./enemy_table.ts";
+export { EnemyTableHandle };
+import { EnemyRouteTableHandle } from "./enemy_route_table.ts";
+export { EnemyRouteTableHandle };
 import { PlayerTableHandle } from "./player_table.ts";
 export { PlayerTableHandle };
 
 // Import and reexport all types
+import { DbRect } from "./db_rect_type.ts";
+export { DbRect };
 import { DbVector2 } from "./db_vector_2_type.ts";
 export { DbVector2 };
+import { Enemy } from "./enemy_type.ts";
+export { Enemy };
+import { EnemyRoute } from "./enemy_route_type.ts";
+export { EnemyRoute };
 import { Player } from "./player_type.ts";
 export { Player };
 import { PlayerState } from "./player_state_type.ts";
@@ -61,6 +75,24 @@ export { PlayerState };
 
 const REMOTE_MODULE = {
   tables: {
+    Enemy: {
+      tableName: "Enemy",
+      rowType: Enemy.getTypeScriptAlgebraicType(),
+      primaryKey: "enemyId",
+      primaryKeyInfo: {
+        colName: "enemyId",
+        colType: Enemy.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    EnemyRoute: {
+      tableName: "EnemyRoute",
+      rowType: EnemyRoute.getTypeScriptAlgebraicType(),
+      primaryKey: "routeId",
+      primaryKeyInfo: {
+        colName: "routeId",
+        colType: EnemyRoute.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
     Player: {
       tableName: "Player",
       rowType: Player.getTypeScriptAlgebraicType(),
@@ -87,6 +119,14 @@ const REMOTE_MODULE = {
     Disconnect: {
       reducerName: "Disconnect",
       argsType: Disconnect.getTypeScriptAlgebraicType(),
+    },
+    InitializeEnemyRoutes: {
+      reducerName: "InitializeEnemyRoutes",
+      argsType: InitializeEnemyRoutes.getTypeScriptAlgebraicType(),
+    },
+    SpawnAllEnemies: {
+      reducerName: "SpawnAllEnemies",
+      argsType: SpawnAllEnemies.getTypeScriptAlgebraicType(),
     },
     UpdatePlayerPosition: {
       reducerName: "UpdatePlayerPosition",
@@ -130,6 +170,8 @@ export type Reducer = never
 | { name: "Connect", args: Connect }
 | { name: "Debug", args: Debug }
 | { name: "Disconnect", args: Disconnect }
+| { name: "InitializeEnemyRoutes", args: InitializeEnemyRoutes }
+| { name: "SpawnAllEnemies", args: SpawnAllEnemies }
 | { name: "UpdatePlayerPosition", args: UpdatePlayerPosition }
 | { name: "UpdatePlayerState", args: UpdatePlayerState }
 ;
@@ -177,6 +219,34 @@ export class RemoteReducers {
     this.connection.offReducer("Disconnect", callback);
   }
 
+  initializeEnemyRoutes(tilemapJson: string) {
+    const __args = { tilemapJson };
+    let __writer = new BinaryWriter(1024);
+    InitializeEnemyRoutes.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("InitializeEnemyRoutes", __argsBuffer, this.setCallReducerFlags.initializeEnemyRoutesFlags);
+  }
+
+  onInitializeEnemyRoutes(callback: (ctx: ReducerEventContext, tilemapJson: string) => void) {
+    this.connection.onReducer("InitializeEnemyRoutes", callback);
+  }
+
+  removeOnInitializeEnemyRoutes(callback: (ctx: ReducerEventContext, tilemapJson: string) => void) {
+    this.connection.offReducer("InitializeEnemyRoutes", callback);
+  }
+
+  spawnAllEnemies() {
+    this.connection.callReducer("SpawnAllEnemies", new Uint8Array(0), this.setCallReducerFlags.spawnAllEnemiesFlags);
+  }
+
+  onSpawnAllEnemies(callback: (ctx: ReducerEventContext) => void) {
+    this.connection.onReducer("SpawnAllEnemies", callback);
+  }
+
+  removeOnSpawnAllEnemies(callback: (ctx: ReducerEventContext) => void) {
+    this.connection.offReducer("SpawnAllEnemies", callback);
+  }
+
   updatePlayerPosition(x: number, y: number) {
     const __args = { x, y };
     let __writer = new BinaryWriter(1024);
@@ -222,6 +292,16 @@ export class SetReducerFlags {
     this.debugFlags = flags;
   }
 
+  initializeEnemyRoutesFlags: CallReducerFlags = 'FullUpdate';
+  initializeEnemyRoutes(flags: CallReducerFlags) {
+    this.initializeEnemyRoutesFlags = flags;
+  }
+
+  spawnAllEnemiesFlags: CallReducerFlags = 'FullUpdate';
+  spawnAllEnemies(flags: CallReducerFlags) {
+    this.spawnAllEnemiesFlags = flags;
+  }
+
   updatePlayerPositionFlags: CallReducerFlags = 'FullUpdate';
   updatePlayerPosition(flags: CallReducerFlags) {
     this.updatePlayerPositionFlags = flags;
@@ -236,6 +316,14 @@ export class SetReducerFlags {
 
 export class RemoteTables {
   constructor(private connection: DbConnectionImpl) {}
+
+  get enemy(): EnemyTableHandle {
+    return new EnemyTableHandle(this.connection.clientCache.getOrCreateTable<Enemy>(REMOTE_MODULE.tables.Enemy));
+  }
+
+  get enemyRoute(): EnemyRouteTableHandle {
+    return new EnemyRouteTableHandle(this.connection.clientCache.getOrCreateTable<EnemyRoute>(REMOTE_MODULE.tables.EnemyRoute));
+  }
 
   get player(): PlayerTableHandle {
     return new PlayerTableHandle(this.connection.clientCache.getOrCreateTable<Player>(REMOTE_MODULE.tables.Player));

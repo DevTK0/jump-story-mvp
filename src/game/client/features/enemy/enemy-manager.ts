@@ -1,176 +1,144 @@
-import Phaser from 'phaser';
-import { Enemy, type EnemyConfig, DEFAULT_ENEMY_CONFIG } from './enemy';
-import { ENEMY_CONFIG } from './config';
-import { STAGE_CONFIG } from '../stage/config';
-
-export interface EnemySpawnConfig {
-  maxEnemies: number;
-  spawnIntervalMs: number;
-  spawnMargin: number;
-  enemyConfig: EnemyConfig;
-}
+import Phaser from "phaser";
+import { DbConnection, Enemy as ServerEnemy } from "../../module_bindings";
 
 export class EnemyManager {
-  private scene: Phaser.Scene;
-  private spawnConfig: EnemySpawnConfig;
-  private target: Phaser.GameObjects.GameObject & { x: number; y: number };
-  
-  private enemies: Enemy[] = [];
-  private enemyGroup!: Phaser.Physics.Arcade.Group;
-  private spawnTimer: Phaser.Time.TimerEvent | null = null;
-  private initialSpawnTimers: Phaser.Time.TimerEvent[] = [];
+    private scene: Phaser.Scene;
+    private dbConnection: DbConnection | null = null;
+    private enemies = new Map<number, Phaser.Physics.Arcade.Sprite>();
+    private enemyGroup!: Phaser.Physics.Arcade.Group;
 
-  constructor(scene: Phaser.Scene, target: Phaser.GameObjects.GameObject & { x: number; y: number }, spawnConfig?: Partial<EnemySpawnConfig>) {
-    this.scene = scene;
-    this.target = target;
-    this.spawnConfig = {
-      maxEnemies: ENEMY_CONFIG.spawning.maxCount,
-      spawnIntervalMs: ENEMY_CONFIG.spawning.interval,
-      spawnMargin: ENEMY_CONFIG.spawning.margin,
-      enemyConfig: DEFAULT_ENEMY_CONFIG,
-      ...spawnConfig
-    };
-    
-    this.setupEnemyGroup();
-    this.startSpawning();
-  }
-
-  private setupEnemyGroup(): void {
-    this.enemyGroup = this.scene.physics.add.group({
-      classType: Enemy,
-      maxSize: this.spawnConfig.maxEnemies * 2,
-      runChildUpdate: false
-    });
-  }
-
-  private startSpawning(): void {
-    this.spawnTimer = this.scene.time.addEvent({
-      delay: this.spawnConfig.spawnIntervalMs,
-      callback: this.trySpawnEnemy,
-      callbackScope: this,
-      loop: true
-    });
-    
-    this.spawnInitialEnemies();
-  }
-
-  private spawnInitialEnemies(): void {
-    for (let i = 0; i < Math.min(ENEMY_CONFIG.spawning.initialCount, this.spawnConfig.maxEnemies); i++) {
-      const timer = this.scene.time.delayedCall(i * ENEMY_CONFIG.spawning.initialDelay, () => {
-        this.trySpawnEnemy();
-      });
-      this.initialSpawnTimers.push(timer);
-    }
-  }
-
-  private trySpawnEnemy(): void {
-    if (this.enemies.length >= this.spawnConfig.maxEnemies) {
-      return;
+    constructor(scene: Phaser.Scene) {
+        this.scene = scene;
+        this.setupEnemyGroup();
+        this.setupEnemyAnimations();
     }
 
-    const spawnPosition = this.getRandomSpawnPosition();
-    this.spawnEnemy(spawnPosition.x, spawnPosition.y);
-  }
-
-  private getRandomSpawnPosition(): { x: number, y: number } {
-    const gameWidth = STAGE_CONFIG.world.width;
-    const gameHeight = STAGE_CONFIG.world.height;
-    const margin = this.spawnConfig.spawnMargin;
-    const groundY = gameHeight - STAGE_CONFIG.ground.height;
-    const maxSpawnY = groundY - STAGE_CONFIG.ground.height;
-    
-    const side = Phaser.Math.Between(0, 2); // Only use top, left, right (no bottom spawning)
-    
-    switch (side) {
-      case 0: // Top
-        return {
-          x: Phaser.Math.Between(margin, gameWidth - margin),
-          y: margin
-        };
-      case 1: // Right
-        return {
-          x: gameWidth - margin,
-          y: Phaser.Math.Between(margin, maxSpawnY)
-        };
-      case 2: // Left
-      default:
-        return {
-          x: margin,
-          y: Phaser.Math.Between(margin, maxSpawnY)
-        };
+    private setupEnemyGroup(): void {
+        this.enemyGroup = this.scene.physics.add.group();
     }
-  }
 
-  private spawnEnemy(x: number, y: number): Enemy {
-    const enemy = new Enemy(this.scene, x, y, this.spawnConfig.enemyConfig, this.target);
-    
-    this.enemies.push(enemy);
-    this.enemyGroup.add(enemy);
-    
-    return enemy;
-  }
 
-  public update(): void {
-    this.enemies = this.enemies.filter(enemy => {
-      if (!enemy.isAlive()) {
-        this.enemyGroup.remove(enemy);
-        return false;
-      }
-      enemy.update();
-      return true;
-    });
-  }
-
-  public destroyEnemy(enemy: Enemy): void {
-    const index = this.enemies.indexOf(enemy);
-    if (index !== -1) {
-      this.enemies.splice(index, 1);
-      this.enemyGroup.remove(enemy);
-      enemy.destroy();
+    private setupEnemyAnimations(): void {
+        // Create orc idle animation
+        if (!this.scene.anims.exists('orc-idle-anim')) {
+            this.scene.anims.create({
+                key: 'orc-idle-anim',
+                frames: this.scene.anims.generateFrameNumbers('orc', { start: 0, end: 5 }),
+                frameRate: 8,
+                repeat: -1
+            });
+        }
+        
+        // Create additional orc animations if needed
+        if (!this.scene.anims.exists('orc-walk-anim')) {
+            this.scene.anims.create({
+                key: 'orc-walk-anim', 
+                frames: this.scene.anims.generateFrameNumbers('orc', { start: 9, end: 16 }),
+                frameRate: 10,
+                repeat: -1
+            });
+        }
     }
-  }
 
-  public destroyAllEnemies(): void {
-    this.enemies.forEach(enemy => {
-      this.enemyGroup.remove(enemy);
-      enemy.destroy();
-    });
-    this.enemies = [];
-  }
-
-  public getEnemies(): Enemy[] {
-    return [...this.enemies];
-  }
-
-  public getEnemyGroup(): Phaser.Physics.Arcade.Group {
-    return this.enemyGroup;
-  }
-
-  public getEnemyCount(): number {
-    return this.enemies.length;
-  }
-
-  public destroy(): void {
-    if (this.spawnTimer) {
-      this.spawnTimer.destroy();
-      this.spawnTimer = null;
+    public setDbConnection(connection: DbConnection): void {
+        this.dbConnection = connection;
+        this.setupServerSubscriptions();
     }
-    
-    this.initialSpawnTimers.forEach(timer => {
-      if (timer) {
-        timer.destroy();
-      }
-    });
-    this.initialSpawnTimers = [];
-    
-    this.destroyAllEnemies();
-    this.enemyGroup.destroy();
-  }
+
+    private setupServerSubscriptions(): void {
+        if (!this.dbConnection) return;
+
+        // Subscribe to enemy table changes
+        this.dbConnection.db.enemy.onInsert((_ctx, enemy) => {
+            this.spawnServerEnemy(enemy);
+        });
+
+        this.dbConnection.db.enemy.onDelete((_ctx, enemy) => {
+            this.despawnServerEnemy(enemy.enemyId);
+        });
+
+        this.dbConnection.db.enemy.onUpdate((_ctx, _oldEnemy, newEnemy) => {
+            this.updateServerEnemy(newEnemy);
+        });
+
+        // Spawn existing enemies that are already in the database
+        for (const enemy of this.dbConnection.db.enemy.iter()) {
+            this.spawnServerEnemy(enemy);
+        }
+    }
+
+    private spawnServerEnemy(serverEnemy: ServerEnemy): void {
+        console.log("enemy: ", serverEnemy);
+        
+        // Use orc spritesheet directly based on enemyType
+        const spriteKey = serverEnemy.enemyType; // "orc"
+        
+        // Create enemy sprite using the spritesheet
+        const sprite = this.scene.physics.add.sprite(
+            serverEnemy.position.x,
+            serverEnemy.position.y,
+            spriteKey
+        );
+
+        // Configure sprite same as player
+        sprite.setOrigin(0.5, 0.5);
+        sprite.setScale(3); // Match player scale (PLAYER_CONFIG.movement.scale)
+        sprite.setDepth(5);
+        
+        // Set initial frame to first frame of idle animation
+        sprite.setFrame(0);
+        
+        // Play idle animation
+        sprite.play(`${spriteKey}-idle-anim`);
+
+        // Configure physics body for collision but no movement
+        if (sprite.body) {
+            const body = sprite.body as Phaser.Physics.Arcade.Body;
+            body.setSize(10, 10); // Match player hitbox size
+            body.setCollideWorldBounds(true);
+            body.setImmovable(true); // Won't be pushed around by collisions
+            body.setVelocity(0, 0); // No movement
+        }
+
+        // Add to group
+        this.enemyGroup.add(sprite);
+
+        // Store reference
+        this.enemies.set(serverEnemy.enemyId, sprite);
+    }
+
+    private despawnServerEnemy(enemyId: number): void {
+        const sprite = this.enemies.get(enemyId);
+        if (sprite) {
+            this.enemyGroup.remove(sprite);
+            sprite.destroy();
+            this.enemies.delete(enemyId);
+        }
+    }
+
+    private updateServerEnemy(serverEnemy: ServerEnemy): void {
+        const sprite = this.enemies.get(serverEnemy.enemyId);
+        if (sprite) {
+            // Update position if it changed
+            sprite.setPosition(serverEnemy.position.x, serverEnemy.position.y);
+
+            // Could add HP-based visual effects here later
+            // e.g., tint based on currentHp percentage
+        }
+    }
+
+
+    public getEnemyGroup(): Phaser.Physics.Arcade.Group {
+        return this.enemyGroup;
+    }
+
+
+    public destroy(): void {
+        this.enemies.forEach((sprite) => {
+            sprite.destroy();
+        });
+        this.enemies.clear();
+        this.enemyGroup.destroy();
+    }
 }
 
-export const DEFAULT_SPAWN_CONFIG: EnemySpawnConfig = {
-  maxEnemies: ENEMY_CONFIG.spawning.maxCount,
-  spawnIntervalMs: ENEMY_CONFIG.spawning.interval,
-  spawnMargin: ENEMY_CONFIG.spawning.margin,
-  enemyConfig: DEFAULT_ENEMY_CONFIG
-};

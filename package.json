@@ -13,6 +13,7 @@
     "docs:preview": "astro preview",
     "test:load": "tsx scripts/tests/stagehand-load-test.ts",
     "test:climb": "tsx scripts/tests/stagehand-climbing-test.ts",
+    "script:initroute": "tsx scripts/init-enemy-routes.ts",
     "mcp:stagehand": "npx @browserbasehq/mcp-stagehand"
   },
   "keywords": [],

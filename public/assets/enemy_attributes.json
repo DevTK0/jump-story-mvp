@@ -1,0 +1,13 @@
+{
+    "enemies": {
+        "orc": {
+            "health": 100,
+            "movement_speed": 50,
+            "damage": 10,
+            "sprite": "orc",
+            "ai_behavior": "patrol",
+            "attack_range": 50,
+            "aggro_range": 150
+        }
+    }
+}

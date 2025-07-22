@@ -1,6 +1,6 @@
 // Export all enemy-related components
 export { Enemy, type EnemyConfig, DEFAULT_ENEMY_CONFIG } from './enemy';
-export { EnemyManager, type EnemySpawnConfig, DEFAULT_SPAWN_CONFIG } from './enemy-manager';
+export { EnemyManager } from './enemy-manager';
 
 // Export enemy constants
 export { ENEMY_CONFIG } from './config';
