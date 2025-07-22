@@ -7,12 +7,8 @@ import { PLAYER_CONFIG } from "../features/player";
 import type { IDebuggable } from "../features/debug/debug-interfaces";
 import { DEBUG_CONFIG } from "../features/debug/config";
 import { DebugState } from "../features/debug/debug-state";
-
-import {
-    DbConnection,
-    type ErrorContext,
-    type SubscriptionEventContext,
-} from "../module_bindings";
+import { DatabaseConnectionManager } from "../managers";
+import { DbConnection } from "../module_bindings";
 import { Identity } from "@clockworklabs/spacetimedb-sdk";
 
 // Scene-specific constants
@@ -24,7 +20,9 @@ const CAMERA_SHAKE_INTENSITY = 0.03;
 
 export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     private player!: Player;
-    private dbConnection!: DbConnection;
+    
+    // Database connection
+    private dbConnectionManager!: DatabaseConnectionManager;
 
     // System managers
     private enemyManager!: EnemyManager;
@@ -56,71 +54,24 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     }
 
     create(): void {
-        const onConnect = (
-            conn: DbConnection,
-            identity: Identity,
-            token: string
-        ) => {
-            this.dbConnection = conn;
-            localStorage.setItem("auth_token", token);
-            console.log(
-                "Connected to SpacetimeDB with identity:",
-                identity.toHexString()
-            );
-
-            conn.subscriptionBuilder()
-                .onApplied(handleSubscriptionApplied)
-                .subscribeToAllTables();
-
-            // Set database connection on player's systems if they exist
-            if (this.player) {
-                const movementSystem = this.player.getSystem("movement") as any;
-                if (movementSystem && movementSystem.setDbConnection) {
-                    movementSystem.setDbConnection(conn);
-                }
-
-                const combatSystem = this.player.getSystem("combat") as any;
-                if (combatSystem && combatSystem.setSyncManager) {
-                    // Get the sync manager from movement system
-                    const syncManager = movementSystem.syncManager;
-                    combatSystem.setSyncManager(syncManager);
-                }
+        // Initialize database connection manager
+        this.dbConnectionManager = new DatabaseConnectionManager(
+            {
+                uri: "ws://localhost:3000",
+                moduleName: "jump-story"
+            },
+            {
+                onConnect: this.handleDatabaseConnect.bind(this),
+                onDisconnect: () => console.log("Disconnected from SpacetimeDB"),
+                onError: (_ctx, err) => console.error("Error connecting to SpacetimeDB:", err),
+                onSubscriptionApplied: (_ctx) => console.log("Subscription applied!")
             }
+        );
 
-            // Initialize peer manager and set up player table event handlers
-            this.peerManager = new PeerManager(this);
-            this.peerManager.setLocalPlayerIdentity(identity);
-
-            // Set up peer event handlers
-            conn.db.player.onInsert(this.peerManager.onPlayerInsert);
-            conn.db.player.onUpdate(this.peerManager.onPlayerUpdate);
-            conn.db.player.onDelete(this.peerManager.onPlayerDelete);
-
-            // Set database connection on enemy manager if it exists
-            if (this.enemyManager) {
-                this.enemyManager.setDbConnection(conn);
-            }
-        };
-
-        const handleSubscriptionApplied = (_ctx: SubscriptionEventContext) => {
-            console.log("Subscription applied!");
-        };
-
-        const onDisconnect = () => {
-            console.log("Disconnected from SpacetimeDB");
-        };
-
-        const onConnectError = (_ctx: ErrorContext, err: Error) => {
-            console.log("Error connecting to SpacetimeDB:", err);
-        };
-
-        DbConnection.builder()
-            .withUri("ws://localhost:3000")
-            .withModuleName("jump-story")
-            .onConnect(onConnect)
-            .onDisconnect(onDisconnect)
-            .onConnectError(onConnectError)
-            .build();
+        // Start database connection
+        this.dbConnectionManager.connect().catch(err => {
+            console.error("Failed to connect to database:", err);
+        });
 
         // Create background
         this.cameras.main.setBackgroundColor(COLOR_BACKGROUND);
@@ -158,18 +109,9 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         this.cameras.main.setBounds(0, 0, mapWidth, mapHeight);
 
         // Set database connection on player's systems if connection exists
-        if (this.dbConnection) {
-            const movementSystem = this.player.getSystem("movement") as any;
-            if (movementSystem && movementSystem.setDbConnection) {
-                movementSystem.setDbConnection(this.dbConnection);
-            }
-
-            const combatSystem = this.player.getSystem("combat") as any;
-            if (combatSystem && combatSystem.setSyncManager) {
-                // Get the sync manager from movement system
-                const syncManager = movementSystem.syncManager;
-                combatSystem.setSyncManager(syncManager);
-            }
+        const dbConnection = this.dbConnectionManager.getConnection();
+        if (dbConnection) {
+            this.setupPlayerSystems(dbConnection);
         }
 
         // Set up map-based collisions
@@ -225,8 +167,9 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         this.enemyManager = new EnemyManager(this);
 
         // Set database connection if already available
-        if (this.dbConnection) {
-            this.enemyManager.setDbConnection(this.dbConnection);
+        const dbConn = this.dbConnectionManager.getConnection();
+        if (dbConn) {
+            this.enemyManager.setDbConnection(dbConn);
         }
 
         // Get combat system for attack collision
@@ -288,6 +231,41 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             // TODO: Call server reducer to damage/destroy enemy
         }
     };
+
+    private handleDatabaseConnect(conn: DbConnection, identity: Identity, _token: string): void {
+        // Set up player systems if player exists
+        if (this.player) {
+            this.setupPlayerSystems(conn);
+        }
+
+        // Initialize peer manager
+        this.peerManager = new PeerManager(this);
+        this.peerManager.setLocalPlayerIdentity(identity);
+
+        // Set up peer event handlers
+        conn.db.player.onInsert(this.peerManager.onPlayerInsert);
+        conn.db.player.onUpdate(this.peerManager.onPlayerUpdate);
+        conn.db.player.onDelete(this.peerManager.onPlayerDelete);
+
+        // Set database connection on enemy manager if it exists
+        if (this.enemyManager) {
+            this.enemyManager.setDbConnection(conn);
+        }
+    }
+
+    private setupPlayerSystems(conn: DbConnection): void {
+        const movementSystem = this.player.getSystem("movement") as any;
+        if (movementSystem && movementSystem.setDbConnection) {
+            movementSystem.setDbConnection(conn);
+        }
+
+        const combatSystem = this.player.getSystem("combat") as any;
+        if (combatSystem && combatSystem.setSyncManager) {
+            // Get the sync manager from movement system
+            const syncManager = movementSystem.syncManager;
+            combatSystem.setSyncManager(syncManager);
+        }
+    }
 
     private onPlayerTouchEnemy = (player: any, enemy: any): void => {
         // Calculate knockback direction (away from enemy)
