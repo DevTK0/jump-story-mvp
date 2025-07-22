@@ -80,8 +80,10 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
                 }
 
                 const combatSystem = this.player.getSystem("combat") as any;
-                if (combatSystem && combatSystem.setDbConnection) {
-                    combatSystem.setDbConnection(conn);
+                if (combatSystem && combatSystem.setSyncManager) {
+                    // Get the sync manager from movement system
+                    const syncManager = movementSystem.syncManager;
+                    combatSystem.setSyncManager(syncManager);
                 }
             }
 
@@ -163,8 +165,10 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             }
 
             const combatSystem = this.player.getSystem("combat") as any;
-            if (combatSystem && combatSystem.setDbConnection) {
-                combatSystem.setDbConnection(this.dbConnection);
+            if (combatSystem && combatSystem.setSyncManager) {
+                // Get the sync manager from movement system
+                const syncManager = movementSystem.syncManager;
+                combatSystem.setSyncManager(syncManager);
             }
         }
 

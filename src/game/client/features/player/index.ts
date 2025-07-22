@@ -8,6 +8,7 @@ export { ClimbingSystem } from './climbing';
 export { CombatSystem, type AttackConfig } from './combat';
 export { AnimationSystem } from './animations';
 export { DebugSystem } from '../debug';
+export { SyncManager, type SyncConfig } from './sync-manager';
 
 // Factory function to create a fully configured player
 import { Player, type PlayerConfig } from './player';

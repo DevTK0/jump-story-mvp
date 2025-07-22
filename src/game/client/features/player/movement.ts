@@ -8,6 +8,7 @@ import { DEBUG_CONFIG } from "../debug/config";
 import { BaseDebugRenderer } from "../debug/debug-renderer";
 import { ShadowTrajectoryRenderer } from "./effects/shadow";
 import { DbConnection, PlayerState } from "../../module_bindings";
+import { SyncManager } from "./sync-manager";
 
 export class MovementSystem extends BaseDebugRenderer implements System, IDebuggable {
     private player: Player;
@@ -21,27 +22,20 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
     // Shadow trajectory renderer
     private shadowRenderer: ShadowTrajectoryRenderer;
     
-    // Position synchronization
-    private lastSyncedPosition = { x: 0, y: 0 };
-    private lastSyncTime = 0;
-    private syncThreshold = 10; // pixels
-    private syncInterval = 200; // milliseconds
-    private dbConnection: DbConnection | null = null;
-
-    // State synchronization
-    private currentPlayerState: PlayerState = { tag: "Idle" };
+    // Synchronization manager
+    public readonly syncManager: SyncManager;
 
     constructor(player: Player, inputSystem: InputSystem) {
         super();
         this.player = player;
         this.inputSystem = inputSystem;
         this.shadowRenderer = new ShadowTrajectoryRenderer(player.scene);
-        this.lastSyncedPosition = { x: player.x, y: player.y };
+        this.syncManager = new SyncManager(player);
         this.wasOnGround = player.body?.onFloor() || false;
     }
     
     public setDbConnection(connection: DbConnection): void {
-        this.dbConnection = connection;
+        this.syncManager.setDbConnection(connection);
     }
 
     update(time: number, _delta: number): void {
@@ -101,53 +95,17 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
         }
         
         // Sync position to SpacetimeDB if needed (ALWAYS do this, even when climbing)
-        this.syncPositionIfNeeded(time, forceSyncOnGroundContact);
+        this.syncManager.syncPosition(time, forceSyncOnGroundContact);
 
         // Sync state to SpacetimeDB if needed
-        this.syncStateIfNeeded(time);
+        const newState = this.determineMovementState();
+        this.syncManager.syncState(newState);
     }
     
-    private syncPositionIfNeeded(time: number, forceSync: boolean = false): void {
-        if (!this.dbConnection) return;
-        
-        const currentX = this.player.x;
-        const currentY = this.player.y;
-        const deltaX = Math.abs(currentX - this.lastSyncedPosition.x);
-        const deltaY = Math.abs(currentY - this.lastSyncedPosition.y);
-        
-        // Force sync on ground contact, or check normal conditions
-        const shouldSync = forceSync || 
-            (time - this.lastSyncTime >= this.syncInterval && 
-             (deltaX > this.syncThreshold || deltaY > this.syncThreshold));
-        
-        if (shouldSync) {
-            this.dbConnection.reducers.updatePlayerPosition(currentX, currentY);
-            this.lastSyncedPosition = { x: currentX, y: currentY };
-            this.lastSyncTime = time;
-            
-            if (forceSync) {
-                console.log(`Forced position sync on ground contact: (${currentX}, ${currentY})`);
-            }
-        }
-    }
-
-    private syncStateIfNeeded(_time: number): void {
-        if (!this.dbConnection) return;
-
-        const newState = this.determineMovementState();
-        
-        // Only sync if state actually changed (don't spam with same state)
-        if (newState.tag !== this.currentPlayerState.tag) {
-            this.dbConnection.reducers.updatePlayerState(newState);
-            this.currentPlayerState = newState;
-            console.log(`Updated player state to: ${newState.tag}`);
-        }
-    }
-
     private determineMovementState(): PlayerState {
         // Don't override attack states or other special states from other systems
         if (this.player.isAttacking) {
-            return this.currentPlayerState; // Keep current state if attacking
+            return this.syncManager.getCurrentState(); // Keep current state if attacking
         }
 
         if (this.player.isClimbing) {
