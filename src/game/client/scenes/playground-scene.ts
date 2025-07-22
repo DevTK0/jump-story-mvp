@@ -7,7 +7,7 @@ import { PLAYER_CONFIG } from "../features/player";
 import type { IDebuggable } from "../features/debug/debug-interfaces";
 import { DEBUG_CONFIG } from "../features/debug/config";
 import { DebugState } from "../features/debug/debug-state";
-import { DatabaseConnectionManager, CollisionSetupManager, type CollisionGroups } from "../managers";
+import { DatabaseConnectionManager, CollisionSetupManager, InteractionHandler, type CollisionGroups } from "../managers";
 import { DbConnection } from "../module_bindings";
 import { Identity } from "@clockworklabs/spacetimedb-sdk";
 
@@ -30,6 +30,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     private mapData!: MapData;
     private peerManager!: PeerManager;
     private collisionSetupManager!: CollisionSetupManager;
+    private interactionHandler!: InteractionHandler;
 
     constructor() {
         super({ key: "playground" });
@@ -115,8 +116,12 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             this.setupPlayerSystems(dbConnection);
         }
 
-        // Initialize collision setup manager
+        // Initialize managers
         this.collisionSetupManager = new CollisionSetupManager(this);
+        this.interactionHandler = new InteractionHandler(this, {
+            cameraShakeDuration: CAMERA_SHAKE_DURATION,
+            cameraShakeIntensity: CAMERA_SHAKE_INTENSITY
+        });
 
         // Create collision groups from map data
         const collisionGroups: CollisionGroups = {
@@ -139,6 +144,12 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             this.enemyManager.setDbConnection(dbConn);
         }
 
+        // Create interaction callbacks
+        const interactionCallbacks = this.interactionHandler.createInteractionCallbacks(
+            this.player,
+            this.enemyManager
+        );
+
         // Set up all collisions using the CollisionSetupManager
         this.collisionSetupManager.setupAllCollisions(
             this.player,
@@ -146,26 +157,10 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             collisionGroups,
             combatSystem,
             climbingSystem,
-            {
-                onPlayerTouchEnemy: this.onPlayerTouchEnemy,
-                onAttackHitEnemy: this.onAttackHitEnemy
-            },
+            interactionCallbacks,
             this
         );
     }
-
-    private onAttackHitEnemy = (_hitbox: any, enemy: any): void => {
-        // Visual feedback for successful hit
-        this.cameras.main.shake(CAMERA_SHAKE_DURATION, CAMERA_SHAKE_INTENSITY);
-
-        // Get enemy ID from sprite and play hit animation
-        const enemyId = this.enemyManager.getEnemyIdFromSprite(enemy);
-        if (enemyId !== null) {
-            this.enemyManager.playHitAnimation(enemyId);
-            console.log('Enemy hit!', enemyId);
-            // TODO: Call server reducer to damage/destroy enemy
-        }
-    };
 
     private handleDatabaseConnect(conn: DbConnection, identity: Identity, _token: string): void {
         // Set up player systems if player exists
@@ -201,34 +196,6 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             combatSystem.setSyncManager(syncManager);
         }
     }
-
-    private onPlayerTouchEnemy = (player: any, enemy: any): void => {
-        // Calculate knockback direction (away from enemy)
-        const playerPos = { x: player.x, y: player.y };
-        const enemyPos = { x: enemy.x, y: enemy.y };
-        
-        // Calculate direction from enemy to player (away from enemy)
-        const deltaX = playerPos.x - enemyPos.x;
-        const deltaY = playerPos.y - enemyPos.y;
-        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-        
-        // Normalize direction (prevent division by zero)
-        const knockbackDirection = {
-            x: distance > 0 ? deltaX / distance : 1, // Default right if same position
-            y: distance > 0 ? deltaY / distance : 0
-        };
-        
-        // Get the animation system and check/trigger hurt animation with knockback
-        const animationSystem = this.player.getSystem("animations") as any;
-        if (animationSystem && animationSystem.playHurtAnimation) {
-            // Only trigger hurt if not already invulnerable
-            const wasHurt = animationSystem.playHurtAnimation(knockbackDirection);
-            if (wasHurt) {
-                console.log('Player hurt by enemy! Knockback direction:', knockbackDirection);
-                // TODO: Call server reducer to damage player
-            }
-        }
-    };
 
     update(time: number, delta: number): void {
         // Update player (which handles all its systems)
