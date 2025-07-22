@@ -23,6 +23,9 @@ export class AnimationSystem implements System {
     // State tracking
     private currentAnimation: string | null = null;
     private isPlayingAttackAnimation = false;
+    private isPlayingHurtAnimation = false;
+    private isInvulnerable = false;
+    private invulnerabilityTimer: number | null = null;
 
     constructor(
         player: Player,
@@ -73,6 +76,13 @@ export class AnimationSystem implements System {
                 frameRate: PLAYER_CONFIG.animations.soldier.attack.framerate,
                 repeat: 0,
             },
+            {
+                key: "soldier-hurt-anim",
+                spriteKey: "soldier",
+                frames: { start: 45, end: 49 }, // Assuming hurt frames are at 54-58
+                frameRate: 15,
+                repeat: 0,
+            },
         ];
 
         // Create animations in Phaser and store configs
@@ -120,8 +130,8 @@ export class AnimationSystem implements System {
             return;
         }
 
-        // Don't change animations during attack
-        if (this.isPlayingAttackAnimation) {
+        // Don't change animations during attack or hurt
+        if (this.isPlayingAttackAnimation || this.isPlayingHurtAnimation) {
             return;
         }
 
@@ -214,7 +224,71 @@ export class AnimationSystem implements System {
         return this.animations.has(key);
     }
 
+    public playHurtAnimation(): boolean {
+        // Don't play hurt animation if already invulnerable
+        if (this.isInvulnerable) {
+            return false;
+        }
+
+        this.isPlayingHurtAnimation = true;
+        this.isInvulnerable = true;
+
+        // Add visual feedback during invulnerability (flashing effect)
+        this.startInvulnerabilityFlash();
+
+        this.playAnimation("soldier-hurt-anim");
+
+        // Reset hurt animation flag after animation completes
+        const onHurtComplete = () => {
+            this.isPlayingHurtAnimation = false;
+        };
+        setTimeout(onHurtComplete, 400);
+
+        // End invulnerability after 1 second
+        if (this.invulnerabilityTimer) {
+            clearTimeout(this.invulnerabilityTimer);
+        }
+        this.invulnerabilityTimer = window.setTimeout(() => {
+            this.isInvulnerable = false;
+            this.player.clearTint(); // Remove flashing effect
+        }, 1000);
+
+        return true;
+    }
+
+    private startInvulnerabilityFlash(): void {
+        let flashCount = 0;
+        const maxFlashes = 10; // Flash 10 times over 1 second
+        
+        const flashInterval = setInterval(() => {
+            if (flashCount >= maxFlashes || !this.isInvulnerable) {
+                clearInterval(flashInterval);
+                this.player.clearTint();
+                return;
+            }
+            
+            // Alternate between normal and transparent
+            if (flashCount % 2 === 0) {
+                this.player.setTint(0xffffff); // Normal
+                this.player.setAlpha(0.5); // Semi-transparent
+            } else {
+                this.player.setAlpha(1); // Fully visible
+            }
+            
+            flashCount++;
+        }, 100); // Flash every 100ms
+    }
+
+    public isPlayerInvulnerable(): boolean {
+        return this.isInvulnerable;
+    }
+
     destroy(): void {
+        // Clean up timers
+        if (this.invulnerabilityTimer) {
+            clearTimeout(this.invulnerabilityTimer);
+        }
+        
         // Clean up event listeners
         gameEvents.off(GameEvent.PLAYER_ATTACKED);
         this.animations.clear();

@@ -260,6 +260,15 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             this.enemyManager.getEnemyGroup(),
             boundaryGroup
         );
+
+        // Set up player-enemy collision for hurt animation
+        this.physics.add.overlap(
+            this.player,
+            this.enemyManager.getEnemyGroup(),
+            this.onPlayerTouchEnemy,
+            undefined,
+            this
+        );
     }
 
     private onAttackHitEnemy = (_hitbox: any, enemy: any): void => {
@@ -272,6 +281,19 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             this.enemyManager.playHitAnimation(enemyId);
             console.log('Enemy hit!', enemyId);
             // TODO: Call server reducer to damage/destroy enemy
+        }
+    };
+
+    private onPlayerTouchEnemy = (_player: any, _enemy: any): void => {
+        // Get the animation system and check/trigger hurt animation
+        const animationSystem = this.player.getSystem("animations") as any;
+        if (animationSystem && animationSystem.playHurtAnimation) {
+            // Only trigger hurt if not already invulnerable
+            const wasHurt = animationSystem.playHurtAnimation();
+            if (wasHurt) {
+                console.log('Player hurt by enemy!');
+                // TODO: Call server reducer to damage player
+            }
         }
     };
 
