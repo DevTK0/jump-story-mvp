@@ -1,4 +1,5 @@
-import type { System, InputState } from '../../shared/types';
+import type { System } from '../core/types';
+import type { InputState } from './player-types';
 import { Player } from './player';
 
 export class InputSystem implements System {

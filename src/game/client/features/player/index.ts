@@ -42,7 +42,9 @@ export function createPlayer(config: PlayerFactoryConfig): Player {
 }
 
 // Type exports
-export type { System } from '../../shared/types';
+export type { System } from '../core/types';
+export * from './player-types';
+export * from './player-events';
 
 // Export player constants
 export { PLAYER_CONFIG } from './config';

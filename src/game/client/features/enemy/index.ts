@@ -4,3 +4,7 @@ export { EnemyManager } from './enemy-manager';
 
 // Export enemy constants
 export { ENEMY_CONFIG } from './config';
+
+// Type exports
+export * from './enemy-types';
+export * from './enemy-events';

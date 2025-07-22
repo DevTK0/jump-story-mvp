@@ -1,4 +1,4 @@
-import type { System } from '../../shared/types';
+import type { System } from '../core/types';
 import { Player } from '../player/player';
 import { InputSystem } from '../player/input';
 import type { IDebuggable } from './debug-interfaces';

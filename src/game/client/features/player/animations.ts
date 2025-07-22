@@ -1,8 +1,9 @@
 import Phaser from "phaser";
-import type { System } from "../../shared/types";
+import type { System } from "../core/types";
 import { Player } from "./player";
 import { InputSystem } from "./input";
-import { gameEvents, GameEvent } from "../../shared/events";
+import { gameEvents } from "../core/events";
+import { PlayerEvent } from "./player-events";
 import { AnimationFactory, AnimationManager, ANIMATION_DEFINITIONS, ANIMATION_TIMINGS } from "../animations";
 
 export class AnimationSystem implements System {
@@ -43,7 +44,7 @@ export class AnimationSystem implements System {
 
     private bindEvents(): void {
         // Listen for combat events to handle attack animations
-        gameEvents.on(GameEvent.PLAYER_ATTACKED, async (data: any) => {
+        gameEvents.on(PlayerEvent.PLAYER_ATTACKED, async (data: any) => {
             this.isPlayingAttackAnimation = true;
 
             // Play the appropriate attack animation based on attack type
@@ -291,7 +292,7 @@ export class AnimationSystem implements System {
         }
         
         // Clean up event listeners
-        gameEvents.off(GameEvent.PLAYER_ATTACKED);
+        gameEvents.off(PlayerEvent.PLAYER_ATTACKED);
         this.animationFactory.clear();
     }
 }

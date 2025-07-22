@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import { Player } from '../features/player';
-import { EnemyManager } from '../features/enemy';
+import { Player } from '../player';
+import { EnemyManager } from '../enemy';
 
 export interface CollisionGroups {
     ground: Phaser.Physics.Arcade.StaticGroup;
@@ -9,7 +9,7 @@ export interface CollisionGroups {
     boundaries: Phaser.Physics.Arcade.StaticGroup;
 }
 
-export class CollisionSetupManager {
+export class PhysicsConfigurator {
     private scene: Phaser.Scene;
 
     constructor(scene: Phaser.Scene) {

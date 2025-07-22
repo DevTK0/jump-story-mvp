@@ -1,6 +1,7 @@
 import Phaser from "phaser";
-import type { System } from "../../shared/types";
-import { gameEvents, GameEvent } from "../../shared/events";
+import type { System } from "../core/types";
+import { gameEvents } from "../core/events";
+import { PlayerEvent } from "./player-events";
 import { Player } from "./player";
 import { InputSystem } from "./input";
 import { MovementSystem } from "./movement";
@@ -393,7 +394,7 @@ export class ClimbingSystem
         this.player.setPlayerState({ isClimbing: true });
         this.physics.enableClimbingPhysics();
 
-        gameEvents.emit(GameEvent.PLAYER_CLIMB_START, {
+        gameEvents.emit(PlayerEvent.PLAYER_CLIMB_START, {
             climbableObject: this.player,
         });
     }
@@ -404,7 +405,7 @@ export class ClimbingSystem
         this.player.setPlayerState({ isClimbing: false });
         this.physics.disableClimbingPhysics();
 
-        gameEvents.emit(GameEvent.PLAYER_CLIMB_END);
+        gameEvents.emit(PlayerEvent.PLAYER_CLIMB_END);
     }
 
     // Public API

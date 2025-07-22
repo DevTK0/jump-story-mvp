@@ -2,29 +2,29 @@ import {
     DbConnection,
     type ErrorContext,
     type SubscriptionEventContext,
-} from "../module_bindings";
+} from "../../module_bindings";
 import { Identity } from "@clockworklabs/spacetimedb-sdk";
 
-export interface DatabaseConnectionConfig {
+export interface SpacetimeConnectionConfig {
     uri: string;
     moduleName: string;
 }
 
-export interface DatabaseConnectionCallbacks {
+export interface SpacetimeConnectionCallbacks {
     onConnect?: (connection: DbConnection, identity: Identity, token: string) => void;
     onDisconnect?: () => void;
     onError?: (ctx: ErrorContext, error: Error) => void;
     onSubscriptionApplied?: (ctx: SubscriptionEventContext) => void;
 }
 
-export class DatabaseConnectionManager {
+export class SpacetimeConnector {
     private connection: DbConnection | null = null;
     private identity: Identity | null = null;
-    private config: DatabaseConnectionConfig;
-    private callbacks: DatabaseConnectionCallbacks;
+    private config: SpacetimeConnectionConfig;
+    private callbacks: SpacetimeConnectionCallbacks;
     private connectionPromise: Promise<DbConnection> | null = null;
 
-    constructor(config: DatabaseConnectionConfig, callbacks?: DatabaseConnectionCallbacks) {
+    constructor(config: SpacetimeConnectionConfig, callbacks?: SpacetimeConnectionCallbacks) {
         this.config = config;
         this.callbacks = callbacks || {};
     }

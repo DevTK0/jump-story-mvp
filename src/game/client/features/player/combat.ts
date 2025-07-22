@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
-import type { System } from '../../shared/types';
-import { gameEvents, GameEvent } from '../../shared/events';
+import type { System } from '../core/types';
+import { gameEvents, CoreGameEvent } from '../core/events';
+import { PlayerEvent } from './player-events';
 import { Player } from './player';
 import { InputSystem } from './input';
 import { PLAYER_CONFIG } from './config';
@@ -174,7 +175,7 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
     }
     
     // Emit attack event with attack type information
-    gameEvents.emit(GameEvent.PLAYER_ATTACKED, {
+    gameEvents.emit(PlayerEvent.PLAYER_ATTACKED, {
       type: 'melee',
       direction: facing,
       attackType: attackType,
@@ -197,7 +198,7 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
       }
       
       // Emit damage event for any overlapping enemies
-      gameEvents.emit(GameEvent.DAMAGE_DEALT, {
+      gameEvents.emit(CoreGameEvent.DAMAGE_DEALT, {
         source: 'player',
         target: 'enemy',
         damage: attackConfig.damage,

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import { Player } from '../features/player';
-import { EnemyManager } from '../features/enemy';
+import { Player } from '../player';
+import { EnemyManager } from '../enemy';
 
 export interface InteractionConfig {
     cameraShakeDuration?: number;

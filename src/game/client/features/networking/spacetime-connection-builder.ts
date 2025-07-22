@@ -1,18 +1,18 @@
 import {
-    DatabaseConnectionManager,
-    type DatabaseConnectionConfig,
-    type DatabaseConnectionCallbacks
-} from './database-connection-manager';
-import { DbConnection, type ErrorContext, type SubscriptionEventContext } from '../module_bindings';
+    SpacetimeConnector,
+    type SpacetimeConnectionConfig,
+    type SpacetimeConnectionCallbacks
+} from './spacetime-connector';
+import { DbConnection, type ErrorContext, type SubscriptionEventContext } from '../../module_bindings';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 
 /**
- * Builder pattern implementation for creating configured DatabaseConnectionManager instances.
+ * Builder pattern implementation for creating configured SpacetimeConnector instances.
  * Provides a fluent API for step-by-step database connection configuration.
  * 
  * Usage:
  * ```typescript
- * const manager = new DatabaseConnectionBuilder()
+ * const connector = new SpacetimeConnectionBuilder()
  *   .setUri('ws://localhost:3000')
  *   .setModuleName('jump-story')
  *   .onConnect((conn, identity, token) => console.log('Connected!'))
@@ -20,14 +20,14 @@ import { Identity } from '@clockworklabs/spacetimedb-sdk';
  *   .build();
  * ```
  */
-export class DatabaseConnectionBuilder {
-    private config: Partial<DatabaseConnectionConfig> = {};
-    private callbacks: DatabaseConnectionCallbacks = {};
+export class SpacetimeConnectionBuilder {
+    private config: Partial<SpacetimeConnectionConfig> = {};
+    private callbacks: SpacetimeConnectionCallbacks = {};
 
     /**
      * Set the WebSocket URI for the database connection
      */
-    public setUri(uri: string): DatabaseConnectionBuilder {
+    public setUri(uri: string): SpacetimeConnectionBuilder {
         this.config.uri = uri;
         return this;
     }
@@ -35,7 +35,7 @@ export class DatabaseConnectionBuilder {
     /**
      * Set the SpacetimeDB module name
      */
-    public setModuleName(moduleName: string): DatabaseConnectionBuilder {
+    public setModuleName(moduleName: string): SpacetimeConnectionBuilder {
         this.config.moduleName = moduleName;
         return this;
     }
@@ -43,7 +43,7 @@ export class DatabaseConnectionBuilder {
     /**
      * Set the complete connection configuration
      */
-    public setConfig(config: DatabaseConnectionConfig): DatabaseConnectionBuilder {
+    public setConfig(config: SpacetimeConnectionConfig): SpacetimeConnectionBuilder {
         this.config = { ...config };
         return this;
     }
@@ -51,7 +51,7 @@ export class DatabaseConnectionBuilder {
     /**
      * Set callback for successful connection events
      */
-    public onConnect(callback: (connection: DbConnection, identity: Identity, token: string) => void): DatabaseConnectionBuilder {
+    public onConnect(callback: (connection: DbConnection, identity: Identity, token: string) => void): SpacetimeConnectionBuilder {
         this.callbacks.onConnect = callback;
         return this;
     }
@@ -59,7 +59,7 @@ export class DatabaseConnectionBuilder {
     /**
      * Set callback for disconnection events
      */
-    public onDisconnect(callback: () => void): DatabaseConnectionBuilder {
+    public onDisconnect(callback: () => void): SpacetimeConnectionBuilder {
         this.callbacks.onDisconnect = callback;
         return this;
     }
@@ -67,7 +67,7 @@ export class DatabaseConnectionBuilder {
     /**
      * Set callback for connection error events
      */
-    public onError(callback: (ctx: ErrorContext, error: Error) => void): DatabaseConnectionBuilder {
+    public onError(callback: (ctx: ErrorContext, error: Error) => void): SpacetimeConnectionBuilder {
         this.callbacks.onError = callback;
         return this;
     }
@@ -75,7 +75,7 @@ export class DatabaseConnectionBuilder {
     /**
      * Set callback for subscription applied events
      */
-    public onSubscriptionApplied(callback: (ctx: SubscriptionEventContext) => void): DatabaseConnectionBuilder {
+    public onSubscriptionApplied(callback: (ctx: SubscriptionEventContext) => void): SpacetimeConnectionBuilder {
         this.callbacks.onSubscriptionApplied = callback;
         return this;
     }
@@ -83,7 +83,7 @@ export class DatabaseConnectionBuilder {
     /**
      * Set all callbacks at once
      */
-    public setCallbacks(callbacks: DatabaseConnectionCallbacks): DatabaseConnectionBuilder {
+    public setCallbacks(callbacks: SpacetimeConnectionCallbacks): SpacetimeConnectionBuilder {
         this.callbacks = { ...callbacks };
         return this;
     }
@@ -91,7 +91,7 @@ export class DatabaseConnectionBuilder {
     /**
      * Configure with default development callbacks (console logging)
      */
-    public withDefaultCallbacks(): DatabaseConnectionBuilder {
+    public withDefaultCallbacks(): SpacetimeConnectionBuilder {
         return this
             .onConnect((_conn, identity, token) => {
                 console.log('Connected to SpacetimeDB:', {
@@ -113,7 +113,7 @@ export class DatabaseConnectionBuilder {
     /**
      * Configure with silent callbacks (no console output)
      */
-    public withSilentCallbacks(): DatabaseConnectionBuilder {
+    public withSilentCallbacks(): SpacetimeConnectionBuilder {
         return this
             .onConnect(() => {})
             .onDisconnect(() => {})
@@ -122,30 +122,30 @@ export class DatabaseConnectionBuilder {
     }
 
     /**
-     * Build and return the configured DatabaseConnectionManager instance
+     * Build and return the configured SpacetimeConnector instance
      */
-    public build(): DatabaseConnectionManager {
+    public build(): SpacetimeConnector {
         // Validate required configuration
         if (!this.config.uri) {
-            throw new Error('DatabaseConnectionBuilder: URI is required');
+            throw new Error('SpacetimeConnectionBuilder: URI is required');
         }
         if (!this.config.moduleName) {
-            throw new Error('DatabaseConnectionBuilder: Module name is required');
+            throw new Error('SpacetimeConnectionBuilder: Module name is required');
         }
 
-        const finalConfig: DatabaseConnectionConfig = {
+        const finalConfig: SpacetimeConnectionConfig = {
             uri: this.config.uri,
             moduleName: this.config.moduleName,
         };
 
-        return new DatabaseConnectionManager(finalConfig, this.callbacks);
+        return new SpacetimeConnector(finalConfig, this.callbacks);
     }
 
     /**
      * Create a preset configuration for local development
      */
-    public static createLocal(moduleName: string = 'jump-story'): DatabaseConnectionBuilder {
-        return new DatabaseConnectionBuilder()
+    public static createLocal(moduleName: string = 'jump-story'): SpacetimeConnectionBuilder {
+        return new SpacetimeConnectionBuilder()
             .setUri('ws://localhost:3000')
             .setModuleName(moduleName)
             .withDefaultCallbacks();
@@ -154,8 +154,8 @@ export class DatabaseConnectionBuilder {
     /**
      * Create a preset configuration for production
      */
-    public static createProduction(uri: string, moduleName: string): DatabaseConnectionBuilder {
-        return new DatabaseConnectionBuilder()
+    public static createProduction(uri: string, moduleName: string): SpacetimeConnectionBuilder {
+        return new SpacetimeConnectionBuilder()
             .setUri(uri)
             .setModuleName(moduleName)
             .withSilentCallbacks(); // Production typically uses silent mode
@@ -164,8 +164,8 @@ export class DatabaseConnectionBuilder {
     /**
      * Create a preset configuration for testing (minimal callbacks)
      */
-    public static createTest(moduleName: string = 'jump-story-test'): DatabaseConnectionBuilder {
-        return new DatabaseConnectionBuilder()
+    public static createTest(moduleName: string = 'jump-story-test'): SpacetimeConnectionBuilder {
+        return new SpacetimeConnectionBuilder()
             .setUri('ws://localhost:3001') // Different port for testing
             .setModuleName(moduleName)
             .withSilentCallbacks();

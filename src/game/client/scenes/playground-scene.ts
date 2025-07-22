@@ -7,7 +7,9 @@ import { PLAYER_CONFIG } from "../features/player";
 import type { IDebuggable } from "../features/debug/debug-interfaces";
 import { DEBUG_CONFIG } from "../features/debug/config";
 import { DebugState } from "../features/debug/debug-state";
-import { DatabaseConnectionBuilder, CollisionSetupManager, InteractionHandler, type CollisionGroups } from "../managers";
+import { SpacetimeConnectionBuilder } from "../features/networking";
+import { PhysicsConfigurator, type CollisionGroups } from "../features/physics";
+import { InteractionHandler } from "../features/networking";
 import { DbConnection } from "../module_bindings";
 import { Identity } from "@clockworklabs/spacetimedb-sdk";
 
@@ -22,14 +24,14 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     private player!: Player;
     
     // Database connection
-    private dbConnectionManager!: import("../managers").DatabaseConnectionManager;
+    private dbConnectionManager!: import("../features/networking").SpacetimeConnector;
 
     // System managers
     private enemyManager!: EnemyManager;
     private mapLoader!: MapLoader;
     private mapData!: MapData;
     private peerManager!: PeerManager;
-    private collisionSetupManager!: CollisionSetupManager;
+    private physicsConfigurator!: PhysicsConfigurator;
     private interactionHandler!: InteractionHandler;
 
     constructor() {
@@ -57,7 +59,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
 
     create(): void {
         // Initialize database connection manager using Builder pattern
-        this.dbConnectionManager = new DatabaseConnectionBuilder()
+        this.dbConnectionManager = new SpacetimeConnectionBuilder()
             .setUri("ws://localhost:3000")
             .setModuleName("jump-story")
             .onConnect(this.handleDatabaseConnect.bind(this))
@@ -112,7 +114,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         }
 
         // Initialize managers
-        this.collisionSetupManager = new CollisionSetupManager(this);
+        this.physicsConfigurator = new PhysicsConfigurator(this);
         this.interactionHandler = new InteractionHandler(this, {
             cameraShakeDuration: CAMERA_SHAKE_DURATION,
             cameraShakeIntensity: CAMERA_SHAKE_INTENSITY
@@ -145,8 +147,8 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             this.enemyManager
         );
 
-        // Set up all collisions using the CollisionSetupManager
-        this.collisionSetupManager.setupAllCollisions(
+        // Set up all collisions using the PhysicsConfigurator
+        this.physicsConfigurator.setupAllCollisions(
             this.player,
             this.enemyManager,
             collisionGroups,

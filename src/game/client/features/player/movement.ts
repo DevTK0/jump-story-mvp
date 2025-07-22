@@ -1,5 +1,6 @@
-import type { System } from "../../shared/types";
-import { gameEvents, GameEvent } from "../../shared/events";
+import type { System } from "../core/types";
+import { gameEvents } from "../core/events";
+import { PlayerEvent } from "./player-events";
 import { Player } from "./player";
 import { InputSystem } from "./input";
 import type { IDebuggable } from "../debug/debug-interfaces";
@@ -118,7 +119,7 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
 
     private jump(): void {
         this.player.body.setVelocityY(-this.player.getJumpSpeed());
-        gameEvents.emit(GameEvent.PLAYER_JUMP, {
+        gameEvents.emit(PlayerEvent.PLAYER_JUMP, {
             velocity: this.player.getJumpSpeed(),
         });
     }
@@ -135,7 +136,7 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
         ) {
             this.player.body.setVelocityY(-this.player.getJumpSpeed());
             this.hasUsedDoubleJump = true;
-            gameEvents.emit(GameEvent.PLAYER_JUMP, {
+            gameEvents.emit(PlayerEvent.PLAYER_JUMP, {
                 velocity: this.player.getJumpSpeed(),
             });
         }
@@ -151,7 +152,7 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
         this.player.body.setVelocityY(
             -this.player.getJumpSpeed() * velocityMultiplier
         );
-        gameEvents.emit(GameEvent.PLAYER_JUMP, {
+        gameEvents.emit(PlayerEvent.PLAYER_JUMP, {
             velocity: this.player.getJumpSpeed() * velocityMultiplier,
         });
     }

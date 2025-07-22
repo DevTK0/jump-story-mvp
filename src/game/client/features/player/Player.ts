@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
-import type { PlayerState, System } from '../../shared/types';
-import { gameEvents, GameEvent } from '../../shared/events';
+import type { System } from '../core/types';
+import type { PlayerState } from './player-types';
+import { gameEvents } from '../core/events';
+import { PlayerEvent } from './player-events';
 import { PLAYER_CONFIG } from './config';
 import { PlayerStateMachine } from './state-machine';
 
@@ -111,7 +113,7 @@ export class Player extends Phaser.GameObjects.Sprite {
     
     // Emit events for state changes
     if (updates.health !== undefined && updates.health < oldHealth) {
-      gameEvents.emit(GameEvent.PLAYER_DAMAGED, {
+      gameEvents.emit(PlayerEvent.PLAYER_DAMAGED, {
         damage: oldHealth - updates.health,
         health: updates.health,
       });
@@ -119,7 +121,7 @@ export class Player extends Phaser.GameObjects.Sprite {
     
     if (updates.health !== undefined && updates.health <= 0 && this.playerState.isAlive) {
       this.playerState.isAlive = false;
-      gameEvents.emit(GameEvent.PLAYER_DIED, {
+      gameEvents.emit(PlayerEvent.PLAYER_DIED, {
         position: { x: this.x, y: this.y },
       });
     }
