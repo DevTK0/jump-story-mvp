@@ -101,7 +101,7 @@ export class EnemyManager {
         // Configure sprite same as player
         sprite.setOrigin(0.5, 0.5);
         sprite.setScale(3); // Match player scale (PLAYER_CONFIG.movement.scale)
-        sprite.setDepth(5);
+        sprite.setDepth(5); // Lower depth than player (player uses depth 10)
 
         // Ensure no tint or blend mode interference
         sprite.clearTint();

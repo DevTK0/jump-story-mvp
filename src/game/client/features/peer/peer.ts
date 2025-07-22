@@ -35,8 +35,8 @@ export class Peer extends Phaser.GameObjects.Sprite {
         // Add to scene (no physics - peers are visual only)
         config.scene.add.existing(this);
 
-        // Set depth to render above ground/platforms
-        this.setDepth(10);
+        // Set depth to render above enemies but below main player
+        this.setDepth(8);
 
         // Set scale to match main player
         this.setScale(PLAYER_CONFIG.movement.scale);

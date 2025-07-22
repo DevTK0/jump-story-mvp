@@ -147,6 +147,9 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             PLAYER_CONFIG.movement.hitboxWidth,
             PLAYER_CONFIG.movement.hitboxHeight
         );
+        
+        // Set player depth to render above all other entities
+        this.player.setDepth(10); // Higher than enemies (depth 5)
 
         // Set camera to follow player
         this.cameras.main.startFollow(this.player);
