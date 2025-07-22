@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { createPlayer, Player } from "../features/player";
 import { EnemyManager, DEFAULT_SPAWN_CONFIG } from "../features/enemy";
 import { MapLoader, type MapData } from "../features/stage";
-import { PeerManager } from "../features/peers";
+import { PeerManager } from "../features/peer";
 import { PLAYER_CONFIG } from "../features/player";
 import type { IDebuggable } from "../features/debug/debug-interfaces";
 import { DEBUG_CONFIG } from "../features/debug/config";
@@ -73,19 +73,19 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             conn.subscriptionBuilder()
                 .onApplied(handleSubscriptionApplied)
                 .subscribeToAllTables();
-                
+
             // Set database connection on player's movement system if it exists
             if (this.player) {
-                const movementSystem = this.player.getSystem('movement') as any;
+                const movementSystem = this.player.getSystem("movement") as any;
                 if (movementSystem && movementSystem.setDbConnection) {
                     movementSystem.setDbConnection(conn);
                 }
             }
-            
+
             // Initialize peer manager and set up player table event handlers
             this.peerManager = new PeerManager(this);
             this.peerManager.setLocalPlayerIdentity(identity);
-            
+
             // Set up peer event handlers
             conn.db.player.onInsert(this.peerManager.onPlayerInsert);
             conn.db.player.onUpdate(this.peerManager.onPlayerUpdate);
@@ -143,10 +143,10 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
 
         // Set camera bounds to match tilemap dimensions
         this.cameras.main.setBounds(0, 0, mapWidth, mapHeight);
-        
+
         // Set database connection on player's movement system if connection exists
         if (this.dbConnection) {
-            const movementSystem = this.player.getSystem('movement') as any;
+            const movementSystem = this.player.getSystem("movement") as any;
             if (movementSystem && movementSystem.setDbConnection) {
                 movementSystem.setDbConnection(this.dbConnection);
             }
@@ -260,7 +260,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
 
         // Update enemy system
         this.enemyManager.update();
-        
+
         // Update peer system for smooth interpolation
         if (this.peerManager) {
             this.peerManager.update();
