@@ -7,7 +7,7 @@ import type { IDebuggable } from "@/debug/debug-interfaces";
 import { DebugState, ShadowState } from "@/debug/debug-state";
 import { DEBUG_CONFIG } from "@/debug/config";
 import { BaseDebugRenderer } from "@/debug/debug-renderer";
-import { ShadowTrajectoryRenderer } from "./effects/shadow";
+import { ShadowTrajectoryRenderer } from "@/effects/shadow";
 import { DbConnection, PlayerState } from "@/spacetime/client";
 import { SyncManager } from "./sync-manager";
 
