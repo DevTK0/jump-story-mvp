@@ -20,7 +20,7 @@ export const ANIMATION_DEFINITIONS = {
         attack1: { start: 18, end: 23, frameRate: 20 },
         attack2: { start: 27, end: 32, frameRate: 20 },
         attack3: { start: 36, end: 45, frameRate: 20 },
-        hurt: { start: 45, end: 49, frameRate: 15 },
+        damaged: { start: 45, end: 49, frameRate: 15 },
     } satisfies SpriteAnimationSet,
 
     /**
@@ -46,7 +46,7 @@ export const ANIMATION_TIMINGS = {
     },
 
     // State animation durations
-    HURT_DURATION: 400,
+    DAMAGED_DURATION: 400,
     INVULNERABILITY_DURATION: 1000,
     FLASH_INTERVAL: 100,
     MAX_FLASHES: 10,
@@ -57,7 +57,7 @@ export const ANIMATION_TIMINGS = {
         walk: 10,
         run: 15,
         attack: 20,
-        hurt: 15,
+        damaged: 15,
         death: 12,
     },
 } as const;
@@ -74,7 +74,7 @@ export const ANIMATION_BEHAVIORS = {
         "attack1",
         "attack2",
         "attack3",
-        "hurt",
+        "damaged",
         "hit",
         "death",
     ] as const,
@@ -87,7 +87,7 @@ export const ANIMATION_BEHAVIORS = {
         "attack1",
         "attack2",
         "attack3",
-        "hurt",
+        "damaged",
         "death",
     ] as const,
 

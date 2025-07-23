@@ -32,6 +32,7 @@ import {
   type ReducerEventContextInterface,
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
+import { FacingDirection as __FacingDirection } from "./facing_direction_type";
 import { PlayerState as __PlayerState } from "./player_state_type";
 import { DbVector2 as __DbVector2 } from "./db_vector_2_type";
 
@@ -41,6 +42,7 @@ export type Player = {
   name: string,
   position: __DbVector2,
   state: __PlayerState,
+  facing: __FacingDirection,
   stateTimestamp: bigint,
   lastActive: Timestamp,
 };
@@ -60,6 +62,7 @@ export namespace Player {
       new ProductTypeElement("name", AlgebraicType.createStringType()),
       new ProductTypeElement("position", __DbVector2.getTypeScriptAlgebraicType()),
       new ProductTypeElement("state", __PlayerState.getTypeScriptAlgebraicType()),
+      new ProductTypeElement("facing", __FacingDirection.getTypeScriptAlgebraicType()),
       new ProductTypeElement("stateTimestamp", AlgebraicType.createI64Type()),
       new ProductTypeElement("lastActive", AlgebraicType.createTimestampType()),
     ]);

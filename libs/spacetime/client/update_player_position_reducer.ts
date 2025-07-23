@@ -33,9 +33,12 @@ import {
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
 
+import { FacingDirection as __FacingDirection } from "./facing_direction_type";
+
 export type UpdatePlayerPosition = {
   x: number,
   y: number,
+  facing: __FacingDirection,
 };
 
 /**
@@ -50,6 +53,7 @@ export namespace UpdatePlayerPosition {
     return AlgebraicType.createProductType([
       new ProductTypeElement("x", AlgebraicType.createF32Type()),
       new ProductTypeElement("y", AlgebraicType.createF32Type()),
+      new ProductTypeElement("facing", __FacingDirection.getTypeScriptAlgebraicType()),
     ]);
   }
 

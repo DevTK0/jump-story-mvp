@@ -8,7 +8,7 @@ import { DebugState, ShadowState } from "@/debug/debug-state";
 import { DEBUG_CONFIG } from "@/debug/config";
 import { BaseDebugRenderer } from "@/debug/debug-renderer";
 import { ShadowTrajectoryRenderer } from "@/effects/shadow";
-import { DbConnection, PlayerState } from "@/spacetime/client";
+import { DbConnection, PlayerState, FacingDirection } from "@/spacetime/client";
 import { SyncManager } from "./sync-manager";
 
 export class MovementSystem extends BaseDebugRenderer implements System, IDebuggable {
@@ -18,6 +18,7 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
     // Movement state
     private hasUsedDoubleJump = false;
     private wasOnGround = false; // Track ground contact state
+    private currentFacing: FacingDirection = { tag: "Right" }; // Track facing direction
     private movementDisabled = false; // For hurt state knockback
 
     // Shadow trajectory renderer
@@ -55,11 +56,17 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
             }
             this.wasOnGround = onGround;
 
+            // Update facing direction based on input (works both on ground and in air)
+            const horizontalDir = this.inputSystem.getHorizontalDirection();
+            if (horizontalDir !== 0) {
+                this.currentFacing = horizontalDir < 0 ? { tag: "Left" } : { tag: "Right" };
+            }
+
             // Horizontal movement (only when on ground)
             if (onGround) {
-                const horizontalDir = this.inputSystem.getHorizontalDirection();
                 if (horizontalDir !== 0) {
                     body.setVelocityX(horizontalDir * this.player.getSpeed());
+                    
                     // Transition to walk state if not already walking or attacking
                     if (!this.player.isInState("Walk") && !this.player.isAttacking) {
                         this.player.transitionToState("Walk");
@@ -105,7 +112,7 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
         }
         
         // Sync position to SpacetimeDB if needed (ALWAYS do this, even when climbing)
-        this.syncManager.syncPosition(time, forceSyncOnGroundContact);
+        this.syncManager.syncPosition(time, this.currentFacing, forceSyncOnGroundContact);
 
         // Sync state to SpacetimeDB if needed
         const newState = this.determineMovementState();

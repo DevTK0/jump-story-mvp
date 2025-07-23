@@ -1,4 +1,4 @@
-import { DbConnection, PlayerState } from '@/spacetime/client';
+import { DbConnection, PlayerState, FacingDirection } from '@/spacetime/client';
 import { Player } from './player';
 
 export interface SyncConfig {
@@ -10,8 +10,9 @@ export class SyncManager {
   private player: Player;
   private dbConnection: DbConnection | null = null;
   
-  // Position synchronization
+  // Position and facing synchronization
   private lastSyncedPosition = { x: 0, y: 0 };
+  private lastSyncedFacing: FacingDirection = { tag: "Right" };
   private lastSyncTime = 0;
   
   // State synchronization
@@ -34,7 +35,7 @@ export class SyncManager {
     this.dbConnection = connection;
   }
   
-  public syncPosition(time: number, forceSync: boolean = false): void {
+  public syncPosition(time: number, facing: FacingDirection, forceSync: boolean = false): void {
     if (!this.dbConnection) return;
     
     const currentX = this.player.x;
@@ -42,18 +43,22 @@ export class SyncManager {
     const deltaX = Math.abs(currentX - this.lastSyncedPosition.x);
     const deltaY = Math.abs(currentY - this.lastSyncedPosition.y);
     
+    // Check if facing changed
+    const facingChanged = facing.tag !== this.lastSyncedFacing.tag;
+    
     // Force sync on important events, or check normal conditions
-    const shouldSync = forceSync || 
+    const shouldSync = forceSync || facingChanged ||
       (time - this.lastSyncTime >= this.config.syncInterval && 
        (deltaX > this.config.positionThreshold || deltaY > this.config.positionThreshold));
     
     if (shouldSync) {
-      this.dbConnection.reducers.updatePlayerPosition(currentX, currentY);
+      this.dbConnection.reducers.updatePlayerPosition(currentX, currentY, facing);
       this.lastSyncedPosition = { x: currentX, y: currentY };
+      this.lastSyncedFacing = facing;
       this.lastSyncTime = time;
       
       if (forceSync) {
-        console.log(`Forced position sync: (${currentX}, ${currentY})`);
+        console.log(`Forced position sync: (${currentX}, ${currentY}) facing ${facing.tag}`);
       }
     }
   }

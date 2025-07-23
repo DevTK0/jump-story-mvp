@@ -20,6 +20,13 @@ public static partial class Module
         Unknown
     }
 
+    [SpacetimeDB.Type]
+    public enum FacingDirection : byte
+    {
+        Left,
+        Right
+    }
+
     [Table(Name = "Player", Public = true)]
     public partial struct Player
     {
@@ -30,6 +37,7 @@ public static partial class Module
         public string name;
         public DbVector2 position;
         public PlayerState state;
+        public FacingDirection facing;
         public long state_timestamp;
         public Timestamp last_active;
     }
@@ -103,7 +111,7 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void UpdatePlayerPosition(ReducerContext ctx, float x, float y)
+    public static void UpdatePlayerPosition(ReducerContext ctx, float x, float y, FacingDirection facing)
     {
         var player = ctx.Db.Player.identity.Find(ctx.Sender);
         if (player is not null)
@@ -115,10 +123,11 @@ public static partial class Module
                 name = player.Value.name,
                 position = new DbVector2(x, y),
                 state = player.Value.state,
+                facing = facing,
                 state_timestamp = player.Value.state_timestamp,
                 last_active = ctx.Timestamp
             });
-            Log.Info($"Updated position for {ctx.Sender} to ({x}, {y})");
+            Log.Info($"Updated position for {ctx.Sender} to ({x}, {y}) facing {facing}");
         }
     }
 
@@ -142,6 +151,7 @@ public static partial class Module
                 name = player.Value.name,
                 position = player.Value.position,
                 state = newState,
+                facing = player.Value.facing,
                 state_timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 last_active = ctx.Timestamp
             });
@@ -168,6 +178,7 @@ public static partial class Module
             name = "Player",
             position = new DbVector2(0, 0),
             state = PlayerState.Idle,
+            facing = FacingDirection.Right,
             state_timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
             last_active = ctx.Timestamp
         };

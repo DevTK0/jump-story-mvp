@@ -80,7 +80,7 @@ export class IdleState extends PlayerState {
     }
 
     protected getAllowedTransitions(): string[] {
-        return ["Walk", "Jump", "Climbing", "Attack1", "Attack2", "Attack3", "Hurt"];
+        return ["Walk", "Jump", "Climbing", "Attack1", "Attack2", "Attack3", "Damaged"];
     }
 }
 
@@ -117,7 +117,7 @@ export class WalkState extends PlayerState {
     }
 
     protected getAllowedTransitions(): string[] {
-        return ["Idle", "Jump", "Climbing", "Attack1", "Attack2", "Attack3", "Hurt"];
+        return ["Idle", "Jump", "Climbing", "Attack1", "Attack2", "Attack3", "Damaged"];
     }
 }
 
@@ -160,7 +160,7 @@ export class JumpState extends PlayerState {
     }
 
     protected getAllowedTransitions(): string[] {
-        return ["Idle", "Walk", "Climbing", "Attack1", "Attack2", "Attack3", "Hurt"];
+        return ["Idle", "Walk", "Climbing", "Attack1", "Attack2", "Attack3", "Damaged"];
     }
 }
 
@@ -195,7 +195,7 @@ export class ClimbingState extends PlayerState {
     }
 
     protected getAllowedTransitions(): string[] {
-        return ["Idle", "Walk", "Jump", "Hurt"];
+        return ["Idle", "Walk", "Jump", "Damaged"];
     }
 }
 
@@ -241,7 +241,7 @@ export abstract class AttackState extends PlayerState {
     }
 
     protected getAllowedTransitions(): string[] {
-        return ["Idle", "Walk", "Hurt"];
+        return ["Idle", "Walk", "Damaged"];
     }
 }
 
@@ -288,14 +288,14 @@ export class Attack3State extends AttackState {
 }
 
 /**
- * Hurt state - player is taking damage and has invulnerability
+ * Damaged state - player is taking damage and has invulnerability
  */
-export class HurtState extends PlayerState {
-    private hurtDuration: number = 1000; // 1 second of invulnerability
+export class DamagedState extends PlayerState {
+    private damagedDuration: number = 1000; // 1 second of invulnerability
     private startTime: number = 0;
 
     onEnter(previousState?: PlayerState): void {
-        console.log(`Player entering Hurt state from ${previousState?.getName() || 'none'}`);
+        console.log(`Player entering Damaged state from ${previousState?.getName() || 'none'}`);
         this.player.setPlayerState({ 
             isAttacking: false,
             isClimbing: false 
@@ -304,12 +304,12 @@ export class HurtState extends PlayerState {
     }
 
     onExit(nextState?: PlayerState): void {
-        console.log(`Player exiting Hurt state to ${nextState?.getName() || 'none'}`);
+        console.log(`Player exiting Damaged state to ${nextState?.getName() || 'none'}`);
     }
 
     update(_time: number, _delta: number): void {
-        // Check if hurt duration is over
-        if (Date.now() - this.startTime >= this.hurtDuration) {
+        // Check if damaged duration is over
+        if (Date.now() - this.startTime >= this.damagedDuration) {
             // Return to appropriate state based on movement
             const body = this.player.body;
             if (Math.abs(body.velocity.x) > 0.1) {
@@ -325,7 +325,7 @@ export class HurtState extends PlayerState {
     }
 
     getName(): string {
-        return "Hurt";
+        return "Damaged";
     }
 
     protected getAllowedTransitions(): string[] {
@@ -356,7 +356,7 @@ export class PlayerStateMachine {
         this.states.set("Attack1", new Attack1State(this.player, this));
         this.states.set("Attack2", new Attack2State(this.player, this));
         this.states.set("Attack3", new Attack3State(this.player, this));
-        this.states.set("Hurt", new HurtState(this.player, this));
+        this.states.set("Damaged", new DamagedState(this.player, this));
 
         // Start in idle state
         this.transitionTo("Idle");

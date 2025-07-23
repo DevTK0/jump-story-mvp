@@ -15,7 +15,7 @@ export class AnimationSystem implements System {
 
     // State tracking
     private isPlayingAttackAnimation = false;
-    private isPlayingHurtAnimation = false;
+    private isPlayingDamagedAnimation = false;
     private isInvulnerable = false;
     private invulnerabilityTimer: number | null = null;
 
@@ -69,8 +69,8 @@ export class AnimationSystem implements System {
             return;
         }
 
-        // Don't change animations during attack or hurt
-        if (this.isPlayingAttackAnimation || this.isPlayingHurtAnimation) {
+        // Don't change animations during attack or damaged
+        if (this.isPlayingAttackAnimation || this.isPlayingDamagedAnimation) {
             return;
         }
 
@@ -147,16 +147,22 @@ export class AnimationSystem implements System {
         return this.animationFactory.hasAnimation(key);
     }
 
-    public playHurtAnimation(knockbackDirection?: { x: number; y: number }): boolean {
-        // Don't play hurt animation if already invulnerable
+    public playDamagedAnimation(knockbackDirection?: { x: number; y: number }): boolean {
+        // Don't play damaged animation if already invulnerable
         if (this.isInvulnerable) {
             return false;
         }
 
-        this.isPlayingHurtAnimation = true;
+        this.isPlayingDamagedAnimation = true;
         this.isInvulnerable = true;
 
-        // Disable movement input during hurt state
+        // Transition state machine to Damaged state
+        const stateMachine = this.player.getStateMachine();
+        if (stateMachine) {
+            stateMachine.transitionTo("Damaged");
+        }
+
+        // Disable movement input during damaged state
         const movementSystem = this.player.getSystem("movement") as any;
         if (movementSystem && movementSystem.setMovementDisabled) {
             movementSystem.setMovementDisabled(true);
@@ -197,10 +203,10 @@ export class AnimationSystem implements System {
         // Add visual feedback during invulnerability (flashing effect)
         this.startInvulnerabilityFlash();
 
-        this.animationManager.play('hurt', false);
+        this.animationManager.play('damaged', false);
 
-        // Reset hurt animation flag and re-enable movement after animation completes
-        this.handleHurtAnimationComplete(movementSystem, climbingSystem);
+        // Reset damaged animation flag and re-enable movement after animation completes
+        this.handleDamagedAnimationComplete(movementSystem, climbingSystem);
 
         // End invulnerability after 1 second
         this.handleInvulnerabilityEnd();
@@ -245,24 +251,24 @@ export class AnimationSystem implements System {
     }
 
     /**
-     * Handle hurt animation completion asynchronously
+     * Handle damaged animation completion asynchronously
      */
-    private async handleHurtAnimationComplete(movementSystem: any, climbingSystem: any): Promise<void> {
+    private async handleDamagedAnimationComplete(movementSystem: any, climbingSystem: any): Promise<void> {
         try {
-            await this.delay(ANIMATION_TIMINGS.HURT_DURATION);
+            await this.delay(ANIMATION_TIMINGS.DAMAGED_DURATION);
             
-            this.isPlayingHurtAnimation = false;
-            // Re-enable movement after hurt animation
+            this.isPlayingDamagedAnimation = false;
+            // Re-enable movement after damaged animation
             if (movementSystem && movementSystem.setMovementDisabled) {
                 movementSystem.setMovementDisabled(false);
             }
-            // Re-enable climbing after hurt animation
+            // Re-enable climbing after damaged animation
             if (climbingSystem && climbingSystem.setClimbingDisabled) {
                 climbingSystem.setClimbingDisabled(false);
             }
         } catch (error) {
-            console.warn('Hurt animation completion interrupted:', error);
-            this.isPlayingHurtAnimation = false;
+            console.warn('Damaged animation completion interrupted:', error);
+            this.isPlayingDamagedAnimation = false;
         }
     }
 

@@ -120,8 +120,7 @@ export class Peer extends Phaser.GameObjects.Sprite {
                 // For now, use idle for climbing (can add climbing animation later)
                 return "soldier-idle-anim";
             case "Damaged":
-                // For now, use idle for damaged (can add damage animation later)
-                return "soldier-idle-anim";
+                return "soldier-damaged-anim";
             case "Dead":
                 // For now, use idle for dead (can add death animation later)
                 return "soldier-idle-anim";
@@ -195,13 +194,6 @@ export class Peer extends Phaser.GameObjects.Sprite {
         );
 
         if (distance > 1) {
-            // Handle facing direction based on movement
-            if (this.targetPosition.x < this.x) {
-                this.setFlipX(true);
-            } else if (this.targetPosition.x > this.x) {
-                this.setFlipX(false);
-            }
-
             // Interpolate position
             const newX = Phaser.Math.Linear(
                 this.x,
@@ -220,9 +212,21 @@ export class Peer extends Phaser.GameObjects.Sprite {
             this.nameLabel.setPosition(this.x, this.y - 60);
         }
 
+        // Update facing direction based on server data
+        this.updateFacingDirection();
+
         // Update animation based on movement
         const targetAnimation = this.determineAnimation();
         this.playAnimation(targetAnimation);
+    }
+
+    private updateFacingDirection(): void {
+        // Set facing direction based on server data
+        if (this.playerData.facing.tag === "Left") {
+            this.setFlipX(true);
+        } else {
+            this.setFlipX(false);
+        }
     }
 
     public getPlayerData(): PlayerData {

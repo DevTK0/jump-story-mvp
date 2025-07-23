@@ -33,6 +33,7 @@ import {
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
 import { Player } from "./player_type";
+import { FacingDirection as __FacingDirection } from "./facing_direction_type";
 import { PlayerState as __PlayerState } from "./player_state_type";
 import { DbVector2 as __DbVector2 } from "./db_vector_2_type";
 

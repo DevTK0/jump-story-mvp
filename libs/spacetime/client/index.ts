@@ -68,6 +68,8 @@ import { Enemy } from "./enemy_type.ts";
 export { Enemy };
 import { EnemyRoute } from "./enemy_route_type.ts";
 export { EnemyRoute };
+import { FacingDirection } from "./facing_direction_type.ts";
+export { FacingDirection };
 import { Player } from "./player_type.ts";
 export { Player };
 import { PlayerState } from "./player_state_type.ts";
@@ -247,19 +249,19 @@ export class RemoteReducers {
     this.connection.offReducer("SpawnAllEnemies", callback);
   }
 
-  updatePlayerPosition(x: number, y: number) {
-    const __args = { x, y };
+  updatePlayerPosition(x: number, y: number, facing: FacingDirection) {
+    const __args = { x, y, facing };
     let __writer = new BinaryWriter(1024);
     UpdatePlayerPosition.getTypeScriptAlgebraicType().serialize(__writer, __args);
     let __argsBuffer = __writer.getBuffer();
     this.connection.callReducer("UpdatePlayerPosition", __argsBuffer, this.setCallReducerFlags.updatePlayerPositionFlags);
   }
 
-  onUpdatePlayerPosition(callback: (ctx: ReducerEventContext, x: number, y: number) => void) {
+  onUpdatePlayerPosition(callback: (ctx: ReducerEventContext, x: number, y: number, facing: FacingDirection) => void) {
     this.connection.onReducer("UpdatePlayerPosition", callback);
   }
 
-  removeOnUpdatePlayerPosition(callback: (ctx: ReducerEventContext, x: number, y: number) => void) {
+  removeOnUpdatePlayerPosition(callback: (ctx: ReducerEventContext, x: number, y: number, facing: FacingDirection) => void) {
     this.connection.offReducer("UpdatePlayerPosition", callback);
   }
 

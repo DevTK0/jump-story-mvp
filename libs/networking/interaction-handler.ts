@@ -59,13 +59,13 @@ export class InteractionHandler {
                 enemy
             );
             
-            // Get the animation system and check/trigger hurt animation with knockback
+            // Get the animation system and check/trigger damaged animation with knockback
             const animationSystem = player.getSystem("animations") as any;
-            if (animationSystem && animationSystem.playHurtAnimation) {
-                // Only trigger hurt if not already invulnerable
-                const wasHurt = animationSystem.playHurtAnimation(knockbackDirection);
-                if (wasHurt) {
-                    console.log('Player hurt by enemy! Knockback direction:', knockbackDirection);
+            if (animationSystem && animationSystem.playDamagedAnimation) {
+                // Only trigger damaged if not already invulnerable
+                const wasDamaged = animationSystem.playDamagedAnimation(knockbackDirection);
+                if (wasDamaged) {
+                    console.log('Player damaged by enemy! Knockback direction:', knockbackDirection);
                     // TODO: Call server reducer to damage player
                 }
             }
