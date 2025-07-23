@@ -14,6 +14,7 @@ interface DamageNumberState {
   enemyId: number;
   initialX: number;
   initialY: number;
+  damageEvent: DamageEvent;
 }
 
 export class DamageNumberRenderer {
@@ -166,7 +167,7 @@ export class DamageNumberRenderer {
     }
 
     // Calculate stacked position
-    const position = this.calculateStackedPosition(damageEvent.enemyId, baseX, baseY);
+    const position = this.calculateStackedPosition(damageEvent.enemyId, baseX, baseY, damageEvent);
     
     // Configure text appearance
     this.configureTextAppearance(text, damageEvent);
@@ -184,6 +185,7 @@ export class DamageNumberRenderer {
       enemyId: damageEvent.enemyId,
       initialX: position.x,
       initialY: position.y,
+      damageEvent: damageEvent,
     };
 
     // Add to tracking
@@ -196,14 +198,15 @@ export class DamageNumberRenderer {
   /**
    * Calculate position for stacked damage numbers
    */
-  private calculateStackedPosition(enemyId: number, baseX: number, baseY: number): { x: number; y: number } {
+  private calculateStackedPosition(enemyId: number, baseX: number, baseY: number, damageEvent: DamageEvent): { x: number; y: number } {
     const activeForEnemy = this.activeNumbers.get(enemyId) || [];
     const stackIndex = activeForEnemy.length;
     
     const { verticalOffset, horizontalJitter } = DAMAGE_NUMBER_CONFIG.stacking;
     
-    // Add random horizontal jitter
-    const jitterX = (Math.random() - 0.5) * horizontalJitter * 2;
+    // Use deterministic jitter based on damage event data for synchronization
+    const seed = this.createSeedFromDamageEvent(damageEvent);
+    const jitterX = (this.seededRandom(seed) - 0.5) * horizontalJitter * 2;
     
     return {
       x: baseX + jitterX,
@@ -248,11 +251,12 @@ export class DamageNumberRenderer {
    * Animate the damage number (rise and fade)
    */
   private animateDamageNumber(damageNumberState: DamageNumberState): void {
-    const { text, initialX, initialY } = damageNumberState;
+    const { text, initialX, initialY, damageEvent } = damageNumberState;
     const { duration, riseDistance, spreadRadius } = DAMAGE_NUMBER_CONFIG.animations;
 
-    // Random horizontal spread
-    const spreadX = (Math.random() - 0.5) * spreadRadius * 2;
+    // Use deterministic spread based on damage event data for synchronization
+    const seed = this.createSeedFromDamageEvent(damageEvent) + 1; // +1 to differentiate from jitter seed
+    const spreadX = (this.seededRandom(seed) - 0.5) * spreadRadius * 2;
     const targetX = initialX + spreadX;
     const targetY = initialY - riseDistance;
 
@@ -312,6 +316,50 @@ export class DamageNumberRenderer {
 
     // Return text to pool
     this.returnTextToPool(text);
+  }
+
+  /**
+   * Create a deterministic seed from damage event data
+   */
+  private createSeedFromDamageEvent(damageEvent: DamageEvent): number {
+    // Use damage event properties to create a deterministic seed
+    // This ensures all clients generate the same "random" positions
+    const timestamp = damageEvent.timestamp.toDate().getTime();
+    const enemyId = damageEvent.enemyId;
+    const damage = Math.round(damageEvent.damageAmount * 100); // Convert to integer
+    
+    // Convert damage type tag to number
+    const damageTypeNum = this.damageTypeToNumber(damageEvent.damageType);
+    
+    // Combine values to create a unique but deterministic seed
+    return (timestamp % 10000) + (enemyId * 1000) + damage + (damageTypeNum * 10000);
+  }
+
+  /**
+   * Convert damage type to number for seeding
+   */
+  private damageTypeToNumber(damageType: any): number {
+    switch (damageType.tag) {
+      case 'Normal': return 1;
+      case 'Crit': return 2;
+      case 'Weak': return 3;
+      case 'Strong': return 4;
+      case 'Immune': return 5;
+      default: return 0;
+    }
+  }
+
+  /**
+   * Seeded random number generator for deterministic positioning
+   */
+  private seededRandom(seed: number): number {
+    // Simple linear congruential generator for deterministic randomness
+    const a = 1664525;
+    const c = 1013904223;
+    const m = 2 ** 32;
+    
+    seed = (a * seed + c) % m;
+    return (seed / m);
   }
 
   /**

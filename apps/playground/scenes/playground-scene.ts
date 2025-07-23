@@ -222,7 +222,12 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         // Subscribe to damage events from the database
         conn.db.damageEvent.onInsert((_ctx, damageEvent) => {
             console.debug('Received damage event:', damageEvent);
+            
+            // Handle damage numbers
             this.damageNumberRenderer.handleDamageEvent(damageEvent);
+            
+            // Handle hit animation for all clients
+            this.enemyManager.playHitAnimation(damageEvent.enemyId);
         });
     }
 

@@ -86,8 +86,7 @@ export class InteractionHandler {
                 this.config.cameraShakeIntensity
             );
 
-            // Play hit animation and damage enemy
-            enemyManager.playHitAnimation(enemyId);
+            // Damage enemy (hit animation will be handled by DamageEvent subscription)
             console.log('Enemy hit!', enemyId);
             
             // Call server reducer to damage enemy

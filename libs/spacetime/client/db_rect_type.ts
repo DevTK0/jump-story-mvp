@@ -32,11 +32,11 @@ import {
   type ReducerEventContextInterface,
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
+import { DbVector2 as __DbVector2 } from "./db_vector_2_type";
+
 export type DbRect = {
-  x: number,
-  y: number,
-  width: number,
-  height: number,
+  position: __DbVector2,
+  size: __DbVector2,
 };
 
 /**
@@ -49,10 +49,8 @@ export namespace DbRect {
   */
   export function getTypeScriptAlgebraicType(): AlgebraicType {
     return AlgebraicType.createProductType([
-      new ProductTypeElement("x", AlgebraicType.createF32Type()),
-      new ProductTypeElement("y", AlgebraicType.createF32Type()),
-      new ProductTypeElement("width", AlgebraicType.createF32Type()),
-      new ProductTypeElement("height", AlgebraicType.createF32Type()),
+      new ProductTypeElement("position", __DbVector2.getTypeScriptAlgebraicType()),
+      new ProductTypeElement("size", __DbVector2.getTypeScriptAlgebraicType()),
     ]);
   }
 
