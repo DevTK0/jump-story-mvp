@@ -38,10 +38,9 @@ public static partial class Module
                     foreach (var obj in objects.EnumerateArray())
                     {
                         var properties = obj.GetProperty("properties");
-                        string enemyType = "";
+                        var enemyType = "";
                         byte maxEnemies = 1;
-                        uint spawnInterval = 60; // Default 60 seconds
-
+                        var spawnInterval = EnemyConstants.DEFAULT_SPAWN_INTERVAL;
                         foreach (var prop in properties.EnumerateArray())
                         {
                             string propName = prop.GetProperty("name").GetString();
@@ -54,6 +53,9 @@ public static partial class Module
                             else if (propName == "spawn_interval")
                                 uint.TryParse(propValue, out spawnInterval);
                         }
+
+                        // Behavior will be populated from database - default to patrol for now
+                        string behavior = "patrol";
 
                         if (!string.IsNullOrEmpty(enemyType))
                         {
@@ -71,7 +73,8 @@ public static partial class Module
                                 ),
                                 max_enemies = maxEnemies,
                                 spawn_interval = spawnInterval,
-                                last_spawn_time = ctx.Timestamp
+                                last_spawn_time = ctx.Timestamp,
+                                behavior = behavior
                             };
 
                             routesList.Add(route);
@@ -114,9 +117,9 @@ public static partial class Module
 
         // Spawn new enemies based on routes
         var random = new Random();
-        int totalSpawned = 0;
+        var totalSpawned = 0;
 
-        const float enemyMaxHp = 100.0f; // Base health for all enemies
+        const float enemyMaxHp = EnemyConstants.ENEMY_MAX_HP;
 
         // Spawn enemies for all routes
         foreach (var route in ctx.Db.EnemyRoute.Iter())
@@ -125,16 +128,15 @@ public static partial class Module
             {
                 var spawnPosition = route.spawn_area.GetRandomPoint(random);
 
-                var newEnemy = new Enemy
+                var baseEnemy = new Enemy
                 {
                     route_id = route.route_id,
                     enemy_type = route.enemy_type,
-                    position = spawnPosition,
-                    state = PlayerState.Idle,
-                    facing = FacingDirection.Right,
                     current_hp = enemyMaxHp,
-                    last_updated = ctx.Timestamp
+                    aggro_start_time = ctx.Timestamp
                 };
+                
+                var newEnemy = CreateEnemyUpdate(baseEnemy, spawnPosition, true, null, false, ctx.Timestamp, PlayerState.Idle);
 
                 ctx.Db.Enemy.Insert(newEnemy);
                 Log.Info($"Spawned {route.enemy_type} at ({spawnPosition.x}, {spawnPosition.y}) for route {route.route_id}");
@@ -144,4 +146,5 @@ public static partial class Module
 
         Log.Info($"Spawned {totalSpawned} enemies across all routes");
     }
+
 }

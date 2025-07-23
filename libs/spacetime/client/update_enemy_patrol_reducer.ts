@@ -32,46 +32,34 @@ import {
   type ReducerEventContextInterface,
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
-import { DbRect as __DbRect } from "./db_rect_type";
 
-export type EnemyRoute = {
-  routeId: number,
-  enemyType: string,
-  spawnArea: __DbRect,
-  maxEnemies: number,
-  spawnInterval: number,
-  lastSpawnTime: Timestamp,
-  behavior: string,
+import { EnemyPatrolTimer as __EnemyPatrolTimer } from "./enemy_patrol_timer_type";
+
+export type UpdateEnemyPatrol = {
+  timer: __EnemyPatrolTimer,
 };
 
 /**
  * A namespace for generated helper functions.
  */
-export namespace EnemyRoute {
+export namespace UpdateEnemyPatrol {
   /**
   * A function which returns this type represented as an AlgebraicType.
   * This function is derived from the AlgebraicType used to generate this type.
   */
   export function getTypeScriptAlgebraicType(): AlgebraicType {
     return AlgebraicType.createProductType([
-      new ProductTypeElement("routeId", AlgebraicType.createU32Type()),
-      new ProductTypeElement("enemyType", AlgebraicType.createStringType()),
-      new ProductTypeElement("spawnArea", __DbRect.getTypeScriptAlgebraicType()),
-      new ProductTypeElement("maxEnemies", AlgebraicType.createU8Type()),
-      new ProductTypeElement("spawnInterval", AlgebraicType.createU32Type()),
-      new ProductTypeElement("lastSpawnTime", AlgebraicType.createTimestampType()),
-      new ProductTypeElement("behavior", AlgebraicType.createStringType()),
+      new ProductTypeElement("timer", __EnemyPatrolTimer.getTypeScriptAlgebraicType()),
     ]);
   }
 
-  export function serialize(writer: BinaryWriter, value: EnemyRoute): void {
-    EnemyRoute.getTypeScriptAlgebraicType().serialize(writer, value);
+  export function serialize(writer: BinaryWriter, value: UpdateEnemyPatrol): void {
+    UpdateEnemyPatrol.getTypeScriptAlgebraicType().serialize(writer, value);
   }
 
-  export function deserialize(reader: BinaryReader): EnemyRoute {
-    return EnemyRoute.getTypeScriptAlgebraicType().deserialize(reader);
+  export function deserialize(reader: BinaryReader): UpdateEnemyPatrol {
+    return UpdateEnemyPatrol.getTypeScriptAlgebraicType().deserialize(reader);
   }
 
 }
-
 

@@ -48,10 +48,14 @@ import { Disconnect } from "./disconnect_reducer.ts";
 export { Disconnect };
 import { InitializeEnemyRoutes } from "./initialize_enemy_routes_reducer.ts";
 export { InitializeEnemyRoutes };
+import { RecoverFromDamage } from "./recover_from_damage_reducer.ts";
+export { RecoverFromDamage };
 import { SpawnAllEnemies } from "./spawn_all_enemies_reducer.ts";
 export { SpawnAllEnemies };
 import { SpawnMissingEnemies } from "./spawn_missing_enemies_reducer.ts";
 export { SpawnMissingEnemies };
+import { UpdateEnemyPatrol } from "./update_enemy_patrol_reducer.ts";
+export { UpdateEnemyPatrol };
 import { UpdatePlayerPosition } from "./update_player_position_reducer.ts";
 export { UpdatePlayerPosition };
 import { UpdatePlayerState } from "./update_player_state_reducer.ts";
@@ -68,6 +72,8 @@ import { PlayerTableHandle } from "./player_table.ts";
 export { PlayerTableHandle };
 import { CleanupDeadBodiesTimerTableHandle } from "./cleanup_dead_bodies_timer_table.ts";
 export { CleanupDeadBodiesTimerTableHandle };
+import { EnemyPatrolTimerTableHandle } from "./enemy_patrol_timer_table.ts";
+export { EnemyPatrolTimerTableHandle };
 import { SpawnEnemiesTimerTableHandle } from "./spawn_enemies_timer_table.ts";
 export { SpawnEnemiesTimerTableHandle };
 
@@ -86,6 +92,8 @@ import { DbVector2 } from "./db_vector_2_type.ts";
 export { DbVector2 };
 import { Enemy } from "./enemy_type.ts";
 export { Enemy };
+import { EnemyPatrolTimer } from "./enemy_patrol_timer_type.ts";
+export { EnemyPatrolTimer };
 import { EnemyRoute } from "./enemy_route_type.ts";
 export { EnemyRoute };
 import { FacingDirection } from "./facing_direction_type.ts";
@@ -144,6 +152,15 @@ const REMOTE_MODULE = {
         colType: CleanupDeadBodiesTimer.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
+    enemy_patrol_timer: {
+      tableName: "enemy_patrol_timer",
+      rowType: EnemyPatrolTimer.getTypeScriptAlgebraicType(),
+      primaryKey: "scheduledId",
+      primaryKeyInfo: {
+        colName: "scheduledId",
+        colType: EnemyPatrolTimer.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
     spawn_enemies_timer: {
       tableName: "spawn_enemies_timer",
       rowType: SpawnEnemiesTimer.getTypeScriptAlgebraicType(),
@@ -183,6 +200,10 @@ const REMOTE_MODULE = {
       reducerName: "InitializeEnemyRoutes",
       argsType: InitializeEnemyRoutes.getTypeScriptAlgebraicType(),
     },
+    RecoverFromDamage: {
+      reducerName: "RecoverFromDamage",
+      argsType: RecoverFromDamage.getTypeScriptAlgebraicType(),
+    },
     SpawnAllEnemies: {
       reducerName: "SpawnAllEnemies",
       argsType: SpawnAllEnemies.getTypeScriptAlgebraicType(),
@@ -190,6 +211,10 @@ const REMOTE_MODULE = {
     SpawnMissingEnemies: {
       reducerName: "SpawnMissingEnemies",
       argsType: SpawnMissingEnemies.getTypeScriptAlgebraicType(),
+    },
+    UpdateEnemyPatrol: {
+      reducerName: "UpdateEnemyPatrol",
+      argsType: UpdateEnemyPatrol.getTypeScriptAlgebraicType(),
     },
     UpdatePlayerPosition: {
       reducerName: "UpdatePlayerPosition",
@@ -236,8 +261,10 @@ export type Reducer = never
 | { name: "Debug", args: Debug }
 | { name: "Disconnect", args: Disconnect }
 | { name: "InitializeEnemyRoutes", args: InitializeEnemyRoutes }
+| { name: "RecoverFromDamage", args: RecoverFromDamage }
 | { name: "SpawnAllEnemies", args: SpawnAllEnemies }
 | { name: "SpawnMissingEnemies", args: SpawnMissingEnemies }
+| { name: "UpdateEnemyPatrol", args: UpdateEnemyPatrol }
 | { name: "UpdatePlayerPosition", args: UpdatePlayerPosition }
 | { name: "UpdatePlayerState", args: UpdatePlayerState }
 ;
@@ -333,6 +360,22 @@ export class RemoteReducers {
     this.connection.offReducer("InitializeEnemyRoutes", callback);
   }
 
+  recoverFromDamage(enemyId: number) {
+    const __args = { enemyId };
+    let __writer = new BinaryWriter(1024);
+    RecoverFromDamage.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("RecoverFromDamage", __argsBuffer, this.setCallReducerFlags.recoverFromDamageFlags);
+  }
+
+  onRecoverFromDamage(callback: (ctx: ReducerEventContext, enemyId: number) => void) {
+    this.connection.onReducer("RecoverFromDamage", callback);
+  }
+
+  removeOnRecoverFromDamage(callback: (ctx: ReducerEventContext, enemyId: number) => void) {
+    this.connection.offReducer("RecoverFromDamage", callback);
+  }
+
   spawnAllEnemies() {
     this.connection.callReducer("SpawnAllEnemies", new Uint8Array(0), this.setCallReducerFlags.spawnAllEnemiesFlags);
   }
@@ -359,6 +402,22 @@ export class RemoteReducers {
 
   removeOnSpawnMissingEnemies(callback: (ctx: ReducerEventContext, timer: SpawnEnemiesTimer) => void) {
     this.connection.offReducer("SpawnMissingEnemies", callback);
+  }
+
+  updateEnemyPatrol(timer: EnemyPatrolTimer) {
+    const __args = { timer };
+    let __writer = new BinaryWriter(1024);
+    UpdateEnemyPatrol.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("UpdateEnemyPatrol", __argsBuffer, this.setCallReducerFlags.updateEnemyPatrolFlags);
+  }
+
+  onUpdateEnemyPatrol(callback: (ctx: ReducerEventContext, timer: EnemyPatrolTimer) => void) {
+    this.connection.onReducer("UpdateEnemyPatrol", callback);
+  }
+
+  removeOnUpdateEnemyPatrol(callback: (ctx: ReducerEventContext, timer: EnemyPatrolTimer) => void) {
+    this.connection.offReducer("UpdateEnemyPatrol", callback);
   }
 
   updatePlayerPosition(x: number, y: number, facing: FacingDirection) {
@@ -421,6 +480,11 @@ export class SetReducerFlags {
     this.initializeEnemyRoutesFlags = flags;
   }
 
+  recoverFromDamageFlags: CallReducerFlags = 'FullUpdate';
+  recoverFromDamage(flags: CallReducerFlags) {
+    this.recoverFromDamageFlags = flags;
+  }
+
   spawnAllEnemiesFlags: CallReducerFlags = 'FullUpdate';
   spawnAllEnemies(flags: CallReducerFlags) {
     this.spawnAllEnemiesFlags = flags;
@@ -429,6 +493,11 @@ export class SetReducerFlags {
   spawnMissingEnemiesFlags: CallReducerFlags = 'FullUpdate';
   spawnMissingEnemies(flags: CallReducerFlags) {
     this.spawnMissingEnemiesFlags = flags;
+  }
+
+  updateEnemyPatrolFlags: CallReducerFlags = 'FullUpdate';
+  updateEnemyPatrol(flags: CallReducerFlags) {
+    this.updateEnemyPatrolFlags = flags;
   }
 
   updatePlayerPositionFlags: CallReducerFlags = 'FullUpdate';
@@ -464,6 +533,10 @@ export class RemoteTables {
 
   get cleanupDeadBodiesTimer(): CleanupDeadBodiesTimerTableHandle {
     return new CleanupDeadBodiesTimerTableHandle(this.connection.clientCache.getOrCreateTable<CleanupDeadBodiesTimer>(REMOTE_MODULE.tables.cleanup_dead_bodies_timer));
+  }
+
+  get enemyPatrolTimer(): EnemyPatrolTimerTableHandle {
+    return new EnemyPatrolTimerTableHandle(this.connection.clientCache.getOrCreateTable<EnemyPatrolTimer>(REMOTE_MODULE.tables.enemy_patrol_timer));
   }
 
   get spawnEnemiesTimer(): SpawnEnemiesTimerTableHandle {

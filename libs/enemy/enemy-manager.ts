@@ -12,6 +12,7 @@ export class EnemyManager {
     private enemyGroup!: Phaser.Physics.Arcade.Group;
     private animationFactory: AnimationFactory;
     private stateService: EnemyStateService;
+    private enemyInterpolation = new Map<number, { targetX: number; startX: number; startTime: number; }>(); 
 
     constructor(scene: Phaser.Scene) {
         this.scene = scene;
@@ -19,6 +20,7 @@ export class EnemyManager {
         this.stateService = new EnemyStateManager(this.enemies, this.enemyStates);
         this.setupEnemyGroup();
         this.setupEnemyAnimations();
+        this.setupInterpolationUpdate();
     }
 
     private setupEnemyGroup(): void {
@@ -31,6 +33,37 @@ export class EnemyManager {
         
         // Create all orc animations
         this.animationFactory.createSpriteAnimations('orc');
+    }
+
+    private setupInterpolationUpdate(): void {
+        // Update interpolation every frame
+        this.scene.events.on('update', () => {
+            this.updateInterpolation();
+        });
+    }
+
+    private updateInterpolation(): void {
+        const currentTime = this.scene.time.now;
+        const interpolationDuration = 100; // 100ms to match server update frequency
+
+        for (const [enemyId, interpolationData] of this.enemyInterpolation.entries()) {
+            const sprite = this.enemies.get(enemyId);
+            if (!sprite) continue;
+
+            const elapsed = currentTime - interpolationData.startTime;
+            const progress = Math.min(elapsed / interpolationDuration, 1);
+
+            // Smooth interpolation using easeOutQuad
+            const easeProgress = 1 - (1 - progress) * (1 - progress);
+            const interpolatedX = interpolationData.startX + (interpolationData.targetX - interpolationData.startX) * easeProgress;
+
+            sprite.setX(interpolatedX);
+
+            // Clean up completed interpolations
+            if (progress >= 1) {
+                this.enemyInterpolation.delete(enemyId);
+            }
+        }
     }
 
     public setDbConnection(connection: DbConnection): void {
@@ -209,6 +242,7 @@ export class EnemyManager {
             // Clean up references immediately (sprite still fading but no longer interactive)
             this.enemies.delete(enemyId);
             this.enemyStates.delete(enemyId);
+            this.enemyInterpolation.delete(enemyId);
         }
     }
 
@@ -216,8 +250,25 @@ export class EnemyManager {
         const sprite = this.enemies.get(serverEnemy.enemyId);
         if (!sprite) return;
 
-        // Update position if it changed
-        sprite.setPosition(serverEnemy.position.x, serverEnemy.position.y);
+        // Store previous position for movement detection
+        const previousX = sprite.x;
+        
+        // Start interpolation to new X position instead of direct setting
+        const targetX = serverEnemy.position.x;
+        if (Math.abs(targetX - sprite.x) > 0.1) {
+            this.enemyInterpolation.set(serverEnemy.enemyId, {
+                targetX: targetX,
+                startX: sprite.x,
+                startTime: this.scene.time.now
+            });
+        }
+
+        // Update facing direction
+        if (serverEnemy.facing.tag === "Left") {
+            sprite.setFlipX(true);
+        } else {
+            sprite.setFlipX(false);
+        }
 
         // Check for state changes
         const previousState = this.enemyStates.get(serverEnemy.enemyId);
@@ -226,6 +277,19 @@ export class EnemyManager {
         if (previousState?.tag !== currentState.tag) {
             this.handleStateChange(serverEnemy.enemyId, sprite, currentState, serverEnemy.enemyType);
             this.enemyStates.set(serverEnemy.enemyId, currentState);
+        }
+
+        // Handle movement animation for idle enemies (patrol movement)
+        if (currentState.tag === "Idle" && Math.abs(targetX - previousX) > 0.1) {
+            // Enemy is moving horizontally - play walk animation
+            if (!sprite.anims.isPlaying || sprite.anims.currentAnim?.key !== `${serverEnemy.enemyType}-walk-anim`) {
+                sprite.play(`${serverEnemy.enemyType}-walk-anim`);
+            }
+        } else if (currentState.tag === "Idle") {
+            // Enemy is not moving - play idle animation
+            if (!sprite.anims.isPlaying || sprite.anims.currentAnim?.key !== `${serverEnemy.enemyType}-idle-anim`) {
+                sprite.play(`${serverEnemy.enemyType}-idle-anim`);
+            }
         }
 
         // Clear any tint - enemies maintain their natural color

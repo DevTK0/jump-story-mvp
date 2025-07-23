@@ -45,6 +45,9 @@ export type Enemy = {
   facing: __FacingDirection,
   currentHp: number,
   lastUpdated: Timestamp,
+  movingRight: boolean,
+  aggroTarget: Identity | undefined,
+  aggroStartTime: Timestamp,
 };
 
 /**
@@ -65,6 +68,9 @@ export namespace Enemy {
       new ProductTypeElement("facing", __FacingDirection.getTypeScriptAlgebraicType()),
       new ProductTypeElement("currentHp", AlgebraicType.createF32Type()),
       new ProductTypeElement("lastUpdated", AlgebraicType.createTimestampType()),
+      new ProductTypeElement("movingRight", AlgebraicType.createBoolType()),
+      new ProductTypeElement("aggroTarget", AlgebraicType.createOptionType(AlgebraicType.createIdentityType())),
+      new ProductTypeElement("aggroStartTime", AlgebraicType.createTimestampType()),
     ]);
   }
 

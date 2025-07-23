@@ -26,6 +26,7 @@ public static partial class Module
         public byte max_enemies;
         public uint spawn_interval;
         public Timestamp last_spawn_time;
+        public string behavior;
     }
 
     [Table(Name = "Enemy", Public = true)]
@@ -40,6 +41,9 @@ public static partial class Module
         public FacingDirection facing;
         public float current_hp;
         public Timestamp last_updated;
+        public bool moving_right; // Direction for patrol behavior
+        public Identity? aggro_target; // Player being chased (null if not in aggro)
+        public Timestamp aggro_start_time; // When aggro started
     }
 
     [Table(Name = "DamageEvent", Public = true)]
@@ -64,6 +68,14 @@ public static partial class Module
 
     [Table(Name = "spawn_enemies_timer", Scheduled = nameof(SpawnMissingEnemies), ScheduledAt = nameof(scheduled_at))]
     public partial struct SpawnEnemiesTimer
+    {
+        [PrimaryKey, AutoInc]
+        public ulong scheduled_id;
+        public ScheduleAt scheduled_at;
+    }
+
+    [Table(Name = "enemy_patrol_timer", Scheduled = nameof(UpdateEnemyPatrol), ScheduledAt = nameof(scheduled_at))]
+    public partial struct EnemyPatrolTimer
     {
         [PrimaryKey, AutoInc]
         public ulong scheduled_id;

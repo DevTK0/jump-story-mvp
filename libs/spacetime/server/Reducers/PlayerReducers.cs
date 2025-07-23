@@ -21,7 +21,13 @@ public static partial class Module
             scheduled_at = new ScheduleAt.Interval(TimeSpan.FromSeconds(10))
         });
         
-        Log.Info("Initialized dead body cleanup and enemy spawning schedulers");
+        // Schedule enemy patrol updates every 100ms
+        ctx.Db.enemy_patrol_timer.Insert(new EnemyPatrolTimer
+        {
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(100))
+        });
+        
+        Log.Info("Initialized dead body cleanup, enemy spawning, and enemy patrol schedulers");
     }
 
     [Reducer(ReducerKind.ClientConnected)]

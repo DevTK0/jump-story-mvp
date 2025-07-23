@@ -47,15 +47,17 @@ async function initializeSpacetime() {
                         let maxEnemies = 1;
                         let spawnInterval = 60; // Default
 
+                        let behavior = "patrol"; // Default
                         for (const prop of obj.properties) {
                             if (prop.name === "enemy") enemyType = prop.value;
                             if (prop.name === "number") maxEnemies = parseInt(prop.value);
                             if (prop.name === "spawn_interval") spawnInterval = parseInt(prop.value);
+                            if (prop.name === "behavior") behavior = prop.value;
                         }
 
                         if (enemyType) {
                             routeCount++;
-                            intervalInfo.push(`  Route ${routeCount}: ${enemyType} (max: ${maxEnemies}, interval: ${spawnInterval}s)`);
+                            intervalInfo.push(`  Route ${routeCount}: ${enemyType} (max: ${maxEnemies}, interval: ${spawnInterval}s, behavior: ${behavior})`);
                         }
                     }
                 }
