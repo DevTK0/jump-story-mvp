@@ -154,7 +154,7 @@
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"60"
+                         "value":"61"
                         }, 
                         {
                          "name":"type",

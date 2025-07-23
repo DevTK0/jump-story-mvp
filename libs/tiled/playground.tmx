@@ -42,7 +42,7 @@
    <properties>
     <property name="enemy" value="orc"/>
     <property name="number" value="1"/>
-    <property name="spawn_interval" value="60"/>
+    <property name="spawn_interval" value="61"/>
     <property name="type" value="spawn"/>
    </properties>
   </object>
