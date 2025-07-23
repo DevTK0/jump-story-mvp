@@ -1,9 +1,18 @@
 import Phaser from 'phaser';
 import { Player } from '@/player';
-import { EnemyManager } from '@/enemy';
 import { AttackType } from '@/spacetime/client';
 import { gameEvents } from '@/core/events';
 import { PlayerEvent } from '@/player/player-events';
+import type { 
+    DatabaseConnection, 
+    PlayerAttackEventData, 
+    AttackHitbox, 
+    EnemySprite, 
+    PlayerSprite, 
+    KnockbackDirection, 
+    InteractionCallbacks,
+    InteractionEnemyManager 
+} from './interaction-interfaces';
 
 export interface InteractionConfig {
     cameraShakeDuration?: number;
@@ -13,8 +22,9 @@ export interface InteractionConfig {
 export class InteractionHandler {
     private scene: Phaser.Scene;
     private config: InteractionConfig;
-    private dbConnection: any;
+    private dbConnection: DatabaseConnection | null;
     private currentAttackType: number = 1; // Default to attack1
+    private enemyManager: InteractionEnemyManager | null = null;
 
     // Default configuration
     private static readonly DEFAULT_CONFIG: Required<InteractionConfig> = {
@@ -22,7 +32,7 @@ export class InteractionHandler {
         cameraShakeIntensity: 0.03
     };
 
-    constructor(scene: Phaser.Scene, dbConnection: any, config?: InteractionConfig) {
+    constructor(scene: Phaser.Scene, dbConnection: DatabaseConnection | null, config?: InteractionConfig) {
         this.scene = scene;
         this.dbConnection = dbConnection;
         this.config = {
@@ -31,7 +41,7 @@ export class InteractionHandler {
         };
 
         // Listen for player attack events to track current attack type
-        gameEvents.on(PlayerEvent.PLAYER_ATTACKED, (data: any) => {
+        gameEvents.on(PlayerEvent.PLAYER_ATTACKED, (data: PlayerAttackEventData) => {
             this.currentAttackType = data.attackType || 1;
         });
     }
@@ -40,28 +50,38 @@ export class InteractionHandler {
      * Handle when player's attack hits an enemy
      */
     public handleAttackHitEnemy(
-        enemyManager: EnemyManager
-    ): (_hitbox: any, enemy: any) => void {
-        return (_hitbox: any, enemy: any) => {
+        enemyManager: InteractionEnemyManager
+    ): (_hitbox: AttackHitbox, enemy: EnemySprite) => void {
+        return (_hitbox: AttackHitbox, enemy: EnemySprite) => {
+            // Get enemy ID first to use centralized validation
+            const enemyId = enemyManager.getEnemyIdFromSprite(enemy);
+            if (enemyId === null) {
+                console.log('Prevented attack - enemy ID not found');
+                return;
+            }
+
+            // Use centralized state service validation
+            if (!enemyManager.canEnemyTakeDamage(enemyId)) {
+                console.log('Prevented attack on invalid/dead enemy');
+                return;
+            }
+
             // Visual feedback for successful hit
             this.scene.cameras.main.shake(
                 this.config.cameraShakeDuration,
                 this.config.cameraShakeIntensity
             );
 
-            // Get enemy ID from sprite and play hit animation
-            const enemyId = enemyManager.getEnemyIdFromSprite(enemy);
-            if (enemyId !== null) {
-                enemyManager.playHitAnimation(enemyId);
-                console.log('Enemy hit!', enemyId);
-                
-                // Call server reducer to damage enemy
-                if (this.dbConnection && this.dbConnection.reducers) {
-                    const attackType = this.mapAttackTypeToEnum(this.currentAttackType);
-                    this.dbConnection.reducers.damageEnemy(enemyId, attackType);
-                } else {
-                    console.warn('Database connection not available - cannot damage enemy');
-                }
+            // Play hit animation and damage enemy
+            enemyManager.playHitAnimation(enemyId);
+            console.log('Enemy hit!', enemyId);
+            
+            // Call server reducer to damage enemy
+            if (this.dbConnection && this.dbConnection.reducers) {
+                const attackType = this.mapAttackTypeToEnum(this.currentAttackType);
+                this.dbConnection.reducers.damageEnemy(enemyId, attackType);
+            } else {
+                console.warn('Database connection not available - cannot damage enemy');
             }
         };
     }
@@ -69,8 +89,26 @@ export class InteractionHandler {
     /**
      * Handle when player touches an enemy (takes damage)
      */
-    public handlePlayerTouchEnemy(player: Player): (player: any, enemy: any) => void {
-        return (playerSprite: any, enemy: any) => {
+    public handlePlayerTouchEnemy(player: Player): (playerSprite: PlayerSprite, enemy: EnemySprite) => void {
+        return (playerSprite: PlayerSprite, enemy: EnemySprite) => {
+            // Debug: Log enemy physics body state
+            console.log('Enemy collision - body exists:', !!enemy.body, 'body enabled:', enemy.body?.enable);
+            
+            // Use centralized validation if enemy manager is available
+            if (this.enemyManager) {
+                const enemyId = this.enemyManager.getEnemyIdFromSprite(enemy);
+                if (enemyId !== null && !this.enemyManager.canEnemyDamagePlayer(enemyId)) {
+                    console.log('Prevented damage from invalid/dead enemy');
+                    return;
+                }
+            } else {
+                // Fallback: Check if enemy physics body is disabled (dead enemies have disabled bodies)
+                if (!enemy.body || !enemy.body.enable) {
+                    console.log('Prevented damage from dead enemy (physics check)');
+                    return;
+                }
+            }
+
             // Calculate knockback direction (away from enemy)
             const knockbackDirection = this.calculateKnockbackDirection(
                 playerSprite,
@@ -94,9 +132,9 @@ export class InteractionHandler {
      * Calculate knockback direction from enemy to player
      */
     private calculateKnockbackDirection(
-        player: any,
-        enemy: any
-    ): { x: number; y: number } {
+        player: PlayerSprite,
+        enemy: EnemySprite
+    ): KnockbackDirection {
         const playerPos = { x: player.x, y: player.y };
         const enemyPos = { x: enemy.x, y: enemy.y };
         
@@ -117,10 +155,10 @@ export class InteractionHandler {
      */
     private mapAttackTypeToEnum(attackType: number): AttackType {
         switch (attackType) {
-            case 1: return AttackType.Attack1;
-            case 2: return AttackType.Attack2;
-            case 3: return AttackType.Attack3;
-            default: return AttackType.Attack1; // Default fallback
+            case 1: return { tag: "Attack1" };
+            case 2: return { tag: "Attack2" };
+            case 3: return { tag: "Attack3" };
+            default: return { tag: "Attack1" }; // Default fallback
         }
     }
 
@@ -129,11 +167,8 @@ export class InteractionHandler {
      */
     public createInteractionCallbacks(
         player: Player,
-        enemyManager: EnemyManager
-    ): {
-        onAttackHitEnemy: (_hitbox: any, enemy: any) => void;
-        onPlayerTouchEnemy: (player: any, enemy: any) => void;
-    } {
+        enemyManager: InteractionEnemyManager
+    ): InteractionCallbacks {
         return {
             onAttackHitEnemy: this.handleAttackHitEnemy(enemyManager),
             onPlayerTouchEnemy: this.handlePlayerTouchEnemy(player)
@@ -143,8 +178,15 @@ export class InteractionHandler {
     /**
      * Update the database connection when it becomes available
      */
-    public setDbConnection(dbConnection: any): void {
+    public setDbConnection(dbConnection: DatabaseConnection | null): void {
         this.dbConnection = dbConnection;
+    }
+
+    /**
+     * Set reference to enemy manager for state checking
+     */
+    public setEnemyManager(enemyManager: InteractionEnemyManager | null): void {
+        this.enemyManager = enemyManager;
     }
 
     /**

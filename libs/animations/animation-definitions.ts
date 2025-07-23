@@ -29,8 +29,8 @@ export const ANIMATION_DEFINITIONS = {
     orc: {
         idle: { start: 0, end: 5, frameRate: 8 },
         walk: { start: 9, end: 16, frameRate: 10 },
-        hit: { start: 32, end: 36, frameRate: 15 },
-        death: { start: 40, end: 44, frameRate: 12 },
+        hit: { start: 32, end: 35, frameRate: 15 },
+        death: { start: 40, end: 43, frameRate: 12 },
     } satisfies SpriteAnimationSet,
 } as const;
 

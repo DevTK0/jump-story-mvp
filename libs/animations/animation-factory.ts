@@ -36,7 +36,7 @@ export interface SpriteAnimationSet {
   [key: string]: (AnimationFrameConfig & { frameRate: number }) | undefined;
 }
 
-export type AnimationType = 'idle' | 'walk' | 'attack1' | 'attack2' | 'attack3' | 'hurt' | 'hit' | 'death';
+export type AnimationType = 'idle' | 'walk' | 'attack1' | 'attack2' | 'attack3' | 'hurt' | 'hit' | 'death' | 'damaged';
 
 /**
  * Animation Factory for creating and managing standardized sprite animations

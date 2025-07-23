@@ -141,6 +141,9 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             this.enemyManager.setDbConnection(dbConn);
         }
 
+        // Set enemy manager reference on interaction handler
+        this.interactionHandler.setEnemyManager(this.enemyManager);
+
         // Create interaction callbacks
         const interactionCallbacks = this.interactionHandler.createInteractionCallbacks(
             this.player,

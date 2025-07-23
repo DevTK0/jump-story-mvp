@@ -1,17 +1,22 @@
 import Phaser from "phaser";
-import { DbConnection, Enemy as ServerEnemy } from "@/spacetime/client";
+import { DbConnection, Enemy as ServerEnemy, PlayerState } from "@/spacetime/client";
 import { AnimationFactory, ANIMATION_DEFINITIONS } from "../animations";
+import { EnemyStateManager, type EnemyStateService } from "./enemy-state-service";
+import { ENEMY_CONFIG } from "./enemy-config";
 
 export class EnemyManager {
     private scene: Phaser.Scene;
     private dbConnection: DbConnection | null = null;
     private enemies = new Map<number, Phaser.Physics.Arcade.Sprite>();
+    private enemyStates = new Map<number, PlayerState>();
     private enemyGroup!: Phaser.Physics.Arcade.Group;
     private animationFactory: AnimationFactory;
+    private stateService: EnemyStateService;
 
     constructor(scene: Phaser.Scene) {
         this.scene = scene;
         this.animationFactory = new AnimationFactory(scene);
+        this.stateService = new EnemyStateManager(this.enemies, this.enemyStates);
         this.setupEnemyGroup();
         this.setupEnemyAnimations();
     }
@@ -58,45 +63,78 @@ export class EnemyManager {
     private spawnServerEnemy(serverEnemy: ServerEnemy): void {
         console.log("enemy: ", serverEnemy);
 
-        // Use orc spritesheet directly based on enemyType
-        const spriteKey = serverEnemy.enemyType; // "orc"
+        const sprite = this.createEnemySprite(serverEnemy);
+        const isDead = serverEnemy.state.tag === "Dead";
+        
+        this.configureEnemySprite(sprite);
+        this.initializeEnemyAnimation(sprite, serverEnemy.enemyType, isDead);
+        this.configureEnemyPhysics(sprite, isDead);
+        this.registerEnemy(sprite, serverEnemy);
+    }
 
-        // Create enemy sprite using the spritesheet
-        const sprite = this.scene.physics.add.sprite(
+    /**
+     * Create the basic enemy sprite with position and texture
+     */
+    private createEnemySprite(serverEnemy: ServerEnemy): Phaser.Physics.Arcade.Sprite {
+        const spriteKey = serverEnemy.enemyType;
+        
+        return this.scene.physics.add.sprite(
             serverEnemy.position.x,
             serverEnemy.position.y,
             spriteKey
         );
+    }
 
-        // Configure sprite same as player
-        sprite.setOrigin(0.5, 0.5);
-        sprite.setScale(3); // Match player scale (PLAYER_CONFIG.movement.scale)
-        sprite.setDepth(5); // Lower depth than player (player uses depth 10)
-
-        // Ensure no tint or blend mode interference
+    /**
+     * Apply basic sprite configuration (origin, scale, depth, visual properties)
+     */
+    private configureEnemySprite(sprite: Phaser.Physics.Arcade.Sprite): void {
+        const { display } = ENEMY_CONFIG;
+        sprite.setOrigin(display.origin.x, display.origin.y);
+        sprite.setScale(display.scale);
+        sprite.setDepth(display.depth);
         sprite.clearTint();
         sprite.setBlendMode(Phaser.BlendModes.NORMAL);
+    }
 
-        // Set initial frame to first frame of idle animation
-        sprite.setFrame(0);
-
-        // Play idle animation
-        sprite.play(`${spriteKey}-idle-anim`);
-
-        // Configure physics body for collision but no movement
-        if (sprite.body) {
-            const body = sprite.body as Phaser.Physics.Arcade.Body;
-            body.setSize(10, 10); // Match player hitbox size
-            body.setCollideWorldBounds(true);
-            body.setImmovable(true); // Won't be pushed around by collisions
-            body.setVelocity(0, 0); // No movement
+    /**
+     * Initialize enemy animation based on its state (dead or alive)
+     */
+    private initializeEnemyAnimation(sprite: Phaser.Physics.Arcade.Sprite, enemyType: string, isDead: boolean): void {
+        if (isDead) {
+            this.setDeadVisuals(sprite, enemyType);
+        } else {
+            sprite.setFrame(0);
+            sprite.play(`${enemyType}-idle-anim`);
         }
+    }
 
-        // Add to group
+    /**
+     * Configure physics body for collision detection and behavior
+     */
+    private configureEnemyPhysics(sprite: Phaser.Physics.Arcade.Sprite, isDead: boolean): void {
+        if (!sprite.body) return;
+        
+        const { physics } = ENEMY_CONFIG;
+        const body = sprite.body as Phaser.Physics.Arcade.Body;
+        
+        body.setSize(physics.hitboxWidth, physics.hitboxHeight);
+        body.setCollideWorldBounds(true);
+        body.setImmovable(true); // Won't be pushed around by collisions
+        body.setVelocity(physics.velocity.x, physics.velocity.y);
+        
+        if (isDead) {
+            body.setEnable(false);
+        }
+    }
+
+    /**
+     * Register enemy in collections and groups
+     */
+    private registerEnemy(sprite: Phaser.Physics.Arcade.Sprite, serverEnemy: ServerEnemy): void {
         this.enemyGroup.add(sprite);
-
-        // Store reference
         this.enemies.set(serverEnemy.enemyId, sprite);
+        this.enemyStates.set(serverEnemy.enemyId, serverEnemy.state);
     }
 
     public playHitAnimation(enemyId: number): void {
@@ -105,11 +143,14 @@ export class EnemyManager {
             // Play hit animation
             sprite.play("orc-hit-anim");
 
-            // Return to idle after hit animation completes
+            // Return to idle after hit animation completes, but only if enemy isn't dead
             sprite.once("animationcomplete", () => {
                 if (sprite.active) {
-                    // Check if sprite still exists
-                    sprite.play("orc-idle-anim");
+                    // Check if enemy died during hit animation using state service
+                    if (!this.stateService.isEnemyDead(enemyId)) {
+                        sprite.play("orc-idle-anim");
+                    }
+                    // If dead, let death animation take precedence
                 }
             });
         }
@@ -126,24 +167,121 @@ export class EnemyManager {
         return null;
     }
 
+    public isEnemyDead(enemySprite: Phaser.Physics.Arcade.Sprite): boolean {
+        const enemyId = this.getEnemyIdFromSprite(enemySprite);
+        if (enemyId === null) return false;
+        
+        const isDead = this.stateService.isEnemyDead(enemyId);
+        console.log(`Enemy ${enemyId} state check: ${isDead ? 'Dead' : 'Alive'}`);
+        return isDead;
+    }
+
+    public canEnemyTakeDamage(enemyId: number): boolean {
+        return this.stateService.canEnemyTakeDamage(enemyId);
+    }
+
+    public canEnemyDamagePlayer(enemyId: number): boolean {
+        return this.stateService.canEnemyDamagePlayer(enemyId);
+    }
+
     private despawnServerEnemy(enemyId: number): void {
         const sprite = this.enemies.get(enemyId);
         if (sprite) {
             this.enemyGroup.remove(sprite);
             sprite.destroy();
             this.enemies.delete(enemyId);
+            this.enemyStates.delete(enemyId);
         }
     }
 
     private updateServerEnemy(serverEnemy: ServerEnemy): void {
         const sprite = this.enemies.get(serverEnemy.enemyId);
-        if (sprite) {
-            // Update position if it changed
-            sprite.setPosition(serverEnemy.position.x, serverEnemy.position.y);
+        if (!sprite) return;
 
-            // Could add HP-based visual effects here later
-            // e.g., tint based on currentHp percentage
+        // Update position if it changed
+        sprite.setPosition(serverEnemy.position.x, serverEnemy.position.y);
+
+        // Check for state changes
+        const previousState = this.enemyStates.get(serverEnemy.enemyId);
+        const currentState = serverEnemy.state;
+
+        if (previousState?.tag !== currentState.tag) {
+            this.handleStateChange(serverEnemy.enemyId, sprite, currentState, serverEnemy.enemyType);
+            this.enemyStates.set(serverEnemy.enemyId, currentState);
         }
+
+        // Clear any tint - enemies maintain their natural color
+        sprite.clearTint();
+    }
+
+    private handleStateChange(enemyId: number, sprite: Phaser.Physics.Arcade.Sprite, newState: PlayerState, enemyType: string): void {
+        console.log(`Enemy ${enemyId} state changed to ${newState.tag}`);
+
+        switch (newState.tag) {
+            case "Dead":
+                // Cancel any ongoing animations (like hit animation) before playing death
+                sprite.anims.stop();
+                this.handleDeathState(sprite, enemyType);
+                break;
+            case "Idle":
+                // Return to idle animation
+                sprite.play(`${enemyType}-idle-anim`);
+                break;
+            case "Walk":
+                // Could add walk animation if needed
+                sprite.play(`${enemyType}-idle-anim`); // Fallback to idle for now
+                break;
+            case "Damaged":
+                // Damaged state is handled by playHitAnimation, but we can also handle it here
+                break;
+            default:
+                // For any other states, fallback to idle
+                sprite.play(`${enemyType}-idle-anim`);
+                break;
+        }
+    }
+
+    private handleDeathState(sprite: Phaser.Physics.Arcade.Sprite, enemyType: string): void {
+        // Play death animation and stop on last frame
+        sprite.play(`${enemyType}-death-anim`);
+        
+        // When death animation completes, stop on the last frame
+        sprite.once("animationcomplete", () => {
+            if (sprite.active) {
+                this.setDeadVisuals(sprite, enemyType);
+            }
+        });
+
+        // Keep physics body enabled temporarily to let enemy fall to ground
+        if (sprite.body) {
+            const body = sprite.body as Phaser.Physics.Arcade.Body;
+            // Allow the body to fall with gravity but prevent horizontal movement
+            body.setVelocityX(0);
+            body.setImmovable(false);
+            
+            // Disable physics after a short delay to let enemy settle on ground
+            setTimeout(() => {
+                if (sprite.active && sprite.body) {
+                    body.setEnable(false);
+                }
+            }, ENEMY_CONFIG.physics.deathFallDelay);
+        }
+
+        // Visual effects for death
+        sprite.setDepth(ENEMY_CONFIG.display.deadDepth);
+        
+        console.log(`Enemy ${enemyType} died and death animation started`);
+    }
+
+    private setDeadVisuals(sprite: Phaser.Physics.Arcade.Sprite, enemyType: string): void {
+        // Stop the animation and keep it on the last frame
+        sprite.anims.stop();
+        // Set to the last frame of death animation (frame 44 for orc)
+        const deathAnim = ANIMATION_DEFINITIONS[enemyType as keyof typeof ANIMATION_DEFINITIONS];
+        if (deathAnim && 'death' in deathAnim) {
+            sprite.setFrame(deathAnim.death.end);
+        }
+        sprite.setDepth(ENEMY_CONFIG.display.deadDepth);
     }
 
     public getEnemyGroup(): Phaser.Physics.Arcade.Group {
@@ -155,6 +293,7 @@ export class EnemyManager {
             sprite.destroy();
         });
         this.enemies.clear();
+        this.enemyStates.clear();
         this.enemyGroup.destroy();
     }
 }
