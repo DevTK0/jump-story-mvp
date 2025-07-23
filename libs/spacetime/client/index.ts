@@ -50,6 +50,8 @@ import { InitializeEnemyRoutes } from "./initialize_enemy_routes_reducer.ts";
 export { InitializeEnemyRoutes };
 import { SpawnAllEnemies } from "./spawn_all_enemies_reducer.ts";
 export { SpawnAllEnemies };
+import { SpawnMissingEnemies } from "./spawn_missing_enemies_reducer.ts";
+export { SpawnMissingEnemies };
 import { UpdatePlayerPosition } from "./update_player_position_reducer.ts";
 export { UpdatePlayerPosition };
 import { UpdatePlayerState } from "./update_player_state_reducer.ts";
@@ -66,6 +68,8 @@ import { PlayerTableHandle } from "./player_table.ts";
 export { PlayerTableHandle };
 import { CleanupDeadBodiesTimerTableHandle } from "./cleanup_dead_bodies_timer_table.ts";
 export { CleanupDeadBodiesTimerTableHandle };
+import { SpawnEnemiesTimerTableHandle } from "./spawn_enemies_timer_table.ts";
+export { SpawnEnemiesTimerTableHandle };
 
 // Import and reexport all types
 import { AttackType } from "./attack_type_type.ts";
@@ -90,6 +94,8 @@ import { Player } from "./player_type.ts";
 export { Player };
 import { PlayerState } from "./player_state_type.ts";
 export { PlayerState };
+import { SpawnEnemiesTimer } from "./spawn_enemies_timer_type.ts";
+export { SpawnEnemiesTimer };
 
 const REMOTE_MODULE = {
   tables: {
@@ -138,6 +144,15 @@ const REMOTE_MODULE = {
         colType: CleanupDeadBodiesTimer.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
+    spawn_enemies_timer: {
+      tableName: "spawn_enemies_timer",
+      rowType: SpawnEnemiesTimer.getTypeScriptAlgebraicType(),
+      primaryKey: "scheduledId",
+      primaryKeyInfo: {
+        colName: "scheduledId",
+        colType: SpawnEnemiesTimer.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
   },
   reducers: {
     CleanupDeadBodies: {
@@ -171,6 +186,10 @@ const REMOTE_MODULE = {
     SpawnAllEnemies: {
       reducerName: "SpawnAllEnemies",
       argsType: SpawnAllEnemies.getTypeScriptAlgebraicType(),
+    },
+    SpawnMissingEnemies: {
+      reducerName: "SpawnMissingEnemies",
+      argsType: SpawnMissingEnemies.getTypeScriptAlgebraicType(),
     },
     UpdatePlayerPosition: {
       reducerName: "UpdatePlayerPosition",
@@ -218,6 +237,7 @@ export type Reducer = never
 | { name: "Disconnect", args: Disconnect }
 | { name: "InitializeEnemyRoutes", args: InitializeEnemyRoutes }
 | { name: "SpawnAllEnemies", args: SpawnAllEnemies }
+| { name: "SpawnMissingEnemies", args: SpawnMissingEnemies }
 | { name: "UpdatePlayerPosition", args: UpdatePlayerPosition }
 | { name: "UpdatePlayerState", args: UpdatePlayerState }
 ;
@@ -325,6 +345,22 @@ export class RemoteReducers {
     this.connection.offReducer("SpawnAllEnemies", callback);
   }
 
+  spawnMissingEnemies(timer: SpawnEnemiesTimer) {
+    const __args = { timer };
+    let __writer = new BinaryWriter(1024);
+    SpawnMissingEnemies.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("SpawnMissingEnemies", __argsBuffer, this.setCallReducerFlags.spawnMissingEnemiesFlags);
+  }
+
+  onSpawnMissingEnemies(callback: (ctx: ReducerEventContext, timer: SpawnEnemiesTimer) => void) {
+    this.connection.onReducer("SpawnMissingEnemies", callback);
+  }
+
+  removeOnSpawnMissingEnemies(callback: (ctx: ReducerEventContext, timer: SpawnEnemiesTimer) => void) {
+    this.connection.offReducer("SpawnMissingEnemies", callback);
+  }
+
   updatePlayerPosition(x: number, y: number, facing: FacingDirection) {
     const __args = { x, y, facing };
     let __writer = new BinaryWriter(1024);
@@ -390,6 +426,11 @@ export class SetReducerFlags {
     this.spawnAllEnemiesFlags = flags;
   }
 
+  spawnMissingEnemiesFlags: CallReducerFlags = 'FullUpdate';
+  spawnMissingEnemies(flags: CallReducerFlags) {
+    this.spawnMissingEnemiesFlags = flags;
+  }
+
   updatePlayerPositionFlags: CallReducerFlags = 'FullUpdate';
   updatePlayerPosition(flags: CallReducerFlags) {
     this.updatePlayerPositionFlags = flags;
@@ -423,6 +464,10 @@ export class RemoteTables {
 
   get cleanupDeadBodiesTimer(): CleanupDeadBodiesTimerTableHandle {
     return new CleanupDeadBodiesTimerTableHandle(this.connection.clientCache.getOrCreateTable<CleanupDeadBodiesTimer>(REMOTE_MODULE.tables.cleanup_dead_bodies_timer));
+  }
+
+  get spawnEnemiesTimer(): SpawnEnemiesTimerTableHandle {
+    return new SpawnEnemiesTimerTableHandle(this.connection.clientCache.getOrCreateTable<SpawnEnemiesTimer>(REMOTE_MODULE.tables.spawn_enemies_timer));
   }
 }
 

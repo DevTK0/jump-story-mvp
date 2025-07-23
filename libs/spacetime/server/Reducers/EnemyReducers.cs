@@ -40,6 +40,7 @@ public static partial class Module
                         var properties = obj.GetProperty("properties");
                         string enemyType = "";
                         byte maxEnemies = 1;
+                        uint spawnInterval = 60; // Default 60 seconds
 
                         foreach (var prop in properties.EnumerateArray())
                         {
@@ -50,6 +51,8 @@ public static partial class Module
                                 enemyType = propValue;
                             else if (propName == "number")
                                 byte.TryParse(propValue, out maxEnemies);
+                            else if (propName == "spawn_interval")
+                                uint.TryParse(propValue, out spawnInterval);
                         }
 
                         if (!string.IsNullOrEmpty(enemyType))
@@ -66,7 +69,9 @@ public static partial class Module
                                     new DbVector2(x, y),
                                     new DbVector2(width, height)
                                 ),
-                                max_enemies = maxEnemies
+                                max_enemies = maxEnemies,
+                                spawn_interval = spawnInterval,
+                                last_spawn_time = ctx.Timestamp
                             };
 
                             routesList.Add(route);

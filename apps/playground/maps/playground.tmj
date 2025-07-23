@@ -56,6 +56,11 @@
                          "value":"4"
                         }, 
                         {
+                         "name":"spawn_interval",
+                         "type":"string",
+                         "value":"60"
+                        }, 
+                        {
                          "name":"type",
                          "type":"string",
                          "value":"spawn"
@@ -81,6 +86,11 @@
                          "name":"number",
                          "type":"string",
                          "value":"3"
+                        }, 
+                        {
+                         "name":"spawn_interval",
+                         "type":"string",
+                         "value":"60"
                         }, 
                         {
                          "name":"type",
@@ -110,6 +120,11 @@
                          "value":"2"
                         }, 
                         {
+                         "name":"spawn_interval",
+                         "type":"string",
+                         "value":"60"
+                        }, 
+                        {
                          "name":"type",
                          "type":"string",
                          "value":"spawn"
@@ -135,6 +150,11 @@
                          "name":"number",
                          "type":"string",
                          "value":"1"
+                        }, 
+                        {
+                         "name":"spawn_interval",
+                         "type":"string",
+                         "value":"60"
                         }, 
                         {
                          "name":"type",
@@ -537,7 +557,7 @@
         {
          "columns":16,
          "firstgid":1,
-         "image":"..\/textures\/TX Tileset Ground.png",
+         "image":"..\/..\/..\/public\/assets\/textures\/TX Tileset Ground.png",
          "imageheight":512,
          "imagewidth":512,
          "margin":0,
@@ -550,7 +570,7 @@
         {
          "columns":32,
          "firstgid":257,
-         "image":"..\/textures\/TX Village Props.png",
+         "image":"..\/..\/..\/public\/assets\/textures\/TX Village Props.png",
          "imageheight":1024,
          "imagewidth":1024,
          "margin":0,

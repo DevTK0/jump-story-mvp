@@ -15,7 +15,13 @@ public static partial class Module
             scheduled_at = new ScheduleAt.Interval(TimeSpan.FromSeconds(1))
         });
         
-        Log.Info("Initialized dead body cleanup scheduler");
+        // Schedule enemy spawning every 10 seconds (checks per-route intervals)
+        ctx.Db.spawn_enemies_timer.Insert(new SpawnEnemiesTimer
+        {
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromSeconds(10))
+        });
+        
+        Log.Info("Initialized dead body cleanup and enemy spawning schedulers");
     }
 
     [Reducer(ReducerKind.ClientConnected)]

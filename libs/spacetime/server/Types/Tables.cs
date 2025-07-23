@@ -24,6 +24,8 @@ public static partial class Module
         public string enemy_type;
         public DbRect spawn_area;
         public byte max_enemies;
+        public uint spawn_interval;
+        public Timestamp last_spawn_time;
     }
 
     [Table(Name = "Enemy", Public = true)]
@@ -54,6 +56,14 @@ public static partial class Module
 
     [Table(Name = "cleanup_dead_bodies_timer", Scheduled = nameof(CleanupDeadBodies), ScheduledAt = nameof(scheduled_at))]
     public partial struct CleanupDeadBodiesTimer
+    {
+        [PrimaryKey, AutoInc]
+        public ulong scheduled_id;
+        public ScheduleAt scheduled_at;
+    }
+
+    [Table(Name = "spawn_enemies_timer", Scheduled = nameof(SpawnMissingEnemies), ScheduledAt = nameof(scheduled_at))]
+    public partial struct SpawnEnemiesTimer
     {
         [PrimaryKey, AutoInc]
         public ulong scheduled_id;
