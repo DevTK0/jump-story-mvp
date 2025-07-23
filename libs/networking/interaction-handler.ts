@@ -25,6 +25,9 @@ export class InteractionHandler {
     private dbConnection: DatabaseConnection | null;
     private currentAttackType: number = 1; // Default to attack1
     private enemyManager: InteractionEnemyManager | null = null;
+    
+    // Track enemies damaged in current attack to prevent duplicates
+    private damagedInCurrentAttack = new Set<number>();
 
     // Default configuration
     private static readonly DEFAULT_CONFIG: Required<InteractionConfig> = {
@@ -43,6 +46,8 @@ export class InteractionHandler {
         // Listen for player attack events to track current attack type
         gameEvents.on(PlayerEvent.PLAYER_ATTACKED, (data: PlayerAttackEventData) => {
             this.currentAttackType = data.attackType || 1;
+            // Clear damage tracking for new attack
+            this.damagedInCurrentAttack.clear();
         });
     }
 
@@ -65,6 +70,15 @@ export class InteractionHandler {
                 console.log('Prevented attack on invalid/dead enemy');
                 return;
             }
+
+            // Prevent multiple damage to same enemy in single attack
+            if (this.damagedInCurrentAttack.has(enemyId)) {
+                console.log('Prevented duplicate damage to enemy', enemyId);
+                return;
+            }
+
+            // Mark enemy as damaged in this attack
+            this.damagedInCurrentAttack.add(enemyId);
 
             // Visual feedback for successful hit
             this.scene.cameras.main.shake(

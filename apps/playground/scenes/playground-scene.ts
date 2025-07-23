@@ -12,6 +12,7 @@ import { PhysicsConfigurator, type CollisionGroups } from "@/physics";
 import { InteractionHandler } from "@/networking";
 import { DbConnection } from "@/spacetime/client";
 import { Identity } from "@clockworklabs/spacetimedb-sdk";
+import { DamageNumberRenderer } from "@/effects";
 
 // Scene-specific constants
 const COLOR_BACKGROUND = 0x2c3e50;
@@ -33,6 +34,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     private peerManager!: PeerManager;
     private physicsConfigurator!: PhysicsConfigurator;
     private interactionHandler!: InteractionHandler;
+    private damageNumberRenderer!: DamageNumberRenderer;
 
     constructor() {
         super({ key: "playground" });
@@ -141,6 +143,15 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             this.enemyManager.setDbConnection(dbConn);
         }
 
+        // Initialize damage number renderer
+        this.damageNumberRenderer = new DamageNumberRenderer(this);
+        this.damageNumberRenderer.setEnemyManager(this.enemyManager);
+
+        // Set up damage event subscription if database connection exists
+        if (dbConn) {
+            this.setupDamageEventSubscription(dbConn);
+        }
+
         // Set enemy manager reference on interaction handler
         this.interactionHandler.setEnemyManager(this.enemyManager);
 
@@ -186,6 +197,11 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         if (this.interactionHandler) {
             this.interactionHandler.setDbConnection(conn);
         }
+
+        // Set up damage event subscription if damage number renderer exists
+        if (this.damageNumberRenderer) {
+            this.setupDamageEventSubscription(conn);
+        }
     }
 
     private setupPlayerSystems(conn: DbConnection): void {
@@ -200,6 +216,14 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             const syncManager = movementSystem.syncManager;
             combatSystem.setSyncManager(syncManager);
         }
+    }
+
+    private setupDamageEventSubscription(conn: DbConnection): void {
+        // Subscribe to damage events from the database
+        conn.db.damageEvent.onInsert((_ctx, damageEvent) => {
+            console.debug('Received damage event:', damageEvent);
+            this.damageNumberRenderer.handleDamageEvent(damageEvent);
+        });
     }
 
     update(time: number, delta: number): void {
@@ -330,6 +354,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
                 ? `${this.mapData.tilemap.widthInPixels}x${this.mapData.tilemap.heightInPixels}`
                 : "N/A",
             peers: this.peerManager ? this.peerManager.getPeerCount() : 0,
+            damageNumbers: this.damageNumberRenderer ? this.damageNumberRenderer.getDebugInfo() : {},
         };
     }
 
@@ -341,6 +366,11 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         // Clean up peer manager
         if (this.peerManager) {
             this.peerManager.destroy();
+        }
+
+        // Clean up damage number renderer
+        if (this.damageNumberRenderer) {
+            this.damageNumberRenderer.destroy();
         }
     }
 }
