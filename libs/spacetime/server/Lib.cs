@@ -80,6 +80,7 @@ public static partial class Module
         public PlayerState state;
         public FacingDirection facing;
         public float current_hp;
+        public Timestamp last_updated;
     }
 
     [Table(Name = "DamageEvent", Public = true)]
@@ -92,6 +93,14 @@ public static partial class Module
         public float damage_amount;
         public DamageType damage_type;
         public Timestamp timestamp;
+    }
+
+    [Table(Name = "cleanup_dead_bodies_timer", Scheduled = nameof(CleanupDeadBodies), ScheduledAt = nameof(scheduled_at))]
+    public partial struct CleanupDeadBodiesTimer
+    {
+        [PrimaryKey, AutoInc]
+        public ulong scheduled_id;
+        public ScheduleAt scheduled_at;
     }
 
     [SpacetimeDB.Type]
@@ -193,6 +202,20 @@ public static partial class Module
         return state == PlayerState.Attack1 ||
                state == PlayerState.Attack2 ||
                state == PlayerState.Attack3;
+    }
+
+    [Reducer(ReducerKind.Init)]
+    public static void Init(ReducerContext ctx)
+    {
+        Log.Info("Initializing module...");
+        
+        // Schedule dead body cleanup every 1 second
+        ctx.Db.cleanup_dead_bodies_timer.Insert(new CleanupDeadBodiesTimer
+        {
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromSeconds(1))
+        });
+        
+        Log.Info("Initialized dead body cleanup scheduler");
     }
 
     [Reducer(ReducerKind.ClientConnected)]
@@ -367,7 +390,8 @@ public static partial class Module
                 position = enemy.Value.position,
                 state = newState,
                 facing = enemy.Value.facing,
-                current_hp = newHp
+                current_hp = newHp,
+                last_updated = ctx.Timestamp
             });
 
             // Record damage event
@@ -468,7 +492,8 @@ public static partial class Module
                     position = spawnPosition,
                     state = PlayerState.Idle,
                     facing = FacingDirection.Right,
-                    current_hp = enemyMaxHp
+                    current_hp = enemyMaxHp,
+                    last_updated = ctx.Timestamp
                 };
 
                 ctx.Db.Enemy.Insert(newEnemy);
@@ -478,6 +503,34 @@ public static partial class Module
         }
 
         Log.Info($"Spawned {totalSpawned} enemies across all routes");
+    }
+
+    [Reducer]
+    public static void CleanupDeadBodies(ReducerContext ctx, CleanupDeadBodiesTimer timer)
+    {
+        var fiveSecondsAgo = ctx.Timestamp - TimeSpan.FromSeconds(5);
+        var enemiesToRemove = new List<uint>();
+        
+        foreach (var enemy in ctx.Db.Enemy.Iter())
+        {
+            // Check if enemy is dead AND has been dead for > 5 seconds
+            if (enemy.state == PlayerState.Dead && 
+                enemy.last_updated < fiveSecondsAgo)
+            {
+                enemiesToRemove.Add(enemy.enemy_id);
+            }
+        }
+        
+        // Delete all expired dead bodies
+        foreach (var enemyId in enemiesToRemove)
+        {
+            ctx.Db.Enemy.enemy_id.Delete(enemyId);
+        }
+        
+        if (enemiesToRemove.Count > 0)
+        {
+            Log.Info($"Cleaned up {enemiesToRemove.Count} dead enemies");
+        }
     }
 
 }

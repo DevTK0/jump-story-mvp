@@ -34,6 +34,8 @@ import {
 } from "@clockworklabs/spacetimedb-sdk";
 
 // Import and reexport all reducer arg types
+import { CleanupDeadBodies } from "./cleanup_dead_bodies_reducer.ts";
+export { CleanupDeadBodies };
 import { CleanupInactivePlayers } from "./cleanup_inactive_players_reducer.ts";
 export { CleanupInactivePlayers };
 import { Connect } from "./connect_reducer.ts";
@@ -62,10 +64,14 @@ import { EnemyRouteTableHandle } from "./enemy_route_table.ts";
 export { EnemyRouteTableHandle };
 import { PlayerTableHandle } from "./player_table.ts";
 export { PlayerTableHandle };
+import { CleanupDeadBodiesTimerTableHandle } from "./cleanup_dead_bodies_timer_table.ts";
+export { CleanupDeadBodiesTimerTableHandle };
 
 // Import and reexport all types
 import { AttackType } from "./attack_type_type.ts";
 export { AttackType };
+import { CleanupDeadBodiesTimer } from "./cleanup_dead_bodies_timer_type.ts";
+export { CleanupDeadBodiesTimer };
 import { DamageEvent } from "./damage_event_type.ts";
 export { DamageEvent };
 import { DamageType } from "./damage_type_type.ts";
@@ -123,8 +129,21 @@ const REMOTE_MODULE = {
         colType: Player.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
+    cleanup_dead_bodies_timer: {
+      tableName: "cleanup_dead_bodies_timer",
+      rowType: CleanupDeadBodiesTimer.getTypeScriptAlgebraicType(),
+      primaryKey: "scheduledId",
+      primaryKeyInfo: {
+        colName: "scheduledId",
+        colType: CleanupDeadBodiesTimer.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
   },
   reducers: {
+    CleanupDeadBodies: {
+      reducerName: "CleanupDeadBodies",
+      argsType: CleanupDeadBodies.getTypeScriptAlgebraicType(),
+    },
     CleanupInactivePlayers: {
       reducerName: "CleanupInactivePlayers",
       argsType: CleanupInactivePlayers.getTypeScriptAlgebraicType(),
@@ -191,6 +210,7 @@ const REMOTE_MODULE = {
 
 // A type representing all the possible variants of a reducer.
 export type Reducer = never
+| { name: "CleanupDeadBodies", args: CleanupDeadBodies }
 | { name: "CleanupInactivePlayers", args: CleanupInactivePlayers }
 | { name: "Connect", args: Connect }
 | { name: "DamageEnemy", args: DamageEnemy }
@@ -204,6 +224,22 @@ export type Reducer = never
 
 export class RemoteReducers {
   constructor(private connection: DbConnectionImpl, private setCallReducerFlags: SetReducerFlags) {}
+
+  cleanupDeadBodies(timer: CleanupDeadBodiesTimer) {
+    const __args = { timer };
+    let __writer = new BinaryWriter(1024);
+    CleanupDeadBodies.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("CleanupDeadBodies", __argsBuffer, this.setCallReducerFlags.cleanupDeadBodiesFlags);
+  }
+
+  onCleanupDeadBodies(callback: (ctx: ReducerEventContext, timer: CleanupDeadBodiesTimer) => void) {
+    this.connection.onReducer("CleanupDeadBodies", callback);
+  }
+
+  removeOnCleanupDeadBodies(callback: (ctx: ReducerEventContext, timer: CleanupDeadBodiesTimer) => void) {
+    this.connection.offReducer("CleanupDeadBodies", callback);
+  }
 
   cleanupInactivePlayers() {
     this.connection.callReducer("CleanupInactivePlayers", new Uint8Array(0), this.setCallReducerFlags.cleanupInactivePlayersFlags);
@@ -324,6 +360,11 @@ export class RemoteReducers {
 }
 
 export class SetReducerFlags {
+  cleanupDeadBodiesFlags: CallReducerFlags = 'FullUpdate';
+  cleanupDeadBodies(flags: CallReducerFlags) {
+    this.cleanupDeadBodiesFlags = flags;
+  }
+
   cleanupInactivePlayersFlags: CallReducerFlags = 'FullUpdate';
   cleanupInactivePlayers(flags: CallReducerFlags) {
     this.cleanupInactivePlayersFlags = flags;
@@ -378,6 +419,10 @@ export class RemoteTables {
 
   get player(): PlayerTableHandle {
     return new PlayerTableHandle(this.connection.clientCache.getOrCreateTable<Player>(REMOTE_MODULE.tables.Player));
+  }
+
+  get cleanupDeadBodiesTimer(): CleanupDeadBodiesTimerTableHandle {
+    return new CleanupDeadBodiesTimerTableHandle(this.connection.clientCache.getOrCreateTable<CleanupDeadBodiesTimer>(REMOTE_MODULE.tables.cleanup_dead_bodies_timer));
   }
 }
 

@@ -187,8 +187,26 @@ export class EnemyManager {
     private despawnServerEnemy(enemyId: number): void {
         const sprite = this.enemies.get(enemyId);
         if (sprite) {
+            // Remove from physics group immediately to prevent further interactions
             this.enemyGroup.remove(sprite);
-            sprite.destroy();
+            
+            // Disable physics body to prevent collisions during fade
+            if (sprite.body) {
+                sprite.body.enable = false;
+            }
+            
+            // Fade out the sprite over 1 second, then destroy
+            this.scene.tweens.add({
+                targets: sprite,
+                alpha: 0,
+                duration: 1000,
+                ease: 'Power2.easeOut',
+                onComplete: () => {
+                    sprite.destroy();
+                }
+            });
+            
+            // Clean up references immediately (sprite still fading but no longer interactive)
             this.enemies.delete(enemyId);
             this.enemyStates.delete(enemyId);
         }

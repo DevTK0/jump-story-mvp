@@ -44,6 +44,7 @@ export type Enemy = {
   state: __PlayerState,
   facing: __FacingDirection,
   currentHp: number,
+  lastUpdated: Timestamp,
 };
 
 /**
@@ -63,6 +64,7 @@ export namespace Enemy {
       new ProductTypeElement("state", __PlayerState.getTypeScriptAlgebraicType()),
       new ProductTypeElement("facing", __FacingDirection.getTypeScriptAlgebraicType()),
       new ProductTypeElement("currentHp", AlgebraicType.createF32Type()),
+      new ProductTypeElement("lastUpdated", AlgebraicType.createTimestampType()),
     ]);
   }
 
