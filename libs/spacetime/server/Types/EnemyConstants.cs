@@ -9,7 +9,7 @@ public static class EnemyConstants
     
     // Aggro and combat constants
     public const float AGGRO_RANGE = 150.0f; // Distance to detect players
-    public const float LEASH_DISTANCE = 200.0f; // Max distance from spawn area to maintain aggro
+    public const float LEASH_DISTANCE = 800.0f; // Max distance from spawn area to maintain aggro (screen's worth)
     public const float KNOCKBACK_DISTANCE = 30.0f; // Pixels to knock back enemy when attacked
     public const int STEP_BACK_MULTIPLIER = 3; // Step back 3x the normal movement when blocked
     

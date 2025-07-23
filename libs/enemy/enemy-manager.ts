@@ -3,12 +3,14 @@ import { DbConnection, Enemy as ServerEnemy, PlayerState } from "@/spacetime/cli
 import { AnimationFactory, ANIMATION_DEFINITIONS } from "../animations";
 import { EnemyStateManager, type EnemyStateService } from "./enemy-state-service";
 import { ENEMY_CONFIG } from "./enemy-config";
+import { EnemyHealthBar } from "./enemy-health-bar";
 
 export class EnemyManager {
     private scene: Phaser.Scene;
     private dbConnection: DbConnection | null = null;
     private enemies = new Map<number, Phaser.Physics.Arcade.Sprite>();
     private enemyStates = new Map<number, PlayerState>();
+    private enemyHealthBars = new Map<number, EnemyHealthBar>();
     private enemyGroup!: Phaser.Physics.Arcade.Group;
     private animationFactory: AnimationFactory;
     private stateService: EnemyStateService;
@@ -48,6 +50,7 @@ export class EnemyManager {
 
         for (const [enemyId, interpolationData] of this.enemyInterpolation.entries()) {
             const sprite = this.enemies.get(enemyId);
+            const healthBar = this.enemyHealthBars.get(enemyId);
             if (!sprite) continue;
 
             const elapsed = currentTime - interpolationData.startTime;
@@ -58,6 +61,11 @@ export class EnemyManager {
             const interpolatedX = interpolationData.startX + (interpolationData.targetX - interpolationData.startX) * easeProgress;
 
             sprite.setX(interpolatedX);
+            
+            // Update health bar position during interpolation
+            if (healthBar) {
+                healthBar.updatePosition(interpolatedX, sprite.y);
+            }
 
             // Clean up completed interpolations
             if (progress >= 1) {
@@ -102,6 +110,7 @@ export class EnemyManager {
         this.configureEnemySprite(sprite);
         this.initializeEnemyAnimation(sprite, serverEnemy.enemyType, isDead);
         this.configureEnemyPhysics(sprite, isDead);
+        this.createHealthBar(serverEnemy, sprite);
         this.registerEnemy(sprite, serverEnemy);
     }
 
@@ -162,6 +171,25 @@ export class EnemyManager {
     }
 
     /**
+     * Create health bar for enemy
+     */
+    private createHealthBar(serverEnemy: ServerEnemy, sprite: Phaser.Physics.Arcade.Sprite): void {
+        // Assume max HP is 100 (this should ideally come from server data)
+        const maxHp = 100;
+        const healthBar = new EnemyHealthBar(
+            this.scene,
+            sprite.x,
+            sprite.y,
+            maxHp
+        );
+        
+        // Update health bar with current HP
+        healthBar.updateHealth(serverEnemy.currentHp);
+        
+        this.enemyHealthBars.set(serverEnemy.enemyId, healthBar);
+    }
+
+    /**
      * Register enemy in collections and groups
      */
     private registerEnemy(sprite: Phaser.Physics.Arcade.Sprite, serverEnemy: ServerEnemy): void {
@@ -219,6 +247,8 @@ export class EnemyManager {
 
     private despawnServerEnemy(enemyId: number): void {
         const sprite = this.enemies.get(enemyId);
+        const healthBar = this.enemyHealthBars.get(enemyId);
+        
         if (sprite) {
             // Remove from physics group immediately to prevent further interactions
             this.enemyGroup.remove(sprite);
@@ -244,10 +274,17 @@ export class EnemyManager {
             this.enemyStates.delete(enemyId);
             this.enemyInterpolation.delete(enemyId);
         }
+        
+        // Clean up health bar
+        if (healthBar) {
+            healthBar.destroy();
+            this.enemyHealthBars.delete(enemyId);
+        }
     }
 
     private updateServerEnemy(serverEnemy: ServerEnemy): void {
         const sprite = this.enemies.get(serverEnemy.enemyId);
+        const healthBar = this.enemyHealthBars.get(serverEnemy.enemyId);
         if (!sprite) return;
 
         // Store previous position for movement detection
@@ -270,6 +307,12 @@ export class EnemyManager {
             sprite.setFlipX(false);
         }
 
+        // Update health bar position and health
+        if (healthBar) {
+            healthBar.updatePosition(sprite.x, sprite.y);
+            healthBar.updateHealth(serverEnemy.currentHp);
+        }
+
         // Check for state changes
         const previousState = this.enemyStates.get(serverEnemy.enemyId);
         const currentState = serverEnemy.state;
@@ -277,6 +320,11 @@ export class EnemyManager {
         if (previousState?.tag !== currentState.tag) {
             this.handleStateChange(serverEnemy.enemyId, sprite, currentState, serverEnemy.enemyType);
             this.enemyStates.set(serverEnemy.enemyId, currentState);
+            
+            // Hide health bar when enemy dies
+            if (currentState.tag === "Dead" && healthBar) {
+                healthBar.hide();
+            }
         }
 
         // Handle movement animation for idle enemies (patrol movement)
@@ -374,8 +422,12 @@ export class EnemyManager {
         this.enemies.forEach((sprite) => {
             sprite.destroy();
         });
+        this.enemyHealthBars.forEach((healthBar) => {
+            healthBar.destroy();
+        });
         this.enemies.clear();
         this.enemyStates.clear();
+        this.enemyHealthBars.clear();
         this.enemyGroup.destroy();
     }
 }

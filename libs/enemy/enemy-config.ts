@@ -55,6 +55,23 @@ export const ENEMY_CONFIG = {
     },
 
     /**
+     * Health bar configuration
+     */
+    healthBar: {
+        width: 32,              // Health bar width in pixels (bigger)
+        height: 4,              // Health bar height in pixels (bigger)
+        offsetY: -30,           // Offset above enemy sprite (higher)
+        backgroundColor: 0x000000, // Black background
+        borderColor: 0xFFFFFF,  // White border
+        healthColor: 0xFF0000,  // Always red health
+        damageColor: 0xFF0000,  // Always red for damaged health
+        borderWidth: 1,         // Border thickness
+        cornerRadius: 1,        // Rounded corners
+        alpha: 0.9,            // Slight transparency
+        showDuration: 3000,     // Show for 3 seconds after damage
+    },
+
+    /**
      * Enemy type configurations
      */
     types: {
