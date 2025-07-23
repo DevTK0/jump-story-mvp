@@ -124,17 +124,9 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
       return false;
     }
     
-    // Cannot attack when climbing or on climbeable surface
+    // Cannot attack when climbing
     if (this.player.isClimbing) {
       return false;
-    }
-    
-    // Check if player is on climbeable surface
-    const climbingSystem = this.player.getSystem('climbing');
-    if (climbingSystem && 'isPlayerOnClimbeable' in climbingSystem) {
-      if ((climbingSystem as any).isPlayerOnClimbeable()) {
-        return false;
-      }
     }
     
     this.performAttack(attackType);
