@@ -115,7 +115,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
 
         // Initialize managers
         this.physicsConfigurator = new PhysicsConfigurator(this);
-        this.interactionHandler = new InteractionHandler(this, {
+        this.interactionHandler = new InteractionHandler(this, dbConnection, {
             cameraShakeDuration: CAMERA_SHAKE_DURATION,
             cameraShakeIntensity: CAMERA_SHAKE_INTENSITY
         });
@@ -177,6 +177,11 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         // Set database connection on enemy manager if it exists
         if (this.enemyManager) {
             this.enemyManager.setDbConnection(conn);
+        }
+
+        // Set database connection on interaction handler if it exists
+        if (this.interactionHandler) {
+            this.interactionHandler.setDbConnection(conn);
         }
     }
 

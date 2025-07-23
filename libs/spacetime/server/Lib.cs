@@ -27,6 +27,24 @@ public static partial class Module
         Right
     }
 
+    [SpacetimeDB.Type]
+    public enum DamageType : byte
+    {
+        Weak,
+        Strong,
+        Crit,
+        Normal,
+        Immune
+    }
+
+    [SpacetimeDB.Type]
+    public enum AttackType : byte
+    {
+        Attack1,
+        Attack2,
+        Attack3
+    }
+
     [Table(Name = "Player", Public = true)]
     public partial struct Player
     {
@@ -38,7 +56,6 @@ public static partial class Module
         public DbVector2 position;
         public PlayerState state;
         public FacingDirection facing;
-        public long state_timestamp;
         public Timestamp last_active;
     }
 
@@ -60,7 +77,21 @@ public static partial class Module
         public uint route_id;
         public string enemy_type;
         public DbVector2 position;
+        public PlayerState state;
+        public FacingDirection facing;
         public float current_hp;
+    }
+
+    [Table(Name = "DamageEvent", Public = true)]
+    public partial struct DamageEvent
+    {
+        [PrimaryKey, AutoInc]
+        public uint damage_event_id;
+        public uint enemy_id;
+        public Identity player_identity;
+        public float damage_amount;
+        public DamageType damage_type;
+        public Timestamp timestamp;
     }
 
     [SpacetimeDB.Type]
@@ -124,7 +155,6 @@ public static partial class Module
                 position = new DbVector2(x, y),
                 state = player.Value.state,
                 facing = facing,
-                state_timestamp = player.Value.state_timestamp,
                 last_active = ctx.Timestamp
             });
             Log.Info($"Updated position for {ctx.Sender} to ({x}, {y}) facing {facing}");
@@ -152,7 +182,6 @@ public static partial class Module
                 position = player.Value.position,
                 state = newState,
                 facing = player.Value.facing,
-                state_timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 last_active = ctx.Timestamp
             });
             Log.Info($"Updated state for {ctx.Sender} to {newState}");
@@ -179,7 +208,6 @@ public static partial class Module
             position = new DbVector2(0, 0),
             state = PlayerState.Idle,
             facing = FacingDirection.Right,
-            state_timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
             last_active = ctx.Timestamp
         };
         ctx.Db.Player.Insert(newPlayer);
@@ -305,6 +333,102 @@ public static partial class Module
     }
 
     [Reducer]
+    public static void DamageEnemy(ReducerContext ctx, uint enemyId, AttackType attackType)
+    {
+        var enemy = ctx.Db.Enemy.enemy_id.Find(enemyId);
+        if (enemy is null)
+        {
+            Log.Info($"Enemy {enemyId} not found for damage");
+            return;
+        }
+
+        // Don't damage already dead enemies
+        if (enemy.Value.current_hp <= 0)
+        {
+            Log.Info($"Enemy {enemyId} is already dead");
+            return;
+        }
+
+        // Server-side damage calculation based on attack type
+        var damageResult = CalculateDamage(attackType, enemy.Value.enemy_type);
+
+        // Apply damage if not immune
+        if (damageResult.type != DamageType.Immune)
+        {
+            var newHp = Math.Max(0, enemy.Value.current_hp - damageResult.finalDamage);
+            var newState = newHp <= 0 ? PlayerState.Dead : enemy.Value.state; // Keep existing state unless dead
+
+            // Update enemy health and state
+            ctx.Db.Enemy.enemy_id.Update(new Enemy
+            {
+                enemy_id = enemy.Value.enemy_id,
+                route_id = enemy.Value.route_id,
+                enemy_type = enemy.Value.enemy_type,
+                position = enemy.Value.position,
+                state = newState,
+                facing = enemy.Value.facing,
+                current_hp = newHp
+            });
+
+            // Record damage event
+            ctx.Db.DamageEvent.Insert(new DamageEvent
+            {
+                enemy_id = enemyId,
+                player_identity = ctx.Sender,
+                damage_amount = damageResult.finalDamage,
+                damage_type = damageResult.type,
+                timestamp = ctx.Timestamp
+            });
+
+            Log.Info($"Player {ctx.Sender} used {attackType} dealing {damageResult.finalDamage} {damageResult.type} damage to enemy {enemyId}. HP: {enemy.Value.current_hp} -> {newHp}");
+        }
+        else
+        {
+            // Record immune event
+            ctx.Db.DamageEvent.Insert(new DamageEvent
+            {
+                enemy_id = enemyId,
+                player_identity = ctx.Sender,
+                damage_amount = 0,
+                damage_type = DamageType.Immune,
+                timestamp = ctx.Timestamp
+            });
+
+            Log.Info($"Player {ctx.Sender} {attackType} was immune against enemy {enemyId}");
+        }
+    }
+
+    private static (float finalDamage, DamageType type) CalculateDamage(AttackType attackType, string enemyType)
+    {
+        // Get base damage from attack type
+        var baseDamage = GetBaseDamage(attackType);
+
+        // Simple damage calculation logic - can be expanded
+        var random = new Random();
+        var roll = random.NextDouble();
+
+        // Critical hit (10% chance)
+        if (roll < 0.1)
+        {
+            return (baseDamage * 2.0f, DamageType.Crit);
+        }
+
+        // Normal/weak hit
+        return (baseDamage, DamageType.Normal);
+    }
+
+    private static float GetBaseDamage(AttackType attackType)
+    {
+        return attackType switch
+        {
+            AttackType.Attack1 => 25f,  // Quick light attack
+            AttackType.Attack2 => 40f,  // Heavy slow attack
+            AttackType.Attack3 => 30f,  // Combo attack
+            _ => 0f
+        };
+    }
+
+    [Reducer]
     public static void SpawnAllEnemies(ReducerContext ctx)
     {
         // Clear all existing enemies first
@@ -342,6 +466,8 @@ public static partial class Module
                     route_id = route.route_id,
                     enemy_type = route.enemy_type,
                     position = spawnPosition,
+                    state = PlayerState.Idle,
+                    facing = FacingDirection.Right,
                     current_hp = enemyMaxHp
                 };
 

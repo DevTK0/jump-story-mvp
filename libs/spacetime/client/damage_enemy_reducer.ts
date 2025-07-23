@@ -32,24 +32,18 @@ import {
   type ReducerEventContextInterface,
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
-import { FacingDirection as __FacingDirection } from "./facing_direction_type";
-import { PlayerState as __PlayerState } from "./player_state_type";
-import { DbVector2 as __DbVector2 } from "./db_vector_2_type";
 
-export type Enemy = {
+import { AttackType as __AttackType } from "./attack_type_type";
+
+export type DamageEnemy = {
   enemyId: number,
-  routeId: number,
-  enemyType: string,
-  position: __DbVector2,
-  state: __PlayerState,
-  facing: __FacingDirection,
-  currentHp: number,
+  attackType: __AttackType,
 };
 
 /**
  * A namespace for generated helper functions.
  */
-export namespace Enemy {
+export namespace DamageEnemy {
   /**
   * A function which returns this type represented as an AlgebraicType.
   * This function is derived from the AlgebraicType used to generate this type.
@@ -57,23 +51,17 @@ export namespace Enemy {
   export function getTypeScriptAlgebraicType(): AlgebraicType {
     return AlgebraicType.createProductType([
       new ProductTypeElement("enemyId", AlgebraicType.createU32Type()),
-      new ProductTypeElement("routeId", AlgebraicType.createU32Type()),
-      new ProductTypeElement("enemyType", AlgebraicType.createStringType()),
-      new ProductTypeElement("position", __DbVector2.getTypeScriptAlgebraicType()),
-      new ProductTypeElement("state", __PlayerState.getTypeScriptAlgebraicType()),
-      new ProductTypeElement("facing", __FacingDirection.getTypeScriptAlgebraicType()),
-      new ProductTypeElement("currentHp", AlgebraicType.createF32Type()),
+      new ProductTypeElement("attackType", __AttackType.getTypeScriptAlgebraicType()),
     ]);
   }
 
-  export function serialize(writer: BinaryWriter, value: Enemy): void {
-    Enemy.getTypeScriptAlgebraicType().serialize(writer, value);
+  export function serialize(writer: BinaryWriter, value: DamageEnemy): void {
+    DamageEnemy.getTypeScriptAlgebraicType().serialize(writer, value);
   }
 
-  export function deserialize(reader: BinaryReader): Enemy {
-    return Enemy.getTypeScriptAlgebraicType().deserialize(reader);
+  export function deserialize(reader: BinaryReader): DamageEnemy {
+    return DamageEnemy.getTypeScriptAlgebraicType().deserialize(reader);
   }
 
 }
-
 

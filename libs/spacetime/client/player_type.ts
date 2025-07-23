@@ -43,7 +43,6 @@ export type Player = {
   position: __DbVector2,
   state: __PlayerState,
   facing: __FacingDirection,
-  stateTimestamp: bigint,
   lastActive: Timestamp,
 };
 
@@ -63,7 +62,6 @@ export namespace Player {
       new ProductTypeElement("position", __DbVector2.getTypeScriptAlgebraicType()),
       new ProductTypeElement("state", __PlayerState.getTypeScriptAlgebraicType()),
       new ProductTypeElement("facing", __FacingDirection.getTypeScriptAlgebraicType()),
-      new ProductTypeElement("stateTimestamp", AlgebraicType.createI64Type()),
       new ProductTypeElement("lastActive", AlgebraicType.createTimestampType()),
     ]);
   }

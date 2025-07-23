@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 import { Player } from '@/player';
 import { EnemyManager } from '@/enemy';
+import { AttackType } from '@/spacetime/client';
+import { gameEvents } from '@/core/events';
+import { PlayerEvent } from '@/player/player-events';
 
 export interface InteractionConfig {
     cameraShakeDuration?: number;
@@ -10,6 +13,8 @@ export interface InteractionConfig {
 export class InteractionHandler {
     private scene: Phaser.Scene;
     private config: InteractionConfig;
+    private dbConnection: any;
+    private currentAttackType: number = 1; // Default to attack1
 
     // Default configuration
     private static readonly DEFAULT_CONFIG: Required<InteractionConfig> = {
@@ -17,12 +22,18 @@ export class InteractionHandler {
         cameraShakeIntensity: 0.03
     };
 
-    constructor(scene: Phaser.Scene, config?: InteractionConfig) {
+    constructor(scene: Phaser.Scene, dbConnection: any, config?: InteractionConfig) {
         this.scene = scene;
+        this.dbConnection = dbConnection;
         this.config = {
             ...InteractionHandler.DEFAULT_CONFIG,
             ...config
         };
+
+        // Listen for player attack events to track current attack type
+        gameEvents.on(PlayerEvent.PLAYER_ATTACKED, (data: any) => {
+            this.currentAttackType = data.attackType || 1;
+        });
     }
 
     /**
@@ -43,7 +54,14 @@ export class InteractionHandler {
             if (enemyId !== null) {
                 enemyManager.playHitAnimation(enemyId);
                 console.log('Enemy hit!', enemyId);
-                // TODO: Call server reducer to damage/destroy enemy
+                
+                // Call server reducer to damage enemy
+                if (this.dbConnection && this.dbConnection.reducers) {
+                    const attackType = this.mapAttackTypeToEnum(this.currentAttackType);
+                    this.dbConnection.reducers.damageEnemy(enemyId, attackType);
+                } else {
+                    console.warn('Database connection not available - cannot damage enemy');
+                }
             }
         };
     }
@@ -95,6 +113,18 @@ export class InteractionHandler {
     }
 
     /**
+     * Map numeric attack type to AttackType enum
+     */
+    private mapAttackTypeToEnum(attackType: number): AttackType {
+        switch (attackType) {
+            case 1: return AttackType.Attack1;
+            case 2: return AttackType.Attack2;
+            case 3: return AttackType.Attack3;
+            default: return AttackType.Attack1; // Default fallback
+        }
+    }
+
+    /**
      * Set up all interaction callbacks at once
      */
     public createInteractionCallbacks(
@@ -108,5 +138,19 @@ export class InteractionHandler {
             onAttackHitEnemy: this.handleAttackHitEnemy(enemyManager),
             onPlayerTouchEnemy: this.handlePlayerTouchEnemy(player)
         };
+    }
+
+    /**
+     * Update the database connection when it becomes available
+     */
+    public setDbConnection(dbConnection: any): void {
+        this.dbConnection = dbConnection;
+    }
+
+    /**
+     * Clean up event listeners
+     */
+    public destroy(): void {
+        gameEvents.off(PlayerEvent.PLAYER_ATTACKED);
     }
 }

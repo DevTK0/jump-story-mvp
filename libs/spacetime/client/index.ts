@@ -38,6 +38,8 @@ import { CleanupInactivePlayers } from "./cleanup_inactive_players_reducer.ts";
 export { CleanupInactivePlayers };
 import { Connect } from "./connect_reducer.ts";
 export { Connect };
+import { DamageEnemy } from "./damage_enemy_reducer.ts";
+export { DamageEnemy };
 import { Debug } from "./debug_reducer.ts";
 export { Debug };
 import { Disconnect } from "./disconnect_reducer.ts";
@@ -52,6 +54,8 @@ import { UpdatePlayerState } from "./update_player_state_reducer.ts";
 export { UpdatePlayerState };
 
 // Import and reexport all table handle types
+import { DamageEventTableHandle } from "./damage_event_table.ts";
+export { DamageEventTableHandle };
 import { EnemyTableHandle } from "./enemy_table.ts";
 export { EnemyTableHandle };
 import { EnemyRouteTableHandle } from "./enemy_route_table.ts";
@@ -60,6 +64,12 @@ import { PlayerTableHandle } from "./player_table.ts";
 export { PlayerTableHandle };
 
 // Import and reexport all types
+import { AttackType } from "./attack_type_type.ts";
+export { AttackType };
+import { DamageEvent } from "./damage_event_type.ts";
+export { DamageEvent };
+import { DamageType } from "./damage_type_type.ts";
+export { DamageType };
 import { DbRect } from "./db_rect_type.ts";
 export { DbRect };
 import { DbVector2 } from "./db_vector_2_type.ts";
@@ -77,6 +87,15 @@ export { PlayerState };
 
 const REMOTE_MODULE = {
   tables: {
+    DamageEvent: {
+      tableName: "DamageEvent",
+      rowType: DamageEvent.getTypeScriptAlgebraicType(),
+      primaryKey: "damageEventId",
+      primaryKeyInfo: {
+        colName: "damageEventId",
+        colType: DamageEvent.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
     Enemy: {
       tableName: "Enemy",
       rowType: Enemy.getTypeScriptAlgebraicType(),
@@ -113,6 +132,10 @@ const REMOTE_MODULE = {
     Connect: {
       reducerName: "Connect",
       argsType: Connect.getTypeScriptAlgebraicType(),
+    },
+    DamageEnemy: {
+      reducerName: "DamageEnemy",
+      argsType: DamageEnemy.getTypeScriptAlgebraicType(),
     },
     Debug: {
       reducerName: "Debug",
@@ -170,6 +193,7 @@ const REMOTE_MODULE = {
 export type Reducer = never
 | { name: "CleanupInactivePlayers", args: CleanupInactivePlayers }
 | { name: "Connect", args: Connect }
+| { name: "DamageEnemy", args: DamageEnemy }
 | { name: "Debug", args: Debug }
 | { name: "Disconnect", args: Disconnect }
 | { name: "InitializeEnemyRoutes", args: InitializeEnemyRoutes }
@@ -199,6 +223,22 @@ export class RemoteReducers {
 
   removeOnConnect(callback: (ctx: ReducerEventContext) => void) {
     this.connection.offReducer("Connect", callback);
+  }
+
+  damageEnemy(enemyId: number, attackType: AttackType) {
+    const __args = { enemyId, attackType };
+    let __writer = new BinaryWriter(1024);
+    DamageEnemy.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("DamageEnemy", __argsBuffer, this.setCallReducerFlags.damageEnemyFlags);
+  }
+
+  onDamageEnemy(callback: (ctx: ReducerEventContext, enemyId: number, attackType: AttackType) => void) {
+    this.connection.onReducer("DamageEnemy", callback);
+  }
+
+  removeOnDamageEnemy(callback: (ctx: ReducerEventContext, enemyId: number, attackType: AttackType) => void) {
+    this.connection.offReducer("DamageEnemy", callback);
   }
 
   debug() {
@@ -289,6 +329,11 @@ export class SetReducerFlags {
     this.cleanupInactivePlayersFlags = flags;
   }
 
+  damageEnemyFlags: CallReducerFlags = 'FullUpdate';
+  damageEnemy(flags: CallReducerFlags) {
+    this.damageEnemyFlags = flags;
+  }
+
   debugFlags: CallReducerFlags = 'FullUpdate';
   debug(flags: CallReducerFlags) {
     this.debugFlags = flags;
@@ -318,6 +363,10 @@ export class SetReducerFlags {
 
 export class RemoteTables {
   constructor(private connection: DbConnectionImpl) {}
+
+  get damageEvent(): DamageEventTableHandle {
+    return new DamageEventTableHandle(this.connection.clientCache.getOrCreateTable<DamageEvent>(REMOTE_MODULE.tables.DamageEvent));
+  }
 
   get enemy(): EnemyTableHandle {
     return new EnemyTableHandle(this.connection.clientCache.getOrCreateTable<Enemy>(REMOTE_MODULE.tables.Enemy));

@@ -32,46 +32,42 @@ import {
   type ReducerEventContextInterface,
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
-import { FacingDirection as __FacingDirection } from "./facing_direction_type";
-import { PlayerState as __PlayerState } from "./player_state_type";
-import { DbVector2 as __DbVector2 } from "./db_vector_2_type";
+import { DamageType as __DamageType } from "./damage_type_type";
 
-export type Enemy = {
+export type DamageEvent = {
+  damageEventId: number,
   enemyId: number,
-  routeId: number,
-  enemyType: string,
-  position: __DbVector2,
-  state: __PlayerState,
-  facing: __FacingDirection,
-  currentHp: number,
+  playerIdentity: Identity,
+  damageAmount: number,
+  damageType: __DamageType,
+  timestamp: Timestamp,
 };
 
 /**
  * A namespace for generated helper functions.
  */
-export namespace Enemy {
+export namespace DamageEvent {
   /**
   * A function which returns this type represented as an AlgebraicType.
   * This function is derived from the AlgebraicType used to generate this type.
   */
   export function getTypeScriptAlgebraicType(): AlgebraicType {
     return AlgebraicType.createProductType([
+      new ProductTypeElement("damageEventId", AlgebraicType.createU32Type()),
       new ProductTypeElement("enemyId", AlgebraicType.createU32Type()),
-      new ProductTypeElement("routeId", AlgebraicType.createU32Type()),
-      new ProductTypeElement("enemyType", AlgebraicType.createStringType()),
-      new ProductTypeElement("position", __DbVector2.getTypeScriptAlgebraicType()),
-      new ProductTypeElement("state", __PlayerState.getTypeScriptAlgebraicType()),
-      new ProductTypeElement("facing", __FacingDirection.getTypeScriptAlgebraicType()),
-      new ProductTypeElement("currentHp", AlgebraicType.createF32Type()),
+      new ProductTypeElement("playerIdentity", AlgebraicType.createIdentityType()),
+      new ProductTypeElement("damageAmount", AlgebraicType.createF32Type()),
+      new ProductTypeElement("damageType", __DamageType.getTypeScriptAlgebraicType()),
+      new ProductTypeElement("timestamp", AlgebraicType.createTimestampType()),
     ]);
   }
 
-  export function serialize(writer: BinaryWriter, value: Enemy): void {
-    Enemy.getTypeScriptAlgebraicType().serialize(writer, value);
+  export function serialize(writer: BinaryWriter, value: DamageEvent): void {
+    DamageEvent.getTypeScriptAlgebraicType().serialize(writer, value);
   }
 
-  export function deserialize(reader: BinaryReader): Enemy {
-    return Enemy.getTypeScriptAlgebraicType().deserialize(reader);
+  export function deserialize(reader: BinaryReader): DamageEvent {
+    return DamageEvent.getTypeScriptAlgebraicType().deserialize(reader);
   }
 
 }
