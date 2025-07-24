@@ -1,9 +1,12 @@
 import type { System } from '../core/types';
 import { Player } from './player';
+import { PlayerQueryService } from './player-query-service';
+import { DbConnection } from '@/spacetime/client';
 
 export class RespawnSystem implements System {
     private player: Player;
-    private dbConnection: any = null;
+    private dbConnection: DbConnection | null = null;
+    private playerQueryService: PlayerQueryService | null = null;
     private lastRespawnTime: number = 0;
     private respawnCooldown: number = 1000; // 1 second cooldown to prevent spam
 
@@ -51,15 +54,12 @@ export class RespawnSystem implements System {
     }
 
     private isPlayerDead(): boolean {
-        // Check if we have access to server player state
-        if (this.dbConnection && this.dbConnection.db && this.dbConnection.db.player && this.dbConnection.identity) {
-            // Get current player from server state
-            for (const serverPlayer of this.dbConnection.db.player.iter()) {
-                if (serverPlayer.identity.toHexString() === this.dbConnection.identity.toHexString()) {
-                    const isDead = serverPlayer.currentHp <= 0 || serverPlayer.state.tag === 'Dead';
-                    console.log(`Respawn check - HP: ${serverPlayer.currentHp}, State: ${serverPlayer.state.tag}, isDead: ${isDead}`);
-                    return isDead;
-                }
+        if (this.playerQueryService) {
+            const player = this.playerQueryService.findCurrentPlayer();
+            if (player) {
+                const isDead = this.playerQueryService.isCurrentPlayerDead();
+                console.log(`Respawn check - HP: ${player.currentHp}, State: ${player.state.tag}, isDead: ${isDead}`);
+                return isDead;
             }
         }
 
@@ -67,8 +67,9 @@ export class RespawnSystem implements System {
         return true;
     }
 
-    public setDbConnection(dbConnection: any): void {
+    public setDbConnection(dbConnection: DbConnection): void {
         this.dbConnection = dbConnection;
+        this.playerQueryService = new PlayerQueryService(dbConnection);
     }
 
     public destroy(): void {

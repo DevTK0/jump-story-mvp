@@ -1,6 +1,7 @@
 import { DbConnection } from '@/spacetime/client';
 import { Player } from './player';
 import type { System } from '@/core/types';
+import { PlayerQueryService } from './player-query-service';
 
 /**
  * Monitors player health and manages death state transitions
@@ -9,6 +10,7 @@ export class DeathMonitor implements System {
     private player: Player;
     private dbConnection: DbConnection | null = null;
     private isDead: boolean = false;
+    private playerQueryService: PlayerQueryService | null = null;
     
     constructor(player: Player) {
         this.player = player;
@@ -16,6 +18,7 @@ export class DeathMonitor implements System {
     
     public setDbConnection(connection: DbConnection): void {
         this.dbConnection = connection;
+        this.playerQueryService = new PlayerQueryService(connection);
         
         // Subscribe to player updates
         if (this.dbConnection.db && this.dbConnection.db.player) {
@@ -27,19 +30,13 @@ export class DeathMonitor implements System {
                 }
             });
             
-            // Check initial state - only for this specific player
-            if (this.dbConnection.identity) {
-                // Find only the current player's data
-                for (const serverPlayer of this.dbConnection.db.player.iter()) {
-                    if (serverPlayer.identity.toHexString() === this.dbConnection.identity.toHexString()) {
-                        this.isDead = serverPlayer.currentHp <= 0 || serverPlayer.state.tag === 'Dead';
-                        
-                        // If player is already dead on connection, transition to dead state
-                        if (this.isDead && !this.player.getStateMachine().isInState("Dead")) {
-                            this.player.transitionToState("Dead");
-                        }
-                        break; // Important: stop after finding our player
-                    }
+            // Check initial state using PlayerQueryService
+            if (this.playerQueryService) {
+                this.isDead = this.playerQueryService.isCurrentPlayerDead();
+                
+                // If player is already dead on connection, transition to dead state
+                if (this.isDead && !this.player.getStateMachine().isInState("Dead")) {
+                    this.player.transitionToState("Dead");
                 }
             }
         }

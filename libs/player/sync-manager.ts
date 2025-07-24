@@ -1,5 +1,6 @@
 import { DbConnection, PlayerState, FacingDirection } from '@/spacetime/client';
 import { Player } from './player';
+import { PlayerQueryService } from './player-query-service';
 
 export interface SyncConfig {
   positionThreshold: number;
@@ -9,6 +10,7 @@ export interface SyncConfig {
 export class SyncManager {
   private player: Player;
   private dbConnection: DbConnection | null = null;
+  private playerQueryService: PlayerQueryService | null = null;
   
   // Position and facing synchronization
   private lastSyncedPosition = { x: 0, y: 0 };
@@ -33,6 +35,7 @@ export class SyncManager {
   
   public setDbConnection(connection: DbConnection): void {
     this.dbConnection = connection;
+    this.playerQueryService = new PlayerQueryService(connection);
   }
   
   public syncPosition(time: number, facing: FacingDirection, forceSync: boolean = false): void {
@@ -104,16 +107,7 @@ export class SyncManager {
   }
   
   private isPlayerDead(): boolean {
-    if (!this.dbConnection?.db?.player || !this.dbConnection.identity) return false;
-    
-    // Find only the current player's data
-    for (const serverPlayer of this.dbConnection.db.player.iter()) {
-      if (serverPlayer.identity.toHexString() === this.dbConnection.identity.toHexString()) {
-        return serverPlayer.currentHp <= 0 || serverPlayer.state.tag === 'Dead';
-      }
-    }
-    
-    return false;
+    return this.playerQueryService?.isCurrentPlayerDead() ?? false;
   }
   
   public isPlayerDeadPublic(): boolean {
