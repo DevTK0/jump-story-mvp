@@ -25,8 +25,8 @@ export const PEER_CONFIG = {
      * Interpolation settings for smooth movement
      */
     interpolation: {
-        speed: 0.15, // Lerp speed for position updates
-        teleportDistance: 150, // Distance threshold for instant teleport
+        speed: 0.25, // Lerp speed for position updates (increased for smoother movement)
+        teleportDistance: 300, // Distance threshold for instant teleport
         minMoveDistance: 0.5, // Minimum distance to update target position
     },
 

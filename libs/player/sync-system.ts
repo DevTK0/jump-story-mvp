@@ -35,7 +35,7 @@ export class SyncSystem implements System {
         }
 
         // Get current facing direction from movement system
-        const currentFacing = this.movementSystem.currentFacing;
+        const currentFacing = this.movementSystem.getCurrentFacing();
         
         // Check for special sync conditions
         let forceSync = false;

@@ -122,7 +122,7 @@ export class PlayerBuilder {
      */
     public build(): Player {
         // Create the player instance
-        const player = new Player(this.config);
+        const player = Player.create(this.config);
         
         // Initialize player components
         player.initializeInput();

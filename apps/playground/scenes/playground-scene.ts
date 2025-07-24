@@ -160,8 +160,8 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         // Initialize enemy manager with proximity-based subscriptions enabled
         this.enemyManager = new EnemyManager(this, {
             useProximitySubscription: true,
-            proximityRadius: 200, // Load enemies within 2000 pixels
-            proximityUpdateInterval: 100, // Update subscription every 5 seconds
+            proximityRadius: 3000, // Load enemies within 3000 pixels
+            proximityUpdateInterval: 10000, // Update subscription every 10 seconds
         });
 
         // Set database connection if already available

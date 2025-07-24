@@ -34,7 +34,12 @@ export class Player extends Phaser.GameObjects.Sprite {
     e: Phaser.Input.Keyboard.Key;
   };
 
-  constructor(config: PlayerConfig) {
+  // Static factory method for PlayerBuilder to use
+  public static create(config: PlayerConfig): Player {
+    return new Player(config);
+  }
+
+  private constructor(config: PlayerConfig) {
     super(config.scene, config.x, config.y, config.texture, config.frame);
     
     // Add to scene

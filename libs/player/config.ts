@@ -38,9 +38,9 @@ export const PLAYER_CONFIG = {
      */
     position: {
         /** Distance threshold in pixels before position sync triggers */
-        syncThreshold: 10,
+        syncThreshold: 5,
         /** Interval in milliseconds between position sync attempts */
-        syncInterval: 200,
+        syncInterval: 50,
         /** Distance threshold in pixels before position reconciliation triggers */
         reconciliationThreshold: 300,
         /** Maximum allowed position update distance in pixels (server-side validation) */

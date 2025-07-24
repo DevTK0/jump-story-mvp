@@ -32,8 +32,8 @@ export class PeerManager {
     private static readonly DEFAULT_SUBSCRIPTION_CONFIG: PeerSubscriptionConfig =
         {
             useProximitySubscription: true, // Enable by default for peers
-            proximityRadius: 200, // 1500 pixels around player
-            proximityUpdateInterval: 100, // Update every 3 seconds
+            proximityRadius: 1500, // 1500 pixels around player
+            proximityUpdateInterval: 3000, // Update every 3 seconds
         };
 
     constructor(

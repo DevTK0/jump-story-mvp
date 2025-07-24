@@ -10,6 +10,7 @@ import {
 } from "./enemy-state-service";
 import { ENEMY_CONFIG } from "./enemy-config";
 import { EnemyHealthBar } from "./enemy-health-bar";
+import { EnemyStateMachine } from "./enemy-state-machine";
 
 export interface EnemySubscriptionConfig {
     /** Use proximity-based subscriptions to limit enemies loaded */
@@ -26,8 +27,10 @@ export class EnemyManager {
     private enemies = new Map<number, Phaser.Physics.Arcade.Sprite>();
     private enemyStates = new Map<number, PlayerState>();
     private enemyHealthBars = new Map<number, EnemyHealthBar>();
+    private enemyTypes = new Map<number, string>();
     private enemyGroup!: Phaser.Physics.Arcade.Group;
     private stateService: EnemyStateManager;
+    private enemyStateMachines = new Map<number, EnemyStateMachine>();
     private enemyInterpolation = new Map<
         number,
         { targetX: number; startX: number; startTime: number }
@@ -405,11 +408,20 @@ export class EnemyManager {
         enemyType: string,
         isDead: boolean
     ): void {
+        // Initial animation is handled by the state machine
+        // Just set the initial frame if dead
         if (isDead) {
-            this.setDeadVisuals(sprite, enemyType);
-        } else {
-            sprite.setFrame(0);
-            sprite.play(`${enemyType}-idle-anim`);
+            // Set to last frame of death animation
+            const deathAnim =
+                ANIMATION_DEFINITIONS[
+                    enemyType as keyof typeof ANIMATION_DEFINITIONS
+                ];
+            if (deathAnim && "death" in deathAnim) {
+                sprite.setFrame(deathAnim.death.end);
+            }
+            sprite.setTint(0x666666);
+            sprite.setAlpha(0.8);
+            sprite.setDepth(ENEMY_CONFIG.display.deadDepth);
         }
     }
 
@@ -467,24 +479,24 @@ export class EnemyManager {
         this.enemyGroup.add(sprite);
         this.enemies.set(serverEnemy.enemyId, sprite);
         this.enemyStates.set(serverEnemy.enemyId, serverEnemy.state);
+        this.enemyTypes.set(serverEnemy.enemyId, serverEnemy.enemyType);
+        
+        // Create state machine for this enemy
+        const stateMachine = new EnemyStateMachine(
+            serverEnemy.enemyId,
+            sprite,
+            serverEnemy.enemyType,
+            this.scene,
+            serverEnemy.state
+        );
+        this.enemyStateMachines.set(serverEnemy.enemyId, stateMachine);
     }
 
     public playHitAnimation(enemyId: number): void {
-        const sprite = this.enemies.get(enemyId);
-        if (sprite) {
-            // Play hit animation
-            sprite.play("orc-hit-anim");
-
-            // Return to idle after hit animation completes, but only if enemy isn't dead
-            sprite.once("animationcomplete", () => {
-                if (sprite.active) {
-                    // Check if enemy died during hit animation using state service
-                    if (!this.stateService.isEnemyDead(enemyId)) {
-                        sprite.play("orc-idle-anim");
-                    }
-                    // If dead, let death animation take precedence
-                }
-            });
+        const stateMachine = this.enemyStateMachines.get(enemyId);
+        if (stateMachine) {
+            // Let the state machine handle hit animations
+            stateMachine.playHitAnimation();
         }
     }
 
@@ -528,12 +540,12 @@ export class EnemyManager {
                 sprite.body.enable = false;
             }
 
-            // Fade out the sprite over 1 second, then destroy
+            // Fade out the sprite over 2 seconds for less noticeable culling
             this.scene.tweens.add({
                 targets: sprite,
                 alpha: 0,
-                duration: 1000,
-                ease: "Power2.easeOut",
+                duration: 2000,
+                ease: "Linear",
                 onComplete: () => {
                     sprite.destroy();
                 },
@@ -542,7 +554,15 @@ export class EnemyManager {
             // Clean up references immediately (sprite still fading but no longer interactive)
             this.enemies.delete(enemyId);
             this.enemyStates.delete(enemyId);
+            this.enemyTypes.delete(enemyId);
             this.enemyInterpolation.delete(enemyId);
+            
+            // Clean up state machine
+            const stateMachine = this.enemyStateMachines.get(enemyId);
+            if (stateMachine) {
+                stateMachine.destroy();
+                this.enemyStateMachines.delete(enemyId);
+            }
         }
 
         // Clean up health bar
@@ -631,84 +651,19 @@ export class EnemyManager {
     }
 
     private handleStateChange(
-        _enemyId: number,
-        sprite: Phaser.Physics.Arcade.Sprite,
+        enemyId: number,
+        _sprite: Phaser.Physics.Arcade.Sprite,
         newState: PlayerState,
-        enemyType: string
+        _enemyType: string
     ): void {
-        switch (newState.tag) {
-            case "Dead":
-                // Cancel any ongoing animations (like hit animation) before playing death
-                sprite.anims.stop();
-                this.handleDeathState(sprite, enemyType);
-                break;
-            case "Idle":
-                // Return to idle animation
-                sprite.play(`${enemyType}-idle-anim`);
-                break;
-            case "Walk":
-                // Could add walk animation if needed
-                sprite.play(`${enemyType}-idle-anim`); // Fallback to idle for now
-                break;
-            case "Damaged":
-                // Damaged state is handled by playHitAnimation, but we can also handle it here
-                break;
-            default:
-                // For any other states, fallback to idle
-                sprite.play(`${enemyType}-idle-anim`);
-                break;
+        // Use state machine to handle state changes
+        const stateMachine = this.enemyStateMachines.get(enemyId);
+        if (stateMachine) {
+            stateMachine.handleServerStateChange(newState);
         }
     }
 
-    private handleDeathState(
-        sprite: Phaser.Physics.Arcade.Sprite,
-        enemyType: string
-    ): void {
-        // Play death animation and stop on last frame
-        sprite.play(`${enemyType}-death-anim`);
-
-        // When death animation completes, stop on the last frame
-        sprite.once("animationcomplete", () => {
-            if (sprite.active) {
-                this.setDeadVisuals(sprite, enemyType);
-            }
-        });
-
-        // Keep physics body enabled temporarily to let enemy fall to ground
-        if (sprite.body) {
-            const body = sprite.body as Phaser.Physics.Arcade.Body;
-            // Allow the body to fall with gravity but prevent horizontal movement
-            body.setVelocityX(0);
-            body.setImmovable(false);
-
-            // Disable physics after a short delay to let enemy settle on ground
-            setTimeout(() => {
-                if (sprite.active && sprite.body) {
-                    body.setEnable(false);
-                }
-            }, ENEMY_CONFIG.physics.deathFallDelay);
-        }
-
-        // Visual effects for death
-        sprite.setDepth(ENEMY_CONFIG.display.deadDepth);
-    }
-
-    private setDeadVisuals(
-        sprite: Phaser.Physics.Arcade.Sprite,
-        enemyType: string
-    ): void {
-        // Stop the animation and keep it on the last frame
-        sprite.anims.stop();
-        // Set to the last frame of death animation (frame 44 for orc)
-        const deathAnim =
-            ANIMATION_DEFINITIONS[
-                enemyType as keyof typeof ANIMATION_DEFINITIONS
-            ];
-        if (deathAnim && "death" in deathAnim) {
-            sprite.setFrame(deathAnim.death.end);
-        }
-        sprite.setDepth(ENEMY_CONFIG.display.deadDepth);
-    }
+    // Removed handleDeathState and setDeadVisuals - now handled by EnemyStateMachine
 
     public getEnemyGroup(): Phaser.Physics.Arcade.Group {
         return this.enemyGroup;
@@ -727,9 +682,14 @@ export class EnemyManager {
         this.enemyHealthBars.forEach((healthBar) => {
             healthBar.destroy();
         });
+        this.enemyStateMachines.forEach((stateMachine) => {
+            stateMachine.destroy();
+        });
         this.enemies.clear();
         this.enemyStates.clear();
+        this.enemyTypes.clear();
         this.enemyHealthBars.clear();
+        this.enemyStateMachines.clear();
         this.enemyInterpolation.clear();
         this.enemyGroup.destroy();
     }

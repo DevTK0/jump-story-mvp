@@ -11,17 +11,15 @@ import { ShadowTrajectoryRenderer } from "@/effects/shadow";
 import { FacingDirection } from "@/spacetime/client";
 import { createLogger } from "@/core/logger";
 import { stateValidator } from "@/core/state-validator";
+import { MovementStateTracker } from "./movement-state-tracker";
 
 export class MovementSystem extends BaseDebugRenderer implements System, IDebuggable {
     private player: Player;
     private inputSystem: InputSystem;
     private logger = createLogger('MovementSystem');
 
-    // Movement state
-    private hasUsedDoubleJump = false;
-    private wasOnGround = false; // Track ground contact state
-    public currentFacing: FacingDirection = { tag: "Right" }; // Track facing direction
-    private movementDisabled = false; // For hurt state knockback
+    // Movement state tracking
+    private stateTracker: MovementStateTracker;
 
     // Shadow trajectory renderer
     private shadowRenderer: ShadowTrajectoryRenderer;
@@ -31,7 +29,7 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
         this.player = player;
         this.inputSystem = inputSystem;
         this.shadowRenderer = new ShadowTrajectoryRenderer(player.scene);
-        this.wasOnGround = player.body?.onFloor() || false;
+        this.stateTracker = new MovementStateTracker(player.body?.onFloor() || false);
     }
     
 
@@ -46,22 +44,20 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
         }
         
         // Handle movement physics (skip if climbing or movement disabled, but still do position sync)
-        if (!this.player.isClimbing && !this.movementDisabled) {
+        if (!this.player.isClimbing && !this.stateTracker.isMovementDisabled()) {
             const body = this.player.body;
             const onGround = body.onFloor();
             const inputState = this.inputSystem.getInputState();
 
             // Check for ground contact transition (landing)
-            if (onGround && !this.wasOnGround) {
+            if (this.stateTracker.hasLanded(onGround)) {
                 this.logger.debug("Player landed - forcing position sync");
+                this.stateTracker.resetDoubleJumpOnLanding();
             }
-            this.wasOnGround = onGround;
 
             // Update facing direction based on input (works both on ground and in air)
             const horizontalDir = this.inputSystem.getHorizontalDirection();
-            if (horizontalDir !== 0) {
-                this.currentFacing = horizontalDir < 0 ? { tag: "Left" } : { tag: "Right" };
-            }
+            this.stateTracker.updateFacingFromInput(horizontalDir);
 
             // Horizontal movement (only when on ground)
             if (onGround) {
@@ -126,19 +122,19 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
         if (
             this.inputSystem.isDoubleJumpPressed() &&
             !onGround &&
-            !this.hasUsedDoubleJump &&
+            !this.stateTracker.getHasUsedDoubleJump() &&
             !this.player.isClimbing
         ) {
             this.player.body.setVelocityY(-this.player.getJumpSpeed());
-            this.hasUsedDoubleJump = true;
+            this.stateTracker.setHasUsedDoubleJump(true);
             gameEvents.emit(PlayerEvent.PLAYER_JUMP, {
                 velocity: this.player.getJumpSpeed(),
             });
         }
 
         // Reset double jump when landing
-        if (onGround && this.hasUsedDoubleJump) {
-            this.hasUsedDoubleJump = false;
+        if (onGround && this.stateTracker.getHasUsedDoubleJump()) {
+            this.stateTracker.setHasUsedDoubleJump(false);
         }
     }
 
@@ -170,7 +166,19 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
     }
 
     public resetDoubleJump(): void {
-        this.hasUsedDoubleJump = false;
+        this.stateTracker.setHasUsedDoubleJump(false);
+    }
+
+    public getCurrentFacing(): FacingDirection {
+        return this.stateTracker.getCurrentFacing();
+    }
+
+    public setMovementDisabled(disabled: boolean): void {
+        this.stateTracker.setMovementDisabled(disabled);
+    }
+
+    public getMovementStateSnapshot() {
+        return this.stateTracker.getStateSnapshot();
     }
 
     // Debug resource cleanup implementation
@@ -241,15 +249,12 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
                 y: Math.round(body.velocity.y),
             },
             onGround: body.onFloor(),
-            hasUsedDoubleJump: this.hasUsedDoubleJump,
+            hasUsedDoubleJump: this.stateTracker.getHasUsedDoubleJump(),
             trajectoryPoints: this.shadowRenderer.getTrajectoryPointCount(),
         };
     }
 
     // Clean up all resources
-    public setMovementDisabled(disabled: boolean): void {
-        this.movementDisabled = disabled;
-    }
 
     destroy(): void {
         this.shadowRenderer.destroy();

@@ -129,33 +129,17 @@ public static partial class Module
             return;
         }
 
-        // Don't allow state changes for dead players (except staying dead)
-        // If player has 0 HP, force Dead state regardless of what client requests
-        if (player.Value.current_hp <= 0 && newState != PlayerState.Dead)
+        // Use StateMachine to handle state transition
+        var result = PlayerStateMachine.ApplyStateTransition(ctx, player.Value, newState);
+        
+        if (!result.Success)
         {
-            Log.Info($"Player {ctx.Sender} has 0 HP, forcing Dead state instead of {newState}");
-            newState = PlayerState.Dead;
+            Log.Info($"State transition failed for {ctx.Sender}: {result.Reason}");
         }
-        else if (player.Value.state == PlayerState.Dead && newState != PlayerState.Dead)
+        else if (result.OldState != result.NewState)
         {
-            Log.Info($"Dead player {ctx.Sender} cannot change state to {newState}");
-            return;
+            Log.Info($"Updated state for {ctx.Sender} from {result.OldState} to {result.NewState}");
         }
-
-        // Only transition to valid states from attack states
-        if (IsAttackState(player.Value.state) && newState != PlayerState.Idle)
-        {
-            Log.Info($"Invalid state transition from {player.Value.state} to {newState}");
-            return;
-        }
-
-        // Update player state
-        ctx.Db.Player.identity.Update(player.Value with
-        {
-            state = newState,
-            last_active = ctx.Timestamp
-        });
-        Log.Info($"Updated state for {ctx.Sender} to {newState}");
     }
 
     [Reducer]
@@ -225,17 +209,21 @@ public static partial class Module
         
         // Apply damage
         var newHp = Math.Max(0, player.Value.current_hp - finalDamage);
-        var newState = newHp <= 0 ? PlayerState.Dead : player.Value.state;
+        var targetState = newHp <= 0 ? PlayerState.Dead : PlayerState.Damaged;
 
-        Log.Info($"Player {ctx.Sender} damage calculation - Current HP: {player.Value.current_hp}, Damage: {finalDamage}, New HP: {newHp}, Current State: {player.Value.state}, New State: {newState}");
+        Log.Info($"Player {ctx.Sender} damage calculation - Current HP: {player.Value.current_hp}, Damage: {finalDamage}, New HP: {newHp}, Target State: {targetState}");
 
-        // Update player with new HP and state
-        ctx.Db.Player.identity.Update(player.Value with
+        // Update player HP first
+        var updatedPlayer = player.Value with
         {
             current_hp = newHp,
-            state = newState,
             last_active = ctx.Timestamp
-        });
+        };
+        ctx.Db.Player.identity.Update(updatedPlayer);
+        
+        // Then apply state transition using StateMachine
+        var stateResult = PlayerStateMachine.ApplyStateTransition(ctx, updatedPlayer, targetState);
+        var newState = stateResult.Success ? stateResult.NewState : player.Value.state;
 
         // Create player damage event for visual display
         ctx.Db.PlayerDamageEvent.Insert(new PlayerDamageEvent
@@ -277,15 +265,22 @@ public static partial class Module
         var maxHp = PlayerConstants.CalculateMaxHp(player.Value.level);
         var maxMana = PlayerConstants.CalculateMaxMana(player.Value.level);
         
-        // Do the respawn and position reset in one atomic operation
-        ctx.Db.Player.identity.Update(player.Value with
+        // First update HP and position
+        var respawnedPlayer = player.Value with
         {
             current_hp = maxHp,
             current_mana = maxMana,
-            state = PlayerState.Idle,
             position = new DbVector2(PlayerConstants.SPAWN_POSITION_X, PlayerConstants.SPAWN_POSITION_Y), // Set spawn position
             last_active = ctx.Timestamp
-        });
+        };
+        ctx.Db.Player.identity.Update(respawnedPlayer);
+        
+        // Then apply state transition to Idle using StateMachine (force transition since we're respawning)
+        var stateResult = PlayerStateMachine.ApplyStateTransition(ctx, respawnedPlayer, PlayerState.Idle, forceTransition: true);
+        if (!stateResult.Success)
+        {
+            Log.Warn($"Failed to transition respawned player to Idle state: {stateResult.Reason}");
+        }
 
         Log.Info($"Player {ctx.Sender} respawned with {maxHp} HP at position ({PlayerConstants.SPAWN_POSITION_X}, {PlayerConstants.SPAWN_POSITION_Y})");
     }
@@ -351,21 +346,26 @@ public static partial class Module
             return;
         }
 
-        // Set player HP to 0 and state to Dead
-        ctx.Db.Player.identity.Update(player.Value with
+        // First set HP to 0
+        var killedPlayer = player.Value with
         {
             current_hp = 0,
-            state = PlayerState.Dead,
             last_active = ctx.Timestamp
-        });
+        };
+        ctx.Db.Player.identity.Update(killedPlayer);
+        
+        // Then apply state transition to Dead using StateMachine
+        var stateResult = PlayerStateMachine.ApplyStateTransition(ctx, killedPlayer, PlayerState.Dead);
+        if (!stateResult.Success)
+        {
+            Log.Warn($"Failed to transition instakilled player to Dead state: {stateResult.Reason}");
+        }
 
         Log.Info($"Player {ctx.Sender} was instakilled (testing feature)");
     }
 
     private static bool IsAttackState(PlayerState state)
     {
-        return state == PlayerState.Attack1 ||
-               state == PlayerState.Attack2 ||
-               state == PlayerState.Attack3;
+        return PlayerStateMachine.IsAttackState(state);
     }
 }

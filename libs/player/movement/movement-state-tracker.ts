@@ -24,9 +24,7 @@ export class MovementStateTracker {
     }
 
     public resetDoubleJumpOnLanding(): void {
-        if (this.isOnGroundTransition()) {
-            this.hasUsedDoubleJump = false;
-        }
+        this.hasUsedDoubleJump = false;
     }
 
     // Ground state management

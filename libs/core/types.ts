@@ -76,7 +76,7 @@ export interface MovementSystem extends System {
   isOnGround?(): boolean;
   forceJump?(velocityMultiplier?: number): void;
   setMovementDisabled?(disabled: boolean): void;
-  currentFacing?: any;
+  getCurrentFacing?(): any;
 }
 
 /**

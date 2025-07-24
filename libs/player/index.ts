@@ -8,7 +8,19 @@ export { ClimbingSystem } from './movement/climbing';
 export { AnimationSystem } from './animations';
 export { DebugSystem } from '@/debug';
 export { SyncManager, type SyncConfig } from './sync-manager';
-export { PlayerStateMachine, PlayerState } from './state-machine';
+export { 
+    PlayerStateMachine, 
+    PlayerState,
+    IdleState,
+    WalkState,
+    JumpState,
+    ClimbingState,
+    Attack1State,
+    Attack2State,
+    Attack3State,
+    DamagedState,
+    DeadState
+} from './state-machine';
 // Teleport effect is now in the effects module
 
 // Combat systems and services

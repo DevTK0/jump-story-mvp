@@ -10,7 +10,7 @@ async function singleInstanceTest(instanceId: number): Promise<void> {
 
     try {
         console.log(
-            `[Instance ${instanceId}] Starting 5-minute movement + attack test...`
+            `[Instance ${instanceId}] Starting 3-minute movement + action test...`
         );
 
         // Initialize the browser
@@ -24,35 +24,30 @@ async function singleInstanceTest(instanceId: number): Promise<void> {
         console.log(`[Instance ${instanceId}] Waiting for game to load...`);
         await stagehand.page.waitForTimeout(3000);
 
-        // Hold spacebar for jumping throughout the test
-        console.log(
-            `[Instance ${instanceId}] Starting spacebar hold for jumping...`
-        );
-        await stagehand.page.keyboard.down("Space");
-
         const testDuration = 200 * 10000; // 3 minutes in milliseconds
         const startTime = Date.now();
         let direction = "left"; // Start with left movement
         const attackKeys = ["KeyX", "KeyC", "KeyV"]; // Attack1, Attack2, Attack3
+        const actionOptions = [...attackKeys, "Space"]; // Attack1, Attack2, Attack3, or Jump
 
         console.log(
-            `[Instance ${instanceId}] Starting 3-minute movement + attack loop...`
+            `[Instance ${instanceId}] Starting 3-minute movement + action loop...`
         );
 
         while (Date.now() - startTime < testDuration) {
             if (direction === "left") {
                 await stagehand.page.keyboard.down("ArrowLeft");
 
-                // Perform random attacks while moving left
+                // Perform random actions (attacks or jumps) while moving left
                 for (let i = 0; i < 10; i++) {
-                    // 10 attacks over 5 seconds
-                    const randomAttack =
-                        attackKeys[
-                            Math.floor(Math.random() * attackKeys.length)
+                    // 10 actions over 5 seconds
+                    const randomAction =
+                        actionOptions[
+                            Math.floor(Math.random() * actionOptions.length)
                         ];
-                    await stagehand.page.keyboard.down(randomAttack);
-                    await stagehand.page.waitForTimeout(500); // Wait 0.5 seconds between attacks
-                    await stagehand.page.keyboard.up(randomAttack);
+                    await stagehand.page.keyboard.down(randomAction);
+                    await stagehand.page.waitForTimeout(500); // Wait 0.5 seconds between actions
+                    await stagehand.page.keyboard.up(randomAction);
                 }
 
                 await stagehand.page.keyboard.up("ArrowLeft");
@@ -60,16 +55,16 @@ async function singleInstanceTest(instanceId: number): Promise<void> {
             } else {
                 await stagehand.page.keyboard.down("ArrowRight");
 
-                // Perform random attacks while moving right
+                // Perform random actions (attacks or jumps) while moving right
                 for (let i = 0; i < 10; i++) {
-                    // 10 attacks over 5 seconds
-                    const randomAttack =
-                        attackKeys[
-                            Math.floor(Math.random() * attackKeys.length)
+                    // 10 actions over 5 seconds
+                    const randomAction =
+                        actionOptions[
+                            Math.floor(Math.random() * actionOptions.length)
                         ];
-                    await stagehand.page.keyboard.down(randomAttack);
-                    await stagehand.page.waitForTimeout(500); // Wait 0.5 seconds between attacks
-                    await stagehand.page.keyboard.up(randomAttack);
+                    await stagehand.page.keyboard.down(randomAction);
+                    await stagehand.page.waitForTimeout(500); // Wait 0.5 seconds between actions
+                    await stagehand.page.keyboard.up(randomAction);
                 }
 
                 await stagehand.page.keyboard.up("ArrowRight");
@@ -80,15 +75,12 @@ async function singleInstanceTest(instanceId: number): Promise<void> {
             await stagehand.page.waitForTimeout(100);
         }
 
-        // Release spacebar at the end
-        await stagehand.page.keyboard.up("Space");
-
         console.log(
-            `[Instance ${instanceId}] ✅ 3-minute movement + attack test completed successfully!`
+            `[Instance ${instanceId}] ✅ 3-minute movement + action test completed successfully!`
         );
     } catch (error) {
         console.error(
-            `[Instance ${instanceId}] ❌ Error during movement + attack test:`,
+            `[Instance ${instanceId}] ❌ Error during movement + action test:`,
             error
         );
 

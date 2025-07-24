@@ -3,6 +3,7 @@ import type { Player as PlayerData } from "@/spacetime/client";
 import { PLAYER_CONFIG } from "../player/config";
 import { PEER_CONFIG } from "./peer-config";
 import { PeerHealthBar } from "./peer-health-bar";
+import { PeerStateMachine } from "./peer-state-machine";
 
 export interface PeerConfig {
     scene: Phaser.Scene;
@@ -18,10 +19,8 @@ export class Peer extends Phaser.GameObjects.Sprite {
     private targetPosition = { x: 0, y: 0 };
     private interpolationSpeed = PEER_CONFIG.interpolation.speed;
 
-    // Animation tracking
-    private currentAnimation: string | null = null;
-    private isPlayingAttackAnimation = false;
-    private attackAnimationTimeout: NodeJS.Timeout | null = null;
+    // State machine for animation management
+    private stateMachine!: PeerStateMachine;
     private isDeathAnimationComplete = false;
 
     constructor(config: PeerConfig) {
@@ -63,12 +62,11 @@ export class Peer extends Phaser.GameObjects.Sprite {
         // Create health bar
         this.createHealthBar();
 
-        // Start with appropriate animation based on state
-        const initialAnim = this.determineAnimation();
-        this.playAnimation(initialAnim);
+        // Initialize state machine
+        this.stateMachine = new PeerStateMachine(this, this.playerData.state);
 
         console.log(
-            `Created peer sprite for ${this.playerData.name} at (${this.x}, ${this.y}) with scale ${PLAYER_CONFIG.movement.scale} in state ${this.playerData.state.tag}, initial anim: ${initialAnim}`
+            `Created peer sprite for ${this.playerData.name} at (${this.x}, ${this.y}) with scale ${PLAYER_CONFIG.movement.scale} in state ${this.playerData.state.tag}`
         );
     }
 
@@ -101,7 +99,7 @@ export class Peer extends Phaser.GameObjects.Sprite {
     }
 
 
-    private playAnimation(animationKey: string): void {
+    public playAnimation(animationKey: string): void {
         if (!this.scene.anims.exists(animationKey)) {
             console.warn(`Animation ${animationKey} does not exist for peer ${this.playerData.name}`);
             return;
@@ -111,66 +109,27 @@ export class Peer extends Phaser.GameObjects.Sprite {
         const isAttackAnim = animationKey.includes("attack");
         const isDeathAnim = animationKey.includes("death");
         
-        // Skip if we're already playing this exact animation (unless it's an attack that needs to restart)
-        if (this.currentAnimation === animationKey && this.anims.isPlaying && !isAttackAnim) {
-            return;
-        }
-        
         // Skip death animation if it has already completed
         if (isDeathAnim && this.isDeathAnimationComplete) {
             return;
         }
         
-        
         // Clear any existing animation listeners
         this.off('animationcomplete');
-        
-        // Clear attack timeout if exists
-        if (this.attackAnimationTimeout) {
-            clearTimeout(this.attackAnimationTimeout);
-            this.attackAnimationTimeout = null;
-        }
         
         if (isAttackAnim) {
             // For attacks, always stop current animation and restart
             this.anims.stop();
-            this.isPlayingAttackAnimation = true;
             this.play(animationKey);
-            this.currentAnimation = animationKey;
             
-            // Set a timeout as a safety net (max attack duration is 600ms for attack2)
-            this.attackAnimationTimeout = setTimeout(() => {
-                if (this.isPlayingAttackAnimation) {
-                    console.warn(`Attack animation ${animationKey} timed out for peer ${this.playerData.name}`);
-                    this.isPlayingAttackAnimation = false;
-                    this.currentAnimation = null;
-                    // Force update to next animation
-                    const nextAnim = this.determineAnimation();
-                    if (nextAnim !== animationKey) {
-                        this.playAnimation(nextAnim);
-                    }
-                }
-            }, 800);
-            
-            // Listen for animation complete
+            // Listen for animation complete to transition back
             this.once('animationcomplete', () => {
-                if (this.attackAnimationTimeout) {
-                    clearTimeout(this.attackAnimationTimeout);
-                    this.attackAnimationTimeout = null;
-                }
-                this.isPlayingAttackAnimation = false;
-                // Transition to next animation based on current state
-                const nextAnim = this.determineAnimation();
-                if (nextAnim !== animationKey) {
-                    this.currentAnimation = null;
-                    this.playAnimation(nextAnim);
-                }
+                // Let state machine handle the transition
+                this.stateMachine.handleServerStateChange(this.playerData.state);
             });
         } else if (isDeathAnim) {
             // Death animation plays once and stops
-            this.isPlayingAttackAnimation = false;
             this.play(animationKey);
-            this.currentAnimation = animationKey;
             
             this.once('animationcomplete', (animation: any) => {
                 if (animation.key === animationKey) {
@@ -181,47 +140,19 @@ export class Peer extends Phaser.GameObjects.Sprite {
             });
         } else {
             // Regular animations (idle, walk, etc) - should loop
-            this.isPlayingAttackAnimation = false;
             this.play(animationKey, true); // true for loop
-            this.currentAnimation = animationKey;
         }
     }
 
-    private determineAnimation(): string {
-        // Use state to determine animation
-        switch (this.playerData.state.tag) {
-            case "Attack1":
-                return "soldier-attack1-anim";
-            case "Attack2":
-                return "soldier-attack2-anim";
-            case "Attack3":
-                return "soldier-attack3-anim";
-            case "Walk":
-                return "soldier-walk-anim";
-            case "Climbing":
-                // For now, use idle for climbing (can add climbing animation later)
-                return "soldier-idle-anim";
-            case "Damaged":
-                return "soldier-damaged-anim";
-            case "Dead":
-                return "soldier-death-anim";
-            case "Idle":
-                return "soldier-idle-anim";
-            case "Unknown":
-            default:
-                console.warn(`Peer ${this.playerData.name} has unknown state: ${this.playerData.state.tag}`);
-                return "soldier-idle-anim";
-        }
+    public resetDeathAnimation(): void {
+        this.isDeathAnimationComplete = false;
     }
 
     public updateFromData(playerData: PlayerData): void {
         const previousState = this.playerData?.state?.tag;
         this.playerData = playerData;
         
-        // Reset death animation flag if peer respawns
-        if (previousState === "Dead" && playerData.state.tag !== "Dead") {
-            this.isDeathAnimationComplete = false;
-        }
+        // State machine will handle respawn animation reset
 
         // Update target position for interpolation
         const newTargetX = playerData.position.x;
@@ -265,12 +196,10 @@ export class Peer extends Phaser.GameObjects.Sprite {
         // Update health bar
         this.healthBar.updateHealth(playerData.currentHp);
 
-        // Check if state changed and update animation accordingly
+        // Check if state changed and let state machine handle it
         if (previousState !== playerData.state.tag) {
             console.log(`Peer ${this.playerData.name} state changed from ${previousState} to ${playerData.state.tag}`);
-            // Force animation update for state changes (especially attacks)
-            const newAnimation = this.determineAnimation();
-            this.playAnimation(newAnimation);
+            this.stateMachine.handleServerStateChange(playerData.state);
         }
     }
 
@@ -306,22 +235,8 @@ export class Peer extends Phaser.GameObjects.Sprite {
         // Update facing direction based on server data
         this.updateFacingDirection();
 
-        // Safety check: if we think we're playing an attack but the state isn't attack, reset
-        if (this.isPlayingAttackAnimation && 
-            this.playerData.state.tag !== "Attack1" && 
-            this.playerData.state.tag !== "Attack2" && 
-            this.playerData.state.tag !== "Attack3") {
-            this.isPlayingAttackAnimation = false;
-            this.currentAnimation = null; // Force animation update
-        }
-
-        // Update animation based on current state
-        const targetAnimation = this.determineAnimation();
-        
-        // Only call playAnimation if we need to change animation
-        if (this.currentAnimation !== targetAnimation || !this.anims.isPlaying) {
-            this.playAnimation(targetAnimation);
-        }
+        // Update state machine
+        this.stateMachine.update(this.scene.time.now, this.scene.game.loop.delta);
     }
 
     private updateFacingDirection(): void {
@@ -338,14 +253,11 @@ export class Peer extends Phaser.GameObjects.Sprite {
     }
 
     public destroy(): void {
-        // Clear any pending timeouts
-        if (this.attackAnimationTimeout) {
-            clearTimeout(this.attackAnimationTimeout);
-            this.attackAnimationTimeout = null;
-        }
-        
         // Remove all event listeners
         this.off('animationcomplete');
+        
+        // Clean up state machine
+        this.stateMachine?.destroy();
         
         this.nameLabel?.destroy();
         this.healthBar?.destroy();
