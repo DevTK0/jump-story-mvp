@@ -15,6 +15,7 @@ import { DbConnection } from "@/spacetime/client";
 import { Identity } from "@clockworklabs/spacetimedb-sdk";
 import { DamageNumberRenderer } from "@/player";
 import { PlayerQueryService } from "@/player";
+import { AnimationFactory, ANIMATION_DEFINITIONS } from "@/animations";
 
 // Scene-specific constants
 const COLOR_BACKGROUND = 0x2c3e50;
@@ -81,6 +82,9 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         this.dbConnectionManager.connect().catch((err: any) => {
             console.error("Failed to connect to database:", err);
         });
+
+        // Create all animations at scene level
+        this.createAllAnimations();
 
         // Create background
         this.cameras.main.setBackgroundColor(COLOR_BACKGROUND);
@@ -420,5 +424,22 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         if (this.damageNumberRenderer) {
             this.damageNumberRenderer.destroy();
         }
+    }
+
+    /**
+     * Create all animations at scene level to ensure they exist before any sprites are created
+     */
+    private createAllAnimations(): void {
+        const animFactory = new AnimationFactory(this);
+        
+        // Register all sprite animations
+        animFactory.registerSpriteAnimations('soldier', ANIMATION_DEFINITIONS.soldier);
+        animFactory.registerSpriteAnimations('orc', ANIMATION_DEFINITIONS.orc);
+        
+        // Create all animations
+        animFactory.createSpriteAnimations('soldier');
+        animFactory.createSpriteAnimations('orc');
+        
+        console.log('Created all game animations at scene level');
     }
 }

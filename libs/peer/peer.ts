@@ -21,6 +21,8 @@ export class Peer extends Phaser.GameObjects.Sprite {
     // Animation tracking
     private currentAnimation: string | null = null;
     private isPlayingAttackAnimation = false;
+    private attackAnimationTimeout: NodeJS.Timeout | null = null;
+    private isDeathAnimationComplete = false;
 
     constructor(config: PeerConfig) {
         // Create soldier sprite with initial frame
@@ -53,6 +55,8 @@ export class Peer extends Phaser.GameObjects.Sprite {
             y: config.playerData.position.y,
         };
 
+        // Animations are now created at scene level
+
         // Create name label
         this.createNameLabel();
 
@@ -60,10 +64,11 @@ export class Peer extends Phaser.GameObjects.Sprite {
         this.createHealthBar();
 
         // Start with appropriate animation based on state
-        this.playAnimation(this.determineAnimation());
+        const initialAnim = this.determineAnimation();
+        this.playAnimation(initialAnim);
 
         console.log(
-            `Created peer sprite for ${this.playerData.name} at (${this.x}, ${this.y}) with scale ${PLAYER_CONFIG.movement.scale} in state ${this.playerData.state.tag}`
+            `Created peer sprite for ${this.playerData.name} at (${this.x}, ${this.y}) with scale ${PLAYER_CONFIG.movement.scale} in state ${this.playerData.state.tag}, initial anim: ${initialAnim}`
         );
     }
 
@@ -95,46 +100,90 @@ export class Peer extends Phaser.GameObjects.Sprite {
         this.healthBar.updateHealth(this.playerData.currentHp);
     }
 
+
     private playAnimation(animationKey: string): void {
-        if (
-            this.scene.anims.exists(animationKey) &&
-            this.currentAnimation !== animationKey
-        ) {
-            // Check if this is an attack animation
-            const isAttackAnim = animationKey.includes("attack");
-            const isDeathAnim = animationKey.includes("death");
+        if (!this.scene.anims.exists(animationKey)) {
+            console.warn(`Animation ${animationKey} does not exist for peer ${this.playerData.name}`);
+            return;
+        }
+
+        // Check animation types
+        const isAttackAnim = animationKey.includes("attack");
+        const isDeathAnim = animationKey.includes("death");
+        
+        // Skip if we're already playing this exact animation (unless it's an attack that needs to restart)
+        if (this.currentAnimation === animationKey && this.anims.isPlaying && !isAttackAnim) {
+            return;
+        }
+        
+        // Skip death animation if it has already completed
+        if (isDeathAnim && this.isDeathAnimationComplete) {
+            return;
+        }
+        
+        
+        // Clear any existing animation listeners
+        this.off('animationcomplete');
+        
+        // Clear attack timeout if exists
+        if (this.attackAnimationTimeout) {
+            clearTimeout(this.attackAnimationTimeout);
+            this.attackAnimationTimeout = null;
+        }
+        
+        if (isAttackAnim) {
+            // For attacks, always stop current animation and restart
+            this.anims.stop();
+            this.isPlayingAttackAnimation = true;
+            this.play(animationKey);
+            this.currentAnimation = animationKey;
             
-            if (isAttackAnim) {
-                this.isPlayingAttackAnimation = true;
-                this.play(animationKey);
-                this.currentAnimation = animationKey;
-                
-                // Listen for animation complete to reset attack flag
-                this.once('animationcomplete', () => {
+            // Set a timeout as a safety net (max attack duration is 600ms for attack2)
+            this.attackAnimationTimeout = setTimeout(() => {
+                if (this.isPlayingAttackAnimation) {
+                    console.warn(`Attack animation ${animationKey} timed out for peer ${this.playerData.name}`);
                     this.isPlayingAttackAnimation = false;
-                    console.log(`Attack animation ${animationKey} completed for peer ${this.playerData.name}`);
-                });
-            } else if (isDeathAnim) {
-                // Play death animation once and stop on last frame
-                this.play(animationKey);
-                this.currentAnimation = animationKey;
-                
-                // Stop on the last frame when animation completes
-                this.once('animationcomplete', (animation: any) => {
-                    if (animation.key === animationKey) {
-                        this.anims.stop();
-                        // Set to last frame of death animation (frame 57)
-                        this.setFrame(57);
-                        console.log(`Death animation completed for peer ${this.playerData.name}`);
+                    this.currentAnimation = null;
+                    // Force update to next animation
+                    const nextAnim = this.determineAnimation();
+                    if (nextAnim !== animationKey) {
+                        this.playAnimation(nextAnim);
                     }
-                });
-            } else {
-                // Don't interrupt attack animations with other animations
-                if (!this.isPlayingAttackAnimation) {
-                    this.play(animationKey);
-                    this.currentAnimation = animationKey;
                 }
-            }
+            }, 800);
+            
+            // Listen for animation complete
+            this.once('animationcomplete', () => {
+                if (this.attackAnimationTimeout) {
+                    clearTimeout(this.attackAnimationTimeout);
+                    this.attackAnimationTimeout = null;
+                }
+                this.isPlayingAttackAnimation = false;
+                // Transition to next animation based on current state
+                const nextAnim = this.determineAnimation();
+                if (nextAnim !== animationKey) {
+                    this.currentAnimation = null;
+                    this.playAnimation(nextAnim);
+                }
+            });
+        } else if (isDeathAnim) {
+            // Death animation plays once and stops
+            this.isPlayingAttackAnimation = false;
+            this.play(animationKey);
+            this.currentAnimation = animationKey;
+            
+            this.once('animationcomplete', (animation: any) => {
+                if (animation.key === animationKey) {
+                    this.anims.stop();
+                    this.setFrame(57); // Last frame of death animation
+                    this.isDeathAnimationComplete = true;
+                }
+            });
+        } else {
+            // Regular animations (idle, walk, etc) - should loop
+            this.isPlayingAttackAnimation = false;
+            this.play(animationKey, true); // true for loop
+            this.currentAnimation = animationKey;
         }
     }
 
@@ -168,6 +217,11 @@ export class Peer extends Phaser.GameObjects.Sprite {
     public updateFromData(playerData: PlayerData): void {
         const previousState = this.playerData?.state?.tag;
         this.playerData = playerData;
+        
+        // Reset death animation flag if peer respawns
+        if (previousState === "Dead" && playerData.state.tag !== "Dead") {
+            this.isDeathAnimationComplete = false;
+        }
 
         // Update target position for interpolation
         const newTargetX = playerData.position.x;
@@ -252,9 +306,22 @@ export class Peer extends Phaser.GameObjects.Sprite {
         // Update facing direction based on server data
         this.updateFacingDirection();
 
-        // Update animation based on movement
+        // Safety check: if we think we're playing an attack but the state isn't attack, reset
+        if (this.isPlayingAttackAnimation && 
+            this.playerData.state.tag !== "Attack1" && 
+            this.playerData.state.tag !== "Attack2" && 
+            this.playerData.state.tag !== "Attack3") {
+            this.isPlayingAttackAnimation = false;
+            this.currentAnimation = null; // Force animation update
+        }
+
+        // Update animation based on current state
         const targetAnimation = this.determineAnimation();
-        this.playAnimation(targetAnimation);
+        
+        // Only call playAnimation if we need to change animation
+        if (this.currentAnimation !== targetAnimation || !this.anims.isPlaying) {
+            this.playAnimation(targetAnimation);
+        }
     }
 
     private updateFacingDirection(): void {
@@ -271,6 +338,15 @@ export class Peer extends Phaser.GameObjects.Sprite {
     }
 
     public destroy(): void {
+        // Clear any pending timeouts
+        if (this.attackAnimationTimeout) {
+            clearTimeout(this.attackAnimationTimeout);
+            this.attackAnimationTimeout = null;
+        }
+        
+        // Remove all event listeners
+        this.off('animationcomplete');
+        
         this.nameLabel?.destroy();
         this.healthBar?.destroy();
         super.destroy();

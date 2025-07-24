@@ -35,11 +35,10 @@ export class AnimationSystem implements System {
     }
 
     private setupAnimations(): void {
-        // Register soldier animations using centralized definitions
-        this.animationFactory.registerSpriteAnimations('soldier', ANIMATION_DEFINITIONS.soldier);
-        
-        // Create all soldier animations
-        this.animationFactory.createSpriteAnimations('soldier');
+        // Animations are now created at scene level, so we just verify they exist
+        if (!this.animationFactory.hasAnimation('soldier-idle-anim')) {
+            console.warn('Player animations not found! They should be created at scene level.');
+        }
     }
 
     private bindEvents(): void {

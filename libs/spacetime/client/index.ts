@@ -48,6 +48,8 @@ import { Disconnect } from "./disconnect_reducer.ts";
 export { Disconnect };
 import { InitializeEnemyRoutes } from "./initialize_enemy_routes_reducer.ts";
 export { InitializeEnemyRoutes };
+import { InstakillPlayer } from "./instakill_player_reducer.ts";
+export { InstakillPlayer };
 import { PlayerTakeDamage } from "./player_take_damage_reducer.ts";
 export { PlayerTakeDamage };
 import { RecoverFromDamage } from "./recover_from_damage_reducer.ts";
@@ -206,6 +208,10 @@ const REMOTE_MODULE = {
       reducerName: "InitializeEnemyRoutes",
       argsType: InitializeEnemyRoutes.getTypeScriptAlgebraicType(),
     },
+    InstakillPlayer: {
+      reducerName: "InstakillPlayer",
+      argsType: InstakillPlayer.getTypeScriptAlgebraicType(),
+    },
     PlayerTakeDamage: {
       reducerName: "PlayerTakeDamage",
       argsType: PlayerTakeDamage.getTypeScriptAlgebraicType(),
@@ -279,6 +285,7 @@ export type Reducer = never
 | { name: "Debug", args: Debug }
 | { name: "Disconnect", args: Disconnect }
 | { name: "InitializeEnemyRoutes", args: InitializeEnemyRoutes }
+| { name: "InstakillPlayer", args: InstakillPlayer }
 | { name: "PlayerTakeDamage", args: PlayerTakeDamage }
 | { name: "RecoverFromDamage", args: RecoverFromDamage }
 | { name: "RespawnPlayer", args: RespawnPlayer }
@@ -379,6 +386,18 @@ export class RemoteReducers {
 
   removeOnInitializeEnemyRoutes(callback: (ctx: ReducerEventContext, tilemapJson: string) => void) {
     this.connection.offReducer("InitializeEnemyRoutes", callback);
+  }
+
+  instakillPlayer() {
+    this.connection.callReducer("InstakillPlayer", new Uint8Array(0), this.setCallReducerFlags.instakillPlayerFlags);
+  }
+
+  onInstakillPlayer(callback: (ctx: ReducerEventContext) => void) {
+    this.connection.onReducer("InstakillPlayer", callback);
+  }
+
+  removeOnInstakillPlayer(callback: (ctx: ReducerEventContext) => void) {
+    this.connection.offReducer("InstakillPlayer", callback);
   }
 
   playerTakeDamage(enemyId: number) {
@@ -543,6 +562,11 @@ export class SetReducerFlags {
   initializeEnemyRoutesFlags: CallReducerFlags = 'FullUpdate';
   initializeEnemyRoutes(flags: CallReducerFlags) {
     this.initializeEnemyRoutesFlags = flags;
+  }
+
+  instakillPlayerFlags: CallReducerFlags = 'FullUpdate';
+  instakillPlayer(flags: CallReducerFlags) {
+    this.instakillPlayerFlags = flags;
   }
 
   playerTakeDamageFlags: CallReducerFlags = 'FullUpdate';

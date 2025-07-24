@@ -31,6 +31,7 @@ export class Player extends Phaser.GameObjects.Sprite {
     z: Phaser.Input.Keyboard.Key;
     r: Phaser.Input.Keyboard.Key;
     t: Phaser.Input.Keyboard.Key;
+    e: Phaser.Input.Keyboard.Key;
   };
 
   constructor(config: PlayerConfig) {
@@ -63,6 +64,7 @@ export class Player extends Phaser.GameObjects.Sprite {
       z: this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.Z),
       r: this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.R),
       t: this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.T),
+      e: this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E),
     };
     
     // Setup physics properties

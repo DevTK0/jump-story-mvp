@@ -4,7 +4,7 @@ import {
     Enemy as ServerEnemy,
     PlayerState,
 } from "@/spacetime/client";
-import { AnimationFactory, ANIMATION_DEFINITIONS } from "../animations";
+import { ANIMATION_DEFINITIONS } from "../animations";
 import {
     EnemyStateManager,
     type EnemyStateService,
@@ -28,8 +28,7 @@ export class EnemyManager {
     private enemyStates = new Map<number, PlayerState>();
     private enemyHealthBars = new Map<number, EnemyHealthBar>();
     private enemyGroup!: Phaser.Physics.Arcade.Group;
-    private animationFactory: AnimationFactory;
-    private stateService: EnemyStateService;
+    private stateService: EnemyStateManager;
     private enemyInterpolation = new Map<
         number,
         { targetX: number; startX: number; startTime: number }
@@ -53,7 +52,7 @@ export class EnemyManager {
         subscriptionConfig?: Partial<EnemySubscriptionConfig>
     ) {
         this.scene = scene;
-        this.animationFactory = new AnimationFactory(scene);
+        // No longer create AnimationFactory - animations are created at scene level
         this.stateService = new EnemyStateManager(
             this.enemies,
             this.enemyStates
@@ -63,7 +62,7 @@ export class EnemyManager {
             ...subscriptionConfig,
         };
         this.setupEnemyGroup();
-        this.setupEnemyAnimations();
+        this.verifyEnemyAnimations();
         this.setupInterpolationUpdate();
     }
 
@@ -71,15 +70,11 @@ export class EnemyManager {
         this.enemyGroup = this.scene.physics.add.group();
     }
 
-    private setupEnemyAnimations(): void {
-        // Register orc animations using centralized definitions
-        this.animationFactory.registerSpriteAnimations(
-            "orc",
-            ANIMATION_DEFINITIONS.orc
-        );
-
-        // Create all orc animations
-        this.animationFactory.createSpriteAnimations("orc");
+    private verifyEnemyAnimations(): void {
+        // Verify animations exist (they should be created at scene level)
+        if (!this.scene.anims.exists('orc-idle-anim')) {
+            console.warn('Enemy animations not found! They should be created at scene level.');
+        }
     }
 
     private setupInterpolationUpdate(): void {

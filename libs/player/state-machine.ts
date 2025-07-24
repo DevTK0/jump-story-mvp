@@ -344,8 +344,8 @@ export class DeadState extends PlayerState {
             isAttacking: false,
             isClimbing: false 
         });
-        // Stop all movement
-        this.player.body.setVelocity(0, 0);
+        // Stop horizontal movement but allow gravity
+        this.player.body.setVelocityX(0);
         // Disable collision detection with enemies (but keep player collision body active for respawn positioning)
         // This prevents collision callbacks from triggering while dead
     }
@@ -356,8 +356,8 @@ export class DeadState extends PlayerState {
     }
 
     update(_time: number, _delta: number): void {
-        // Keep player velocity at zero while dead
-        this.player.body.setVelocity(0, 0);
+        // Only stop horizontal movement, allow gravity to work
+        this.player.body.setVelocityX(0);
     }
 
     getDbState(): DbPlayerState {

@@ -86,10 +86,8 @@ export class SyncManager {
   public syncPosition(time: number, facing: FacingDirection, forceSync: boolean = false): void {
     if (!this.dbConnection) return;
     
-    // Don't sync position if player is dead or client thinks it's dead
-    if (this.isPlayerDead() || this.player.getStateMachine().isInState("Dead")) {
-      return;
-    }
+    // Allow position sync even when dead so gravity/falling is visible to other players
+    // The server will validate if dead players should be able to move
     
     const currentX = this.player.x;
     const currentY = this.player.y;

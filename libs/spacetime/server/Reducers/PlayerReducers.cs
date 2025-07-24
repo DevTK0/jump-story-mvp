@@ -82,15 +82,24 @@ public static partial class Module
             return;
         }
 
-        // Don't allow position updates for dead players
+        var currentPos = player.Value.position;
+        
+        // For dead players, only allow gravity-based movement (falling)
         if (player.Value.current_hp <= 0 || player.Value.state == PlayerState.Dead)
         {
-            Log.Info($"Dead player {ctx.Sender} cannot move");
-            return;
+            // Check if this is just gravity movement (only Y position changing, or very small X changes)
+            var xDelta = Math.Abs(x - currentPos.x);
+            
+            // Allow if X movement is minimal (just physics drift) and Y is changing (falling)
+            if (xDelta > 5.0f) // More than 5 pixels of horizontal movement
+            {
+                Log.Info($"Dead player {ctx.Sender} cannot move horizontally");
+                return;
+            }
+            // Allow Y movement for gravity
         }
 
         // Prevent teleportation by checking distance between current and new position
-        var currentPos = player.Value.position;
         var distance = Math.Sqrt(Math.Pow(x - currentPos.x, 2) + Math.Pow(y - currentPos.y, 2));
         
         // Reject position updates that are too far from current position (likely teleportation attempts)
@@ -307,6 +316,34 @@ public static partial class Module
         });
 
         Log.Info($"Player {ctx.Sender} teleported from ({oldPos.x}, {oldPos.y}) to ({x}, {y})");
+    }
+
+    [Reducer]
+    public static void InstakillPlayer(ReducerContext ctx)
+    {
+        var player = ctx.Db.Player.identity.Find(ctx.Sender);
+        if (player == null)
+        {
+            Log.Info($"Player not found for instakill: {ctx.Sender}");
+            return;
+        }
+
+        // Don't instakill already dead players
+        if (player.Value.current_hp <= 0 || player.Value.state == PlayerState.Dead)
+        {
+            Log.Info($"Player {ctx.Sender} is already dead");
+            return;
+        }
+
+        // Set player HP to 0 and state to Dead
+        ctx.Db.Player.identity.Update(player.Value with
+        {
+            current_hp = 0,
+            state = PlayerState.Dead,
+            last_active = ctx.Timestamp
+        });
+
+        Log.Info($"Player {ctx.Sender} was instakilled (testing feature)");
     }
 
     private static bool IsAttackState(PlayerState state)

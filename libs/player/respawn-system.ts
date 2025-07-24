@@ -24,6 +24,12 @@ export class RespawnSystem implements System {
             console.log('🔄 Respawn key (R) pressed!');
             this.handleRespawnInput(time);
         }
+
+        // Check if instakill key was just pressed (for testing)
+        if (inputSystem.isJustPressed('instakill')) {
+            console.log('💀 Instakill key (E) pressed!');
+            this.handleInstakill();
+        }
     }
 
     private handleRespawnInput(time: number): void {
@@ -73,6 +79,33 @@ export class RespawnSystem implements System {
         this.playerQueryService = PlayerQueryService.getInstance();
         if (!this.playerQueryService) {
             console.error('❌ RespawnSystem: PlayerQueryService singleton not available');
+        }
+    }
+
+    private handleInstakill(): void {
+        // Don't instakill if already dead
+        if (this.isPlayerDead()) {
+            console.log('Player is already dead');
+            return;
+        }
+
+        // Call the instakill reducer on the server
+        if (this.dbConnection && this.dbConnection.reducers) {
+            console.log('💀 Triggering instakill...');
+            
+            try {
+                // Call the instakillPlayer reducer (will be available after regenerating client bindings)
+                if (this.dbConnection.reducers.instakillPlayer) {
+                    this.dbConnection.reducers.instakillPlayer();
+                    console.log('💀 Instakill command sent to server');
+                } else {
+                    console.warn('instakillPlayer reducer not found - you may need to regenerate client bindings');
+                }
+            } catch (error) {
+                console.error('❌ Error sending instakill command:', error);
+            }
+        } else {
+            console.warn('Database connection not available - cannot instakill');
         }
     }
 
