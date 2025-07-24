@@ -31,8 +31,8 @@ export class SceneErrorHandler {
         // Wrap event handlers
         this.wrapEventHandlers(scene, context);
 
-        // Add error display UI
-        this.addErrorDisplay(scene);
+        // Add error logging
+        this.addErrorLogging(scene);
     }
 
     /**
@@ -149,77 +149,25 @@ export class SceneErrorHandler {
     }
 
     /**
-     * Add error display UI to scene
+     * Add error logging for scene
      */
-    private addErrorDisplay(scene: Scene): void {
-        let errorText: Phaser.GameObjects.Text | null = null;
-        let errorBackground: Phaser.GameObjects.Rectangle | null = null;
-        let errorTimer: Phaser.Time.TimerEvent | null = null;
-
-        // Register error handler to show errors in-game
+    private addErrorLogging(scene: Scene): void {
+        // Register error handler to log errors to console only
         this.errorBoundary.registerErrorHandler(`scene-${scene.scene.key}`, (error: GameError) => {
-            // Only show medium severity and above
-            if (error.severity === ErrorSeverity.LOW) {
-                return;
-            }
-
-            // Clear previous error display
-            if (errorTimer) {
-                errorTimer.destroy();
-            }
-            if (errorText) {
-                errorText.destroy();
-            }
-            if (errorBackground) {
-                errorBackground.destroy();
-            }
-
-            // Create error display
-            const camera = scene.cameras.main;
-            const x = camera.centerX;
-            const y = camera.height - 100;
-
-            // Background
-            errorBackground = scene.add.rectangle(x, y, 600, 80, 0x000000, 0.8);
-            errorBackground.setScrollFactor(0);
-            errorBackground.setDepth(9999);
-
-            // Error text
-            const displayText = `Error: ${error.message}`;
-            errorText = scene.add.text(x, y, displayText, {
-                fontSize: '16px',
-                color: error.severity === ErrorSeverity.CRITICAL ? '#ff0000' : '#ffaa00',
-                align: 'center',
-                wordWrap: { width: 580 }
-            });
-            errorText.setOrigin(0.5);
-            errorText.setScrollFactor(0);
-            errorText.setDepth(10000);
-
-            // Auto-hide after delay
-            const displayDuration = error.severity === ErrorSeverity.CRITICAL ? 10000 : 5000;
-            errorTimer = scene.time.delayedCall(displayDuration, () => {
-                if (errorText) {
-                    errorText.destroy();
-                    errorText = null;
-                }
-                if (errorBackground) {
-                    errorBackground.destroy();
-                    errorBackground = null;
-                }
-            });
-        });
-
-        // Cleanup on scene shutdown
-        scene.events.once('shutdown', () => {
-            if (errorTimer) {
-                errorTimer.destroy();
-            }
-            if (errorText) {
-                errorText.destroy();
-            }
-            if (errorBackground) {
-                errorBackground.destroy();
+            // Log errors to console with appropriate level
+            const logMessage = `[Scene: ${scene.scene.key}] ${error.message}`;
+            
+            switch (error.severity) {
+                case ErrorSeverity.LOW:
+                    console.debug(logMessage, error);
+                    break;
+                case ErrorSeverity.MEDIUM:
+                    console.warn(logMessage, error);
+                    break;
+                case ErrorSeverity.HIGH:
+                case ErrorSeverity.CRITICAL:
+                    console.error(logMessage, error);
+                    break;
             }
         });
     }
