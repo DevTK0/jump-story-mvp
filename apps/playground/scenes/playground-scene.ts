@@ -8,7 +8,7 @@ import type { IDebuggable } from "@/debug/debug-interfaces";
 import { DEBUG_CONFIG } from "@/debug/config";
 import { DebugState } from "@/debug/debug-state";
 import { SpacetimeConnectionBuilder } from "@/networking";
-import { PlayerStatsUI } from "@/ui/player-stats-ui";
+import { PlayerStatsUI, FPSCounter, PerformanceMetrics } from "@/ui";
 import { PhysicsConfigurator, type CollisionGroups } from "@/physics";
 import { InteractionHandler } from "@/networking";
 import { DbConnection } from "@/spacetime/client";
@@ -39,6 +39,8 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     private interactionHandler!: InteractionHandler;
     private damageNumberRenderer!: DamageNumberRenderer;
     private playerStatsUI: PlayerStatsUI | null = null;
+    private fpsCounter!: FPSCounter;
+    private performanceMetrics!: PerformanceMetrics;
 
     constructor() {
         super({ key: "playground" });
@@ -170,6 +172,32 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         this.damageNumberRenderer = new DamageNumberRenderer(this);
         this.damageNumberRenderer.setEnemyManager(this.enemyManager);
 
+        // Create FPS counter
+        this.fpsCounter = new FPSCounter(this, {
+            x: this.scale.width - 130, // Position on right side
+            y: 10,
+            fontSize: '14px',
+            alpha: 0.7
+        });
+
+        // Add keyboard shortcut to toggle FPS counter (F key)
+        this.input.keyboard?.on('keydown-F', () => {
+            this.fpsCounter.toggle();
+        });
+
+        // Create performance metrics panel
+        this.performanceMetrics = new PerformanceMetrics(this, {
+            x: 10,
+            y: 100,
+            fontSize: '14px',
+            alpha: 0.7
+        });
+
+        // Add keyboard shortcut to toggle performance metrics (P key)
+        this.input.keyboard?.on('keydown-P', () => {
+            this.performanceMetrics.toggle();
+        });
+
         // Set up damage event subscription if database connection exists
         if (dbConn) {
             this.setupDamageEventSubscription(dbConn);
@@ -279,6 +307,12 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     update(time: number, delta: number): void {
         // Update player (which handles all its systems)
         this.player.update(time, delta);
+
+        // Update FPS counter
+        this.fpsCounter.update(time, delta);
+
+        // Update performance metrics
+        this.performanceMetrics.update(time, delta);
 
         // Enemy manager doesn't need updates (server-driven)
 

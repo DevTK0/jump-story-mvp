@@ -225,9 +225,25 @@ public static partial class Module
             }
         }
         
-        // Delete all expired dead bodies
+        // Delete all expired dead bodies and their associated damage events
         foreach (var enemyId in enemiesToRemove)
         {
+            // First, delete all damage events for this enemy
+            var damageEventsToRemove = new List<uint>();
+            foreach (var damageEvent in ctx.Db.DamageEvent.Iter())
+            {
+                if (damageEvent.enemy_id == enemyId)
+                {
+                    damageEventsToRemove.Add(damageEvent.damage_event_id);
+                }
+            }
+            
+            foreach (var damageEventId in damageEventsToRemove)
+            {
+                ctx.Db.DamageEvent.damage_event_id.Delete(damageEventId);
+            }
+            
+            // Then delete the enemy
             ctx.Db.Enemy.enemy_id.Delete(enemyId);
         }
         
