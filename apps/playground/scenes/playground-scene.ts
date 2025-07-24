@@ -207,14 +207,10 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             this.setupPlayerSystems(conn);
         }
 
-        // Initialize peer manager
+        // Initialize peer manager with proximity subscription enabled
         this.peerManager = new PeerManager(this);
         this.peerManager.setLocalPlayerIdentity(identity);
-
-        // Set up peer event handlers
-        conn.db.player.onInsert(this.peerManager.onPlayerInsert);
-        conn.db.player.onUpdate(this.peerManager.onPlayerUpdate);
-        conn.db.player.onDelete(this.peerManager.onPlayerDelete);
+        this.peerManager.setDbConnection(conn);
 
         // Set database connection on enemy manager if it exists
         if (this.enemyManager) {
