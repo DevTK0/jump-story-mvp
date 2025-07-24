@@ -1,6 +1,7 @@
 import { DbConnection, PlayerState, FacingDirection } from '@/spacetime/client';
 import { Player } from './player';
 import { PlayerQueryService } from './player-query-service';
+import { PLAYER_CONFIG } from './config';
 
 export interface SyncConfig {
   positionThreshold: number;
@@ -26,8 +27,8 @@ export class SyncManager {
   constructor(player: Player, config?: Partial<SyncConfig>) {
     this.player = player;
     this.config = {
-      positionThreshold: config?.positionThreshold ?? 10, // pixels
-      syncInterval: config?.syncInterval ?? 200, // milliseconds
+      positionThreshold: config?.positionThreshold ?? PLAYER_CONFIG.position.syncThreshold,
+      syncInterval: config?.syncInterval ?? PLAYER_CONFIG.position.syncInterval,
     };
     
     this.lastSyncedPosition = { x: player.x, y: player.y };

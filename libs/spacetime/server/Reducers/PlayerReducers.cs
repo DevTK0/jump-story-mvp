@@ -44,7 +44,7 @@ public static partial class Module
         {
             identity = ctx.Sender,
             name = "Player",
-            position = new DbVector2(1000, 100), // Default spawn position
+            position = new DbVector2(PlayerConstants.SPAWN_POSITION_X, PlayerConstants.SPAWN_POSITION_Y), // Default spawn position
             state = PlayerState.Idle,
             facing = FacingDirection.Right,
             last_active = ctx.Timestamp,
@@ -94,7 +94,7 @@ public static partial class Module
         var distance = Math.Sqrt(Math.Pow(x - currentPos.x, 2) + Math.Pow(y - currentPos.y, 2));
         
         // Reject position updates that are too far from current position (likely teleportation attempts)
-        if (distance > 200) // Max 200 pixels movement per update
+        if (distance > PlayerConstants.MAX_POSITION_UPDATE_DISTANCE)
         {
             Log.Info($"Rejected position update for {ctx.Sender} - too large movement ({distance:F1} pixels from ({currentPos.x}, {currentPos.y}) to ({x}, {y}))");
             return;
@@ -258,11 +258,11 @@ public static partial class Module
             current_hp = maxHp,
             current_mana = maxMana,
             state = PlayerState.Idle,
-            position = new DbVector2(1000, 100), // Set spawn position
+            position = new DbVector2(PlayerConstants.SPAWN_POSITION_X, PlayerConstants.SPAWN_POSITION_Y), // Set spawn position
             last_active = ctx.Timestamp
         });
 
-        Log.Info($"Player {ctx.Sender} respawned with {maxHp} HP at position (100, 100)");
+        Log.Info($"Player {ctx.Sender} respawned with {maxHp} HP at position ({PlayerConstants.SPAWN_POSITION_X}, {PlayerConstants.SPAWN_POSITION_Y})");
     }
 
 

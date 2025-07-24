@@ -2,6 +2,8 @@ import { DbConnection } from '@/spacetime/client';
 import { Player } from './player';
 import type { System } from '@/core/types';
 import { PlayerQueryService } from './player-query-service';
+import { PositionReconciliationService } from './position-reconciliation-service';
+import { DeathStateService } from './death-state-service';
 
 /**
  * Monitors player health and manages death state transitions
@@ -11,9 +13,13 @@ export class DeathMonitor implements System {
     private dbConnection: DbConnection | null = null;
     private isDead: boolean = false;
     private playerQueryService: PlayerQueryService | null = null;
+    private positionReconciliationService: PositionReconciliationService;
+    private deathStateService: DeathStateService;
     
     constructor(player: Player) {
         this.player = player;
+        this.positionReconciliationService = new PositionReconciliationService(player);
+        this.deathStateService = new DeathStateService(player);
     }
     
     public setDbConnection(connection: DbConnection): void {
@@ -45,53 +51,91 @@ export class DeathMonitor implements System {
     private handlePlayerUpdate(oldHp: number, newHp: number, serverState: string, newPlayer: any): void {
         console.log(`Player HP changed: ${oldHp} -> ${newHp}, State: ${serverState}`);
         
-        // Server reconciliation - check if client and server positions are too far apart
-        if (newPlayer && newPlayer.position) {
-            const serverX = newPlayer.position.x;
-            const serverY = newPlayer.position.y;
-            const clientX = this.player.x;
-            const clientY = this.player.y;
-            const distance = Math.sqrt((serverX - clientX) ** 2 + (serverY - clientY) ** 2);
+        // Server position reconciliation with safe property access
+        if (newPlayer && 
+            newPlayer.position && 
+            typeof newPlayer.position.x === 'number' && 
+            typeof newPlayer.position.y === 'number') {
             
-            // If positions are too far apart (> 300 pixels), reconcile to server position
-            if (distance > 300) {
-                console.log(`🔄 Server reconciliation: Client at (${clientX}, ${clientY}), Server at (${serverX}, ${serverY}), Distance: ${distance.toFixed(1)}`);
-                console.log(`🚀 Teleporting client to server position`);
-                this.player.setPosition(serverX, serverY);
+            const serverPos = { x: newPlayer.position.x, y: newPlayer.position.y };
+            
+            this.positionReconciliationService.checkAndReconcile(serverPos, (reconciledPos) => {
+                // Update sync manager's position to prevent immediate override
+                this.updateSyncManagerPosition(reconciledPos.x, reconciledPos.y);
+            });
+        }
+        
+        // Use death state service to determine what action to take
+        const stateAction = this.deathStateService.determineStateAction(oldHp, newHp, serverState, this.isDead);
+        
+        // Execute the determined action
+        this.executeStateAction(stateAction.action, stateAction.reason);
+        
+    }
+    
+    /**
+     * Execute the determined state action
+     * @param action The action to take
+     * @param reason Reason for the action (for logging)
+     */
+    private executeStateAction(action: 'die' | 'respawn' | 'force_dead' | 'sync_dead' | 'none', reason: string): void {
+        switch (action) {
+            case 'die':
+                console.log(reason);
+                this.isDead = true;
+                this.player.transitionToState("Dead");
+                break;
                 
-                // Also update the sync manager's last synced position to prevent immediate override
-                const movementSystem = this.player.getSystem('movement') as any;
-                if (movementSystem?.syncManager) {
-                    movementSystem.syncManager.updateLastSyncedPosition(serverX, serverY);
-                }
+            case 'respawn':
+                console.log(reason);
+                this.isDead = false;
+                this.player.transitionToState("Idle");
+                break;
+                
+            case 'force_dead':
+                console.log(reason);
+                this.isDead = true;
+                this.player.transitionToState("Dead");
+                break;
+                
+            case 'sync_dead':
+                console.log(reason);
+                this.isDead = true;
+                this.player.transitionToState("Dead");
+                break;
+                
+            case 'none':
+                // No action needed
+                break;
+                
+            default:
+                console.warn(`Unknown death state action: ${action}`);
+                break;
+        }
+    }
+    
+    /**
+     * Helper method to update sync manager position after reconciliation
+     * @param x New X position
+     * @param y New Y position
+     */
+    private updateSyncManagerPosition(x: number, y: number): void {
+        try {
+            const movementSystem = this.player.getSystem('movement') as any;
+            
+            // Safe property access chain with explicit checks
+            if (movementSystem && 
+                typeof movementSystem === 'object' && 
+                movementSystem.syncManager && 
+                typeof movementSystem.syncManager.updateLastSyncedPosition === 'function') {
+                
+                movementSystem.syncManager.updateLastSyncedPosition(x, y);
+            } else {
+                console.warn('SyncManager not available for position update');
             }
+        } catch (error) {
+            console.error('Error updating sync manager position:', error);
         }
-        
-        // Check if player just died (HP reached 0)
-        if (oldHp > 0 && newHp <= 0) {
-            console.log('Player died! Transitioning to Dead state');
-            this.isDead = true;
-            this.player.transitionToState("Dead");
-        }
-        // Check if player respawned (HP went from 0 to positive OR server state changed from Dead to something else)
-        else if ((oldHp <= 0 && newHp > 0) || (this.isDead && newHp > 0 && serverState !== 'Dead')) {
-            console.log('Player respawned! Transitioning to Idle state');
-            this.isDead = false;
-            this.player.transitionToState("Idle");
-        }
-        // Force Dead state if HP is 0 but client state isn't Dead yet
-        else if (newHp <= 0 && !this.player.getStateMachine().isInState("Dead")) {
-            console.log('Forcing Dead state - HP is 0 but state is not Dead');
-            this.isDead = true;
-            this.player.transitionToState("Dead");
-        }
-        // Also handle server state changes
-        else if (serverState === 'Dead' && !this.player.getStateMachine().isInState("Dead")) {
-            console.log('Server says player is dead, syncing state');
-            this.isDead = true;
-            this.player.transitionToState("Dead");
-        }
-        
     }
     
     public isPlayerDead(): boolean {

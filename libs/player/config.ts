@@ -33,4 +33,29 @@ export const PLAYER_CONFIG = {
             },
         },
     },
+    /**
+     * Position synchronization configuration
+     */
+    position: {
+        /** Distance threshold in pixels before position sync triggers */
+        syncThreshold: 10,
+        /** Interval in milliseconds between position sync attempts */
+        syncInterval: 200,
+        /** Distance threshold in pixels before position reconciliation triggers */
+        reconciliationThreshold: 300,
+        /** Maximum allowed position update distance in pixels (server-side validation) */
+        maxUpdateDistance: 200,
+    },
+    /**
+     * Respawn system configuration
+     */
+    respawn: {
+        /** Cooldown in milliseconds between respawn attempts */
+        cooldown: 1000,
+        /** Default spawn coordinates */
+        spawnPosition: {
+            x: 1000,
+            y: 100,
+        },
+    },
 } as const;

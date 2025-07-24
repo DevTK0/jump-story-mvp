@@ -11,6 +11,11 @@ export { DebugSystem } from '@/debug';
 export { SyncManager, type SyncConfig } from './sync-manager';
 export { PlayerStateMachine, PlayerState } from './state-machine';
 
+// Player services
+export { PlayerQueryService } from './player-query-service';
+export { PositionReconciliationService, type PositionReconciliationConfig } from './position-reconciliation-service';
+export { DeathStateService } from './death-state-service';
+
 // Builder pattern for flexible player creation
 export { PlayerBuilder } from './player-builder';
 

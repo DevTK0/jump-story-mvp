@@ -2,13 +2,14 @@ import type { System } from '../core/types';
 import { Player } from './player';
 import { PlayerQueryService } from './player-query-service';
 import { DbConnection } from '@/spacetime/client';
+import { PLAYER_CONFIG } from './config';
 
 export class RespawnSystem implements System {
     private player: Player;
     private dbConnection: DbConnection | null = null;
     private playerQueryService: PlayerQueryService | null = null;
     private lastRespawnTime: number = 0;
-    private respawnCooldown: number = 1000; // 1 second cooldown to prevent spam
+    private respawnCooldown: number = PLAYER_CONFIG.respawn.cooldown;
 
     constructor(player: Player) {
         this.player = player;
