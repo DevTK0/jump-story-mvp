@@ -74,27 +74,35 @@ export class PlayerQueryService {
 
     /**
      * Set up event listeners for targeted subscription
-     * Since we only subscribe to our player, all events will be for our player
+     * Even with targeted subscription, we should verify identity to be safe
      */
     private setupTargetedEventListeners(): void {
-        if (!this.dbConnection?.db?.player) {
+        if (!this.dbConnection?.db?.player || !this.dbConnection.identity) {
             return;
         }
 
-        // With targeted subscription, all updates are for our player
+        const myIdentityHex = this.dbConnection.identity.toHexString();
+
+        // Verify identity even with targeted subscription for safety
         this.dbConnection.db.player.onUpdate((_ctx, _oldPlayer, newPlayer) => {
-            // Current player updated via targeted subscription
-            this.currentPlayerData = newPlayer;
+            if (newPlayer.identity.toHexString() === myIdentityHex) {
+                // Current player updated via targeted subscription
+                this.currentPlayerData = newPlayer;
+            }
         });
 
         this.dbConnection.db.player.onInsert((_ctx, insertedPlayer) => {
-            // Current player inserted via targeted subscription
-            this.currentPlayerData = insertedPlayer;
+            if (insertedPlayer.identity.toHexString() === myIdentityHex) {
+                // Current player inserted via targeted subscription
+                this.currentPlayerData = insertedPlayer;
+            }
         });
 
-        this.dbConnection.db.player.onDelete((_ctx, _deletedPlayer) => {
-            // Current player deleted via targeted subscription
-            this.currentPlayerData = null;
+        this.dbConnection.db.player.onDelete((_ctx, deletedPlayer) => {
+            if (deletedPlayer.identity.toHexString() === myIdentityHex) {
+                // Current player deleted via targeted subscription
+                this.currentPlayerData = null;
+            }
         });
     }
 
@@ -135,15 +143,19 @@ export class PlayerQueryService {
      * Update current player data from the targeted subscription
      */
     private updateCurrentPlayerFromSubscription(): void {
-        if (!this.dbConnection?.db?.player) {
+        if (!this.dbConnection?.db?.player || !this.dbConnection.identity) {
             return;
         }
 
-        // With targeted subscription, there should only be one player row (ours)
+        const myIdentityHex = this.dbConnection.identity.toHexString();
+
+        // Verify identity even with targeted subscription
         for (const player of this.dbConnection.db.player.iter()) {
-            this.currentPlayerData = player;
-            // Loaded current player from targeted subscription
-            break; // Should only be one player in targeted subscription
+            if (player.identity.toHexString() === myIdentityHex) {
+                this.currentPlayerData = player;
+                // Loaded current player from targeted subscription
+                break;
+            }
         }
     }
 

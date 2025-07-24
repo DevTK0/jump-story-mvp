@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import type { Player as PlayerData } from "@/spacetime/client";
 import { PLAYER_CONFIG } from "../player/config";
+import { PEER_CONFIG } from "./peer-config";
+import { PeerHealthBar } from "./peer-health-bar";
 
 export interface PeerConfig {
     scene: Phaser.Scene;
@@ -10,10 +12,11 @@ export interface PeerConfig {
 export class Peer extends Phaser.GameObjects.Sprite {
     private playerData: PlayerData;
     private nameLabel!: Phaser.GameObjects.Text;
+    private healthBar!: PeerHealthBar;
 
     // Interpolation properties
     private targetPosition = { x: 0, y: 0 };
-    private interpolationSpeed = 0.15;
+    private interpolationSpeed = PEER_CONFIG.interpolation.speed;
 
     // Animation tracking
     private currentAnimation: string | null = null;
@@ -35,14 +38,14 @@ export class Peer extends Phaser.GameObjects.Sprite {
         config.scene.add.existing(this);
 
         // Set depth to render above enemies but below main player
-        this.setDepth(8);
+        this.setDepth(PEER_CONFIG.display.depth);
 
         // Set scale to match main player
         this.setScale(PLAYER_CONFIG.movement.scale);
 
         // Set visual properties to distinguish from main player
-        this.setAlpha(0.9);
-        this.setTint(0xbbbbbb);
+        this.setAlpha(PEER_CONFIG.display.alpha);
+        this.setTint(PEER_CONFIG.display.tint);
 
         // Initialize target position
         this.targetPosition = {
@@ -52,6 +55,9 @@ export class Peer extends Phaser.GameObjects.Sprite {
 
         // Create name label
         this.createNameLabel();
+
+        // Create health bar
+        this.createHealthBar();
 
         // Start with appropriate animation based on state
         this.playAnimation(this.determineAnimation());
@@ -64,17 +70,29 @@ export class Peer extends Phaser.GameObjects.Sprite {
     private createNameLabel(): void {
         this.nameLabel = this.scene.add.text(
             this.x,
-            this.y - 60,
+            this.y + PEER_CONFIG.display.nameLabel.offsetY,
             this.playerData.name,
             {
-                fontSize: "12px",
-                color: "#ffffff",
-                stroke: "#000000",
-                strokeThickness: 2,
+                fontSize: PEER_CONFIG.display.nameLabel.fontSize,
+                color: PEER_CONFIG.display.nameLabel.color,
+                stroke: PEER_CONFIG.display.nameLabel.stroke,
+                strokeThickness: PEER_CONFIG.display.nameLabel.strokeThickness,
             }
         );
         this.nameLabel.setOrigin(0.5, 0.5);
-        this.nameLabel.setDepth(11); // Above the peer sprite
+        this.nameLabel.setDepth(PEER_CONFIG.display.nameLabel.depth); // Above the peer sprite
+    }
+
+    private createHealthBar(): void {
+        this.healthBar = new PeerHealthBar(
+            this.scene,
+            this.x,
+            this.y,
+            this.playerData.maxHp
+        );
+        
+        // Initialize health bar with current health
+        this.healthBar.updateHealth(this.playerData.currentHp);
     }
 
     private playAnimation(animationKey: string): void {
@@ -163,7 +181,7 @@ export class Peer extends Phaser.GameObjects.Sprite {
             newTargetY
         );
 
-        if (targetDistance > 0.5) {
+        if (targetDistance > PEER_CONFIG.interpolation.minMoveDistance) {
             // Check for teleport distance (if too far, snap immediately)
             const currentDistance = Phaser.Math.Distance.Between(
                 this.x,
@@ -172,11 +190,12 @@ export class Peer extends Phaser.GameObjects.Sprite {
                 newTargetY
             );
 
-            if (currentDistance > 150) {
+            if (currentDistance > PEER_CONFIG.interpolation.teleportDistance) {
                 // Teleport if too far
                 this.setPosition(newTargetX, newTargetY);
                 this.targetPosition = { x: newTargetX, y: newTargetY };
-                this.nameLabel.setPosition(this.x, this.y - 60);
+                this.nameLabel.setPosition(this.x, this.y + PEER_CONFIG.display.nameLabel.offsetY);
+                this.healthBar.updatePosition(this.x, this.y);
                 console.log(
                     `Teleported peer ${this.playerData.name} to (${this.x}, ${this.y})`
                 );
@@ -188,6 +207,9 @@ export class Peer extends Phaser.GameObjects.Sprite {
                 );
             }
         }
+
+        // Update health bar
+        this.healthBar.updateHealth(playerData.currentHp);
 
         // Check if state changed and update animation accordingly
         if (previousState !== playerData.state.tag) {
@@ -222,8 +244,9 @@ export class Peer extends Phaser.GameObjects.Sprite {
 
             this.setPosition(newX, newY);
 
-            // Update name label position
-            this.nameLabel.setPosition(this.x, this.y - 60);
+            // Update name label and health bar positions
+            this.nameLabel.setPosition(this.x, this.y + PEER_CONFIG.display.nameLabel.offsetY);
+            this.healthBar.updatePosition(this.x, this.y);
         }
 
         // Update facing direction based on server data
@@ -249,6 +272,7 @@ export class Peer extends Phaser.GameObjects.Sprite {
 
     public destroy(): void {
         this.nameLabel?.destroy();
+        this.healthBar?.destroy();
         super.destroy();
     }
 }
