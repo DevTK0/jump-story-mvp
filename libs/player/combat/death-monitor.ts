@@ -1,7 +1,7 @@
 import { DbConnection, Player as ServerPlayer } from '@/spacetime/client';
 import { Player } from '../player';
 import type { System } from '@/core/types';
-import { PlayerQueryService } from '../player-query-service';
+import { PlayerQueryService } from '../services/player-query-service';
 import { DeathStateService } from './death-state-service';
 
 /**

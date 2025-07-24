@@ -1,8 +1,8 @@
 import { DbConnection, PlayerState, FacingDirection, Player as ServerPlayer } from '@/spacetime/client';
-import { Player } from './player';
-import { PlayerQueryService } from './player-query-service';
-import { PositionReconciliationService } from './movement/position-reconciliation-service';
-import { PLAYER_CONFIG } from './config';
+import { Player } from '../player';
+import { PlayerQueryService } from '../services/player-query-service';
+import { PositionReconciliationService } from '../movement/position-reconciliation-service';
+import { PLAYER_CONFIG } from '../config';
 
 export interface SyncConfig {
   positionThreshold: number;

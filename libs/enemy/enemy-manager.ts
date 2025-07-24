@@ -7,10 +7,10 @@ import {
 import { ANIMATION_DEFINITIONS } from "../animations";
 import {
     EnemyStateManager,
-} from "./enemy-state-service";
-import { ENEMY_CONFIG } from "./enemy-config";
-import { EnemyHealthBar } from "./enemy-health-bar";
-import { EnemyStateMachine } from "./enemy-state-machine";
+} from "./state/enemy-state-service";
+import { ENEMY_CONFIG } from "./config/enemy-config";
+import { EnemyHealthBar } from "./ui/enemy-health-bar";
+import { EnemyStateMachine } from "./state/enemy-state-machine";
 
 export interface EnemySubscriptionConfig {
     /** Use proximity-based subscriptions to limit enemies loaded */

@@ -1,7 +1,7 @@
 import Phaser from "phaser";
-import { PEER_CONFIG } from "./peer-config";
+import { ENEMY_CONFIG } from "../config/enemy-config";
 
-export class PeerHealthBar {
+export class EnemyHealthBar {
     private scene: Phaser.Scene;
     private container: Phaser.GameObjects.Container;
     private background: Phaser.GameObjects.Graphics;
@@ -20,7 +20,7 @@ export class PeerHealthBar {
 
         // Create container to hold all health bar elements
         this.container = scene.add.container(x, y);
-        this.container.setDepth(PEER_CONFIG.display.depth + 1); // Above peers
+        this.container.setDepth(ENEMY_CONFIG.display.depth + 1); // Above enemies
         this.container.setAlpha(0); // Start invisible
 
         // Create graphics objects
@@ -35,7 +35,7 @@ export class PeerHealthBar {
     }
 
     private drawHealthBar(): void {
-        const config = PEER_CONFIG.healthBar;
+        const config = ENEMY_CONFIG.healthBar;
         const halfWidth = config.width / 2;
         const halfHeight = config.height / 2;
 
@@ -52,7 +52,7 @@ export class PeerHealthBar {
         const healthPercentage = Math.max(0, this.currentHp / this.maxHp);
         const healthWidth = config.width * healthPercentage;
 
-        // Draw health bar (green)
+        // Draw health bar (always red)
         if (healthWidth > 0) {
             this.healthBar.fillStyle(config.healthColor, config.alpha);
             this.healthBar.fillRoundedRect(-halfWidth, -halfHeight, healthWidth, config.height, config.cornerRadius);
@@ -66,7 +66,7 @@ export class PeerHealthBar {
     public updateHealth(newHp: number): void {
         this.currentHp = Math.max(0, Math.min(this.maxHp, newHp));
         
-        // Only show health bar if peer took damage and isn't dead
+        // Only show health bar if enemy took damage and isn't dead
         if (newHp < this.maxHp && newHp > 0) {
             this.show();
         } else if (newHp <= 0) {
@@ -77,7 +77,7 @@ export class PeerHealthBar {
     }
 
     public updatePosition(x: number, y: number): void {
-        this.container.setPosition(x, y + PEER_CONFIG.healthBar.offsetY);
+        this.container.setPosition(x, y + ENEMY_CONFIG.healthBar.offsetY);
     }
 
     public show(): void {
@@ -99,7 +99,7 @@ export class PeerHealthBar {
         }
 
         // Set timer to hide after duration
-        this.hideTimer = this.scene.time.delayedCall(PEER_CONFIG.healthBar.showDuration, () => {
+        this.hideTimer = this.scene.time.delayedCall(ENEMY_CONFIG.healthBar.showDuration, () => {
             this.hide();
         });
     }

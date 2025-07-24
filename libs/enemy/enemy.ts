@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ENEMY_CONFIG } from './config';
+import { ENEMY_CONFIG } from './config/config';
 
 export interface EnemyConfig {
   speed: number;

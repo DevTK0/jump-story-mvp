@@ -4,7 +4,7 @@ import type { PlayerState } from './player-types';
 import { gameEvents } from '../core/events';
 import { PlayerEvent } from './player-events';
 import { PLAYER_CONFIG } from './config';
-import { PlayerStateMachine } from './state-machine';
+import { PlayerStateMachine } from './state/state-machine';
 
 export interface PlayerConfig {
   scene: Phaser.Scene;

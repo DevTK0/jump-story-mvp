@@ -1,11 +1,11 @@
-import type { System } from '../core/types';
-import { Player } from './player';
-import { PlayerQueryService } from './player-query-service';
-import { InputSystem } from './input';
+import type { System } from '../../core/types';
+import { Player } from '../player';
+import { PlayerQueryService } from '../services/player-query-service';
+import { InputSystem } from '../input';
 import { DbConnection } from '@/spacetime/client';
-import { PLAYER_CONFIG } from './config';
-import { createLogger } from '../core/logger';
-import { stateValidator } from '../core/state-validator';
+import { PLAYER_CONFIG } from '../config';
+import { createLogger } from '../../core/logger';
+import { stateValidator } from '../../core/state-validator';
 
 export class RespawnSystem implements System {
     private player: Player;

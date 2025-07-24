@@ -1,5 +1,5 @@
 import { PlayerState } from '@/spacetime/client';
-import { PlayerQueryService } from '@/player/player-query-service';
+import { PlayerQueryService } from '@/player/services/player-query-service';
 
 export interface StateValidationResult {
   isValid: boolean;

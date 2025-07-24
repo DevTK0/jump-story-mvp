@@ -4,7 +4,7 @@
  */
 
 import Phaser from 'phaser';
-import { PLAYER_STATS_UI_CONFIG } from './player-stats-ui-config';
+import { PLAYER_STATS_UI_CONFIG } from '../stats/player-stats-ui-config';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { DbConnection } from '@/spacetime/client';
 

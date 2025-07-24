@@ -1,5 +1,5 @@
 import { PlayerState as DbPlayerState } from '@/spacetime/client';
-import { Peer } from './peer';
+import { Peer } from '../peer';
 
 /**
  * Base class for all peer states

@@ -2,8 +2,8 @@ import Phaser from "phaser";
 import type { Player as PlayerData } from "@/spacetime/client";
 import { PLAYER_CONFIG } from "../player/config";
 import { PEER_CONFIG } from "./peer-config";
-import { PeerHealthBar } from "./peer-health-bar";
-import { PeerStateMachine } from "./peer-state-machine";
+import { PeerHealthBar } from "./ui/peer-health-bar";
+import { PeerStateMachine } from "./state/peer-state-machine";
 
 export interface PeerConfig {
     scene: Phaser.Scene;

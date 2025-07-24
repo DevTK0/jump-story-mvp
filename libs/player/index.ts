@@ -7,7 +7,7 @@ export { MovementSystem } from './movement/movement';
 export { ClimbingSystem } from './movement/climbing';
 export { AnimationSystem } from './animations';
 export { DebugSystem } from '@/debug';
-export { SyncManager, type SyncConfig } from './sync-manager';
+export { SyncManager, type SyncConfig } from './sync/sync-manager';
 export { 
     PlayerStateMachine, 
     PlayerState,
@@ -20,7 +20,7 @@ export {
     Attack3State,
     DamagedState,
     DeadState
-} from './state-machine';
+} from './state/state-machine';
 // Teleport effect is now in the effects module
 
 // Combat systems and services
@@ -39,7 +39,7 @@ export {
 } from './combat';
 
 // Player services
-export { PlayerQueryService } from './player-query-service';
+export { PlayerQueryService } from './services/player-query-service';
 export { PositionReconciliationService, type PositionReconciliationConfig } from './movement/position-reconciliation-service';
 
 // Builder pattern for flexible player creation

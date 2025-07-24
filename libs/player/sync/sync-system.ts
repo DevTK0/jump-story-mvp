@@ -1,9 +1,9 @@
-import type { System } from '../core/types';
-import { Player } from './player';
+import type { System } from '../../core/types';
+import { Player } from '../player';
 import { SyncManager } from './sync-manager';
-import { MovementSystem } from './movement/movement';
+import { MovementSystem } from '../movement/movement';
 import { DbConnection, PlayerState } from '@/spacetime/client';
-import { createLogger } from '../core/logger';
+import { createLogger } from '../../core/logger';
 
 /**
  * Handles all player synchronization with the server.
