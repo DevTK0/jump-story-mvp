@@ -13,7 +13,7 @@ importers:
         version: 0.35.0(astro@5.12.0(@types/node@24.0.8)(rollup@4.44.1)(tsx@4.20.3)(typescript@5.8.3))
       '@browserbasehq/stagehand':
         specifier: ^2.4.0
-        version: 2.4.0(deepmerge@4.3.1)(dotenv@16.6.1)(react@19.1.0)(zod@3.25.67)
+        version: 2.4.0(deepmerge@4.3.1)(dotenv@17.2.0)(react@19.1.0)(zod@3.25.67)
       '@clockworklabs/spacetimedb-sdk':
         specifier: ^1.2.2
         version: 1.2.2(undici@6.21.3)
@@ -29,6 +29,9 @@ importers:
       astro-d2:
         specifier: ^0.8.0
         version: 0.8.0(astro@5.12.0(@types/node@24.0.8)(rollup@4.44.1)(tsx@4.20.3)(typescript@5.8.3))
+      dotenv:
+        specifier: ^17.2.0
+        version: 17.2.0
       phaser:
         specifier: ^3.90.0
         version: 3.90.0
@@ -47,7 +50,7 @@ importers:
     devDependencies:
       '@browserbasehq/mcp-stagehand':
         specifier: ^0.5.1
-        version: 0.5.1(@types/node@24.0.8)(deepmerge@4.3.1)(dotenv@16.6.1)(openai@4.104.0(ws@8.18.3)(zod@3.25.67))(react@19.1.0)(rollup@4.44.1)(tsx@4.20.3)(typescript@5.8.3)(zod@3.25.67)
+        version: 0.5.1(@types/node@24.0.8)(deepmerge@4.3.1)(dotenv@17.2.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.67))(react@19.1.0)(rollup@4.44.1)(tsx@4.20.3)(typescript@5.8.3)(undici@6.21.3)(zod@3.25.67)
       '@types/node':
         specifier: ^24.0.8
         version: 24.0.8
@@ -1220,8 +1223,8 @@ packages:
   dlv@1.1.3:
     resolution: {integrity: sha512-+HlytyjlPKnIG8XuRG8WvmBP8xs8P71y+SKKS6ZXWoEgLuePxtDoUEiH7WkdePWrQ5JBpE6aoVqfZfJUQkjXwA==}
 
-  dotenv@16.6.1:
-    resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
+  dotenv@17.2.0:
+    resolution: {integrity: sha512-Q4sgBT60gzd0BB0lSyYD3xM4YxrXA9y4uBDof1JNYGzOXrQdQ6yX+7XIAqoFOGQFOTK1D3Hts5OllpxMDZFONQ==}
     engines: {node: '>=12'}
 
   dset@3.1.4:
@@ -3189,12 +3192,12 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.27.1
 
-  '@browserbasehq/mcp-stagehand@0.5.1(@types/node@24.0.8)(deepmerge@4.3.1)(dotenv@16.6.1)(openai@4.104.0(ws@8.18.3)(zod@3.25.67))(react@19.1.0)(rollup@4.44.1)(tsx@4.20.3)(typescript@5.8.3)(zod@3.25.67)':
+  '@browserbasehq/mcp-stagehand@0.5.1(@types/node@24.0.8)(deepmerge@4.3.1)(dotenv@17.2.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.67))(react@19.1.0)(rollup@4.44.1)(tsx@4.20.3)(typescript@5.8.3)(undici@6.21.3)(zod@3.25.67)':
     dependencies:
       '@browserbasehq/sdk': 2.6.0
-      '@browserbasehq/stagehand': 1.14.0(@playwright/test@1.53.2)(deepmerge@4.3.1)(dotenv@16.6.1)(openai@4.104.0(ws@8.18.3)(zod@3.25.67))(zod@3.25.67)
+      '@browserbasehq/stagehand': 1.14.0(@playwright/test@1.53.2)(deepmerge@4.3.1)(dotenv@17.2.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.67))(zod@3.25.67)
       '@modelcontextprotocol/sdk': 1.13.2
-      '@modelcontextprotocol/server-stagehand': jump-story-mvp@file:(@types/node@24.0.8)(deepmerge@4.3.1)(dotenv@16.6.1)(react@19.1.0)(rollup@4.44.1)(tsx@4.20.3)(typescript@5.8.3)(zod@3.25.67)
+      '@modelcontextprotocol/server-stagehand': jump-story-mvp@file:(@types/node@24.0.8)(deepmerge@4.3.1)(react@19.1.0)(rollup@4.44.1)(tsx@4.20.3)(typescript@5.8.3)(undici@6.21.3)(zod@3.25.67)
       '@playwright/test': 1.53.2
     transitivePeerDependencies:
       - '@azure/app-configuration'
@@ -3233,6 +3236,7 @@ snapshots:
       - terser
       - tsx
       - typescript
+      - undici
       - uploadthing
       - utf-8-validate
       - yaml
@@ -3250,13 +3254,13 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@browserbasehq/stagehand@1.14.0(@playwright/test@1.53.2)(deepmerge@4.3.1)(dotenv@16.6.1)(openai@4.104.0(ws@8.18.3)(zod@3.25.67))(zod@3.25.67)':
+  '@browserbasehq/stagehand@1.14.0(@playwright/test@1.53.2)(deepmerge@4.3.1)(dotenv@17.2.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.67))(zod@3.25.67)':
     dependencies:
       '@anthropic-ai/sdk': 0.27.3
       '@browserbasehq/sdk': 2.6.0
       '@playwright/test': 1.53.2
       deepmerge: 4.3.1
-      dotenv: 16.6.1
+      dotenv: 17.2.0
       openai: 4.104.0(ws@8.18.3)(zod@3.25.67)
       ws: 8.18.3
       zod: 3.25.67
@@ -3266,7 +3270,7 @@ snapshots:
       - encoding
       - utf-8-validate
 
-  '@browserbasehq/stagehand@2.4.0(deepmerge@4.3.1)(dotenv@16.6.1)(react@19.1.0)(zod@3.25.67)':
+  '@browserbasehq/stagehand@2.4.0(deepmerge@4.3.1)(dotenv@17.2.0)(react@19.1.0)(zod@3.25.67)':
     dependencies:
       '@anthropic-ai/sdk': 0.39.0
       '@browserbasehq/sdk': 2.6.0
@@ -3274,7 +3278,7 @@ snapshots:
       ai: 4.3.16(react@19.1.0)(zod@3.25.67)
       deepmerge: 4.3.1
       devtools-protocol: 0.0.1464554
-      dotenv: 16.6.1
+      dotenv: 17.2.0
       fetch-cookie: 3.1.0
       openai: 4.104.0(ws@8.18.3)(zod@3.25.67)
       pino: 9.7.0
@@ -4205,7 +4209,7 @@ snapshots:
 
   dlv@1.1.3: {}
 
-  dotenv@16.6.1: {}
+  dotenv@17.2.0: {}
 
   dset@3.1.4: {}
 
@@ -4846,14 +4850,16 @@ snapshots:
       chalk: 5.4.1
       diff-match-patch: 1.0.5
 
-  jump-story-mvp@file:(@types/node@24.0.8)(deepmerge@4.3.1)(dotenv@16.6.1)(react@19.1.0)(rollup@4.44.1)(tsx@4.20.3)(typescript@5.8.3)(zod@3.25.67):
+  jump-story-mvp@file:(@types/node@24.0.8)(deepmerge@4.3.1)(react@19.1.0)(rollup@4.44.1)(tsx@4.20.3)(typescript@5.8.3)(undici@6.21.3)(zod@3.25.67):
     dependencies:
       '@astrojs/starlight': 0.35.0(astro@5.12.0(@types/node@24.0.8)(rollup@4.44.1)(tsx@4.20.3)(typescript@5.8.3))
-      '@browserbasehq/stagehand': 2.4.0(deepmerge@4.3.1)(dotenv@16.6.1)(react@19.1.0)(zod@3.25.67)
+      '@browserbasehq/stagehand': 2.4.0(deepmerge@4.3.1)(dotenv@17.2.0)(react@19.1.0)(zod@3.25.67)
+      '@clockworklabs/spacetimedb-sdk': 1.2.2(undici@6.21.3)
       '@fontsource/geist-mono': 5.2.6
       '@fontsource/geist-sans': 5.2.5
       astro: 5.12.0(@types/node@24.0.8)(rollup@4.44.1)(tsx@4.20.3)(typescript@5.8.3)
       astro-d2: 0.8.0(astro@5.12.0(@types/node@24.0.8)(rollup@4.44.1)(tsx@4.20.3)(typescript@5.8.3))
+      dotenv: 17.2.0
       phaser: 3.90.0
       starlight-auto-sidebar: 0.1.2(@astrojs/starlight@0.35.0(astro@5.12.0(@types/node@24.0.8)(rollup@4.44.1)(tsx@4.20.3)(typescript@5.8.3)))
       starlight-image-zoom: 0.13.0(@astrojs/starlight@0.35.0(astro@5.12.0(@types/node@24.0.8)(rollup@4.44.1)(tsx@4.20.3)(typescript@5.8.3)))
@@ -4878,7 +4884,6 @@ snapshots:
       - bufferutil
       - db0
       - deepmerge
-      - dotenv
       - encoding
       - idb-keyval
       - ioredis
@@ -4895,6 +4900,7 @@ snapshots:
       - terser
       - tsx
       - typescript
+      - undici
       - uploadthing
       - utf-8-validate
       - yaml

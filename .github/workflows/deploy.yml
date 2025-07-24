@@ -31,6 +31,8 @@ jobs:
         run: pnpm install
         
       - name: Build game
+        env:
+          VITE_SPACETIME_TARGET: cloud
         run: pnpm run build
           
       - name: Move game build

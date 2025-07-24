@@ -87,9 +87,18 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         // Register recovery strategies
         registerAllRecoveryStrategies();
         
+        // Determine database URI based on environment variable
+        // @ts-ignore - VITE_SPACETIME_TARGET is injected at build time
+        const target = import.meta.env.VITE_SPACETIME_TARGET || 'local';
+        const dbUri = target === 'cloud' 
+            ? 'wss://maincloud.spacetimedb.com'
+            : 'ws://localhost:3000';
+            
+        console.log(`🚀 Connecting to SpaceTimeDB (${target}): ${dbUri}`);
+
         // Initialize database connection manager using Builder pattern
         this.dbConnectionManager = new SpacetimeConnectionBuilder()
-            .setUri("ws://localhost:3000")
+            .setUri(dbUri)
             .setModuleName("jump-story")
             .onConnect(this.handleDatabaseConnect.bind(this))
             .onDisconnect(() => console.log("Disconnected from SpacetimeDB"))

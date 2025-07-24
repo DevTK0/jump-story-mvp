@@ -4,7 +4,11 @@
  *
  * Reads the playground.tmj tilemap file and calls the InitializeEnemyRoutes reducer
  * to populate the EnemyRoute table with spawn zone definitions including spawn intervals.
- * 
+ *
+ * Usage:
+ *   pnpm run init:local          # Initialize local deployment
+ *   pnpm run init:cloud          # Initialize cloud deployment
+ *
  * This script sets up:
  * - Enemy spawn areas with configurable spawn intervals
  * - Route-specific enemy types and max counts
@@ -13,16 +17,38 @@
 
 import { readFileSync } from "fs";
 import { join } from "path";
-import {
-    DbConnection,
-    type ErrorContext,
-} from "../libs/spacetime/client";
+import { DbConnection, type ErrorContext } from "../libs/spacetime/client";
 import { Identity } from "@clockworklabs/spacetimedb-sdk";
+import * as dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 async function initializeSpacetime() {
     let connection: DbConnection | null = null;
 
     try {
+        // Get deployment target from command line argument
+        const target = process.argv[2] || "local";
+        const isCloud = target === "cloud";
+
+        // Determine the URI based on target
+        const uri = isCloud
+            ? "wss://maincloud.spacetimedb.com"
+            : "ws://localhost:3000";
+
+        console.log(`🚀 Initializing SpaceTimeDB (${target} deployment)...`);
+        console.log(`   URI: ${uri}`);
+
+        // Get admin API key from environment
+        const adminApiKey = process.env.SPACETIME_ADMIN_API_KEY;
+        if (!adminApiKey) {
+            throw new Error(
+                "SPACETIME_ADMIN_API_KEY not found in environment variables. Please check your .env file."
+            );
+        }
+        console.log("Admin API key loaded successfully.");
+
         console.log("Reading tilemap file...");
 
         // Read the tilemap JSON file
@@ -50,14 +76,18 @@ async function initializeSpacetime() {
                         let behavior = "patrol"; // Default
                         for (const prop of obj.properties) {
                             if (prop.name === "enemy") enemyType = prop.value;
-                            if (prop.name === "number") maxEnemies = parseInt(prop.value);
-                            if (prop.name === "spawn_interval") spawnInterval = parseInt(prop.value);
+                            if (prop.name === "number")
+                                maxEnemies = parseInt(prop.value);
+                            if (prop.name === "spawn_interval")
+                                spawnInterval = parseInt(prop.value);
                             if (prop.name === "behavior") behavior = prop.value;
                         }
 
                         if (enemyType) {
                             routeCount++;
-                            intervalInfo.push(`  Route ${routeCount}: ${enemyType} (max: ${maxEnemies}, interval: ${spawnInterval}s, behavior: ${behavior})`);
+                            intervalInfo.push(
+                                `  Route ${routeCount}: ${enemyType} (max: ${maxEnemies}, interval: ${spawnInterval}s, behavior: ${behavior})`
+                            );
                         }
                     }
                 }
@@ -65,7 +95,7 @@ async function initializeSpacetime() {
         }
 
         console.log(`Found ${routeCount} enemy routes with spawn intervals:`);
-        intervalInfo.forEach(info => console.log(info));
+        intervalInfo.forEach((info) => console.log(info));
 
         console.log("\nConnecting to SpaceTimeDB...");
 
@@ -90,7 +120,7 @@ async function initializeSpacetime() {
             };
 
             DbConnection.builder()
-                .withUri("ws://localhost:3000")
+                .withUri(uri)
                 .withModuleName("jump-story")
                 .onConnect(onConnect)
                 .onConnectError(onConnectError)
@@ -102,46 +132,59 @@ async function initializeSpacetime() {
         }
 
         console.log("Populating enemy configurations...");
-        
+
         // Read and populate enemy config from JSON
         const enemyAttributesPath = join(
             process.cwd(),
             "apps/playground/enemy_attributes.json"
         );
         const enemyConfigContent = readFileSync(enemyAttributesPath, "utf8");
-        await connection.reducers.populateEnemyConfig(enemyConfigContent);
-        
+        await connection.reducers.populateEnemyConfig(
+            adminApiKey,
+            enemyConfigContent
+        );
+
         console.log("✅ Enemy configurations populated!");
 
         console.log("Populating player leveling curve...");
-        
+
         // Read and populate player leveling curve from JSON
         const playerLevelingPath = join(
             process.cwd(),
             "apps/playground/player_leveling_curve.json"
         );
         const levelingCurveContent = readFileSync(playerLevelingPath, "utf8");
-        await connection.reducers.populatePlayerLevelingConfig(levelingCurveContent);
-        
+        await connection.reducers.populatePlayerLevelingConfig(
+            adminApiKey,
+            levelingCurveContent
+        );
+
         console.log("✅ Player leveling curve populated!");
 
         console.log("Initializing enemy routes with spawn intervals...");
 
         // Call the reducer using the proper connection
-        await connection.reducers.initializeEnemyRoutes(tilemapContent);
+        await connection.reducers.initializeEnemyRoutes(
+            adminApiKey,
+            tilemapContent
+        );
 
         console.log("✅ Enemy routes initialized successfully!");
         console.log("🐺 Spawning initial enemies for all routes...");
-        
+
         // Spawn initial enemies to populate the world
-        await connection.reducers.spawnAllEnemies();
-        
+        await connection.reducers.spawnAllEnemies(adminApiKey);
+
         // Give extra time for all operations to complete
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 3000));
 
         console.log("✅ SpaceTime database initialized successfully!");
-        console.log("✅ Enemy routes with per-route spawn intervals configured!");
-        console.log(`✅ ${routeCount} spawn areas ready with individual timing!`);
+        console.log(
+            "✅ Enemy routes with per-route spawn intervals configured!"
+        );
+        console.log(
+            `✅ ${routeCount} spawn areas ready with individual timing!`
+        );
         console.log("🐺 Initial enemy population spawned!");
     } catch (error) {
         console.error(

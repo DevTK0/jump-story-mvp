@@ -51,6 +51,12 @@ async function singleInstanceTest(instanceId: number): Promise<void> {
                 }
 
                 await stagehand.page.keyboard.up("ArrowLeft");
+                
+                // Press R for respawn after changing direction
+                await stagehand.page.keyboard.down("KeyR");
+                await stagehand.page.waitForTimeout(100);
+                await stagehand.page.keyboard.up("KeyR");
+                
                 direction = "right";
             } else {
                 await stagehand.page.keyboard.down("ArrowRight");
@@ -68,6 +74,12 @@ async function singleInstanceTest(instanceId: number): Promise<void> {
                 }
 
                 await stagehand.page.keyboard.up("ArrowRight");
+                
+                // Press R for respawn after changing direction
+                await stagehand.page.keyboard.down("KeyR");
+                await stagehand.page.waitForTimeout(100);
+                await stagehand.page.keyboard.up("KeyR");
+                
                 direction = "left";
             }
 

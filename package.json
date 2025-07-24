@@ -14,6 +14,8 @@
     "test:load": "tsx scripts/tests/stagehand-load-test.ts",
     "test:climb": "tsx scripts/tests/stagehand-climbing-test.ts",
     "script:init": "tsx scripts/init-spacetime.ts",
+    "init:local": "tsx scripts/init-spacetime.ts",
+    "init:cloud": "tsx scripts/init-spacetime.ts cloud",
     "mcp:stagehand": "npx @browserbasehq/mcp-stagehand"
   },
   "keywords": [],
@@ -28,6 +30,7 @@
     "@fontsource/geist-sans": "^5.2.5",
     "astro": "^5.12.0",
     "astro-d2": "^0.8.0",
+    "dotenv": "^17.2.0",
     "phaser": "^3.90.0",
     "starlight-auto-sidebar": "^0.1.2",
     "starlight-image-zoom": "^0.13.0",
