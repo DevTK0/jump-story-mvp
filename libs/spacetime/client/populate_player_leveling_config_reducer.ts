@@ -34,6 +34,7 @@ import {
 } from "@clockworklabs/spacetimedb-sdk";
 
 export type PopulatePlayerLevelingConfig = {
+  adminApiKey: string,
   levelingCurveJson: string,
 };
 
@@ -47,6 +48,7 @@ export namespace PopulatePlayerLevelingConfig {
   */
   export function getTypeScriptAlgebraicType(): AlgebraicType {
     return AlgebraicType.createProductType([
+      new ProductTypeElement("adminApiKey", AlgebraicType.createStringType()),
       new ProductTypeElement("levelingCurveJson", AlgebraicType.createStringType()),
     ]);
   }

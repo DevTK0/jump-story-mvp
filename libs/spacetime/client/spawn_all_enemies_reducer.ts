@@ -33,7 +33,9 @@ import {
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
 
-export type SpawnAllEnemies = {};
+export type SpawnAllEnemies = {
+  adminApiKey: string,
+};
 
 /**
  * A namespace for generated helper functions.
@@ -45,6 +47,7 @@ export namespace SpawnAllEnemies {
   */
   export function getTypeScriptAlgebraicType(): AlgebraicType {
     return AlgebraicType.createProductType([
+      new ProductTypeElement("adminApiKey", AlgebraicType.createStringType()),
     ]);
   }
 

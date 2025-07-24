@@ -33,7 +33,9 @@ import {
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
 
-export type InstakillPlayer = {};
+export type InstakillPlayer = {
+  adminApiKey: string,
+};
 
 /**
  * A namespace for generated helper functions.
@@ -45,6 +47,7 @@ export namespace InstakillPlayer {
   */
   export function getTypeScriptAlgebraicType(): AlgebraicType {
     return AlgebraicType.createProductType([
+      new ProductTypeElement("adminApiKey", AlgebraicType.createStringType()),
     ]);
   }
 

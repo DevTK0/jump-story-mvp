@@ -143,8 +143,15 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void CleanupInactivePlayers(ReducerContext ctx)
+    public static void CleanupInactivePlayers(ReducerContext ctx, string adminApiKey)
     {
+        // Validate admin API key
+        if (!AdminConstants.IsValidAdminKey(adminApiKey))
+        {
+            Log.Warn($"Unauthorized attempt to cleanup inactive players from {ctx.Sender}");
+            return;
+        }
+
         // Manual cleanup - remove all players (for testing purposes)
         // In production, this would have time-based logic
         var playersToRemove = new List<Identity>();
@@ -330,8 +337,15 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void InstakillPlayer(ReducerContext ctx)
+    public static void InstakillPlayer(ReducerContext ctx, string adminApiKey)
     {
+        // Validate admin API key
+        if (!AdminConstants.IsValidAdminKey(adminApiKey))
+        {
+            Log.Warn($"Unauthorized attempt to instakill player from {ctx.Sender}");
+            return;
+        }
+
         var player = ctx.Db.Player.identity.Find(ctx.Sender);
         if (player == null)
         {

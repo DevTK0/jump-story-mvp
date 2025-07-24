@@ -6,8 +6,15 @@ using System.Text.Json;
 public static partial class Module
 {
     [Reducer]
-    public static void PopulateEnemyConfig(ReducerContext ctx, string enemyConfigJson)
+    public static void PopulateEnemyConfig(ReducerContext ctx, string adminApiKey, string enemyConfigJson)
     {
+        // Validate admin API key
+        if (!AdminConstants.IsValidAdminKey(adminApiKey))
+        {
+            Log.Warn($"Unauthorized attempt to populate enemy config from {ctx.Sender}");
+            return;
+        }
+
         Log.Info("Populating EnemyConfig table from JSON data...");
         
         try
@@ -73,8 +80,15 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void PopulatePlayerLevelingConfig(ReducerContext ctx, string levelingCurveJson)
+    public static void PopulatePlayerLevelingConfig(ReducerContext ctx, string adminApiKey, string levelingCurveJson)
     {
+        // Validate admin API key
+        if (!AdminConstants.IsValidAdminKey(adminApiKey))
+        {
+            Log.Warn($"Unauthorized attempt to populate player leveling config from {ctx.Sender}");
+            return;
+        }
+
         Log.Info("Populating PlayerLevelingConfig table from JSON data...");
         
         try

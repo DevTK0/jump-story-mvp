@@ -34,6 +34,7 @@ import {
 } from "@clockworklabs/spacetimedb-sdk";
 
 export type PopulateEnemyConfig = {
+  adminApiKey: string,
   enemyConfigJson: string,
 };
 
@@ -47,6 +48,7 @@ export namespace PopulateEnemyConfig {
   */
   export function getTypeScriptAlgebraicType(): AlgebraicType {
     return AlgebraicType.createProductType([
+      new ProductTypeElement("adminApiKey", AlgebraicType.createStringType()),
       new ProductTypeElement("enemyConfigJson", AlgebraicType.createStringType()),
     ]);
   }

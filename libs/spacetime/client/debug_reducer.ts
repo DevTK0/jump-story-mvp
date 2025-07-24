@@ -33,7 +33,9 @@ import {
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
 
-export type Debug = {};
+export type Debug = {
+  adminApiKey: string,
+};
 
 /**
  * A namespace for generated helper functions.
@@ -45,6 +47,7 @@ export namespace Debug {
   */
   export function getTypeScriptAlgebraicType(): AlgebraicType {
     return AlgebraicType.createProductType([
+      new ProductTypeElement("adminApiKey", AlgebraicType.createStringType()),
     ]);
   }
 

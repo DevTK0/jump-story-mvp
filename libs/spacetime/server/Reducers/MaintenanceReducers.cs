@@ -300,8 +300,15 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void Debug(ReducerContext ctx)
+    public static void Debug(ReducerContext ctx, string adminApiKey)
     {
+        // Validate admin API key
+        if (!AdminConstants.IsValidAdminKey(adminApiKey))
+        {
+            Log.Warn($"Unauthorized attempt to call debug from {ctx.Sender}");
+            return;
+        }
+
         var playerCount = 0;
         foreach (var _ in ctx.Db.Player.Iter())
         {

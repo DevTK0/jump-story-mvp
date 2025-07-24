@@ -7,8 +7,15 @@ using System.Text.Json;
 public static partial class Module
 {
     [Reducer]
-    public static void InitializeEnemyRoutes(ReducerContext ctx, string tilemapJson)
+    public static void InitializeEnemyRoutes(ReducerContext ctx, string adminApiKey, string tilemapJson)
     {
+        // Validate admin API key
+        if (!AdminConstants.IsValidAdminKey(adminApiKey))
+        {
+            Log.Warn($"Unauthorized attempt to initialize enemy routes from {ctx.Sender}");
+            return;
+        }
+
         // Initialize enemy routes based on tilemap JSON data passed as parameter
         // Client should read playground.tmj file and pass the content to this reducer
 
@@ -95,8 +102,15 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void SpawnAllEnemies(ReducerContext ctx)
+    public static void SpawnAllEnemies(ReducerContext ctx, string adminApiKey)
     {
+        // Validate admin API key
+        if (!AdminConstants.IsValidAdminKey(adminApiKey))
+        {
+            Log.Warn($"Unauthorized attempt to spawn all enemies from {ctx.Sender}");
+            return;
+        }
+
         // Clear existing enemies first
         var enemiesToRemove = new List<uint>();
         foreach (var enemy in ctx.Db.Enemy.Iter())
@@ -110,6 +124,23 @@ public static partial class Module
         }
 
         Log.Info($"Cleared {enemiesToRemove.Count} existing enemies");
+
+        // Clear all enemy damage events
+        var damageEventsToRemove = new List<uint>();
+        foreach (var damageEvent in ctx.Db.EnemyDamageEvent.Iter())
+        {
+            damageEventsToRemove.Add(damageEvent.damage_event_id);
+        }
+
+        foreach (var damageEventId in damageEventsToRemove)
+        {
+            ctx.Db.EnemyDamageEvent.damage_event_id.Delete(damageEventId);
+        }
+
+        if (damageEventsToRemove.Count > 0)
+        {
+            Log.Info($"Cleared {damageEventsToRemove.Count} enemy damage events");
+        }
 
         // Spawn new enemies based on routes
         var random = new Random();

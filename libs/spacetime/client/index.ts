@@ -369,15 +369,19 @@ export class RemoteReducers {
     this.connection.offReducer("CleanupDeadBodies", callback);
   }
 
-  cleanupInactivePlayers() {
-    this.connection.callReducer("CleanupInactivePlayers", new Uint8Array(0), this.setCallReducerFlags.cleanupInactivePlayersFlags);
+  cleanupInactivePlayers(adminApiKey: string) {
+    const __args = { adminApiKey };
+    let __writer = new BinaryWriter(1024);
+    CleanupInactivePlayers.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("CleanupInactivePlayers", __argsBuffer, this.setCallReducerFlags.cleanupInactivePlayersFlags);
   }
 
-  onCleanupInactivePlayers(callback: (ctx: ReducerEventContext) => void) {
+  onCleanupInactivePlayers(callback: (ctx: ReducerEventContext, adminApiKey: string) => void) {
     this.connection.onReducer("CleanupInactivePlayers", callback);
   }
 
-  removeOnCleanupInactivePlayers(callback: (ctx: ReducerEventContext) => void) {
+  removeOnCleanupInactivePlayers(callback: (ctx: ReducerEventContext, adminApiKey: string) => void) {
     this.connection.offReducer("CleanupInactivePlayers", callback);
   }
 
@@ -405,15 +409,19 @@ export class RemoteReducers {
     this.connection.offReducer("DamageEnemy", callback);
   }
 
-  debug() {
-    this.connection.callReducer("Debug", new Uint8Array(0), this.setCallReducerFlags.debugFlags);
+  debug(adminApiKey: string) {
+    const __args = { adminApiKey };
+    let __writer = new BinaryWriter(1024);
+    Debug.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("Debug", __argsBuffer, this.setCallReducerFlags.debugFlags);
   }
 
-  onDebug(callback: (ctx: ReducerEventContext) => void) {
+  onDebug(callback: (ctx: ReducerEventContext, adminApiKey: string) => void) {
     this.connection.onReducer("Debug", callback);
   }
 
-  removeOnDebug(callback: (ctx: ReducerEventContext) => void) {
+  removeOnDebug(callback: (ctx: ReducerEventContext, adminApiKey: string) => void) {
     this.connection.offReducer("Debug", callback);
   }
 
@@ -425,31 +433,35 @@ export class RemoteReducers {
     this.connection.offReducer("Disconnect", callback);
   }
 
-  initializeEnemyRoutes(tilemapJson: string) {
-    const __args = { tilemapJson };
+  initializeEnemyRoutes(adminApiKey: string, tilemapJson: string) {
+    const __args = { adminApiKey, tilemapJson };
     let __writer = new BinaryWriter(1024);
     InitializeEnemyRoutes.getTypeScriptAlgebraicType().serialize(__writer, __args);
     let __argsBuffer = __writer.getBuffer();
     this.connection.callReducer("InitializeEnemyRoutes", __argsBuffer, this.setCallReducerFlags.initializeEnemyRoutesFlags);
   }
 
-  onInitializeEnemyRoutes(callback: (ctx: ReducerEventContext, tilemapJson: string) => void) {
+  onInitializeEnemyRoutes(callback: (ctx: ReducerEventContext, adminApiKey: string, tilemapJson: string) => void) {
     this.connection.onReducer("InitializeEnemyRoutes", callback);
   }
 
-  removeOnInitializeEnemyRoutes(callback: (ctx: ReducerEventContext, tilemapJson: string) => void) {
+  removeOnInitializeEnemyRoutes(callback: (ctx: ReducerEventContext, adminApiKey: string, tilemapJson: string) => void) {
     this.connection.offReducer("InitializeEnemyRoutes", callback);
   }
 
-  instakillPlayer() {
-    this.connection.callReducer("InstakillPlayer", new Uint8Array(0), this.setCallReducerFlags.instakillPlayerFlags);
+  instakillPlayer(adminApiKey: string) {
+    const __args = { adminApiKey };
+    let __writer = new BinaryWriter(1024);
+    InstakillPlayer.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("InstakillPlayer", __argsBuffer, this.setCallReducerFlags.instakillPlayerFlags);
   }
 
-  onInstakillPlayer(callback: (ctx: ReducerEventContext) => void) {
+  onInstakillPlayer(callback: (ctx: ReducerEventContext, adminApiKey: string) => void) {
     this.connection.onReducer("InstakillPlayer", callback);
   }
 
-  removeOnInstakillPlayer(callback: (ctx: ReducerEventContext) => void) {
+  removeOnInstakillPlayer(callback: (ctx: ReducerEventContext, adminApiKey: string) => void) {
     this.connection.offReducer("InstakillPlayer", callback);
   }
 
@@ -469,35 +481,35 @@ export class RemoteReducers {
     this.connection.offReducer("PlayerTakeDamage", callback);
   }
 
-  populateEnemyConfig(enemyConfigJson: string) {
-    const __args = { enemyConfigJson };
+  populateEnemyConfig(adminApiKey: string, enemyConfigJson: string) {
+    const __args = { adminApiKey, enemyConfigJson };
     let __writer = new BinaryWriter(1024);
     PopulateEnemyConfig.getTypeScriptAlgebraicType().serialize(__writer, __args);
     let __argsBuffer = __writer.getBuffer();
     this.connection.callReducer("PopulateEnemyConfig", __argsBuffer, this.setCallReducerFlags.populateEnemyConfigFlags);
   }
 
-  onPopulateEnemyConfig(callback: (ctx: ReducerEventContext, enemyConfigJson: string) => void) {
+  onPopulateEnemyConfig(callback: (ctx: ReducerEventContext, adminApiKey: string, enemyConfigJson: string) => void) {
     this.connection.onReducer("PopulateEnemyConfig", callback);
   }
 
-  removeOnPopulateEnemyConfig(callback: (ctx: ReducerEventContext, enemyConfigJson: string) => void) {
+  removeOnPopulateEnemyConfig(callback: (ctx: ReducerEventContext, adminApiKey: string, enemyConfigJson: string) => void) {
     this.connection.offReducer("PopulateEnemyConfig", callback);
   }
 
-  populatePlayerLevelingConfig(levelingCurveJson: string) {
-    const __args = { levelingCurveJson };
+  populatePlayerLevelingConfig(adminApiKey: string, levelingCurveJson: string) {
+    const __args = { adminApiKey, levelingCurveJson };
     let __writer = new BinaryWriter(1024);
     PopulatePlayerLevelingConfig.getTypeScriptAlgebraicType().serialize(__writer, __args);
     let __argsBuffer = __writer.getBuffer();
     this.connection.callReducer("PopulatePlayerLevelingConfig", __argsBuffer, this.setCallReducerFlags.populatePlayerLevelingConfigFlags);
   }
 
-  onPopulatePlayerLevelingConfig(callback: (ctx: ReducerEventContext, levelingCurveJson: string) => void) {
+  onPopulatePlayerLevelingConfig(callback: (ctx: ReducerEventContext, adminApiKey: string, levelingCurveJson: string) => void) {
     this.connection.onReducer("PopulatePlayerLevelingConfig", callback);
   }
 
-  removeOnPopulatePlayerLevelingConfig(callback: (ctx: ReducerEventContext, levelingCurveJson: string) => void) {
+  removeOnPopulatePlayerLevelingConfig(callback: (ctx: ReducerEventContext, adminApiKey: string, levelingCurveJson: string) => void) {
     this.connection.offReducer("PopulatePlayerLevelingConfig", callback);
   }
 
@@ -529,15 +541,19 @@ export class RemoteReducers {
     this.connection.offReducer("RespawnPlayer", callback);
   }
 
-  spawnAllEnemies() {
-    this.connection.callReducer("SpawnAllEnemies", new Uint8Array(0), this.setCallReducerFlags.spawnAllEnemiesFlags);
+  spawnAllEnemies(adminApiKey: string) {
+    const __args = { adminApiKey };
+    let __writer = new BinaryWriter(1024);
+    SpawnAllEnemies.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("SpawnAllEnemies", __argsBuffer, this.setCallReducerFlags.spawnAllEnemiesFlags);
   }
 
-  onSpawnAllEnemies(callback: (ctx: ReducerEventContext) => void) {
+  onSpawnAllEnemies(callback: (ctx: ReducerEventContext, adminApiKey: string) => void) {
     this.connection.onReducer("SpawnAllEnemies", callback);
   }
 
-  removeOnSpawnAllEnemies(callback: (ctx: ReducerEventContext) => void) {
+  removeOnSpawnAllEnemies(callback: (ctx: ReducerEventContext, adminApiKey: string) => void) {
     this.connection.offReducer("SpawnAllEnemies", callback);
   }
 

@@ -34,6 +34,7 @@ import {
 } from "@clockworklabs/spacetimedb-sdk";
 
 export type InitializeEnemyRoutes = {
+  adminApiKey: string,
   tilemapJson: string,
 };
 
@@ -47,6 +48,7 @@ export namespace InitializeEnemyRoutes {
   */
   export function getTypeScriptAlgebraicType(): AlgebraicType {
     return AlgebraicType.createProductType([
+      new ProductTypeElement("adminApiKey", AlgebraicType.createStringType()),
       new ProductTypeElement("tilemapJson", AlgebraicType.createStringType()),
     ]);
   }
