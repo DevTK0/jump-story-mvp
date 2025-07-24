@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { DbMetricsTracker } from './db-metrics-tracker';
 
 export interface PerformanceMetricsConfig {
     x?: number;
@@ -128,29 +129,12 @@ export class PerformanceMetrics {
     }
     
     private getNetworkStats(): string {
-        // Get from db connection manager if available
-        const dbManager = (this.scene as any).dbConnectionManager;
-        if (dbManager && dbManager.getConnection) {
-            const conn = dbManager.getConnection();
-            if (conn && conn.db) {
-                // Count total rows across all tables
-                let totalRows = 0;
-                
-                // Count players
-                const playerCount = conn.db.player.count ? conn.db.player.count() : 0;
-                totalRows += playerCount;
-                
-                // Count enemies
-                const enemyCount = conn.db.enemy.count ? conn.db.enemy.count() : 0;
-                totalRows += enemyCount;
-                
-                // Count active damage events
-                const damageEventCount = conn.db.damageEvent.count ? conn.db.damageEvent.count() : 0;
-                
-                // Return connection status with entity counts
-                return `Connected (${playerCount}p, ${enemyCount}e, ${damageEventCount}d)`;
-            }
+        const tracker = DbMetricsTracker.getInstance();
+        
+        if (tracker.isConnected()) {
+            return `Connected (${tracker.getNetworkSummary()})`;
         }
+        
         return 'Disconnected';
     }
     

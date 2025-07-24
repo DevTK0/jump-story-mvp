@@ -8,7 +8,7 @@ import type { IDebuggable } from "@/debug/debug-interfaces";
 import { DEBUG_CONFIG } from "@/debug/config";
 import { DebugState } from "@/debug/debug-state";
 import { SpacetimeConnectionBuilder } from "@/networking";
-import { PlayerStatsUI, FPSCounter, PerformanceMetrics } from "@/ui";
+import { PlayerStatsUI, FPSCounter, PerformanceMetrics, DbMetricsTracker } from "@/ui";
 import { PhysicsConfigurator, type CollisionGroups } from "@/physics";
 import { InteractionHandler } from "@/networking";
 import { DbConnection } from "@/spacetime/client";
@@ -233,6 +233,10 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         // Initialize the PlayerQueryService singleton immediately
         PlayerQueryService.getInstance(conn);
         console.log('✅ PlayerQueryService singleton initialized');
+        
+        // Initialize the DbMetricsTracker
+        DbMetricsTracker.getInstance().initialize(conn);
+        console.log('✅ DbMetricsTracker initialized');
 
         // Set up player systems if player exists
         if (this.player) {
