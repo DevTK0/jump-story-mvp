@@ -1,7 +1,13 @@
+/**
+ * Player Stats UI
+ * Displays player health, mana, experience, and level using configuration-based approach
+ */
+
 import Phaser from 'phaser';
 import { DbConnection } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { PlayerQueryService } from '@/player';
+import { PLAYER_STATS_UI_CONFIG, getBarColors, createTextStyle } from './player-stats-ui-config';
 
 export class PlayerStatsUI {
     private scene: Phaser.Scene;
@@ -12,32 +18,12 @@ export class PlayerStatsUI {
     // UI Elements
     private container!: Phaser.GameObjects.Container;
     private identityText!: Phaser.GameObjects.Text;
-    private hpBar!: Phaser.GameObjects.Graphics;
-    private hpBarBg!: Phaser.GameObjects.Graphics;
-    private manaBar!: Phaser.GameObjects.Graphics;
-    private manaBarBg!: Phaser.GameObjects.Graphics;
-    private hpText!: Phaser.GameObjects.Text;
-    private manaText!: Phaser.GameObjects.Text;
-    private levelText!: Phaser.GameObjects.Text;
+    private bars: Map<string, Phaser.GameObjects.Graphics> = new Map();
+    private barBackgrounds: Map<string, Phaser.GameObjects.Graphics> = new Map();
+    private texts: Map<string, Phaser.GameObjects.Text> = new Map();
     
-    // UI Configuration
-    private readonly UI_CONFIG = {
-        x: 20,
-        y: 20,
-        barWidth: 200,
-        barHeight: 16,
-        barSpacing: 25,
-        identitySpacing: 20,
-        fontSize: 14,
-        colors: {
-            hpBar: 0xFF0000,      // Red
-            hpBarBg: 0x660000,    // Dark red
-            manaBar: 0x0066FF,    // Blue
-            manaBarBg: 0x000066,  // Dark blue
-            text: '#FFFFFF',      // White
-            barBorder: 0xFFFFFF   // White border
-        }
-    };
+    // Performance optimization
+    private lastUpdateTime: number = 0;
 
     constructor(scene: Phaser.Scene, playerIdentity: Identity) {
         this.scene = scene;
@@ -46,88 +32,140 @@ export class PlayerStatsUI {
     }
 
     private createUI(): void {
+        const config = PLAYER_STATS_UI_CONFIG;
+        
         // Create container for all UI elements
-        this.container = this.scene.add.container(this.UI_CONFIG.x, this.UI_CONFIG.y);
-        this.container.setDepth(1000); // High depth to stay on top
-        this.container.setScrollFactor(0); // Fix to camera - doesn't move with world
+        this.container = this.scene.add.container(config.position.x, config.position.y);
+        this.container.setDepth(config.display.baseDepth);
+        this.container.setScrollFactor(config.display.scrollFactor.x, config.display.scrollFactor.y);
 
         // Create player identity text
         const identityStr = this.playerIdentity.toHexString();
         this.identityText = this.scene.add.text(0, 0, `Player: ${identityStr}`, {
-            fontSize: `${this.UI_CONFIG.fontSize}px`,
-            color: this.UI_CONFIG.colors.text,
+            ...createTextStyle(),
             fontStyle: 'bold'
         });
 
-        // Create HP bar background
-        this.hpBarBg = this.scene.add.graphics();
-        this.hpBarBg.fillStyle(this.UI_CONFIG.colors.hpBarBg);
-        this.hpBarBg.fillRect(0, this.UI_CONFIG.identitySpacing, this.UI_CONFIG.barWidth, this.UI_CONFIG.barHeight);
-        this.hpBarBg.lineStyle(1, this.UI_CONFIG.colors.barBorder);
-        this.hpBarBg.strokeRect(0, this.UI_CONFIG.identitySpacing, this.UI_CONFIG.barWidth, this.UI_CONFIG.barHeight);
+        // Create bars in order: HP, Mana, EXP
+        this.createBar('hp', 0);
+        this.createBar('mana', 1);
+        this.createBar('exp', 2);
 
-        // Create HP bar
-        this.hpBar = this.scene.add.graphics();
+        // Create level text
+        const levelText = this.scene.add.text(
+            0, 
+            config.position.identitySpacing + config.position.barSpacing * 3, 
+            'Level: 1', 
+            createTextStyle()
+        );
+        this.texts.set('level', levelText);
 
-        // Create mana bar background
-        this.manaBarBg = this.scene.add.graphics();
-        this.manaBarBg.fillStyle(this.UI_CONFIG.colors.manaBarBg);
-        this.manaBarBg.fillRect(0, this.UI_CONFIG.identitySpacing + this.UI_CONFIG.barSpacing, this.UI_CONFIG.barWidth, this.UI_CONFIG.barHeight);
-        this.manaBarBg.lineStyle(1, this.UI_CONFIG.colors.barBorder);
-        this.manaBarBg.strokeRect(0, this.UI_CONFIG.identitySpacing + this.UI_CONFIG.barSpacing, this.UI_CONFIG.barWidth, this.UI_CONFIG.barHeight);
-
-        // Create mana bar
-        this.manaBar = this.scene.add.graphics();
-
-        // Create text elements
-        this.hpText = this.scene.add.text(this.UI_CONFIG.barWidth + 10, this.UI_CONFIG.identitySpacing, 'HP: 100/100', {
-            fontSize: `${this.UI_CONFIG.fontSize}px`,
-            color: this.UI_CONFIG.colors.text
-        });
-
-        this.manaText = this.scene.add.text(this.UI_CONFIG.barWidth + 10, this.UI_CONFIG.identitySpacing + this.UI_CONFIG.barSpacing, 'MP: 50/50', {
-            fontSize: `${this.UI_CONFIG.fontSize}px`,
-            color: this.UI_CONFIG.colors.text
-        });
-
-        this.levelText = this.scene.add.text(0, this.UI_CONFIG.identitySpacing + this.UI_CONFIG.barSpacing * 2, 'Level: 1', {
-            fontSize: `${this.UI_CONFIG.fontSize}px`,
-            color: this.UI_CONFIG.colors.text
-        });
+        // Remove the 'U' key handler since it's now handled by the level up animation manager
 
         // Add all elements to container
-        this.container.add([
-            this.identityText,
-            this.hpBarBg,
-            this.hpBar,
-            this.manaBarBg,
-            this.manaBar,
-            this.hpText,
-            this.manaText,
-            this.levelText
-        ]);
+        const elements: Phaser.GameObjects.GameObject[] = [this.identityText];
+        
+        // Add bars and texts in order
+        ['hp', 'mana', 'exp'].forEach(barType => {
+            const bg = this.barBackgrounds.get(barType);
+            const bar = this.bars.get(barType);
+            const text = this.texts.get(barType);
+            if (bg) elements.push(bg);
+            if (bar) elements.push(bar);
+            if (text) elements.push(text);
+        });
+        
+        const levelTextObj = this.texts.get('level');
+        if (levelTextObj) elements.push(levelTextObj);
+        
+        this.container.add(elements);
 
         // Initial update
-        this.updateStats(100, 100, 50, 50, 1);
+        this.updateStats(100, 100, 50, 50, 1, 0, 100);
     }
 
-    private updateStats(currentHp: number, maxHp: number, currentMana: number, maxMana: number, level: number): void {
-        // Update HP bar
-        const hpPercentage = Math.max(0, Math.min(1, currentHp / maxHp));
-        this.hpBar.clear();
-        this.hpBar.fillStyle(this.UI_CONFIG.colors.hpBar);
-        this.hpBar.fillRect(0, this.UI_CONFIG.identitySpacing, this.UI_CONFIG.barWidth * hpPercentage, this.UI_CONFIG.barHeight);
+    /**
+     * Create a bar with background and text
+     */
+    private createBar(type: 'hp' | 'mana' | 'exp', index: number): void {
+        const config = PLAYER_STATS_UI_CONFIG;
+        const colors = getBarColors(type);
+        const yPos = config.position.identitySpacing + config.position.barSpacing * index;
 
-        // Update mana bar
-        const manaPercentage = Math.max(0, Math.min(1, currentMana / maxMana));
-        this.manaBar.clear();
-        this.manaBar.fillStyle(this.UI_CONFIG.colors.manaBar);
-        this.manaBar.fillRect(0, this.UI_CONFIG.identitySpacing + this.UI_CONFIG.barSpacing, this.UI_CONFIG.barWidth * manaPercentage, this.UI_CONFIG.barHeight);
+        // Create background
+        const bg = this.scene.add.graphics();
+        bg.fillStyle(colors.background);
+        bg.fillRect(0, yPos, config.position.barWidth, config.position.barHeight);
+        bg.lineStyle(1, config.colors.barBorder);
+        bg.strokeRect(0, yPos, config.position.barWidth, config.position.barHeight);
+        this.barBackgrounds.set(type, bg);
+
+        // Create fill bar
+        const bar = this.scene.add.graphics();
+        this.bars.set(type, bar);
+
+        // Create text
+        const labels = {
+            hp: 'HP',
+            mana: 'MP',
+            exp: 'EXP'
+        };
+        const text = this.scene.add.text(
+            config.position.barWidth + 10, 
+            yPos, 
+            `${labels[type]}: 0/0`, 
+            createTextStyle()
+        );
+        this.texts.set(type, text);
+    }
+
+    /**
+     * Update bar display
+     */
+    private updateBar(type: 'hp' | 'mana' | 'exp', current: number, max: number, index: number): void {
+        const config = PLAYER_STATS_UI_CONFIG;
+        const colors = getBarColors(type);
+        const bar = this.bars.get(type);
+        const text = this.texts.get(type);
+        
+        if (!bar || !text) return;
+
+        const percentage = max > 0 ? Math.max(0, Math.min(1, current / max)) : 0;
+        const yPos = config.position.identitySpacing + config.position.barSpacing * index;
+        
+        // Update bar fill
+        bar.clear();
+        bar.fillStyle(colors.fill);
+        bar.fillRect(0, yPos, config.position.barWidth * percentage, config.position.barHeight);
 
         // Update text
-        this.hpText.setText(`HP: ${Math.floor(currentHp)}/${Math.floor(maxHp)}`);
-        this.manaText.setText(`MP: ${Math.floor(currentMana)}/${Math.floor(maxMana)}`);
-        this.levelText.setText(`Level: ${level}`);
+        const labels = {
+            hp: 'HP',
+            mana: 'MP',
+            exp: 'EXP'
+        };
+        text.setText(`${labels[type]}: ${Math.floor(current)}/${Math.floor(max)}`);
+    }
+
+    private updateStats(currentHp: number, maxHp: number, currentMana: number, maxMana: number, 
+                       level: number, experience: number, expRequired: number): void {
+        // Throttle updates for performance
+        const now = Date.now();
+        if (now - this.lastUpdateTime < PLAYER_STATS_UI_CONFIG.performance.updateThrottle) {
+            return;
+        }
+        this.lastUpdateTime = now;
+
+        // Update bars
+        this.updateBar('hp', currentHp, maxHp, 0);
+        this.updateBar('mana', currentMana, maxMana, 1);
+        this.updateBar('exp', experience, expRequired, 2);
+
+        // Update level text
+        const levelText = this.texts.get('level');
+        if (levelText) {
+            levelText.setText(`Level: ${level}`);
+        }
     }
 
     public setDbConnection(dbConnection: DbConnection): void {
@@ -138,7 +176,7 @@ export class PlayerStatsUI {
     private setupOptimizedPlayerSubscription(): void {
         if (!this.dbConnection) return;
 
-        // Get the singleton PlayerQueryService (should already be initialized by PlaygroundScene)
+        // Get the singleton PlayerQueryService
         this.playerQueryService = PlayerQueryService.getInstance();
         if (!this.playerQueryService) {
             console.warn('⚠️ PlayerStatsUI: PlayerQueryService singleton not available, falling back to direct subscription');
@@ -146,88 +184,101 @@ export class PlayerStatsUI {
             return;
         }
         
-        // The PlayerQueryService already has the targeted subscription set up,
-        // so we just need to set up our own event listeners for UI updates
         this.setupSharedSubscriptionListeners();
-        
-        // Initial update from cached data
         this.updateFromCurrentPlayerData();
     }
 
-    /**
-     * Set up event listeners that work with the shared PlayerQueryService subscription
-     * We need to filter by identity since the subscription is shared
-     */
     private setupSharedSubscriptionListeners(): void {
         if (!this.dbConnection) return;
 
-        // Listen to player updates and filter for our specific player
-        this.dbConnection.db.player.onUpdate((_ctx, _oldPlayer, newPlayer) => {
+        // Listen to player updates
+        this.dbConnection.db.player.onUpdate((_ctx, oldPlayer, newPlayer) => {
             if (newPlayer.identity.toHexString() === this.playerIdentity.toHexString()) {
-                console.log('🔄 PlayerStatsUI: Player updated via shared subscription');
+                // Get exp required for next level
+                const nextLevelConfig = this.findNextLevelConfig(newPlayer.level);
+                const expRequired = nextLevelConfig?.expRequired || 0;
+                
                 this.updateStats(
                     newPlayer.currentHp,
                     newPlayer.maxHp,
                     newPlayer.currentMana,
                     newPlayer.maxMana,
-                    newPlayer.level
+                    newPlayer.level,
+                    newPlayer.experience,
+                    expRequired
                 );
             }
         });
 
         this.dbConnection.db.player.onInsert((_ctx, insertedPlayer) => {
             if (insertedPlayer.identity.toHexString() === this.playerIdentity.toHexString()) {
-                console.log('➕ PlayerStatsUI: Player inserted via shared subscription');
+                const nextLevelConfig = this.findNextLevelConfig(insertedPlayer.level);
+                const expRequired = nextLevelConfig?.expRequired || 0;
+                
                 this.updateStats(
                     insertedPlayer.currentHp,
                     insertedPlayer.maxHp,
                     insertedPlayer.currentMana,
                     insertedPlayer.maxMana,
-                    insertedPlayer.level
+                    insertedPlayer.level,
+                    insertedPlayer.experience,
+                    expRequired
                 );
             }
         });
     }
 
-    /**
-     * Fallback to old subscription pattern if targeted subscription fails
-     */
     private setupFallbackSubscription(): void {
         if (!this.dbConnection) return;
 
         console.warn('⚠️ PlayerStatsUI: Using fallback subscription - less efficient');
 
-        this.dbConnection.db.player.onUpdate((_ctx, _oldPlayer, newPlayer) => {
-            // Only update if this is our specific player
+        this.dbConnection.db.player.onUpdate((_ctx, oldPlayer, newPlayer) => {
             if (newPlayer.identity.toHexString() === this.playerIdentity.toHexString()) {
+                const nextLevelConfig = this.findNextLevelConfig(newPlayer.level);
+                const expRequired = nextLevelConfig?.expRequired || 0;
+                
                 this.updateStats(
                     newPlayer.currentHp,
                     newPlayer.maxHp,
                     newPlayer.currentMana,
                     newPlayer.maxMana,
-                    newPlayer.level
+                    newPlayer.level,
+                    newPlayer.experience,
+                    expRequired
                 );
             }
         });
 
-        // Initial update with current player data
         this.updateFromCurrentPlayerData();
     }
 
     private updateFromCurrentPlayerData(): void {
-        if (!this.playerQueryService) return;
+        if (!this.playerQueryService || !this.dbConnection) return;
 
-        // Use optimized PlayerQueryService for current player data
         const player = this.playerQueryService.findCurrentPlayer();
         if (player) {
+            const nextLevelConfig = this.findNextLevelConfig(player.level);
+            const expRequired = nextLevelConfig?.expRequired || 0;
+            
             this.updateStats(
                 player.currentHp,
                 player.maxHp,
                 player.currentMana,
                 player.maxMana,
-                player.level
+                player.level,
+                player.experience,
+                expRequired
             );
         }
+    }
+
+    private findNextLevelConfig(currentLevel: number) {
+        if (!this.dbConnection) return null;
+        
+        return Array.from(this.dbConnection.db.playerLevelingConfig).find(
+            config => config.level === currentLevel + 1
+        );
     }
 
     public getPlayerIdentity(): Identity {
@@ -237,6 +288,7 @@ export class PlayerStatsUI {
     public setVisible(visible: boolean): void {
         this.container.setVisible(visible);
     }
+
 
     public destroy(): void {
         this.container.destroy();

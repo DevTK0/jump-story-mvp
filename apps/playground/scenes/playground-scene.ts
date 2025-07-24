@@ -8,7 +8,7 @@ import type { IDebuggable } from "@/debug/debug-interfaces";
 import { DEBUG_CONFIG } from "@/debug/config";
 import { DebugState } from "@/debug/debug-state";
 import { SpacetimeConnectionBuilder } from "@/networking";
-import { PlayerStatsUI, FPSCounter, PerformanceMetrics, DbMetricsTracker } from "@/ui";
+import { PlayerStatsUI, FPSCounter, PerformanceMetrics, DbMetricsTracker, LevelUpAnimationManager } from "@/ui";
 import { PhysicsConfigurator, type CollisionGroups } from "@/physics";
 import { InteractionHandler } from "@/networking";
 import { DbConnection } from "@/spacetime/client";
@@ -42,6 +42,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     private playerStatsUI: PlayerStatsUI | null = null;
     private fpsCounter!: FPSCounter;
     private performanceMetrics!: PerformanceMetrics;
+    private levelUpAnimationManager!: LevelUpAnimationManager;
 
     constructor() {
         super({ key: "playground" });
@@ -176,6 +177,9 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         // Initialize player damage renderer
         this.playerDamageRenderer = new PlayerDamageRenderer(this);
         this.playerDamageRenderer.setPlayer(this.player);
+        
+        // Create level up animation manager
+        this.levelUpAnimationManager = new LevelUpAnimationManager(this);
 
         // Create FPS counter
         this.fpsCounter = new FPSCounter(this, {
@@ -201,6 +205,25 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         // Add keyboard shortcut to toggle performance metrics (P key)
         this.input.keyboard?.on('keydown-P', () => {
             this.performanceMetrics.toggle();
+        });
+        
+        // Add keyboard shortcut to test level up animation (U key)
+        this.input.keyboard?.on('keydown-U', () => {
+            if (this.levelUpAnimationManager && this.dbConnectionManager.getConnection()) {
+                const identity = this.dbConnectionManager.getConnection()!.identity;
+                if (identity) {
+                    // Get current level from database
+                    let currentLevel = 1;
+                    for (const player of this.dbConnectionManager.getConnection()!.db.player.iter()) {
+                        if (player.identity.toHexString() === identity.toHexString()) {
+                            currentLevel = player.level;
+                            break;
+                        }
+                    }
+                    // Trigger level up animation
+                    this.levelUpAnimationManager.triggerLevelUpAnimation(identity, currentLevel + 1);
+                }
+            }
         });
 
         // Set up damage event subscriptions if database connection exists
@@ -253,6 +276,11 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         this.peerManager = new PeerManager(this);
         this.peerManager.setLocalPlayerIdentity(identity);
         this.peerManager.setDbConnection(conn);
+        
+        // Connect peer manager with level up animation manager
+        if (this.levelUpAnimationManager) {
+            this.peerManager.setLevelUpAnimationManager(this.levelUpAnimationManager);
+        }
 
         // Set database connection on enemy manager if it exists
         if (this.enemyManager) {
@@ -267,6 +295,16 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         // Initialize player stats UI with identity
         this.playerStatsUI = new PlayerStatsUI(this, identity);
         this.playerStatsUI.setDbConnection(conn);
+        
+        // Initialize level up animation manager
+        if (this.levelUpAnimationManager) {
+            this.levelUpAnimationManager.initialize(conn, identity);
+            
+            // Register player sprite for smooth tracking
+            if (this.player) {
+                this.levelUpAnimationManager.registerSprite(identity, this.player);
+            }
+        }
 
         // Set up damage event subscriptions if renderers exist
         if (this.enemyDamageRenderer) {

@@ -36,7 +36,7 @@ public static partial class Module
 
     // Helper method to process aggro detection and validation
     private static (bool hasAggro, bool shouldChase, DbVector2 targetPosition, Identity? aggroTarget) ProcessAggroDetection(
-        ReducerContext ctx, Enemy enemy, float leftBound, float rightBound)
+        ReducerContext ctx, Enemy enemy, EnemyConfig enemyConfig, float leftBound, float rightBound)
     {
 
         var hasAggro = enemy.aggro_target.HasValue;
@@ -47,11 +47,11 @@ public static partial class Module
         if (hasAggro)
         {
             // Check if aggro target still exists and is in range
-            var aggroPlayer = ctx.Db.Player.identity.Find(enemy.aggro_target.Value);
+            var aggroPlayer = enemy.aggro_target.HasValue ? ctx.Db.Player.identity.Find(enemy.aggro_target.Value) : null;
             if (aggroPlayer != null)
             {
-                // Maintain aggro if player is within leash distance from spawn area
-                if (IsPlayerInLeashRange(aggroPlayer.Value.position, enemy.position, leftBound, rightBound))
+                // Maintain aggro if player is within leash distance
+                if (IsPlayerInLeashRange(aggroPlayer.Value.position, enemy.position))
                 {
                     shouldChase = true;
                     targetPosition = aggroPlayer.Value.position;
@@ -70,8 +70,32 @@ public static partial class Module
                 newAggroTarget = null;
             }
         }
-        // Note: Enemies only aggro when attacked, not by proximity
-        // Proximity aggro removed - aggro is set in CombatReducers when enemy is attacked
+        else if (enemyConfig.behavior == "aggressive")
+        {
+            // Check for nearby players within aggro range
+            foreach (var player in ctx.Db.Player.Iter())
+            {
+                // Skip dead players
+                if (player.current_hp <= 0 || player.state == PlayerState.Dead)
+                    continue;
+
+                // Calculate distance to player
+                var distance = Math.Sqrt(
+                    Math.Pow(player.position.x - enemy.position.x, 2) + 
+                    Math.Pow(player.position.y - enemy.position.y, 2)
+                );
+
+                // Check if player is within aggro range
+                if (distance <= enemyConfig.aggro_range)
+                {
+                    hasAggro = true;
+                    shouldChase = true;
+                    newAggroTarget = player.identity;
+                    targetPosition = player.position;
+                    break; // Aggro on first valid target found
+                }
+            }
+        }
 
         return (hasAggro, shouldChase, targetPosition, newAggroTarget);
     }
@@ -161,6 +185,7 @@ public static partial class Module
             state = newState ?? originalEnemy.state,
             facing = newFacing,
             current_hp = originalEnemy.current_hp,
+            level = originalEnemy.level,
             last_updated = currentTimestamp,
             moving_right = newMovingRight,
             aggro_target = newAggroTarget,
@@ -177,13 +202,14 @@ public static partial class Module
     }
 
     // Helper method to check if player is within leash range
-    private static bool IsPlayerInLeashRange(DbVector2 playerPosition, DbVector2 enemyPosition, float leftBound, float rightBound)
+    private static bool IsPlayerInLeashRange(DbVector2 playerPosition, DbVector2 enemyPosition)
     {
-        var distanceToPlayer = Math.Abs(playerPosition.x - enemyPosition.x);
-        var spawnCenterX = (leftBound + rightBound) / 2;
-        var distanceFromSpawn = Math.Abs(enemyPosition.x - spawnCenterX);
+        var distanceToPlayer = Math.Sqrt(
+            Math.Pow(playerPosition.x - enemyPosition.x, 2) + 
+            Math.Pow(playerPosition.y - enemyPosition.y, 2)
+        );
         
-        return distanceFromSpawn <= EnemyConstants.LEASH_DISTANCE && distanceToPlayer <= EnemyConstants.LEASH_DISTANCE;
+        return distanceToPlayer <= EnemyConstants.LEASH_DISTANCE;
     }
 
     // Helper method to update enemy if any values changed
@@ -308,7 +334,6 @@ public static partial class Module
 
         var random = new Random();
         var totalSpawned = 0;
-        const float enemyMaxHp = EnemyConstants.ENEMY_MAX_HP;
 
         // Check each route and spawn missing enemies if interval has passed
         foreach (var route in ctx.Db.EnemyRoute.Iter())
@@ -318,6 +343,14 @@ public static partial class Module
             
             if (route.last_spawn_time < intervalAgo)
             {
+                // Get enemy config from database
+                var enemyConfig = ctx.Db.EnemyConfig.enemy_type.Find(route.enemy_type);
+                if (enemyConfig == null)
+                {
+                    Log.Warn($"No config found for enemy type: {route.enemy_type}, skipping spawn");
+                    continue;
+                }
+
                 // Count current alive enemies for this route
                 var currentEnemyCount = 0;
                 foreach (var enemy in ctx.Db.Enemy.Iter())
@@ -338,7 +371,8 @@ public static partial class Module
                     {
                         route_id = route.route_id,
                         enemy_type = route.enemy_type,
-                        current_hp = enemyMaxHp,
+                        current_hp = enemyConfig.Value.max_hp,
+                        level = enemyConfig.Value.level,
                         aggro_start_time = ctx.Timestamp
                     };
                     
@@ -369,7 +403,6 @@ public static partial class Module
             return;
         }
 
-        const float patrolSpeed = EnemyConstants.PATROL_SPEED;
         const float deltaTime = EnemyConstants.DELTA_TIME;
 
         foreach (var enemy in ctx.Db.Enemy.Iter())
@@ -393,14 +426,22 @@ public static partial class Module
                 continue;
             }
 
+            // Get enemy config for behavior and movement speed
+            var enemyConfig = ctx.Db.EnemyConfig.enemy_type.Find(enemy.enemy_type);
+            if (enemyConfig == null)
+            {
+                Log.Warn($"No config found for enemy type: {enemy.enemy_type}");
+                continue;
+            }
+
             // Calculate route boundaries
             var (leftBound, rightBound) = CalculateRouteBounds(route.Value);
 
             // Process aggro detection and validation
-            var (hasAggro, shouldChase, targetPosition, newAggroTarget) = ProcessAggroDetection(ctx, enemy, leftBound, rightBound);
+            var (hasAggro, shouldChase, targetPosition, newAggroTarget) = ProcessAggroDetection(ctx, enemy, enemyConfig.Value, leftBound, rightBound);
             
             // Calculate new position based on behavior
-            var movement = patrolSpeed * deltaTime;
+            var movement = enemyConfig.Value.movement_speed * deltaTime;
             float newX;
             bool newMovingRight;
 
@@ -408,7 +449,7 @@ public static partial class Module
             {
                 (newX, newMovingRight) = CalculateChaseMovement(enemy, targetPosition, movement, leftBound, rightBound);
             }
-            else if (route.Value.behavior == "patrol" && !hasAggro)
+            else if (enemyConfig.Value.behavior == "patrol" && !hasAggro)
             {
                 (newX, newMovingRight) = CalculatePatrolMovement(enemy, movement, leftBound, rightBound);
             }

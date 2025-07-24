@@ -21,6 +21,7 @@ export class PeerManager {
     private peers: Map<string, Peer> = new Map();
     private localPlayerIdentity: Identity | null = null;
     private dbConnection: DbConnection | null = null;
+    private levelUpAnimationManager: any = null;
 
     // Proximity-based subscription configuration
     private subscriptionConfig: PeerSubscriptionConfig;
@@ -53,6 +54,19 @@ export class PeerManager {
     public setDbConnection(connection: DbConnection): void {
         this.dbConnection = connection;
         this.setupServerSubscriptions();
+    }
+
+    /**
+     * Set the level up animation manager for registering peer sprites
+     */
+    public setLevelUpAnimationManager(manager: any): void {
+        this.levelUpAnimationManager = manager;
+        
+        // Register any existing peer sprites
+        for (const [identityString, peer] of this.peers) {
+            const playerData = peer.getPlayerData();
+            manager.registerSprite(playerData.identity, peer);
+        }
     }
 
     private setupServerSubscriptions(): void {
@@ -234,6 +248,11 @@ export class PeerManager {
                         playerData: player,
                     });
                     this.peers.set(identityString, peer);
+                    
+                    // Register peer sprite with level up animation manager
+                    if (this.levelUpAnimationManager) {
+                        this.levelUpAnimationManager.registerSprite(player.identity, peer);
+                    }
                 }
             }
         }
@@ -303,6 +322,11 @@ export class PeerManager {
         // Create new peer
         const peer = new Peer({ scene: this.scene, playerData });
         this.peers.set(identityString, peer);
+        
+        // Register peer sprite with level up animation manager
+        if (this.levelUpAnimationManager) {
+            this.levelUpAnimationManager.registerSprite(playerData.identity, peer);
+        }
 
         console.log(
             `Created peer for player: ${playerData.name} (${identityString})`

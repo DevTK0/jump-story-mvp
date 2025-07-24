@@ -52,6 +52,10 @@ import { InstakillPlayer } from "./instakill_player_reducer.ts";
 export { InstakillPlayer };
 import { PlayerTakeDamage } from "./player_take_damage_reducer.ts";
 export { PlayerTakeDamage };
+import { PopulateEnemyConfig } from "./populate_enemy_config_reducer.ts";
+export { PopulateEnemyConfig };
+import { PopulatePlayerLevelingConfig } from "./populate_player_leveling_config_reducer.ts";
+export { PopulatePlayerLevelingConfig };
 import { RecoverFromDamage } from "./recover_from_damage_reducer.ts";
 export { RecoverFromDamage };
 import { RespawnPlayer } from "./respawn_player_reducer.ts";
@@ -72,6 +76,8 @@ export { UpdatePlayerState };
 // Import and reexport all table handle types
 import { EnemyTableHandle } from "./enemy_table.ts";
 export { EnemyTableHandle };
+import { EnemyConfigTableHandle } from "./enemy_config_table.ts";
+export { EnemyConfigTableHandle };
 import { EnemyDamageEventTableHandle } from "./enemy_damage_event_table.ts";
 export { EnemyDamageEventTableHandle };
 import { EnemyRouteTableHandle } from "./enemy_route_table.ts";
@@ -80,6 +86,8 @@ import { PlayerTableHandle } from "./player_table.ts";
 export { PlayerTableHandle };
 import { PlayerDamageEventTableHandle } from "./player_damage_event_table.ts";
 export { PlayerDamageEventTableHandle };
+import { PlayerLevelingConfigTableHandle } from "./player_leveling_config_table.ts";
+export { PlayerLevelingConfigTableHandle };
 import { CleanupDeadBodiesTimerTableHandle } from "./cleanup_dead_bodies_timer_table.ts";
 export { CleanupDeadBodiesTimerTableHandle };
 import { EnemyPatrolTimerTableHandle } from "./enemy_patrol_timer_table.ts";
@@ -100,6 +108,8 @@ import { DbVector2 } from "./db_vector_2_type.ts";
 export { DbVector2 };
 import { Enemy } from "./enemy_type.ts";
 export { Enemy };
+import { EnemyConfig } from "./enemy_config_type.ts";
+export { EnemyConfig };
 import { EnemyDamageEvent } from "./enemy_damage_event_type.ts";
 export { EnemyDamageEvent };
 import { EnemyPatrolTimer } from "./enemy_patrol_timer_type.ts";
@@ -112,6 +122,8 @@ import { Player } from "./player_type.ts";
 export { Player };
 import { PlayerDamageEvent } from "./player_damage_event_type.ts";
 export { PlayerDamageEvent };
+import { PlayerLevelingConfig } from "./player_leveling_config_type.ts";
+export { PlayerLevelingConfig };
 import { PlayerState } from "./player_state_type.ts";
 export { PlayerState };
 import { SpawnEnemiesTimer } from "./spawn_enemies_timer_type.ts";
@@ -126,6 +138,15 @@ const REMOTE_MODULE = {
       primaryKeyInfo: {
         colName: "enemyId",
         colType: Enemy.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    EnemyConfig: {
+      tableName: "EnemyConfig",
+      rowType: EnemyConfig.getTypeScriptAlgebraicType(),
+      primaryKey: "enemyType",
+      primaryKeyInfo: {
+        colName: "enemyType",
+        colType: EnemyConfig.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     EnemyDamageEvent: {
@@ -162,6 +183,15 @@ const REMOTE_MODULE = {
       primaryKeyInfo: {
         colName: "damageEventId",
         colType: PlayerDamageEvent.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    PlayerLevelingConfig: {
+      tableName: "PlayerLevelingConfig",
+      rowType: PlayerLevelingConfig.getTypeScriptAlgebraicType(),
+      primaryKey: "level",
+      primaryKeyInfo: {
+        colName: "level",
+        colType: PlayerLevelingConfig.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     cleanup_dead_bodies_timer: {
@@ -228,6 +258,14 @@ const REMOTE_MODULE = {
     PlayerTakeDamage: {
       reducerName: "PlayerTakeDamage",
       argsType: PlayerTakeDamage.getTypeScriptAlgebraicType(),
+    },
+    PopulateEnemyConfig: {
+      reducerName: "PopulateEnemyConfig",
+      argsType: PopulateEnemyConfig.getTypeScriptAlgebraicType(),
+    },
+    PopulatePlayerLevelingConfig: {
+      reducerName: "PopulatePlayerLevelingConfig",
+      argsType: PopulatePlayerLevelingConfig.getTypeScriptAlgebraicType(),
     },
     RecoverFromDamage: {
       reducerName: "RecoverFromDamage",
@@ -300,6 +338,8 @@ export type Reducer = never
 | { name: "InitializeEnemyRoutes", args: InitializeEnemyRoutes }
 | { name: "InstakillPlayer", args: InstakillPlayer }
 | { name: "PlayerTakeDamage", args: PlayerTakeDamage }
+| { name: "PopulateEnemyConfig", args: PopulateEnemyConfig }
+| { name: "PopulatePlayerLevelingConfig", args: PopulatePlayerLevelingConfig }
 | { name: "RecoverFromDamage", args: RecoverFromDamage }
 | { name: "RespawnPlayer", args: RespawnPlayer }
 | { name: "SpawnAllEnemies", args: SpawnAllEnemies }
@@ -427,6 +467,38 @@ export class RemoteReducers {
 
   removeOnPlayerTakeDamage(callback: (ctx: ReducerEventContext, enemyId: number) => void) {
     this.connection.offReducer("PlayerTakeDamage", callback);
+  }
+
+  populateEnemyConfig(enemyConfigJson: string) {
+    const __args = { enemyConfigJson };
+    let __writer = new BinaryWriter(1024);
+    PopulateEnemyConfig.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("PopulateEnemyConfig", __argsBuffer, this.setCallReducerFlags.populateEnemyConfigFlags);
+  }
+
+  onPopulateEnemyConfig(callback: (ctx: ReducerEventContext, enemyConfigJson: string) => void) {
+    this.connection.onReducer("PopulateEnemyConfig", callback);
+  }
+
+  removeOnPopulateEnemyConfig(callback: (ctx: ReducerEventContext, enemyConfigJson: string) => void) {
+    this.connection.offReducer("PopulateEnemyConfig", callback);
+  }
+
+  populatePlayerLevelingConfig(levelingCurveJson: string) {
+    const __args = { levelingCurveJson };
+    let __writer = new BinaryWriter(1024);
+    PopulatePlayerLevelingConfig.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("PopulatePlayerLevelingConfig", __argsBuffer, this.setCallReducerFlags.populatePlayerLevelingConfigFlags);
+  }
+
+  onPopulatePlayerLevelingConfig(callback: (ctx: ReducerEventContext, levelingCurveJson: string) => void) {
+    this.connection.onReducer("PopulatePlayerLevelingConfig", callback);
+  }
+
+  removeOnPopulatePlayerLevelingConfig(callback: (ctx: ReducerEventContext, levelingCurveJson: string) => void) {
+    this.connection.offReducer("PopulatePlayerLevelingConfig", callback);
   }
 
   recoverFromDamage(enemyId: number) {
@@ -587,6 +659,16 @@ export class SetReducerFlags {
     this.playerTakeDamageFlags = flags;
   }
 
+  populateEnemyConfigFlags: CallReducerFlags = 'FullUpdate';
+  populateEnemyConfig(flags: CallReducerFlags) {
+    this.populateEnemyConfigFlags = flags;
+  }
+
+  populatePlayerLevelingConfigFlags: CallReducerFlags = 'FullUpdate';
+  populatePlayerLevelingConfig(flags: CallReducerFlags) {
+    this.populatePlayerLevelingConfigFlags = flags;
+  }
+
   recoverFromDamageFlags: CallReducerFlags = 'FullUpdate';
   recoverFromDamage(flags: CallReducerFlags) {
     this.recoverFromDamageFlags = flags;
@@ -636,6 +718,10 @@ export class RemoteTables {
     return new EnemyTableHandle(this.connection.clientCache.getOrCreateTable<Enemy>(REMOTE_MODULE.tables.Enemy));
   }
 
+  get enemyConfig(): EnemyConfigTableHandle {
+    return new EnemyConfigTableHandle(this.connection.clientCache.getOrCreateTable<EnemyConfig>(REMOTE_MODULE.tables.EnemyConfig));
+  }
+
   get enemyDamageEvent(): EnemyDamageEventTableHandle {
     return new EnemyDamageEventTableHandle(this.connection.clientCache.getOrCreateTable<EnemyDamageEvent>(REMOTE_MODULE.tables.EnemyDamageEvent));
   }
@@ -650,6 +736,10 @@ export class RemoteTables {
 
   get playerDamageEvent(): PlayerDamageEventTableHandle {
     return new PlayerDamageEventTableHandle(this.connection.clientCache.getOrCreateTable<PlayerDamageEvent>(REMOTE_MODULE.tables.PlayerDamageEvent));
+  }
+
+  get playerLevelingConfig(): PlayerLevelingConfigTableHandle {
+    return new PlayerLevelingConfigTableHandle(this.connection.clientCache.getOrCreateTable<PlayerLevelingConfig>(REMOTE_MODULE.tables.PlayerLevelingConfig));
   }
 
   get cleanupDeadBodiesTimer(): CleanupDeadBodiesTimerTableHandle {

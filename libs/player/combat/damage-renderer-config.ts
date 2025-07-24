@@ -13,14 +13,6 @@ interface DamageStyleBase {
     fontFamily: string;
     strokeThickness: number;
     fontStyle: string;
-    shadow: {
-        offsetX: number;
-        offsetY: number;
-        color: string;
-        blur: number;
-        stroke: boolean;
-        fill: boolean;
-    };
 }
 
 /**
@@ -41,11 +33,11 @@ export const DAMAGE_COLOR_THEMES = {
     enemy: {
         Normal: {
             color: "#FFD700", // Gold
-            gradientColors: ["#ff0000ff", "#ebf804ff"], // Orange to yellow
+            gradientColors: ["#ff0000ff", "#ffc800ff"], // Orange to yellow
         },
         Crit: {
             color: "#FF0000", // Bright red
-            gradientColors: ["#ff0000ff", "#ff04f2ff"], // Orange-red to bright yellow
+            gradientColors: ["#fd0090ff", "#ff04f2ff"], // Orange-red to bright yellow
         },
         Weak: {
             color: "#ff8800", // Orange
@@ -90,74 +82,34 @@ export const DAMAGE_COLOR_THEMES = {
  */
 const BASE_DAMAGE_STYLES: Record<string, DamageStyleBase> = {
     Normal: {
-        fontSize: "28px",
+        fontSize: "36px",
         fontFamily: "Impact, Arial Black, sans-serif",
-        strokeThickness: 6,
+        strokeThickness: 3,
         fontStyle: "bold",
-        shadow: {
-            offsetX: 3,
-            offsetY: 3,
-            color: "#000000",
-            blur: 4,
-            stroke: true,
-            fill: true,
-        },
     },
     Crit: {
-        fontSize: "28px",
+        fontSize: "36px",
         fontFamily: "Impact, Arial Black, sans-serif",
-        strokeThickness: 6,
+        strokeThickness: 3,
         fontStyle: "bold",
-        shadow: {
-            offsetX: 3,
-            offsetY: 3,
-            color: "#000000",
-            blur: 4,
-            stroke: true,
-            fill: true,
-        },
     },
     Weak: {
-        fontSize: "28px",
+        fontSize: "36px",
         fontFamily: "Impact, Arial Black, sans-serif",
-        strokeThickness: 6,
+        strokeThickness: 3,
         fontStyle: "bold",
-        shadow: {
-            offsetX: 3,
-            offsetY: 3,
-            color: "#000000",
-            blur: 4,
-            stroke: true,
-            fill: true,
-        },
     },
     Strong: {
-        fontSize: "28px",
+        fontSize: "36px",
         fontFamily: "Impact, Arial Black, sans-serif",
-        strokeThickness: 6,
+        strokeThickness: 3,
         fontStyle: "bold",
-        shadow: {
-            offsetX: 3,
-            offsetY: 3,
-            color: "#000000",
-            blur: 4,
-            stroke: true,
-            fill: true,
-        },
     },
     Immune: {
-        fontSize: "28px",
+        fontSize: "36px",
         fontFamily: "Impact, Arial Black, sans-serif",
-        strokeThickness: 6,
+        strokeThickness: 3,
         fontStyle: "italic",
-        shadow: {
-            offsetX: 3,
-            offsetY: 3,
-            color: "#000000",
-            blur: 4,
-            stroke: true,
-            fill: true,
-        },
     },
 };
 
@@ -177,7 +129,7 @@ export function getDamageStyle(
     return {
         ...baseStyle,
         color: colorTheme.color,
-        stroke: "#000000", // Always black stroke
+        stroke: "#FFFFFF", // White stroke like level up text
         useGradient: colorTheme.gradientColors.length > 0,
         gradientColors: colorTheme.gradientColors,
     };
@@ -210,7 +162,7 @@ export const DAMAGE_RENDERER_CONFIG = {
      * Stacking behavior for multiple hits
      */
     stacking: {
-        verticalOffset: 25, // Pixels between stacked numbers
+        verticalOffset: 35, // Pixels between stacked numbers
         horizontalJitter: 10, // Random horizontal offset
         maxStackHeight: 5, // Maximum numbers per enemy
         batchWindowMs: 100, // Milliseconds to batch rapid hits

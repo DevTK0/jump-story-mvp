@@ -197,7 +197,7 @@ export class PlayerDamageRenderer {
   private configureTextAppearance(text: Phaser.GameObjects.Text, damageEvent: PlayerDamageEvent): void {
     const damageTypeKey = getDamageTypeKey(damageEvent.damageType);
     const style = getDamageStyle(damageTypeKey, 'player');
-    const displayText = '-' + getDamageDisplayText(damageEvent.damageAmount, damageEvent.damageType);
+    const displayText = getDamageDisplayText(damageEvent.damageAmount, damageEvent.damageType);
 
     text.setText(displayText);
     
@@ -229,18 +229,6 @@ export class PlayerDamageRenderer {
         strokeThickness: style.strokeThickness,
         fontStyle: style.fontStyle,
       });
-    }
-    
-    // Apply shadow if defined
-    if (style.shadow) {
-      text.setShadow(
-        style.shadow.offsetX,
-        style.shadow.offsetY,
-        style.shadow.color,
-        style.shadow.blur,
-        style.shadow.stroke,
-        style.shadow.fill
-      );
     }
     
     // Add scale effect for critical hits

@@ -1,4 +1,8 @@
 export { PlayerStatsUI } from './player-stats-ui';
+export { LevelUpRenderer } from './level-up-renderer';
+export { LevelUpAnimationManager } from './level-up-animation-manager';
+export { PLAYER_STATS_UI_CONFIG, getBarColors, createTextStyle } from './player-stats-ui-config';
+export type { BarConfig, LevelUpAnimationConfig } from './player-stats-ui-config';
 export { FPSCounter } from './fps-counter';
 export type { FPSCounterConfig } from './fps-counter';
 export { PerformanceMetrics } from './performance-metrics';

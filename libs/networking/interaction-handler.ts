@@ -78,7 +78,6 @@ export class InteractionHandler {
 
             // Use centralized state service validation
             if (!enemyManager.canEnemyTakeDamage(enemyId)) {
-                console.log('Prevented attack on invalid/dead enemy');
                 return;
             }
 

@@ -32,7 +32,6 @@ public static partial class Module
         public byte max_enemies;
         public uint spawn_interval;
         public Timestamp last_spawn_time;
-        public string behavior;
     }
 
     [Table(Name = "Enemy", Public = true)]
@@ -46,6 +45,7 @@ public static partial class Module
         public PlayerState state;
         public FacingDirection facing;
         public float current_hp;
+        public uint level; // Enemy level for EXP calculation
         public Timestamp last_updated;
         public bool moving_right; // Direction for patrol behavior
         public Identity? aggro_target; // Player being chased (null if not in aggro)
@@ -98,6 +98,29 @@ public static partial class Module
         [PrimaryKey, AutoInc]
         public ulong scheduled_id;
         public ScheduleAt scheduled_at;
+    }
+
+    [Table(Name = "EnemyConfig", Public = true)]
+    public partial struct EnemyConfig
+    {
+        [PrimaryKey]
+        public string enemy_type;
+        public float max_hp;
+        public uint level;
+        public string behavior; // patrol, aggressive
+        public uint base_exp_reward;
+        public uint movement_speed;
+        public uint damage;
+        public uint attack_range;
+        public uint aggro_range;
+    }
+
+    [Table(Name = "PlayerLevelingConfig", Public = true)]
+    public partial struct PlayerLevelingConfig
+    {
+        [PrimaryKey]
+        public uint level;
+        public uint exp_required; // Total EXP required to reach this level from level 1
     }
 
 }

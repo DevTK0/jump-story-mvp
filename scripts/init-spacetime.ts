@@ -101,6 +101,30 @@ async function initializeSpacetime() {
             throw new Error("Failed to establish connection");
         }
 
+        console.log("Populating enemy configurations...");
+        
+        // Read and populate enemy config from JSON
+        const enemyAttributesPath = join(
+            process.cwd(),
+            "apps/playground/enemy_attributes.json"
+        );
+        const enemyConfigContent = readFileSync(enemyAttributesPath, "utf8");
+        await connection.reducers.populateEnemyConfig(enemyConfigContent);
+        
+        console.log("✅ Enemy configurations populated!");
+
+        console.log("Populating player leveling curve...");
+        
+        // Read and populate player leveling curve from JSON
+        const playerLevelingPath = join(
+            process.cwd(),
+            "apps/playground/player_leveling_curve.json"
+        );
+        const levelingCurveContent = readFileSync(playerLevelingPath, "utf8");
+        await connection.reducers.populatePlayerLevelingConfig(levelingCurveContent);
+        
+        console.log("✅ Player leveling curve populated!");
+
         console.log("Initializing enemy routes with spawn intervals...");
 
         // Call the reducer using the proper connection

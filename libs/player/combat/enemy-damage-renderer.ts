@@ -114,7 +114,7 @@ export class EnemyDamageRenderer {
     // Get enemy position
     const position = this.getEnemyPosition(damageEvent.enemyId);
     if (!position) {
-      console.debug(`No position found for enemy ${damageEvent.enemyId}`);
+      console.warn(`[EnemyDamageRenderer] No position found for enemy ${damageEvent.enemyId} - enemy sprite may be missing or invisible`);
       return;
     }
 
@@ -146,7 +146,9 @@ export class EnemyDamageRenderer {
     const enemies = (this.enemyManager as any).enemies as Map<number, Phaser.Physics.Arcade.Sprite>;
     const enemySprite = enemies.get(enemyId);
     
-    if (!enemySprite || !enemySprite.active) {
+    
+    // Allow damage numbers on dead enemies that are still visible (playing death animation)
+    if (!enemySprite || !enemySprite.visible) {
       return null;
     }
 
@@ -252,18 +254,6 @@ export class EnemyDamageRenderer {
         strokeThickness: style.strokeThickness,
         fontStyle: style.fontStyle,
       });
-    }
-    
-    // Apply shadow if defined
-    if (style.shadow) {
-      text.setShadow(
-        style.shadow.offsetX,
-        style.shadow.offsetY,
-        style.shadow.color,
-        style.shadow.blur,
-        style.shadow.stroke,
-        style.shadow.fill
-      );
     }
     
     // Add scale effect for critical hits
