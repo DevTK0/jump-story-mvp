@@ -85,12 +85,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"100"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"3"
+                         "value":"300"
                         }, 
                         {
                          "name":"type",

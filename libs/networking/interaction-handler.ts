@@ -3,6 +3,7 @@ import { Player } from '@/player';
 import { AttackType } from '@/spacetime/client';
 import { gameEvents } from '@/core/events';
 import { PlayerEvent } from '@/player/player-events';
+import { PlayerQueryService } from '@/player';
 import type { 
     DatabaseConnection, 
     PlayerAttackEventData, 
@@ -25,6 +26,7 @@ export class InteractionHandler {
     private dbConnection: DatabaseConnection | null;
     private currentAttackType: number = 1; // Default to attack1
     private enemyManager: InteractionEnemyManager | null = null;
+    private playerQueryService: PlayerQueryService | null = null;
     
     // Track enemies damaged in current attack to prevent duplicates
     private damagedInCurrentAttack = new Set<number>();
@@ -42,6 +44,9 @@ export class InteractionHandler {
             ...InteractionHandler.DEFAULT_CONFIG,
             ...config
         };
+
+        // Get PlayerQueryService singleton if available
+        this.playerQueryService = PlayerQueryService.getInstance();
 
         // Listen for player attack events to track current attack type
         gameEvents.on(PlayerEvent.PLAYER_ATTACKED, (data: PlayerAttackEventData) => {
@@ -220,6 +225,12 @@ export class InteractionHandler {
      */
     public setDbConnection(dbConnection: DatabaseConnection | null): void {
         this.dbConnection = dbConnection;
+        
+        // Get the singleton PlayerQueryService (should already be initialized by PlaygroundScene)
+        this.playerQueryService = PlayerQueryService.getInstance();
+        if (!this.playerQueryService) {
+            console.warn('⚠️ InteractionHandler: PlayerQueryService singleton not available');
+        }
     }
 
     /**
@@ -233,17 +244,13 @@ export class InteractionHandler {
      * Check if the current player is dead on the server
      */
     private isPlayerDead(): boolean {
-        if (!this.dbConnection?.db?.player) return false;
-        
-        // Get current player from server state
-        for (const serverPlayer of this.dbConnection.db.player.iter()) {
-            if (this.dbConnection.identity && 
-                serverPlayer.identity.toHexString() === this.dbConnection.identity.toHexString()) {
-                return serverPlayer.currentHp <= 0 || serverPlayer.state.tag === 'Dead';
-            }
+        // Use optimized PlayerQueryService instead of manual iteration
+        if (!this.playerQueryService) {
+            console.warn('⚠️ InteractionHandler: PlayerQueryService not available, assuming player alive');
+            return false;
         }
         
-        return false;
+        return this.playerQueryService.isCurrentPlayerDead();
     }
 
     /**

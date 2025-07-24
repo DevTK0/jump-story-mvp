@@ -25,8 +25,8 @@
   <object id="32" name="orc 1" x="128" y="416" width="832" height="32">
    <properties>
     <property name="enemy" value="orc"/>
-    <property name="number" value="100"/>
-    <property name="spawn_interval" value="3"/>
+    <property name="number" value="5"/>
+    <property name="spawn_interval" value="300"/>
     <property name="type" value="spawn"/>
    </properties>
   </object>

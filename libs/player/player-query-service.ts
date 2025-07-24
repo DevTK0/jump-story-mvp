@@ -1,17 +1,41 @@
-import { DbConnection } from '@/spacetime/client';
+import { DbConnection, Player } from '@/spacetime/client';
 
 /**
  * Service for querying player data from SpacetimeDB
  * Uses targeted subscription to minimize bandwidth and memory usage
+ * 
+ * This is a singleton service that should be shared across all components
+ * to avoid duplicate subscriptions and ensure consistent state.
  */
 export class PlayerQueryService {
+    private static instance: PlayerQueryService | null = null;
     private dbConnection: DbConnection;
-    private currentPlayerData: any | null = null;
+    private currentPlayerData: Player | null = null;
     private isTargetedSubscriptionActive = false;
 
-    constructor(dbConnection: DbConnection) {
+    private constructor(dbConnection: DbConnection) {
         this.dbConnection = dbConnection;
         this.setupTargetedSubscription();
+    }
+
+    /**
+     * Get or create the singleton instance of PlayerQueryService
+     * @param dbConnection Required on first call to create the instance
+     * @returns The singleton instance or null if no connection provided on first call
+     */
+    public static getInstance(dbConnection?: DbConnection): PlayerQueryService | null {
+        if (!PlayerQueryService.instance && dbConnection) {
+            PlayerQueryService.instance = new PlayerQueryService(dbConnection);
+            // PlayerQueryService: Singleton instance created
+        }
+        return PlayerQueryService.instance;
+    }
+
+    /**
+     * Clear the singleton instance (useful for cleanup/testing)
+     */
+    public static clearInstance(): void {
+        PlayerQueryService.instance = null;
     }
 
     /**
@@ -30,13 +54,13 @@ export class PlayerQueryService {
             // This follows the pattern: SELECT * FROM Player WHERE identity = 'myIdentity'
             this.dbConnection.subscriptionBuilder()
                 .onApplied(() => {
-                    console.log('🎯 Player-specific subscription applied');
+                    // Player-specific subscription applied
                     this.updateCurrentPlayerFromSubscription();
                 })
                 .subscribe([`SELECT * FROM Player WHERE identity = x'${myIdentity}'`]);
             
             this.isTargetedSubscriptionActive = true;
-            console.log(`✅ Subscribed to targeted player data for identity: ${myIdentity}`);
+            // Subscribed to targeted player data
             
             // Set up event listeners for the targeted data
             this.setupTargetedEventListeners();
@@ -58,18 +82,18 @@ export class PlayerQueryService {
         }
 
         // With targeted subscription, all updates are for our player
-        this.dbConnection.db.player.onUpdate((ctx, oldPlayer, newPlayer) => {
-            console.log('🔄 Current player updated via targeted subscription');
+        this.dbConnection.db.player.onUpdate((_ctx, _oldPlayer, newPlayer) => {
+            // Current player updated via targeted subscription
             this.currentPlayerData = newPlayer;
         });
 
-        this.dbConnection.db.player.onInsert((ctx, insertedPlayer) => {
-            console.log('➕ Current player inserted via targeted subscription');
+        this.dbConnection.db.player.onInsert((_ctx, insertedPlayer) => {
+            // Current player inserted via targeted subscription
             this.currentPlayerData = insertedPlayer;
         });
 
-        this.dbConnection.db.player.onDelete((ctx, deletedPlayer) => {
-            console.log('➖ Current player deleted via targeted subscription');
+        this.dbConnection.db.player.onDelete((_ctx, _deletedPlayer) => {
+            // Current player deleted via targeted subscription
             this.currentPlayerData = null;
         });
     }
@@ -83,23 +107,23 @@ export class PlayerQueryService {
             return;
         }
 
-        console.warn('⚠️ Using fallback event listeners - less efficient than targeted subscription');
+        // Using fallback event listeners - less efficient than targeted subscription
 
-        this.dbConnection.db.player.onUpdate((ctx, oldPlayer, newPlayer) => {
+        this.dbConnection.db.player.onUpdate((_ctx, _oldPlayer, newPlayer) => {
             if (this.dbConnection.identity && 
                 newPlayer.identity.toHexString() === this.dbConnection.identity.toHexString()) {
                 this.currentPlayerData = newPlayer;
             }
         });
 
-        this.dbConnection.db.player.onInsert((ctx, insertedPlayer) => {
+        this.dbConnection.db.player.onInsert((_ctx, insertedPlayer) => {
             if (this.dbConnection.identity && 
                 insertedPlayer.identity.toHexString() === this.dbConnection.identity.toHexString()) {
                 this.currentPlayerData = insertedPlayer;
             }
         });
 
-        this.dbConnection.db.player.onDelete((ctx, deletedPlayer) => {
+        this.dbConnection.db.player.onDelete((_ctx, deletedPlayer) => {
             if (this.dbConnection.identity && 
                 deletedPlayer.identity.toHexString() === this.dbConnection.identity.toHexString()) {
                 this.currentPlayerData = null;
@@ -118,7 +142,7 @@ export class PlayerQueryService {
         // With targeted subscription, there should only be one player row (ours)
         for (const player of this.dbConnection.db.player.iter()) {
             this.currentPlayerData = player;
-            console.log('📥 Loaded current player from targeted subscription');
+            // Loaded current player from targeted subscription
             break; // Should only be one player in targeted subscription
         }
     }
@@ -128,7 +152,7 @@ export class PlayerQueryService {
      * Uses targeted subscription data for maximum efficiency
      * @returns Server player data or null if not found
      */
-    public findCurrentPlayer(): any | null {
+    public findCurrentPlayer(): Player | null {
         if (!this.dbConnection.identity) {
             return null;
         }

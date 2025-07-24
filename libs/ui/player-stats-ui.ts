@@ -1,11 +1,13 @@
 import Phaser from 'phaser';
 import { DbConnection } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
+import { PlayerQueryService } from '@/player';
 
 export class PlayerStatsUI {
     private scene: Phaser.Scene;
     private dbConnection: DbConnection | null = null;
     private playerIdentity: Identity;
+    private playerQueryService: PlayerQueryService | null = null;
     
     // UI Elements
     private container!: Phaser.GameObjects.Container;
@@ -130,13 +132,71 @@ export class PlayerStatsUI {
 
     public setDbConnection(dbConnection: DbConnection): void {
         this.dbConnection = dbConnection;
-        this.setupPlayerSubscription();
+        this.setupOptimizedPlayerSubscription();
     }
 
-    private setupPlayerSubscription(): void {
+    private setupOptimizedPlayerSubscription(): void {
         if (!this.dbConnection) return;
 
-        // Subscribe to player updates - only process updates for our specific player
+        // Get the singleton PlayerQueryService (should already be initialized by PlaygroundScene)
+        this.playerQueryService = PlayerQueryService.getInstance();
+        if (!this.playerQueryService) {
+            console.warn('⚠️ PlayerStatsUI: PlayerQueryService singleton not available, falling back to direct subscription');
+            this.setupFallbackSubscription();
+            return;
+        }
+        
+        // The PlayerQueryService already has the targeted subscription set up,
+        // so we just need to set up our own event listeners for UI updates
+        this.setupSharedSubscriptionListeners();
+        
+        // Initial update from cached data
+        this.updateFromCurrentPlayerData();
+    }
+
+    /**
+     * Set up event listeners that work with the shared PlayerQueryService subscription
+     * We need to filter by identity since the subscription is shared
+     */
+    private setupSharedSubscriptionListeners(): void {
+        if (!this.dbConnection) return;
+
+        // Listen to player updates and filter for our specific player
+        this.dbConnection.db.player.onUpdate((_ctx, _oldPlayer, newPlayer) => {
+            if (newPlayer.identity.toHexString() === this.playerIdentity.toHexString()) {
+                console.log('🔄 PlayerStatsUI: Player updated via shared subscription');
+                this.updateStats(
+                    newPlayer.currentHp,
+                    newPlayer.maxHp,
+                    newPlayer.currentMana,
+                    newPlayer.maxMana,
+                    newPlayer.level
+                );
+            }
+        });
+
+        this.dbConnection.db.player.onInsert((_ctx, insertedPlayer) => {
+            if (insertedPlayer.identity.toHexString() === this.playerIdentity.toHexString()) {
+                console.log('➕ PlayerStatsUI: Player inserted via shared subscription');
+                this.updateStats(
+                    insertedPlayer.currentHp,
+                    insertedPlayer.maxHp,
+                    insertedPlayer.currentMana,
+                    insertedPlayer.maxMana,
+                    insertedPlayer.level
+                );
+            }
+        });
+    }
+
+    /**
+     * Fallback to old subscription pattern if targeted subscription fails
+     */
+    private setupFallbackSubscription(): void {
+        if (!this.dbConnection) return;
+
+        console.warn('⚠️ PlayerStatsUI: Using fallback subscription - less efficient');
+
         this.dbConnection.db.player.onUpdate((_ctx, _oldPlayer, newPlayer) => {
             // Only update if this is our specific player
             if (newPlayer.identity.toHexString() === this.playerIdentity.toHexString()) {
@@ -155,20 +215,18 @@ export class PlayerStatsUI {
     }
 
     private updateFromCurrentPlayerData(): void {
-        if (!this.dbConnection) return;
+        if (!this.playerQueryService) return;
 
-        // Find and update with current player data
-        for (const player of this.dbConnection.db.player.iter()) {
-            if (player.identity.toHexString() === this.playerIdentity.toHexString()) {
-                this.updateStats(
-                    player.currentHp,
-                    player.maxHp,
-                    player.currentMana,
-                    player.maxMana,
-                    player.level
-                );
-                break;
-            }
+        // Use optimized PlayerQueryService for current player data
+        const player = this.playerQueryService.findCurrentPlayer();
+        if (player) {
+            this.updateStats(
+                player.currentHp,
+                player.maxHp,
+                player.currentMana,
+                player.maxMana,
+                player.level
+            );
         }
     }
 

@@ -21,6 +21,7 @@ export class InputSystem implements System {
       attack2: false,
       attack3: false,
       respawn: false,
+      teleport: false,
     };
     
     this.previousInputState = { ...this.inputState };
@@ -45,6 +46,7 @@ export class InputSystem implements System {
       attack2: keys.c.isDown,
       attack3: keys.v.isDown,
       respawn: keys.r.isDown,
+      teleport: keys.t?.isDown || false,
     };
     
     // Update facing direction based on input (unless climbing)

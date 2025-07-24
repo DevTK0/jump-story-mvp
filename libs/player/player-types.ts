@@ -17,4 +17,5 @@ export interface InputState {
   attack2: boolean; 
   attack3: boolean;
   respawn: boolean;
+  teleport: boolean;
 }

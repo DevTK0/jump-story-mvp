@@ -1,10 +1,10 @@
 import Phaser from 'phaser';
-import type { System } from '../core/types';
-import { gameEvents, CoreGameEvent } from '../core/events';
-import { PlayerEvent } from './player-events';
-import { Player } from './player';
-import { InputSystem } from './input';
-import { PLAYER_CONFIG } from './config';
+import type { System } from '../../core/types';
+import { gameEvents, CoreGameEvent } from '../../core/events';
+import { PlayerEvent } from '../player-events';
+import { Player } from '../player';
+import { InputSystem } from '../input';
+import { PLAYER_CONFIG } from '../config';
 import type { IDebuggable } from '@/debug/debug-interfaces';
 import { DEBUG_CONFIG } from '@/debug/config';
 import { BaseDebugRenderer } from '@/debug/debug-renderer';

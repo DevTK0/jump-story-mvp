@@ -13,7 +13,8 @@ import { PhysicsConfigurator, type CollisionGroups } from "@/physics";
 import { InteractionHandler } from "@/networking";
 import { DbConnection } from "@/spacetime/client";
 import { Identity } from "@clockworklabs/spacetimedb-sdk";
-import { DamageNumberRenderer } from "@/effects";
+import { DamageNumberRenderer } from "@/player";
+import { PlayerQueryService } from "@/player";
 
 // Scene-specific constants
 const COLOR_BACKGROUND = 0x2c3e50;
@@ -148,8 +149,12 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         const climbingSystem = this.player.getSystem("climbing");
         const combatSystem = this.player.getSystem("combat");
 
-        // Initialize enemy manager
-        this.enemyManager = new EnemyManager(this);
+        // Initialize enemy manager with proximity-based subscriptions enabled
+        this.enemyManager = new EnemyManager(this, {
+            useProximitySubscription: true,
+            proximityRadius: 200, // Load enemies within 2000 pixels
+            proximityUpdateInterval: 100, // Update subscription every 5 seconds
+        });
 
         // Set database connection if already available
         const dbConn = this.dbConnectionManager.getConnection();
@@ -193,6 +198,10 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         identity: Identity,
         _token: string
     ): void {
+        // Initialize the PlayerQueryService singleton immediately
+        PlayerQueryService.getInstance(conn);
+        console.log('✅ PlayerQueryService singleton initialized');
+
         // Set up player systems if player exists
         if (this.player) {
             this.setupPlayerSystems(conn);
@@ -249,13 +258,16 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         if (deathMonitor && deathMonitor.setDbConnection) {
             deathMonitor.setDbConnection(conn);
         }
+
+        const teleportSystem = this.player.getSystem("teleport") as any;
+        if (teleportSystem && teleportSystem.setDbConnection) {
+            teleportSystem.setDbConnection(conn);
+        }
     }
 
     private setupDamageEventSubscription(conn: DbConnection): void {
         // Subscribe to damage events from the database
         conn.db.damageEvent.onInsert((_ctx, damageEvent) => {
-            console.debug("Received damage event:", damageEvent);
-
             // Handle damage numbers
             this.damageNumberRenderer.handleDamageEvent(damageEvent);
 

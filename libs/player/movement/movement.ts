@@ -1,15 +1,15 @@
-import type { System } from "../core/types";
-import { gameEvents } from "../core/events";
-import { PlayerEvent } from "./player-events";
-import { Player } from "./player";
-import { InputSystem } from "./input";
+import type { System } from "../../core/types";
+import { gameEvents } from "../../core/events";
+import { PlayerEvent } from "../player-events";
+import { Player } from "../player";
+import { InputSystem } from "../input";
 import type { IDebuggable } from "@/debug/debug-interfaces";
 import { DebugState, ShadowState } from "@/debug/debug-state";
 import { DEBUG_CONFIG } from "@/debug/config";
 import { BaseDebugRenderer } from "@/debug/debug-renderer";
 import { ShadowTrajectoryRenderer } from "@/effects/shadow";
 import { DbConnection, PlayerState, FacingDirection } from "@/spacetime/client";
-import { SyncManager } from "./sync-manager";
+import { SyncManager } from "../sync-manager";
 
 export class MovementSystem extends BaseDebugRenderer implements System, IDebuggable {
     private player: Player;

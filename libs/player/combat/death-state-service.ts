@@ -1,4 +1,4 @@
-import { Player } from './player';
+import { Player } from '../player';
 
 /**
  * Service for managing death state transitions and logic

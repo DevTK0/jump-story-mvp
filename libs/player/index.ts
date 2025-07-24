@@ -3,18 +3,29 @@ export { Player, type PlayerConfig } from './player';
 
 // Player systems
 export { InputSystem } from './input';
-export { MovementSystem } from './movement';
-export { ClimbingSystem } from './climbing';
-export { CombatSystem, type AttackConfig } from './combat';
+export { MovementSystem } from './movement/movement';
+export { ClimbingSystem } from './movement/climbing';
 export { AnimationSystem } from './animations';
 export { DebugSystem } from '@/debug';
 export { SyncManager, type SyncConfig } from './sync-manager';
 export { PlayerStateMachine, PlayerState } from './state-machine';
+// Teleport effect is now in the effects module
+
+// Combat systems and services
+export { 
+    CombatSystem, 
+    type AttackConfig,
+    DeathMonitor,
+    DeathStateService,
+    DamageNumberRenderer,
+    DAMAGE_NUMBER_CONFIG,
+    getDamageTypeKey,
+    getDamageDisplayText
+} from './combat';
 
 // Player services
 export { PlayerQueryService } from './player-query-service';
-export { PositionReconciliationService, type PositionReconciliationConfig } from './position-reconciliation-service';
-export { DeathStateService } from './death-state-service';
+export { PositionReconciliationService, type PositionReconciliationConfig } from './movement/position-reconciliation-service';
 
 // Builder pattern for flexible player creation
 export { PlayerBuilder } from './player-builder';
@@ -22,7 +33,7 @@ export { PlayerBuilder } from './player-builder';
 // Legacy factory function - maintained for backward compatibility
 import { Player, type PlayerConfig } from './player';
 import { PlayerBuilder } from './player-builder';
-import type { AttackConfig } from './combat';
+import type { AttackConfig } from './combat/combat';
 
 export interface PlayerFactoryConfig extends PlayerConfig {
   attackConfig?: AttackConfig;

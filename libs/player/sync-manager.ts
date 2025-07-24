@@ -1,6 +1,7 @@
-import { DbConnection, PlayerState, FacingDirection } from '@/spacetime/client';
+import { DbConnection, PlayerState, FacingDirection, Player as ServerPlayer } from '@/spacetime/client';
 import { Player } from './player';
 import { PlayerQueryService } from './player-query-service';
+import { PositionReconciliationService } from './movement/position-reconciliation-service';
 import { PLAYER_CONFIG } from './config';
 
 export interface SyncConfig {
@@ -12,6 +13,7 @@ export class SyncManager {
   private player: Player;
   private dbConnection: DbConnection | null = null;
   private playerQueryService: PlayerQueryService | null = null;
+  private positionReconciliationService: PositionReconciliationService;
   
   // Position and facing synchronization
   private lastSyncedPosition = { x: 0, y: 0 };
@@ -32,11 +34,53 @@ export class SyncManager {
     };
     
     this.lastSyncedPosition = { x: player.x, y: player.y };
+    this.positionReconciliationService = new PositionReconciliationService(player);
   }
   
   public setDbConnection(connection: DbConnection): void {
     this.dbConnection = connection;
-    this.playerQueryService = new PlayerQueryService(connection);
+    this.playerQueryService = PlayerQueryService.getInstance();
+    if (!this.playerQueryService) {
+      console.error('❌ SyncManager: PlayerQueryService singleton not available');
+    }
+    
+    // Set up position reconciliation monitoring
+    this.setupPositionReconciliation();
+  }
+  
+  private setupPositionReconciliation(): void {
+    if (!this.dbConnection?.db?.player) return;
+    
+    // Subscribe to player position updates from server
+    this.dbConnection.db.player.onUpdate((_ctx, _oldPlayer, newPlayer) => {
+      // Only process updates for the current player
+      if (this.dbConnection && this.dbConnection.identity && 
+          newPlayer.identity.toHexString() === this.dbConnection.identity.toHexString()) {
+        this.handleServerPositionUpdate(newPlayer);
+      }
+    });
+  }
+  
+  private handleServerPositionUpdate(serverPlayer: ServerPlayer): void {
+    // Skip reconciliation if player is dead - let death monitor handle respawn positioning
+    if (serverPlayer.state.tag === 'Dead' || serverPlayer.currentHp <= 0) {
+      return;
+    }
+    
+    if (serverPlayer.position && 
+        typeof serverPlayer.position.x === 'number' && 
+        typeof serverPlayer.position.y === 'number') {
+      
+      const serverPos = { x: serverPlayer.position.x, y: serverPlayer.position.y };
+      
+      // Server position update received
+      
+      // Check if reconciliation is needed
+      this.positionReconciliationService.checkAndReconcile(serverPos, (reconciledPos) => {
+        // Update our last synced position to prevent immediate re-sync
+        this.updateLastSyncedPosition(reconciledPos.x, reconciledPos.y);
+      });
+    }
   }
   
   public syncPosition(time: number, facing: FacingDirection, forceSync: boolean = false): void {
@@ -61,13 +105,14 @@ export class SyncManager {
        (deltaX > this.config.positionThreshold || deltaY > this.config.positionThreshold));
     
     if (shouldSync) {
+      // Sending position update to server
       this.dbConnection.reducers.updatePlayerPosition(currentX, currentY, facing);
       this.lastSyncedPosition = { x: currentX, y: currentY };
       this.lastSyncedFacing = facing;
       this.lastSyncTime = time;
       
       if (forceSync) {
-        console.log(`Forced position sync: (${currentX}, ${currentY}) facing ${facing.tag}`);
+        // Forced position sync
       }
     }
   }

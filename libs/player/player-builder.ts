@@ -1,12 +1,13 @@
 import { Player, type PlayerConfig } from './player';
 import { InputSystem } from './input';
-import { MovementSystem } from './movement';
-import { ClimbingSystem } from './climbing';
-import { CombatSystem, type AttackConfig } from './combat';
+import { MovementSystem } from './movement/movement';
+import { ClimbingSystem } from './movement/climbing';
+import { CombatSystem, type AttackConfig } from './combat/combat';
 import { AnimationSystem } from './animations';
 import { RespawnSystem } from './respawn-system';
+import { TeleportEffect } from '../effects';
 import { DebugSystem } from '@/debug/debug-system';
-import { DeathMonitor } from './death-monitor';
+import { DeathMonitor } from './combat/death-monitor';
 
 /**
  * Builder pattern implementation for creating fully configured Player instances.
@@ -167,6 +168,10 @@ export class PlayerBuilder {
         // Create respawn system (always enabled for online play)
         const respawnSystem = new RespawnSystem(player);
         systems.set('respawn', respawnSystem);
+
+        // Create teleport effect (always enabled for testing reconciliation)
+        const teleportEffect = new TeleportEffect(player);
+        systems.set('teleport', teleportEffect);
 
         // Register all created systems with the player
         for (const [name, system] of systems.entries()) {

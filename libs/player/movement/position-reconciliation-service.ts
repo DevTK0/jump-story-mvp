@@ -1,5 +1,5 @@
-import { Player } from './player';
-import { PLAYER_CONFIG } from './config';
+import { Player } from '../player';
+import { PLAYER_CONFIG } from '../config';
 
 /**
  * Configuration for position reconciliation
@@ -48,7 +48,11 @@ export class PositionReconciliationService {
      */
     public shouldReconcile(clientPos: { x: number; y: number }, serverPos: { x: number; y: number }): boolean {
         const distance = this.calculateDistance(clientPos, serverPos);
-        return distance > this.config.reconciliationThreshold;
+        const shouldReconcile = distance > this.config.reconciliationThreshold;
+        
+        // Position reconciliation needed when distance exceeds threshold
+        
+        return shouldReconcile;
     }
 
     /**
@@ -60,10 +64,9 @@ export class PositionReconciliationService {
         const clientPos = { x: this.player.x, y: this.player.y };
         
         if (this.shouldReconcile(clientPos, serverPos)) {
-            const distance = this.calculateDistance(clientPos, serverPos);
             
-            console.log(`🔄 Server reconciliation: Client at (${clientPos.x}, ${clientPos.y}), Server at (${serverPos.x}, ${serverPos.y}), Distance: ${distance.toFixed(1)}`);
-            console.log(`🚀 Teleporting client to server position`);
+            // Reconciling position - distance exceeds threshold
+            // Reconciling position - snapping player to server position
             
             // Teleport player to server position
             this.player.setPosition(serverPos.x, serverPos.y);
@@ -85,6 +88,7 @@ export class PositionReconciliationService {
         const clientPos = { x: this.player.x, y: this.player.y };
         
         if (this.shouldReconcile(clientPos, serverPos)) {
+            // Reconciliation triggered - distance exceeds threshold
             this.reconcilePosition(serverPos, onReconciled);
             return true;
         }

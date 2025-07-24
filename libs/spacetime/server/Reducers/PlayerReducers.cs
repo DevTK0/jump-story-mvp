@@ -266,6 +266,49 @@ public static partial class Module
     }
 
 
+    [Reducer]
+    public static void TeleportPlayer(ReducerContext ctx, float x, float y)
+    {
+        var player = ctx.Db.Player.identity.Find(ctx.Sender);
+        if (player == null)
+        {
+            Log.Info($"Player not found for teleport: {ctx.Sender}");
+            return;
+        }
+
+        // Don't allow teleport if player is dead
+        if (player.Value.current_hp <= 0 || player.Value.state == PlayerState.Dead)
+        {
+            Log.Info($"Player {ctx.Sender} is dead, cannot teleport");
+            return;
+        }
+
+        // Validate the teleport position is within reasonable bounds (e.g., map limits)
+        // You might want to adjust these based on your actual map size
+        const float MIN_X = -5000f;
+        const float MAX_X = 5000f;
+        const float MIN_Y = -5000f;
+        const float MAX_Y = 5000f;
+
+        if (x < MIN_X || x > MAX_X || y < MIN_Y || y > MAX_Y)
+        {
+            Log.Info($"Player {ctx.Sender} attempted to teleport out of bounds: ({x}, {y})");
+            return;
+        }
+
+        var oldPos = player.Value.position;
+        var newPos = new DbVector2(x, y);
+
+        // Update player position
+        ctx.Db.Player.identity.Update(player.Value with
+        {
+            position = newPos,
+            last_active = ctx.Timestamp
+        });
+
+        Log.Info($"Player {ctx.Sender} teleported from ({oldPos.x}, {oldPos.y}) to ({x}, {y})");
+    }
+
     private static bool IsAttackState(PlayerState state)
     {
         return state == PlayerState.Attack1 ||

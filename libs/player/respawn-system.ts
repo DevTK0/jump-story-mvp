@@ -70,7 +70,10 @@ export class RespawnSystem implements System {
 
     public setDbConnection(dbConnection: DbConnection): void {
         this.dbConnection = dbConnection;
-        this.playerQueryService = new PlayerQueryService(dbConnection);
+        this.playerQueryService = PlayerQueryService.getInstance();
+        if (!this.playerQueryService) {
+            console.error('❌ RespawnSystem: PlayerQueryService singleton not available');
+        }
     }
 
     public destroy(): void {
