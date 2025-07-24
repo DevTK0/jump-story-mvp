@@ -1,5 +1,13 @@
 import { DbConnection, Player } from '@/spacetime/client';
 
+// Player query specific error types
+export class PlayerQueryError extends Error {
+    constructor(message: string, public readonly context?: Record<string, any>) {
+        super(message);
+        this.name = 'PlayerQueryError';
+    }
+}
+
 /**
  * Service for querying player data from SpacetimeDB
  * Uses targeted subscription to minimize bandwidth and memory usage
@@ -26,7 +34,6 @@ export class PlayerQueryService {
     public static getInstance(dbConnection?: DbConnection): PlayerQueryService | null {
         if (!PlayerQueryService.instance && dbConnection) {
             PlayerQueryService.instance = new PlayerQueryService(dbConnection);
-            // PlayerQueryService: Singleton instance created
         }
         return PlayerQueryService.instance;
     }
@@ -54,19 +61,23 @@ export class PlayerQueryService {
             // This follows the pattern: SELECT * FROM Player WHERE identity = 'myIdentity'
             this.dbConnection.subscriptionBuilder()
                 .onApplied(() => {
-                    // Player-specific subscription applied
+                    console.log('Player-specific subscription applied');
                     this.updateCurrentPlayerFromSubscription();
                 })
                 .subscribe([`SELECT * FROM Player WHERE identity = x'${myIdentity}'`]);
             
             this.isTargetedSubscriptionActive = true;
-            // Subscribed to targeted player data
+            console.log('Subscribed to targeted player data');
             
             // Set up event listeners for the targeted data
             this.setupTargetedEventListeners();
             
         } catch (error) {
-            console.error('❌ Failed to set up targeted player subscription:', error);
+            const queryError = new PlayerQueryError(
+                'Failed to set up targeted player subscription',
+                { identity: this.dbConnection.identity?.toHexString() }
+            );
+            console.error('Player subscription error:', queryError.message, queryError.context);
             // Fallback to the old inefficient approach if targeted subscription fails
             this.setupFallbackEventListeners();
         }

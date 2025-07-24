@@ -41,7 +41,7 @@ export class LevelUpRenderer {
     /**
      * Show level up animation for a player
      */
-    public showLevelUpAnimation(playerIdentity: Identity, newLevel: number): void {
+    public showLevelUpAnimation(playerIdentity: Identity, _newLevel: number): void {
         if (!this.dbConnection) {
             console.warn('LevelUpRenderer: Database connection not initialized');
             return;

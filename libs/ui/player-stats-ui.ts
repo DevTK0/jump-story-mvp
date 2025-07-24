@@ -192,7 +192,7 @@ export class PlayerStatsUI {
         if (!this.dbConnection) return;
 
         // Listen to player updates
-        this.dbConnection.db.player.onUpdate((_ctx, oldPlayer, newPlayer) => {
+        this.dbConnection.db.player.onUpdate((_ctx, _oldPlayer, newPlayer) => {
             if (newPlayer.identity.toHexString() === this.playerIdentity.toHexString()) {
                 // Get exp required for next level
                 const nextLevelConfig = this.findNextLevelConfig(newPlayer.level);
@@ -233,7 +233,7 @@ export class PlayerStatsUI {
 
         console.warn('⚠️ PlayerStatsUI: Using fallback subscription - less efficient');
 
-        this.dbConnection.db.player.onUpdate((_ctx, oldPlayer, newPlayer) => {
+        this.dbConnection.db.player.onUpdate((_ctx, _oldPlayer, newPlayer) => {
             if (newPlayer.identity.toHexString() === this.playerIdentity.toHexString()) {
                 const nextLevelConfig = this.findNextLevelConfig(newPlayer.level);
                 const expRequired = nextLevelConfig?.expRequired || 0;
@@ -276,9 +276,12 @@ export class PlayerStatsUI {
     private findNextLevelConfig(currentLevel: number) {
         if (!this.dbConnection) return null;
         
-        return Array.from(this.dbConnection.db.playerLevelingConfig).find(
-            config => config.level === currentLevel + 1
-        );
+        for (const config of this.dbConnection.db.playerLevelingConfig.iter()) {
+            if (config.level === currentLevel + 1) {
+                return config;
+            }
+        }
+        return null;
     }
 
     public getPlayerIdentity(): Identity {

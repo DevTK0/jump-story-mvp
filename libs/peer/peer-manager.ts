@@ -63,7 +63,7 @@ export class PeerManager {
         this.levelUpAnimationManager = manager;
         
         // Register any existing peer sprites
-        for (const [identityString, peer] of this.peers) {
+        for (const [_identityString, peer] of this.peers) {
             const playerData = peer.getPlayerData();
             manager.registerSprite(playerData.identity, peer);
         }

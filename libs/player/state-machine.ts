@@ -1,6 +1,5 @@
 import { Player } from './player';
 import { PlayerState as DbPlayerState } from '@/spacetime/client';
-import { createLogger } from '../core/logger';
 
 /**
  * Base class for all player states

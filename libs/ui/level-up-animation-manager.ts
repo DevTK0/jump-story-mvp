@@ -9,22 +9,18 @@ import { DbConnection } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 
 export class LevelUpAnimationManager {
-    private scene: Phaser.Scene;
     private levelUpRenderer: LevelUpRenderer;
     private dbConnection: DbConnection | null = null;
-    private localPlayerIdentity: Identity | null = null;
     
     constructor(scene: Phaser.Scene) {
-        this.scene = scene;
         this.levelUpRenderer = new LevelUpRenderer(scene);
     }
 
     /**
      * Initialize the manager with database connection
      */
-    public initialize(dbConnection: DbConnection, localPlayerIdentity: Identity): void {
+    public initialize(dbConnection: DbConnection, _localPlayerIdentity: Identity): void {
         this.dbConnection = dbConnection;
-        this.localPlayerIdentity = localPlayerIdentity;
         this.levelUpRenderer.initialize(dbConnection);
         this.setupLevelUpSubscriptions();
     }

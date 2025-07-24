@@ -5,6 +5,25 @@ import {
 } from "@/spacetime/client";
 import { Identity } from "@clockworklabs/spacetimedb-sdk";
 
+// Connection-specific error types
+export class ConnectionError extends Error {
+    public readonly code = 'CONNECTION_ERROR';
+    
+    constructor(message: string, public readonly context?: Record<string, any>, public readonly originalError?: Error) {
+        super(message);
+        this.name = 'ConnectionError';
+    }
+}
+
+export class TimeoutError extends Error {
+    public readonly code = 'TIMEOUT_ERROR';
+    
+    constructor(message: string, public readonly timeoutMs: number, public readonly context?: Record<string, any>) {
+        super(message);
+        this.name = 'TimeoutError';
+    }
+}
+
 export interface SpacetimeConnectionConfig {
     uri: string;
     moduleName: string;
@@ -42,7 +61,20 @@ export class SpacetimeConnector {
 
         // Create new connection promise
         this.connectionPromise = new Promise((resolve, reject) => {
+            // Add timeout
+            const timeoutMs = 30000; // 30 seconds
+            const timeout = setTimeout(() => {
+                const error = new TimeoutError(
+                    `Connection to SpacetimeDB timed out after ${timeoutMs}ms`,
+                    timeoutMs,
+                    { uri: this.config.uri, module: this.config.moduleName }
+                );
+                console.error('Connection timeout:', error.message, error.context);
+                reject(error);
+            }, timeoutMs);
+
             const onConnect = (conn: DbConnection, identity: Identity, token: string) => {
+                clearTimeout(timeout);
                 this.connection = conn;
                 this.identity = identity;
                 
@@ -62,6 +94,7 @@ export class SpacetimeConnector {
             };
 
             const onDisconnect = () => {
+                clearTimeout(timeout);
                 console.log("Disconnected from SpacetimeDB");
                 this.connection = null;
                 this.identity = null;
@@ -69,9 +102,19 @@ export class SpacetimeConnector {
             };
 
             const onConnectError = (ctx: ErrorContext, err: Error) => {
-                console.error("Error connecting to SpacetimeDB:", err);
-                this.callbacks.onError?.(ctx, err);
-                reject(err);
+                clearTimeout(timeout);
+                const connectionError = new ConnectionError(
+                    `Failed to connect to SpacetimeDB: ${err.message}`,
+                    { 
+                        uri: this.config.uri, 
+                        module: this.config.moduleName,
+                        errorContext: ctx 
+                    },
+                    err
+                );
+                console.error("Error connecting to SpacetimeDB:", connectionError.message, connectionError.context);
+                this.callbacks.onError?.(ctx, connectionError);
+                reject(connectionError);
             };
 
             DbConnection.builder()

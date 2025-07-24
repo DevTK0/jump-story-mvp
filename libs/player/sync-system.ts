@@ -58,7 +58,7 @@ export class SyncSystem implements System {
         this.syncManager.syncState(newState);
     }
 
-    private shouldForceSync(onGround: boolean): boolean {
+    private shouldForceSync(_onGround: boolean): boolean {
         // You could track landing/jumping events here if needed
         // For now, let SyncManager handle the sync timing
         return false;

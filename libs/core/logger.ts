@@ -14,7 +14,7 @@ export interface LoggerConfig {
   colorize?: boolean;
 }
 
-class Logger {
+export class Logger {
   private static instance: Logger;
   private config: LoggerConfig = {
     level: LogLevel.INFO,

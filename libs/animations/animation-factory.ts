@@ -9,6 +9,14 @@
  * - Automatic animation registration and caching
  */
 
+// Animation-specific error types
+export class AnimationError extends Error {
+    constructor(message: string, public readonly context?: Record<string, any>) {
+        super(message);
+        this.name = 'AnimationError';
+    }
+}
+
 export interface AnimationFrameConfig {
     start: number;
     end: number;
@@ -75,8 +83,9 @@ export class AnimationFactory {
     public createSpriteAnimations(spriteKey: string): string[] {
         const animations = this.spriteDefinitions.get(spriteKey);
         if (!animations) {
-            throw new Error(
-                `No animation definitions found for sprite: ${spriteKey}`
+            throw new AnimationError(
+                `No animation definitions found for sprite: ${spriteKey}`,
+                { spriteKey }
             );
         }
 
@@ -110,9 +119,7 @@ export class AnimationFactory {
     public createSingleAnimation(config: AnimationConfig): string {
         // Check if animation already exists
         if (this.scene.anims.exists(config.key)) {
-            console.warn(
-                `Animation '${config.key}' already exists, skipping creation`
-            );
+            console.warn(`Animation '${config.key}' already exists, skipping creation`);
             return config.key;
         }
 
