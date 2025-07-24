@@ -8,48 +8,39 @@ import { DebugState, ShadowState } from "@/debug/debug-state";
 import { DEBUG_CONFIG } from "@/debug/config";
 import { BaseDebugRenderer } from "@/debug/debug-renderer";
 import { ShadowTrajectoryRenderer } from "@/effects/shadow";
-import { DbConnection, PlayerState, FacingDirection } from "@/spacetime/client";
-import { SyncManager } from "../sync-manager";
+import { FacingDirection } from "@/spacetime/client";
+import { createLogger } from "@/core/logger";
+import { stateValidator } from "@/core/state-validator";
 
 export class MovementSystem extends BaseDebugRenderer implements System, IDebuggable {
     private player: Player;
     private inputSystem: InputSystem;
+    private logger = createLogger('MovementSystem');
 
     // Movement state
     private hasUsedDoubleJump = false;
     private wasOnGround = false; // Track ground contact state
-    private currentFacing: FacingDirection = { tag: "Right" }; // Track facing direction
+    public currentFacing: FacingDirection = { tag: "Right" }; // Track facing direction
     private movementDisabled = false; // For hurt state knockback
 
     // Shadow trajectory renderer
     private shadowRenderer: ShadowTrajectoryRenderer;
-    
-    // Synchronization manager
-    public readonly syncManager: SyncManager;
 
     constructor(player: Player, inputSystem: InputSystem) {
         super();
         this.player = player;
         this.inputSystem = inputSystem;
         this.shadowRenderer = new ShadowTrajectoryRenderer(player.scene);
-        this.syncManager = new SyncManager(player);
         this.wasOnGround = player.body?.onFloor() || false;
     }
     
-    public setDbConnection(connection: DbConnection): void {
-        this.syncManager.setDbConnection(connection);
-    }
 
     update(time: number, _delta: number): void {
-        let forceSyncOnGroundContact = false;
-        
         // Check if player is dead
-        const isPlayerDead = this.syncManager.isPlayerDeadPublic();
+        const isPlayerDead = stateValidator.isCurrentPlayerDead();
         if (isPlayerDead) {
             // When dead, only stop horizontal movement but let gravity work
             this.player.body.setVelocityX(0);
-            // Continue to sync position so other players see the body fall
-            this.syncManager.syncPosition(time, this.currentFacing, false);
             // Don't process any input or other movement logic
             return;
         }
@@ -62,8 +53,7 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
 
             // Check for ground contact transition (landing)
             if (onGround && !this.wasOnGround) {
-                forceSyncOnGroundContact = true;
-                console.log("Player landed - forcing position sync");
+                this.logger.debug("Player landed - forcing position sync");
             }
             this.wasOnGround = onGround;
 
@@ -95,8 +85,7 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
             if (inputState.jump && onGround) {
                 this.jump();
                 this.player.transitionToState("Jump");
-                forceSyncOnGroundContact = true; // Force sync on jump takeoff too
-                console.log("Player jumped - forcing position sync");
+                this.logger.debug("Player jumped");
             }
 
             // Double jump
@@ -121,18 +110,6 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
             this.shadowRenderer.clearTrajectory();
             this.shadowRenderer.cleanupSprites();
         }
-        
-        // Sync position to SpacetimeDB if needed (ALWAYS do this, even when climbing)
-        this.syncManager.syncPosition(time, this.currentFacing, forceSyncOnGroundContact);
-
-        // Sync state to SpacetimeDB if needed
-        const newState = this.determineMovementState();
-        this.syncManager.syncState(newState);
-    }
-    
-    private determineMovementState(): PlayerState {
-        // Use the state machine's current DB state
-        return this.player.getStateMachine().getCurrentDbState();
     }
 
     private jump(): void {

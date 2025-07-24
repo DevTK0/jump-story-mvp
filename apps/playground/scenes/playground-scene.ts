@@ -318,15 +318,15 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     }
 
     private setupPlayerSystems(conn: DbConnection): void {
-        const movementSystem = this.player.getSystem("movement") as any;
-        if (movementSystem && movementSystem.setDbConnection) {
-            movementSystem.setDbConnection(conn);
+        const syncSystem = this.player.getSystem("sync") as any;
+        if (syncSystem && syncSystem.setDbConnection) {
+            syncSystem.setDbConnection(conn);
         }
 
         const combatSystem = this.player.getSystem("combat") as any;
-        if (combatSystem && combatSystem.setSyncManager) {
-            // Get the sync manager from movement system
-            const syncManager = movementSystem.syncManager;
+        if (combatSystem && combatSystem.setSyncManager && syncSystem) {
+            // Get the sync manager from sync system
+            const syncManager = syncSystem.getSyncManager();
             combatSystem.setSyncManager(syncManager);
         }
 

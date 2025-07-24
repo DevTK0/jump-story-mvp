@@ -17,14 +17,14 @@ export interface PlayerConfig {
 export class Player extends Phaser.GameObjects.Sprite {
   private playerState: PlayerState;
   private systems: Map<string, System> = new Map();
-  private stateMachine: PlayerStateMachine;
+  private stateMachine!: PlayerStateMachine; // Will be initialized by PlayerBuilder
   
   // Physics body reference for convenience
   public body!: Phaser.Physics.Arcade.Body;
   
   // Input references
-  private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
-  private keys: {
+  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys; // Will be initialized by PlayerBuilder
+  private keys!: {
     c: Phaser.Input.Keyboard.Key;
     x: Phaser.Input.Keyboard.Key;
     v: Phaser.Input.Keyboard.Key;
@@ -44,8 +44,17 @@ export class Player extends Phaser.GameObjects.Sprite {
     // Type-cast body
     this.body = this.body as Phaser.Physics.Arcade.Body;
     
-    // Initialize state
-    this.playerState = {
+    // Initialize with default state - PlayerBuilder will configure the rest
+    this.playerState = this.createDefaultPlayerState();
+    
+    // Setup physics properties
+    this.setupPhysics();
+    
+    // State machine will be initialized by PlayerBuilder
+  }
+  
+  private createDefaultPlayerState(): PlayerState {
+    return {
       health: 100,
       maxHealth: 100,
       isAlive: true,
@@ -54,8 +63,10 @@ export class Player extends Phaser.GameObjects.Sprite {
       canJump: true,
       facingDirection: 1,
     };
-    
-    // Setup input
+  }
+  
+  // Initialize input - called by PlayerBuilder
+  public initializeInput(): void {
     this.cursors = this.scene.input.keyboard!.createCursorKeys();
     this.keys = {
       c: this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.C),
@@ -66,11 +77,10 @@ export class Player extends Phaser.GameObjects.Sprite {
       t: this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.T),
       e: this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E),
     };
-    
-    // Setup physics properties
-    this.setupPhysics();
-    
-    // Initialize state machine
+  }
+  
+  // Initialize state machine - called by PlayerBuilder
+  public initializeStateMachine(): void {
     this.stateMachine = new PlayerStateMachine(this);
   }
   

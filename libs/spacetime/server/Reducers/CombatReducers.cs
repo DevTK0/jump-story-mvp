@@ -36,7 +36,7 @@ public static partial class Module
         }
 
         // Server-side damage calculation based on attack type
-        var damageResult = CalculateDamage(attackType, enemy.Value.enemy_type);
+        var damageResult = DamageCalculator.CalculateDamage(attackType, enemy.Value.enemy_type);
 
         // Apply damage if not immune
         if (damageResult.type != DamageType.Immune)
@@ -82,7 +82,7 @@ public static partial class Module
             // Award experience if enemy was killed
             if (wasKilled)
             {
-                AwardExperienceForKill(ctx, enemy.Value);
+                ExperienceService.AwardExperienceForKill(ctx, enemy.Value);
             }
 
             Log.Info($"Player {ctx.Sender} used {attackType} dealing {damageResult.finalDamage} {damageResult.type} damage to enemy {enemyId}. HP: {oldHp} -> {newHp}" + (wasKilled ? " [KILLED]" : ""));
@@ -120,127 +120,4 @@ public static partial class Module
         Log.Info($"Enemy {enemyId} recovered from damage and returned to idle state");
     }
 
-    /// <summary>
-    /// Award experience to all contributors when an enemy is killed
-    /// </summary>
-    private static void AwardExperienceForKill(ReducerContext ctx, Enemy deadEnemy)
-    {
-        // Get enemy config for base EXP reward
-        var enemyConfig = ctx.Db.EnemyConfig.enemy_type.Find(deadEnemy.enemy_type);
-        if (enemyConfig == null)
-        {
-            Log.Warn($"Cannot award EXP - no config found for enemy type: {deadEnemy.enemy_type}");
-            return;
-        }
-
-        // Get all damage events for this enemy to calculate contributions
-        var damageEvents = new List<EnemyDamageEvent>();
-        var playerDamageMap = new Dictionary<Identity, float>();
-        
-        foreach (var damageEvent in ctx.Db.EnemyDamageEvent.Iter())
-        {
-            if (damageEvent.enemy_id == deadEnemy.enemy_id && damageEvent.damage_amount > 0)
-            {
-                damageEvents.Add(damageEvent);
-                
-                // Aggregate damage by player
-                if (playerDamageMap.ContainsKey(damageEvent.player_identity))
-                {
-                    playerDamageMap[damageEvent.player_identity] += damageEvent.damage_amount;
-                }
-                else
-                {
-                    playerDamageMap[damageEvent.player_identity] = damageEvent.damage_amount;
-                }
-            }
-        }
-
-        if (playerDamageMap.Count == 0)
-        {
-            Log.Warn($"No damage contributors found for killed enemy {deadEnemy.enemy_id}");
-            return;
-        }
-
-        // Calculate total damage dealt
-        float totalDamage = 0;
-        foreach (var damage in playerDamageMap.Values)
-        {
-            totalDamage += damage;
-        }
-        
-        // Award EXP to each contributor based on their damage percentage
-        foreach (var (playerIdentity, damageDealt) in playerDamageMap)
-        {
-            var contributionPercentage = totalDamage > 0 ? damageDealt / totalDamage : 0f;
-            
-            // Get player info
-            var player = ctx.Db.Player.identity.Find(playerIdentity);
-            if (player == null) continue;
-
-            // Calculate EXP gain based on contribution
-            var expGained = (uint)Math.Max(1, Math.Round(enemyConfig.Value.base_exp_reward * contributionPercentage));
-            
-            // Award experience and check for level up
-            AwardExperienceToPlayer(ctx, player.Value, expGained, deadEnemy, contributionPercentage);
-        }
-
-        // Note: Damage events are cleaned up by CleanupDeadBodies reducer after 5 seconds
-        // This gives clients time to render all damage numbers including the killing blow
-    }
-
-    /// <summary>
-    /// Award experience to a player and handle level ups
-    /// </summary>
-    private static void AwardExperienceToPlayer(ReducerContext ctx, Player player, uint expGained, Enemy killedEnemy, float contributionPercentage)
-    {
-        var oldLevel = player.level;
-        var oldExp = player.experience;
-        var newExp = oldExp + expGained;
-        uint totalExpSpent = 0;
-        
-        // Check for level ups and calculate total exp spent
-        var newLevel = oldLevel;
-        while (true)
-        {
-            var nextLevelData = ctx.Db.PlayerLevelingConfig.level.Find(newLevel + 1);
-            if (nextLevelData == null)
-            {
-                // No more levels defined
-                break;
-            }
-            
-            if (newExp >= nextLevelData.Value.exp_required)
-            {
-                // Subtract the experience required for this level
-                newExp -= nextLevelData.Value.exp_required;
-                totalExpSpent += nextLevelData.Value.exp_required;
-                newLevel++;
-            }
-            else
-            {
-                break;
-            }
-        }
-        
-        // Update player with new level and remaining experience
-        var updatedPlayer = player with 
-        { 
-            experience = newExp,
-            level = newLevel
-        };
-        ctx.Db.Player.identity.Update(updatedPlayer);
-
-        // Log level ups
-        if (newLevel > oldLevel)
-        {
-            Log.Info($"🎉 Player {player.identity} leveled up! {oldLevel} -> {newLevel}");
-            if (totalExpSpent > 0)
-            {
-                Log.Info($"   Spent {totalExpSpent} EXP on level ups, {newExp} EXP remaining");
-            }
-        }
-
-        Log.Info($"Player {player.identity} gained {expGained} EXP from {killedEnemy.enemy_type} (Level {killedEnemy.level}). " +
-                $"Contribution: {contributionPercentage:P1}, Total EXP: {oldExp} -> {oldExp + expGained}, Current: {newExp}");
-    }
 }

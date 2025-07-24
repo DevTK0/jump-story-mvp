@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
 import { Player } from '@/player';
+import { AnimationSystem } from '@/player/animations';
 import { AttackType } from '@/spacetime/client';
 import { gameEvents } from '@/core/events';
 import { PlayerEvent } from '@/player/player-events';
 import { PlayerQueryService } from '@/player';
+import { createLogger } from '@/core/logger';
 import type { 
     DatabaseConnection, 
     PlayerAttackEventData, 
@@ -27,6 +29,7 @@ export class InteractionHandler {
     private currentAttackType: number = 1; // Default to attack1
     private enemyManager: InteractionEnemyManager | null = null;
     private playerQueryService: PlayerQueryService | null = null;
+    private logger = createLogger('InteractionHandler');
     
     // Track enemies damaged in current attack to prevent duplicates
     private damagedInCurrentAttack = new Set<number>();
@@ -65,14 +68,14 @@ export class InteractionHandler {
         return (_hitbox: AttackHitbox, enemy: EnemySprite) => {
             // Don't allow attacks if player is dead
             if (this.isPlayerDead()) {
-                console.log('Prevented attack - player is dead');
+                this.logger.debug('Prevented attack - player is dead');
                 return;
             }
             
             // Get enemy ID first to use centralized validation
             const enemyId = enemyManager.getEnemyIdFromSprite(enemy);
             if (enemyId === null) {
-                console.log('Prevented attack - enemy ID not found');
+                this.logger.debug('Prevented attack - enemy ID not found');
                 return;
             }
 
@@ -83,7 +86,7 @@ export class InteractionHandler {
 
             // Prevent multiple damage to same enemy in single attack
             if (this.damagedInCurrentAttack.has(enemyId)) {
-                console.log('Prevented duplicate damage to enemy', enemyId);
+                this.logger.debug('Prevented duplicate damage to enemy', enemyId);
                 return;
             }
 
@@ -97,14 +100,14 @@ export class InteractionHandler {
             );
 
             // Damage enemy (hit animation will be handled by DamageEvent subscription)
-            console.log('Enemy hit!', enemyId);
+            this.logger.info('Enemy hit!', enemyId);
             
             // Call server reducer to damage enemy
             if (this.dbConnection && this.dbConnection.reducers) {
                 const attackType = this.mapAttackTypeToEnum(this.currentAttackType);
                 this.dbConnection.reducers.damageEnemy(enemyId, attackType);
             } else {
-                console.warn('Database connection not available - cannot damage enemy');
+                this.logger.warn('Database connection not available - cannot damage enemy');
             }
         };
     }
@@ -116,24 +119,24 @@ export class InteractionHandler {
         return (playerSprite: PlayerSprite, enemy: EnemySprite) => {
             // Don't allow any interactions with dead players
             if (this.isPlayerDead()) {
-                console.log('Prevented enemy interaction - player is dead');
+                this.logger.debug('Prevented enemy interaction - player is dead');
                 return;
             }
             
             // Debug: Log enemy physics body state
-            console.log('Enemy collision - body exists:', !!enemy.body, 'body enabled:', enemy.body?.enable);
+            this.logger.debug('Enemy collision - body exists:', !!enemy.body, 'body enabled:', enemy.body?.enable);
             
             // Use centralized validation if enemy manager is available
             if (this.enemyManager) {
                 const enemyId = this.enemyManager.getEnemyIdFromSprite(enemy);
                 if (enemyId !== null && !this.enemyManager.canEnemyDamagePlayer(enemyId)) {
-                    console.log('Prevented damage from invalid/dead enemy');
+                    this.logger.debug('Prevented damage from invalid/dead enemy');
                     return;
                 }
             } else {
                 // Fallback: Check if enemy physics body is disabled (dead enemies have disabled bodies)
                 if (!enemy.body || !enemy.body.enable) {
-                    console.log('Prevented damage from dead enemy (physics check)');
+                    this.logger.debug('Prevented damage from dead enemy (physics check)');
                     return;
                 }
             }
@@ -145,28 +148,28 @@ export class InteractionHandler {
             );
             
             // Get the animation system and check/trigger damaged animation with knockback
-            const animationSystem = player.getSystem("animations") as any;
+            const animationSystem = player.getSystem<AnimationSystem>("animations");
             if (animationSystem && animationSystem.playDamagedAnimation) {
                 // Check invulnerability state before processing damage
-                console.log(`🔍 Damage attempt - Player invulnerable: ${animationSystem.isPlayerInvulnerable()}`);
+                this.logger.debug(`🔍 Damage attempt - Player invulnerable: ${animationSystem.isPlayerInvulnerable()}`);
                 
                 // Only trigger damaged if not already invulnerable
                 const wasDamaged = animationSystem.playDamagedAnimation(knockbackDirection);
                 if (wasDamaged) {
-                    console.log('✅ Player damaged by enemy! Sending damage to server. Knockback direction:', knockbackDirection);
+                    this.logger.info('✅ Player damaged by enemy! Sending damage to server. Knockback direction:', knockbackDirection);
                     
                     // Call server reducer to damage player
                     if (this.dbConnection && this.dbConnection.reducers && this.enemyManager) {
                         const enemyId = this.enemyManager.getEnemyIdFromSprite(enemy);
                         if (enemyId !== null) {
-                            console.log('📡 Sending damage to server for enemy:', enemyId);
+                            this.logger.debug('📡 Sending damage to server for enemy:', enemyId);
                             this.dbConnection.reducers.playerTakeDamage(enemyId);
                         }
                     } else {
-                        console.warn('Database connection not available - cannot damage player');
+                        this.logger.warn('Database connection not available - cannot damage player');
                     }
                 } else {
-                    console.log('❌ Damage attempt blocked - player invulnerable or animation system rejected');
+                    this.logger.debug('❌ Damage attempt blocked - player invulnerable or animation system rejected');
                 }
             }
         };
@@ -228,7 +231,7 @@ export class InteractionHandler {
         // Get the singleton PlayerQueryService (should already be initialized by PlaygroundScene)
         this.playerQueryService = PlayerQueryService.getInstance();
         if (!this.playerQueryService) {
-            console.warn('⚠️ InteractionHandler: PlayerQueryService singleton not available');
+            this.logger.warn('⚠️ InteractionHandler: PlayerQueryService singleton not available');
         }
     }
 
@@ -245,7 +248,7 @@ export class InteractionHandler {
     private isPlayerDead(): boolean {
         // Use optimized PlayerQueryService instead of manual iteration
         if (!this.playerQueryService) {
-            console.warn('⚠️ InteractionHandler: PlayerQueryService not available, assuming player alive');
+            this.logger.warn('⚠️ InteractionHandler: PlayerQueryService not available, assuming player alive');
             return false;
         }
         

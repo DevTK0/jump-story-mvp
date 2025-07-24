@@ -218,22 +218,10 @@ public static partial class Module
         var damage = PlayerConstants.CalculateEnemyDamage(enemyLevel, player.Value.level);
         
         // Determine damage type based on player level vs enemy level
-        var damageType = DeterminePlayerDamageType(player.Value.level, enemyLevel);
+        var damageType = DamageCalculator.DeterminePlayerDamageType(player.Value.level, enemyLevel);
         
         // Apply damage multiplier based on damage type
-        var finalDamage = damage;
-        switch (damageType)
-        {
-            case DamageType.Crit:
-                finalDamage = damage * 1.5f; // Enemy crits for 50% more
-                break;
-            case DamageType.Weak:
-                finalDamage = damage * 0.5f; // Player resists, takes 50% less
-                break;
-            case DamageType.Strong:
-                finalDamage = damage * 1.2f; // Enemy has advantage
-                break;
-        }
+        var finalDamage = damage * DamageCalculator.GetDamageMultiplier(damageType);
         
         // Apply damage
         var newHp = Math.Max(0, player.Value.current_hp - finalDamage);
@@ -379,38 +367,5 @@ public static partial class Module
         return state == PlayerState.Attack1 ||
                state == PlayerState.Attack2 ||
                state == PlayerState.Attack3;
-    }
-
-    private static DamageType DeterminePlayerDamageType(uint playerLevel, uint enemyLevel)
-    {
-        // Random chance for damage types
-        var random = new Random();
-        var roll = random.NextDouble();
-        
-        // Level difference affects damage type chances
-        var levelDiff = (int)playerLevel - (int)enemyLevel;
-        
-        if (levelDiff >= 5)
-        {
-            // Player much higher level - more likely to resist
-            if (roll < 0.4) return DamageType.Weak;      // 40% weak damage
-            else if (roll < 0.1) return DamageType.Crit; // 10% crit (enemy gets lucky)
-            else return DamageType.Normal;               // 50% normal
-        }
-        else if (levelDiff <= -5)
-        {
-            // Enemy much higher level - more likely to crit
-            if (roll < 0.3) return DamageType.Crit;      // 30% crit
-            else if (roll < 0.5) return DamageType.Strong; // 20% strong
-            else return DamageType.Normal;                // 50% normal
-        }
-        else
-        {
-            // Similar levels - balanced chances
-            if (roll < 0.15) return DamageType.Crit;     // 15% crit
-            else if (roll < 0.25) return DamageType.Weak; // 10% weak
-            else if (roll < 0.35) return DamageType.Strong; // 10% strong
-            else return DamageType.Normal;                // 65% normal
-        }
     }
 }

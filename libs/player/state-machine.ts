@@ -1,5 +1,6 @@
 import { Player } from './player';
 import { PlayerState as DbPlayerState } from '@/spacetime/client';
+import { createLogger } from '../core/logger';
 
 /**
  * Base class for all player states
@@ -367,10 +368,11 @@ export class DeadState extends PlayerState {
         if (!this.hasLanded && this.player.body.onFloor()) {
             this.hasLanded = true;
             // Force sync position when dead player hits ground
-            const movementSystem = this.player.getSystem('movement') as any;
-            if (movementSystem && movementSystem.syncManager) {
+            const syncSystem = this.player.getSystem('sync') as any;
+            if (syncSystem) {
+                const syncManager = syncSystem.getSyncManager();
                 const facing = this.player.flipX ? { tag: "Left" } : { tag: "Right" };
-                movementSystem.syncManager.syncPositionForDead(time, facing);
+                syncManager.syncPositionForDead(time, facing);
             }
         }
     }

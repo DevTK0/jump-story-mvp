@@ -5,6 +5,7 @@ import { ClimbingSystem } from './movement/climbing';
 import { CombatSystem, type AttackConfig } from './combat/combat';
 import { AnimationSystem } from './animations';
 import { RespawnSystem } from './respawn-system';
+import { SyncSystem } from './sync-system';
 import { TeleportEffect } from '../effects';
 import { DebugSystem } from '@/debug/debug-system';
 import { DeathMonitor } from './combat/death-monitor';
@@ -123,6 +124,10 @@ export class PlayerBuilder {
         // Create the player instance
         const player = new Player(this.config);
         
+        // Initialize player components
+        player.initializeInput();
+        player.initializeStateMachine();
+        
         // Create and register systems based on configuration
         this.createAndRegisterSystems(player);
         
@@ -139,6 +144,11 @@ export class PlayerBuilder {
         // Create movement system (always required)
         const movementSystem = new MovementSystem(player, inputSystem);
         systems.set('movement', movementSystem);
+        
+        // Create sync system (always required for online play)
+        const syncSystem = new SyncSystem(player);
+        syncSystem.setMovementSystem(movementSystem);
+        systems.set('sync', syncSystem);
         
         // Create death monitor (always required)
         const deathMonitor = new DeathMonitor(player);

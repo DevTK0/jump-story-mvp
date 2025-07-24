@@ -1,8 +1,11 @@
 import type { System } from '../core/types';
 import { Player } from './player';
 import { PlayerQueryService } from './player-query-service';
+import { InputSystem } from './input';
 import { DbConnection } from '@/spacetime/client';
 import { PLAYER_CONFIG } from './config';
+import { createLogger } from '../core/logger';
+import { stateValidator } from '../core/state-validator';
 
 export class RespawnSystem implements System {
     private player: Player;
@@ -10,24 +13,25 @@ export class RespawnSystem implements System {
     private playerQueryService: PlayerQueryService | null = null;
     private lastRespawnTime: number = 0;
     private respawnCooldown: number = PLAYER_CONFIG.respawn.cooldown;
+    private logger = createLogger('RespawnSystem');
 
     constructor(player: Player) {
         this.player = player;
     }
 
     update(time: number, _delta: number): void {
-        const inputSystem = this.player.getSystem('input') as any;
+        const inputSystem = this.player.getSystem<InputSystem>('input');
         if (!inputSystem) return;
 
         // Check if respawn key was just pressed
         if (inputSystem.isJustPressed('respawn')) {
-            console.log('🔄 Respawn key (R) pressed!');
+            this.logger.info('🔄 Respawn key (R) pressed!');
             this.handleRespawnInput(time);
         }
 
         // Check if instakill key was just pressed (for testing)
         if (inputSystem.isJustPressed('instakill')) {
-            console.log('💀 Instakill key (E) pressed!');
+            this.logger.info('💀 Instakill key (E) pressed!');
             this.handleInstakill();
         }
     }
@@ -35,77 +39,68 @@ export class RespawnSystem implements System {
     private handleRespawnInput(time: number): void {
         // Prevent respawn spam
         if (time - this.lastRespawnTime < this.respawnCooldown) {
-            console.log('Respawn on cooldown');
+            this.logger.debug('Respawn on cooldown');
             return;
         }
 
         // Only allow respawn if player is dead
-        if (!this.isPlayerDead()) {
-            console.log('Player is not dead, cannot respawn');
+        const respawnValidation = stateValidator.canPlayerPerformAction('respawn');
+        if (!respawnValidation.isValid) {
+            this.logger.warn(respawnValidation.reason || 'Cannot respawn');
             return;
         }
 
         // Call server respawn reducer
         if (this.dbConnection && this.dbConnection.reducers) {
-            console.log('✅ Requesting respawn from server...');
+            this.logger.info('✅ Requesting respawn from server...');
             try {
                 this.dbConnection.reducers.respawnPlayer();
                 this.lastRespawnTime = time;
-                console.log('✅ Respawn request sent successfully');
+                this.logger.info('✅ Respawn request sent successfully');
             } catch (error) {
-                console.error('❌ Error calling respawn reducer:', error);
+                this.logger.error('❌ Error calling respawn reducer:', error);
             }
         } else {
-            console.warn('❌ Database connection not available - cannot respawn');
+            this.logger.warn('❌ Database connection not available - cannot respawn');
         }
     }
 
     private isPlayerDead(): boolean {
-        if (this.playerQueryService) {
-            const player = this.playerQueryService.findCurrentPlayer();
-            if (player) {
-                const isDead = this.playerQueryService.isCurrentPlayerDead();
-                console.log(`Respawn check - HP: ${player.currentHp}, State: ${player.state.tag}, isDead: ${isDead}`);
-                return isDead;
-            }
-        }
-
-        // Fallback: assume we can always try to respawn (server will validate)
-        return true;
+        return stateValidator.isCurrentPlayerDead();
     }
 
     public setDbConnection(dbConnection: DbConnection): void {
         this.dbConnection = dbConnection;
         this.playerQueryService = PlayerQueryService.getInstance();
         if (!this.playerQueryService) {
-            console.error('❌ RespawnSystem: PlayerQueryService singleton not available');
+            this.logger.error('❌ RespawnSystem: PlayerQueryService singleton not available');
         }
     }
 
     private handleInstakill(): void {
         // Don't instakill if already dead
         if (this.isPlayerDead()) {
-            console.log('Player is already dead');
+            this.logger.debug('Player is already dead');
             return;
         }
 
         // Call the instakill reducer on the server
         if (this.dbConnection && this.dbConnection.reducers) {
-            console.log('💀 Triggering instakill...');
+            this.logger.info('💀 Triggering instakill...');
             
             try {
                 // Call the instakillPlayer reducer (will be available after regenerating client bindings)
                 if (this.dbConnection.reducers.instakillPlayer) {
                     this.dbConnection.reducers.instakillPlayer();
-                    console.log('💀 Instakill command sent to server');
+                    this.logger.info('💀 Instakill command sent to server');
                 } else {
-                    console.warn('instakillPlayer reducer not found - you may need to regenerate client bindings');
+                    this.logger.warn('instakillPlayer reducer not found - you may need to regenerate client bindings');
                 }
             } catch (error) {
-                console.error('❌ Error sending instakill command:', error);
+                this.logger.error('❌ Error sending instakill command:', error);
             }
         } else {
-            console.warn('Database connection not available - cannot instakill');
+            this.logger.warn('Database connection not available - cannot instakill');
         }
     }
 
