@@ -86,8 +86,10 @@ export class SyncManager {
   public syncPosition(time: number, facing: FacingDirection, forceSync: boolean = false): void {
     if (!this.dbConnection) return;
     
-    // Allow position sync even when dead so gravity/falling is visible to other players
-    // The server will validate if dead players should be able to move
+    // Don't sync position if dead (HP <= 0) - this prevents teleport issues
+    if (this.isPlayerDead()) {
+      return;
+    }
     
     const currentX = this.player.x;
     const currentY = this.player.y;
@@ -156,6 +158,24 @@ export class SyncManager {
   
   public isPlayerDeadPublic(): boolean {
     return this.isPlayerDead();
+  }
+  
+  /**
+   * Special position sync for dead players - only called when they hit the ground
+   */
+  public syncPositionForDead(time: number, facing: FacingDirection): void {
+    if (!this.dbConnection) return;
+    
+    const currentX = this.player.x;
+    const currentY = this.player.y;
+    
+    console.log(`Dead player landed - syncing final position (${currentX}, ${currentY})`);
+    
+    // Force sync the landing position
+    this.dbConnection.reducers.updatePlayerPosition(currentX, currentY, facing);
+    this.lastSyncedPosition = { x: currentX, y: currentY };
+    this.lastSyncedFacing = facing;
+    this.lastSyncTime = time;
   }
   
 }

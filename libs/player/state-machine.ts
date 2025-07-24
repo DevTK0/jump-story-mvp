@@ -338,6 +338,8 @@ export class DamagedState extends PlayerState {
  * Dead state - player has died and cannot perform actions
  */
 export class DeadState extends PlayerState {
+    private hasLanded: boolean = false;
+
     onEnter(previousState?: PlayerState): void {
         console.log(`Player entering Dead state from ${previousState?.getName() || 'none'}`);
         this.player.setPlayerState({ 
@@ -348,16 +350,29 @@ export class DeadState extends PlayerState {
         this.player.body.setVelocityX(0);
         // Disable collision detection with enemies (but keep player collision body active for respawn positioning)
         // This prevents collision callbacks from triggering while dead
+        this.hasLanded = false;
     }
 
     onExit(nextState?: PlayerState): void {
         console.log(`Player exiting Dead state to ${nextState?.getName() || 'none'}`);
         // Re-enable collision detection when respawning
+        this.hasLanded = false;
     }
 
-    update(_time: number, _delta: number): void {
+    update(time: number, _delta: number): void {
         // Only stop horizontal movement, allow gravity to work
         this.player.body.setVelocityX(0);
+        
+        // Check if player has landed on ground and sync position once
+        if (!this.hasLanded && this.player.body.onFloor()) {
+            this.hasLanded = true;
+            // Force sync position when dead player hits ground
+            const movementSystem = this.player.getSystem('movement') as any;
+            if (movementSystem && movementSystem.syncManager) {
+                const facing = this.player.flipX ? { tag: "Left" } : { tag: "Right" };
+                movementSystem.syncManager.syncPositionForDead(time, facing);
+            }
+        }
     }
 
     getDbState(): DbPlayerState {
