@@ -13,7 +13,7 @@ import { PhysicsConfigurator, type CollisionGroups } from "@/physics";
 import { InteractionHandler } from "@/networking";
 import { DbConnection } from "@/spacetime/client";
 import { Identity } from "@clockworklabs/spacetimedb-sdk";
-import { DamageNumberRenderer } from "@/player";
+import { DamageNumberRenderer, PlayerDamageRenderer } from "@/player";
 import { PlayerQueryService } from "@/player";
 import { AnimationFactory, ANIMATION_DEFINITIONS } from "@/animations";
 
@@ -38,6 +38,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     private physicsConfigurator!: PhysicsConfigurator;
     private interactionHandler!: InteractionHandler;
     private damageNumberRenderer!: DamageNumberRenderer;
+    private playerDamageRenderer!: PlayerDamageRenderer;
     private playerStatsUI: PlayerStatsUI | null = null;
     private fpsCounter!: FPSCounter;
     private performanceMetrics!: PerformanceMetrics;
@@ -168,9 +169,13 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             this.enemyManager.setDbConnection(dbConn);
         }
 
-        // Initialize damage number renderer
+        // Initialize damage number renderer for enemies
         this.damageNumberRenderer = new DamageNumberRenderer(this);
         this.damageNumberRenderer.setEnemyManager(this.enemyManager);
+        
+        // Initialize player damage renderer
+        this.playerDamageRenderer = new PlayerDamageRenderer(this);
+        this.playerDamageRenderer.setPlayer(this.player);
 
         // Create FPS counter
         this.fpsCounter = new FPSCounter(this, {
@@ -198,9 +203,10 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             this.performanceMetrics.toggle();
         });
 
-        // Set up damage event subscription if database connection exists
+        // Set up damage event subscriptions if database connection exists
         if (dbConn) {
             this.setupDamageEventSubscription(dbConn);
+            this.playerDamageRenderer.setDbConnection(dbConn);
         }
 
         // Set enemy manager reference on interaction handler
@@ -262,9 +268,14 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         this.playerStatsUI = new PlayerStatsUI(this, identity);
         this.playerStatsUI.setDbConnection(conn);
 
-        // Set up damage event subscription if damage number renderer exists
+        // Set up damage event subscriptions if renderers exist
         if (this.damageNumberRenderer) {
             this.setupDamageEventSubscription(conn);
+        }
+        
+        // Set up player damage renderer connection
+        if (this.playerDamageRenderer) {
+            this.playerDamageRenderer.setDbConnection(conn);
         }
     }
 
@@ -298,8 +309,8 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     }
 
     private setupDamageEventSubscription(conn: DbConnection): void {
-        // Subscribe to damage events from the database
-        conn.db.damageEvent.onInsert((_ctx, damageEvent) => {
+        // Subscribe to enemy damage events from the database
+        conn.db.enemyDamageEvent.onInsert((_ctx, damageEvent) => {
             // Handle damage numbers
             this.damageNumberRenderer.handleDamageEvent(damageEvent);
 

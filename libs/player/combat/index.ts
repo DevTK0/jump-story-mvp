@@ -7,4 +7,5 @@ export { DeathStateService } from './death-state-service';
 
 // Damage visualization
 export { DamageNumberRenderer } from './damage-number-renderer';
+export { PlayerDamageRenderer } from './player-damage-renderer';
 export { DAMAGE_NUMBER_CONFIG, getDamageTypeKey, getDamageDisplayText } from './damage-number-config';

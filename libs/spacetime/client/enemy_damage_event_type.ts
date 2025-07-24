@@ -34,7 +34,7 @@ import {
 } from "@clockworklabs/spacetimedb-sdk";
 import { DamageType as __DamageType } from "./damage_type_type";
 
-export type DamageEvent = {
+export type EnemyDamageEvent = {
   damageEventId: number,
   enemyId: number,
   playerIdentity: Identity,
@@ -46,7 +46,7 @@ export type DamageEvent = {
 /**
  * A namespace for generated helper functions.
  */
-export namespace DamageEvent {
+export namespace EnemyDamageEvent {
   /**
   * A function which returns this type represented as an AlgebraicType.
   * This function is derived from the AlgebraicType used to generate this type.
@@ -62,12 +62,12 @@ export namespace DamageEvent {
     ]);
   }
 
-  export function serialize(writer: BinaryWriter, value: DamageEvent): void {
-    DamageEvent.getTypeScriptAlgebraicType().serialize(writer, value);
+  export function serialize(writer: BinaryWriter, value: EnemyDamageEvent): void {
+    EnemyDamageEvent.getTypeScriptAlgebraicType().serialize(writer, value);
   }
 
-  export function deserialize(reader: BinaryReader): DamageEvent {
-    return DamageEvent.getTypeScriptAlgebraicType().deserialize(reader);
+  export function deserialize(reader: BinaryReader): EnemyDamageEvent {
+    return EnemyDamageEvent.getTypeScriptAlgebraicType().deserialize(reader);
   }
 
 }

@@ -18,7 +18,6 @@ export class PerformanceMetrics {
     private container: Phaser.GameObjects.Container;
     
     // Update tracking
-    private updateCounter: number = 0;
     private updateInterval: number = 500; // Update every 500ms
     private lastUpdateTime: number = 0;
     
@@ -59,7 +58,7 @@ export class PerformanceMetrics {
         this.lastUpdateTime = performance.now();
     }
     
-    public update(time: number, delta: number): void {
+    public update(_time: number, _delta: number): void {
         const currentTime = performance.now();
         const elapsed = currentTime - this.lastUpdateTime;
         

@@ -7,7 +7,6 @@ import {
 import { ANIMATION_DEFINITIONS } from "../animations";
 import {
     EnemyStateManager,
-    type EnemyStateService,
 } from "./enemy-state-service";
 import { ENEMY_CONFIG } from "./enemy-config";
 import { EnemyHealthBar } from "./enemy-health-bar";

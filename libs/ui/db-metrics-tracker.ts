@@ -17,7 +17,6 @@ export class DbMetricsTracker {
     
     // Event tracking
     private eventCount: number = 0;
-    private eventStartTime: number = Date.now();
     private lastEventTime: number = Date.now();
     private eventHistory: number[] = []; // Timestamps of recent events
     private readonly EVENT_HISTORY_WINDOW = 5000; // 5 second window
@@ -47,7 +46,8 @@ export class DbMetricsTracker {
             'player',
             'enemy',
             'enemyRoute',
-            'damageEvent',
+            'enemyDamageEvent',
+            'playerDamageEvent',
             'cleanupDeadBodiesTimer',
             'enemyPatrolTimer',
             'spawnEnemiesTimer'

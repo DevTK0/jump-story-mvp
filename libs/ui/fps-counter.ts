@@ -11,7 +11,6 @@ export interface FPSCounterConfig {
 }
 
 export class FPSCounter {
-    private scene: Phaser.Scene;
     private fpsText: Phaser.GameObjects.Text;
     private background: Phaser.GameObjects.Rectangle;
     private container: Phaser.GameObjects.Container;
@@ -30,7 +29,6 @@ export class FPSCounter {
     private maxHistorySize: number = 60; // Keep last 60 samples (15 seconds at 4 updates/sec)
 
     constructor(scene: Phaser.Scene, config?: FPSCounterConfig) {
-        this.scene = scene;
         
         // Default configuration
         const x = config?.x ?? 10;
@@ -66,7 +64,7 @@ export class FPSCounter {
         this.lastTime = performance.now();
     }
     
-    public update(time: number, delta: number): void {
+    public update(_time: number, _delta: number): void {
         this.frameCount++;
         
         const currentTime = performance.now();

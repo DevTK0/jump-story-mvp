@@ -52,13 +52,25 @@ public static partial class Module
         public Timestamp aggro_start_time; // When aggro started
     }
 
-    [Table(Name = "DamageEvent", Public = true)]
-    public partial struct DamageEvent
+    [Table(Name = "EnemyDamageEvent", Public = true)]
+    public partial struct EnemyDamageEvent
     {
         [PrimaryKey, AutoInc]
         public uint damage_event_id;
         public uint enemy_id;
         public Identity player_identity;
+        public float damage_amount;
+        public DamageType damage_type;
+        public Timestamp timestamp;
+    }
+
+    [Table(Name = "PlayerDamageEvent", Public = true)]
+    public partial struct PlayerDamageEvent
+    {
+        [PrimaryKey, AutoInc]
+        public uint damage_event_id;
+        public Identity player_identity;
+        public uint enemy_id; // The enemy that caused the damage
         public float damage_amount;
         public DamageType damage_type;
         public Timestamp timestamp;

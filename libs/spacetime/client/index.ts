@@ -70,14 +70,16 @@ import { UpdatePlayerState } from "./update_player_state_reducer.ts";
 export { UpdatePlayerState };
 
 // Import and reexport all table handle types
-import { DamageEventTableHandle } from "./damage_event_table.ts";
-export { DamageEventTableHandle };
 import { EnemyTableHandle } from "./enemy_table.ts";
 export { EnemyTableHandle };
+import { EnemyDamageEventTableHandle } from "./enemy_damage_event_table.ts";
+export { EnemyDamageEventTableHandle };
 import { EnemyRouteTableHandle } from "./enemy_route_table.ts";
 export { EnemyRouteTableHandle };
 import { PlayerTableHandle } from "./player_table.ts";
 export { PlayerTableHandle };
+import { PlayerDamageEventTableHandle } from "./player_damage_event_table.ts";
+export { PlayerDamageEventTableHandle };
 import { CleanupDeadBodiesTimerTableHandle } from "./cleanup_dead_bodies_timer_table.ts";
 export { CleanupDeadBodiesTimerTableHandle };
 import { EnemyPatrolTimerTableHandle } from "./enemy_patrol_timer_table.ts";
@@ -90,8 +92,6 @@ import { AttackType } from "./attack_type_type.ts";
 export { AttackType };
 import { CleanupDeadBodiesTimer } from "./cleanup_dead_bodies_timer_type.ts";
 export { CleanupDeadBodiesTimer };
-import { DamageEvent } from "./damage_event_type.ts";
-export { DamageEvent };
 import { DamageType } from "./damage_type_type.ts";
 export { DamageType };
 import { DbRect } from "./db_rect_type.ts";
@@ -100,6 +100,8 @@ import { DbVector2 } from "./db_vector_2_type.ts";
 export { DbVector2 };
 import { Enemy } from "./enemy_type.ts";
 export { Enemy };
+import { EnemyDamageEvent } from "./enemy_damage_event_type.ts";
+export { EnemyDamageEvent };
 import { EnemyPatrolTimer } from "./enemy_patrol_timer_type.ts";
 export { EnemyPatrolTimer };
 import { EnemyRoute } from "./enemy_route_type.ts";
@@ -108,6 +110,8 @@ import { FacingDirection } from "./facing_direction_type.ts";
 export { FacingDirection };
 import { Player } from "./player_type.ts";
 export { Player };
+import { PlayerDamageEvent } from "./player_damage_event_type.ts";
+export { PlayerDamageEvent };
 import { PlayerState } from "./player_state_type.ts";
 export { PlayerState };
 import { SpawnEnemiesTimer } from "./spawn_enemies_timer_type.ts";
@@ -115,15 +119,6 @@ export { SpawnEnemiesTimer };
 
 const REMOTE_MODULE = {
   tables: {
-    DamageEvent: {
-      tableName: "DamageEvent",
-      rowType: DamageEvent.getTypeScriptAlgebraicType(),
-      primaryKey: "damageEventId",
-      primaryKeyInfo: {
-        colName: "damageEventId",
-        colType: DamageEvent.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
-      },
-    },
     Enemy: {
       tableName: "Enemy",
       rowType: Enemy.getTypeScriptAlgebraicType(),
@@ -131,6 +126,15 @@ const REMOTE_MODULE = {
       primaryKeyInfo: {
         colName: "enemyId",
         colType: Enemy.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    EnemyDamageEvent: {
+      tableName: "EnemyDamageEvent",
+      rowType: EnemyDamageEvent.getTypeScriptAlgebraicType(),
+      primaryKey: "damageEventId",
+      primaryKeyInfo: {
+        colName: "damageEventId",
+        colType: EnemyDamageEvent.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     EnemyRoute: {
@@ -149,6 +153,15 @@ const REMOTE_MODULE = {
       primaryKeyInfo: {
         colName: "identity",
         colType: Player.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    PlayerDamageEvent: {
+      tableName: "PlayerDamageEvent",
+      rowType: PlayerDamageEvent.getTypeScriptAlgebraicType(),
+      primaryKey: "damageEventId",
+      primaryKeyInfo: {
+        colName: "damageEventId",
+        colType: PlayerDamageEvent.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     cleanup_dead_bodies_timer: {
@@ -619,12 +632,12 @@ export class SetReducerFlags {
 export class RemoteTables {
   constructor(private connection: DbConnectionImpl) {}
 
-  get damageEvent(): DamageEventTableHandle {
-    return new DamageEventTableHandle(this.connection.clientCache.getOrCreateTable<DamageEvent>(REMOTE_MODULE.tables.DamageEvent));
-  }
-
   get enemy(): EnemyTableHandle {
     return new EnemyTableHandle(this.connection.clientCache.getOrCreateTable<Enemy>(REMOTE_MODULE.tables.Enemy));
+  }
+
+  get enemyDamageEvent(): EnemyDamageEventTableHandle {
+    return new EnemyDamageEventTableHandle(this.connection.clientCache.getOrCreateTable<EnemyDamageEvent>(REMOTE_MODULE.tables.EnemyDamageEvent));
   }
 
   get enemyRoute(): EnemyRouteTableHandle {
@@ -633,6 +646,10 @@ export class RemoteTables {
 
   get player(): PlayerTableHandle {
     return new PlayerTableHandle(this.connection.clientCache.getOrCreateTable<Player>(REMOTE_MODULE.tables.Player));
+  }
+
+  get playerDamageEvent(): PlayerDamageEventTableHandle {
+    return new PlayerDamageEventTableHandle(this.connection.clientCache.getOrCreateTable<PlayerDamageEvent>(REMOTE_MODULE.tables.PlayerDamageEvent));
   }
 
   get cleanupDeadBodiesTimer(): CleanupDeadBodiesTimerTableHandle {

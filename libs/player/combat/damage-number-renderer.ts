@@ -4,7 +4,7 @@
  */
 
 import Phaser from 'phaser';
-import { DamageEvent } from '@/spacetime/client';
+import { EnemyDamageEvent } from '@/spacetime/client';
 import { EnemyManager } from '@/enemy';
 import { DAMAGE_NUMBER_CONFIG, getDamageTypeKey, getDamageDisplayText } from './damage-number-config';
 
@@ -14,7 +14,7 @@ interface DamageNumberState {
   enemyId: number;
   initialX: number;
   initialY: number;
-  damageEvent: DamageEvent;
+  damageEvent: EnemyDamageEvent;
 }
 
 export class DamageNumberRenderer {
@@ -99,7 +99,7 @@ export class DamageNumberRenderer {
   /**
    * Handle incoming damage event from SpacetimeDB
    */
-  public handleDamageEvent(damageEvent: DamageEvent): void {
+  public handleDamageEvent(damageEvent: EnemyDamageEvent): void {
     if (!this.enemyManager) {
       console.warn('DamageNumberRenderer: EnemyManager not set');
       return;
@@ -130,7 +130,7 @@ export class DamageNumberRenderer {
   /**
    * Check if damage event is too old to process
    */
-  private isEventStale(damageEvent: DamageEvent): boolean {
+  private isEventStale(damageEvent: EnemyDamageEvent): boolean {
     const eventTime = damageEvent.timestamp.toDate().getTime();
     const now = Date.now();
     return now - eventTime > DAMAGE_NUMBER_CONFIG.performance.staleEventThresholdMs;
@@ -159,7 +159,7 @@ export class DamageNumberRenderer {
   /**
    * Create and position a damage number
    */
-  private createDamageNumber(damageEvent: DamageEvent, baseX: number, baseY: number): void {
+  private createDamageNumber(damageEvent: EnemyDamageEvent, baseX: number, baseY: number): void {
     const text = this.getTextFromPool();
     if (!text) {
       console.debug('No available text objects in pool');
@@ -198,7 +198,7 @@ export class DamageNumberRenderer {
   /**
    * Calculate position for stacked damage numbers
    */
-  private calculateStackedPosition(enemyId: number, baseX: number, baseY: number, damageEvent: DamageEvent): { x: number; y: number } {
+  private calculateStackedPosition(enemyId: number, baseX: number, baseY: number, damageEvent: EnemyDamageEvent): { x: number; y: number } {
     const activeForEnemy = this.activeNumbers.get(enemyId) || [];
     const stackIndex = activeForEnemy.length;
     
@@ -217,7 +217,7 @@ export class DamageNumberRenderer {
   /**
    * Configure text appearance based on damage type
    */
-  private configureTextAppearance(text: Phaser.GameObjects.Text, damageEvent: DamageEvent): void {
+  private configureTextAppearance(text: Phaser.GameObjects.Text, damageEvent: EnemyDamageEvent): void {
     const damageTypeKey = getDamageTypeKey(damageEvent.damageType);
     const style = DAMAGE_NUMBER_CONFIG.styles[damageTypeKey];
     const displayText = getDamageDisplayText(damageEvent.damageAmount, damageEvent.damageType);
@@ -321,7 +321,7 @@ export class DamageNumberRenderer {
   /**
    * Create a deterministic seed from damage event data
    */
-  private createSeedFromDamageEvent(damageEvent: DamageEvent): number {
+  private createSeedFromDamageEvent(damageEvent: EnemyDamageEvent): number {
     // Use damage event properties to create a deterministic seed
     // This ensures all clients generate the same "random" positions
     const timestamp = damageEvent.timestamp.toDate().getTime();

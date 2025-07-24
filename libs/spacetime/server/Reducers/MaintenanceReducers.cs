@@ -230,7 +230,7 @@ public static partial class Module
         {
             // First, delete all damage events for this enemy
             var damageEventsToRemove = new List<uint>();
-            foreach (var damageEvent in ctx.Db.DamageEvent.Iter())
+            foreach (var damageEvent in ctx.Db.EnemyDamageEvent.Iter())
             {
                 if (damageEvent.enemy_id == enemyId)
                 {
@@ -240,7 +240,7 @@ public static partial class Module
             
             foreach (var damageEventId in damageEventsToRemove)
             {
-                ctx.Db.DamageEvent.damage_event_id.Delete(damageEventId);
+                ctx.Db.EnemyDamageEvent.damage_event_id.Delete(damageEventId);
             }
             
             // Then delete the enemy
@@ -250,6 +250,26 @@ public static partial class Module
         if (enemiesToRemove.Count > 0)
         {
             Log.Info($"Cleaned up {enemiesToRemove.Count} dead enemies");
+        }
+        
+        // Also clean up old player damage events (older than 5 seconds)
+        var playerDamageEventsToRemove = new List<uint>();
+        foreach (var playerDamageEvent in ctx.Db.PlayerDamageEvent.Iter())
+        {
+            if (playerDamageEvent.timestamp < fiveSecondsAgo)
+            {
+                playerDamageEventsToRemove.Add(playerDamageEvent.damage_event_id);
+            }
+        }
+        
+        foreach (var damageEventId in playerDamageEventsToRemove)
+        {
+            ctx.Db.PlayerDamageEvent.damage_event_id.Delete(damageEventId);
+        }
+        
+        if (playerDamageEventsToRemove.Count > 0)
+        {
+            Log.Info($"Cleaned up {playerDamageEventsToRemove.Count} old player damage events");
         }
     }
 

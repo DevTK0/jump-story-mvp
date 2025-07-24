@@ -217,11 +217,29 @@ public static partial class Module
         uint enemyLevel = 1; // TODO: Add enemy levels
         var damage = PlayerConstants.CalculateEnemyDamage(enemyLevel, player.Value.level);
         
+        // Determine damage type based on player level vs enemy level
+        var damageType = DeterminePlayerDamageType(player.Value.level, enemyLevel);
+        
+        // Apply damage multiplier based on damage type
+        var finalDamage = damage;
+        switch (damageType)
+        {
+            case DamageType.Crit:
+                finalDamage = damage * 1.5f; // Enemy crits for 50% more
+                break;
+            case DamageType.Weak:
+                finalDamage = damage * 0.5f; // Player resists, takes 50% less
+                break;
+            case DamageType.Strong:
+                finalDamage = damage * 1.2f; // Enemy has advantage
+                break;
+        }
+        
         // Apply damage
-        var newHp = Math.Max(0, player.Value.current_hp - damage);
+        var newHp = Math.Max(0, player.Value.current_hp - finalDamage);
         var newState = newHp <= 0 ? PlayerState.Dead : player.Value.state;
 
-        Log.Info($"Player {ctx.Sender} damage calculation - Current HP: {player.Value.current_hp}, Damage: {damage}, New HP: {newHp}, Current State: {player.Value.state}, New State: {newState}");
+        Log.Info($"Player {ctx.Sender} damage calculation - Current HP: {player.Value.current_hp}, Damage: {finalDamage}, New HP: {newHp}, Current State: {player.Value.state}, New State: {newState}");
 
         // Update player with new HP and state
         ctx.Db.Player.identity.Update(player.Value with
@@ -231,7 +249,17 @@ public static partial class Module
             last_active = ctx.Timestamp
         });
 
-        Log.Info($"Player {ctx.Sender} took {damage} damage from enemy {enemyId}. HP: {player.Value.current_hp} -> {newHp}");
+        // Create player damage event for visual display
+        ctx.Db.PlayerDamageEvent.Insert(new PlayerDamageEvent
+        {
+            player_identity = ctx.Sender,
+            enemy_id = enemyId,
+            damage_amount = finalDamage,
+            damage_type = damageType,
+            timestamp = ctx.Timestamp
+        });
+
+        Log.Info($"Player {ctx.Sender} took {finalDamage} damage from enemy {enemyId}. HP: {player.Value.current_hp} -> {newHp}");
 
         // If player died, log it
         if (newState == PlayerState.Dead)
@@ -351,5 +379,38 @@ public static partial class Module
         return state == PlayerState.Attack1 ||
                state == PlayerState.Attack2 ||
                state == PlayerState.Attack3;
+    }
+
+    private static DamageType DeterminePlayerDamageType(uint playerLevel, uint enemyLevel)
+    {
+        // Random chance for damage types
+        var random = new Random();
+        var roll = random.NextDouble();
+        
+        // Level difference affects damage type chances
+        var levelDiff = (int)playerLevel - (int)enemyLevel;
+        
+        if (levelDiff >= 5)
+        {
+            // Player much higher level - more likely to resist
+            if (roll < 0.4) return DamageType.Weak;      // 40% weak damage
+            else if (roll < 0.1) return DamageType.Crit; // 10% crit (enemy gets lucky)
+            else return DamageType.Normal;               // 50% normal
+        }
+        else if (levelDiff <= -5)
+        {
+            // Enemy much higher level - more likely to crit
+            if (roll < 0.3) return DamageType.Crit;      // 30% crit
+            else if (roll < 0.5) return DamageType.Strong; // 20% strong
+            else return DamageType.Normal;                // 50% normal
+        }
+        else
+        {
+            // Similar levels - balanced chances
+            if (roll < 0.15) return DamageType.Crit;     // 15% crit
+            else if (roll < 0.25) return DamageType.Weak; // 10% weak
+            else if (roll < 0.35) return DamageType.Strong; // 10% strong
+            else return DamageType.Normal;                // 65% normal
+        }
     }
 }

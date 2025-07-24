@@ -67,7 +67,7 @@ public static partial class Module
             ctx.Db.Enemy.enemy_id.Update(damagedEnemy);
 
             // Record damage event
-            ctx.Db.DamageEvent.Insert(new DamageEvent
+            ctx.Db.EnemyDamageEvent.Insert(new EnemyDamageEvent
             {
                 enemy_id = enemyId,
                 player_identity = ctx.Sender,
@@ -81,7 +81,7 @@ public static partial class Module
         else
         {
             // Record immune event
-            ctx.Db.DamageEvent.Insert(new DamageEvent
+            ctx.Db.EnemyDamageEvent.Insert(new EnemyDamageEvent
             {
                 enemy_id = enemyId,
                 player_identity = ctx.Sender,

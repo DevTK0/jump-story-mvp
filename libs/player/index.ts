@@ -18,6 +18,7 @@ export {
     DeathMonitor,
     DeathStateService,
     DamageNumberRenderer,
+    PlayerDamageRenderer,
     DAMAGE_NUMBER_CONFIG,
     getDamageTypeKey,
     getDamageDisplayText

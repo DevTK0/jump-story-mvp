@@ -32,25 +32,25 @@ import {
   type ReducerEventContextInterface,
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
-import { DamageEvent } from "./damage_event_type";
+import { PlayerDamageEvent } from "./player_damage_event_type";
 import { DamageType as __DamageType } from "./damage_type_type";
 
 import { type EventContext, type Reducer, RemoteReducers, RemoteTables } from ".";
 
 /**
- * Table handle for the table `DamageEvent`.
+ * Table handle for the table `PlayerDamageEvent`.
  *
- * Obtain a handle from the [`damageEvent`] property on [`RemoteTables`],
- * like `ctx.db.damageEvent`.
+ * Obtain a handle from the [`playerDamageEvent`] property on [`RemoteTables`],
+ * like `ctx.db.playerDamageEvent`.
  *
  * Users are encouraged not to explicitly reference this type,
  * but to directly chain method calls,
- * like `ctx.db.damageEvent.on_insert(...)`.
+ * like `ctx.db.playerDamageEvent.on_insert(...)`.
  */
-export class DamageEventTableHandle {
-  tableCache: TableCache<DamageEvent>;
+export class PlayerDamageEventTableHandle {
+  tableCache: TableCache<PlayerDamageEvent>;
 
-  constructor(tableCache: TableCache<DamageEvent>) {
+  constructor(tableCache: TableCache<PlayerDamageEvent>) {
     this.tableCache = tableCache;
   }
 
@@ -58,24 +58,24 @@ export class DamageEventTableHandle {
     return this.tableCache.count();
   }
 
-  iter(): Iterable<DamageEvent> {
+  iter(): Iterable<PlayerDamageEvent> {
     return this.tableCache.iter();
   }
   /**
-   * Access to the `damageEventId` unique index on the table `DamageEvent`,
+   * Access to the `damageEventId` unique index on the table `PlayerDamageEvent`,
    * which allows point queries on the field of the same name
-   * via the [`DamageEventDamageEventIdUnique.find`] method.
+   * via the [`PlayerDamageEventDamageEventIdUnique.find`] method.
    *
    * Users are encouraged not to explicitly reference this type,
    * but to directly chain method calls,
-   * like `ctx.db.damageEvent.damageEventId().find(...)`.
+   * like `ctx.db.playerDamageEvent.damageEventId().find(...)`.
    *
-   * Get a handle on the `damageEventId` unique index on the table `DamageEvent`.
+   * Get a handle on the `damageEventId` unique index on the table `PlayerDamageEvent`.
    */
   damageEventId = {
     // Find the subscribed row whose `damageEventId` column value is equal to `col_val`,
     // if such a row is present in the client cache.
-    find: (col_val: number): DamageEvent | undefined => {
+    find: (col_val: number): PlayerDamageEvent | undefined => {
       for (let row of this.tableCache.iter()) {
         if (deepEqual(row.damageEventId, col_val)) {
           return row;
@@ -84,27 +84,27 @@ export class DamageEventTableHandle {
     },
   };
 
-  onInsert = (cb: (ctx: EventContext, row: DamageEvent) => void) => {
+  onInsert = (cb: (ctx: EventContext, row: PlayerDamageEvent) => void) => {
     return this.tableCache.onInsert(cb);
   }
 
-  removeOnInsert = (cb: (ctx: EventContext, row: DamageEvent) => void) => {
+  removeOnInsert = (cb: (ctx: EventContext, row: PlayerDamageEvent) => void) => {
     return this.tableCache.removeOnInsert(cb);
   }
 
-  onDelete = (cb: (ctx: EventContext, row: DamageEvent) => void) => {
+  onDelete = (cb: (ctx: EventContext, row: PlayerDamageEvent) => void) => {
     return this.tableCache.onDelete(cb);
   }
 
-  removeOnDelete = (cb: (ctx: EventContext, row: DamageEvent) => void) => {
+  removeOnDelete = (cb: (ctx: EventContext, row: PlayerDamageEvent) => void) => {
     return this.tableCache.removeOnDelete(cb);
   }
 
   // Updates are only defined for tables with primary keys.
-  onUpdate = (cb: (ctx: EventContext, oldRow: DamageEvent, newRow: DamageEvent) => void) => {
+  onUpdate = (cb: (ctx: EventContext, oldRow: PlayerDamageEvent, newRow: PlayerDamageEvent) => void) => {
     return this.tableCache.onUpdate(cb);
   }
 
-  removeOnUpdate = (cb: (ctx: EventContext, onRow: DamageEvent, newRow: DamageEvent) => void) => {
+  removeOnUpdate = (cb: (ctx: EventContext, onRow: PlayerDamageEvent, newRow: PlayerDamageEvent) => void) => {
     return this.tableCache.removeOnUpdate(cb);
   }}
