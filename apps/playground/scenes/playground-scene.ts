@@ -16,6 +16,9 @@ import { Identity } from "@clockworklabs/spacetimedb-sdk";
 import { EnemyDamageRenderer, PlayerDamageRenderer } from "@/player";
 import { PlayerQueryService } from "@/player";
 import { AnimationFactory, ANIMATION_DEFINITIONS } from "@/animations";
+import { protectScene } from "@/core/scene-error-handler";
+import { ErrorBoundary, NetworkError, AssetError } from "@/core/error-boundary";
+import { registerAllRecoveryStrategies } from "@/core/error-recovery-strategies";
 
 // Scene-specific constants
 const COLOR_BACKGROUND = 0x2c3e50;
@@ -25,6 +28,7 @@ const CAMERA_SHAKE_DURATION = 100;
 const CAMERA_SHAKE_INTENSITY = 0.03;
 
 export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
+    private errorBoundary: ErrorBoundary = ErrorBoundary.getInstance();
     private player!: Player;
 
     // Database connection
@@ -54,7 +58,6 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         this.mapLoader.loadMapAssets();
 
         // Load unified soldier spritesheet
-
         this.load.spritesheet("soldier", "assets/spritesheet/Soldier.png", {
             frameWidth: SPRITE_FRAME_WIDTH,
             frameHeight: SPRITE_FRAME_HEIGHT,
@@ -65,18 +68,39 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             frameWidth: SPRITE_FRAME_WIDTH,
             frameHeight: SPRITE_FRAME_HEIGHT,
         });
+        
+        // Add error handler for asset loading
+        this.load.on('loaderror', (file: any) => {
+            this.errorBoundary.handleError(new AssetError(`Failed to load asset: ${file.key}`, {
+                scene: this,
+                system: 'loader',
+                action: 'load-asset',
+                metadata: { file }
+            }));
+        });
     }
 
     create(): void {
+        // Protect this scene with error boundaries
+        protectScene(this);
+        
+        // Register recovery strategies
+        registerAllRecoveryStrategies();
+        
         // Initialize database connection manager using Builder pattern
         this.dbConnectionManager = new SpacetimeConnectionBuilder()
             .setUri("ws://localhost:3000")
             .setModuleName("jump-story")
             .onConnect(this.handleDatabaseConnect.bind(this))
             .onDisconnect(() => console.log("Disconnected from SpacetimeDB"))
-            .onError((_ctx, err) =>
-                console.error("Error connecting to SpacetimeDB:", err)
-            )
+            .onError((_ctx, err) => {
+                console.error("Error connecting to SpacetimeDB:", err);
+                this.errorBoundary.handleError(new NetworkError("Database connection error", {
+                    scene: this,
+                    system: 'database',
+                    action: 'connection'
+                }));
+            })
             .onSubscriptionApplied((_ctx) =>
                 console.log("Subscription applied!")
             )
@@ -85,6 +109,11 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         // Start database connection
         this.dbConnectionManager.connect().catch((err: any) => {
             console.error("Failed to connect to database:", err);
+            this.errorBoundary.handleError(new NetworkError("Failed to connect to database", {
+                scene: this,
+                system: 'database',
+                action: 'connect'
+            }));
         });
 
         // Create all animations at scene level
