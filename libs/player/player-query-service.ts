@@ -2,26 +2,150 @@ import { DbConnection } from '@/spacetime/client';
 
 /**
  * Service for querying player data from SpacetimeDB
- * Centralizes common player lookup patterns to reduce code duplication
+ * Uses targeted subscription to minimize bandwidth and memory usage
  */
 export class PlayerQueryService {
     private dbConnection: DbConnection;
+    private currentPlayerData: any | null = null;
+    private isTargetedSubscriptionActive = false;
 
     constructor(dbConnection: DbConnection) {
         this.dbConnection = dbConnection;
+        this.setupTargetedSubscription();
+    }
+
+    /**
+     * Set up a targeted subscription for just the current player
+     * This minimizes bandwidth and memory usage by only subscribing to relevant data
+     */
+    private async setupTargetedSubscription(): Promise<void> {
+        if (!this.dbConnection.identity || this.isTargetedSubscriptionActive) {
+            return;
+        }
+
+        try {
+            const myIdentity = this.dbConnection.identity.toHexString();
+            
+            // Subscribe only to the current player's row using SQL query
+            // This follows the pattern: SELECT * FROM Player WHERE identity = 'myIdentity'
+            this.dbConnection.subscriptionBuilder()
+                .onApplied(() => {
+                    console.log('🎯 Player-specific subscription applied');
+                    this.updateCurrentPlayerFromSubscription();
+                })
+                .subscribe([`SELECT * FROM Player WHERE identity = x'${myIdentity}'`]);
+            
+            this.isTargetedSubscriptionActive = true;
+            console.log(`✅ Subscribed to targeted player data for identity: ${myIdentity}`);
+            
+            // Set up event listeners for the targeted data
+            this.setupTargetedEventListeners();
+            
+        } catch (error) {
+            console.error('❌ Failed to set up targeted player subscription:', error);
+            // Fallback to the old inefficient approach if targeted subscription fails
+            this.setupFallbackEventListeners();
+        }
+    }
+
+    /**
+     * Set up event listeners for targeted subscription
+     * Since we only subscribe to our player, all events will be for our player
+     */
+    private setupTargetedEventListeners(): void {
+        if (!this.dbConnection?.db?.player) {
+            return;
+        }
+
+        // With targeted subscription, all updates are for our player
+        this.dbConnection.db.player.onUpdate((ctx, oldPlayer, newPlayer) => {
+            console.log('🔄 Current player updated via targeted subscription');
+            this.currentPlayerData = newPlayer;
+        });
+
+        this.dbConnection.db.player.onInsert((ctx, insertedPlayer) => {
+            console.log('➕ Current player inserted via targeted subscription');
+            this.currentPlayerData = insertedPlayer;
+        });
+
+        this.dbConnection.db.player.onDelete((ctx, deletedPlayer) => {
+            console.log('➖ Current player deleted via targeted subscription');
+            this.currentPlayerData = null;
+        });
+    }
+
+    /**
+     * Fallback event listeners that filter by identity (less efficient)
+     * Used only if targeted subscription setup fails
+     */
+    private setupFallbackEventListeners(): void {
+        if (!this.dbConnection?.db?.player) {
+            return;
+        }
+
+        console.warn('⚠️ Using fallback event listeners - less efficient than targeted subscription');
+
+        this.dbConnection.db.player.onUpdate((ctx, oldPlayer, newPlayer) => {
+            if (this.dbConnection.identity && 
+                newPlayer.identity.toHexString() === this.dbConnection.identity.toHexString()) {
+                this.currentPlayerData = newPlayer;
+            }
+        });
+
+        this.dbConnection.db.player.onInsert((ctx, insertedPlayer) => {
+            if (this.dbConnection.identity && 
+                insertedPlayer.identity.toHexString() === this.dbConnection.identity.toHexString()) {
+                this.currentPlayerData = insertedPlayer;
+            }
+        });
+
+        this.dbConnection.db.player.onDelete((ctx, deletedPlayer) => {
+            if (this.dbConnection.identity && 
+                deletedPlayer.identity.toHexString() === this.dbConnection.identity.toHexString()) {
+                this.currentPlayerData = null;
+            }
+        });
+    }
+
+    /**
+     * Update current player data from the targeted subscription
+     */
+    private updateCurrentPlayerFromSubscription(): void {
+        if (!this.dbConnection?.db?.player) {
+            return;
+        }
+
+        // With targeted subscription, there should only be one player row (ours)
+        for (const player of this.dbConnection.db.player.iter()) {
+            this.currentPlayerData = player;
+            console.log('📥 Loaded current player from targeted subscription');
+            break; // Should only be one player in targeted subscription
+        }
     }
 
     /**
      * Find the current player's data from the server
+     * Uses targeted subscription data for maximum efficiency
      * @returns Server player data or null if not found
      */
     public findCurrentPlayer(): any | null {
-        if (!this.dbConnection?.db?.player || !this.dbConnection.identity) {
+        if (!this.dbConnection.identity) {
             return null;
         }
 
+        // If we have targeted subscription, return cached data directly
+        if (this.isTargetedSubscriptionActive) {
+            return this.currentPlayerData;
+        }
+
+        // Fallback: search through all players (only if targeted subscription failed)
+        if (!this.dbConnection?.db?.player) {
+            return null;
+        }
+
+        const myIdentityHex = this.dbConnection.identity.toHexString();
         for (const serverPlayer of this.dbConnection.db.player.iter()) {
-            if (serverPlayer.identity.toHexString() === this.dbConnection.identity.toHexString()) {
+            if (serverPlayer.identity.toHexString() === myIdentityHex) {
                 return serverPlayer;
             }
         }
