@@ -58,10 +58,18 @@ export class MapLoader {
     }
 
     public loadMapAssets(): void {
-        // Load map JSON
+        // Check if we're in cloud/production or local environment
+        // @ts-ignore - VITE_SPACETIME_TARGET is injected at build time
+        const target = import.meta.env.VITE_SPACETIME_TARGET || 'local';
+        
+        // Load map JSON from appropriate location
+        const mapPath = target === 'cloud' 
+            ? "maps/playground.tmj"  // Production: use public folder
+            : "apps/playground/maps/playground.tmj";  // Development: use source folder
+        
         this.scene.load.tilemapTiledJSON(
             "playground",
-            "apps/playground/maps/playground.tmj"
+            mapPath
         );
 
         // Load tileset images
