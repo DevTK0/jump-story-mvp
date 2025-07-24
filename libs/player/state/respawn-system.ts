@@ -84,24 +84,9 @@ export class RespawnSystem implements System {
             return;
         }
 
-        // Call the instakill reducer on the server
-        if (this.dbConnection && this.dbConnection.reducers) {
-            this.logger.info('💀 Triggering instakill...');
-            
-            try {
-                // Call the instakillPlayer reducer (will be available after regenerating client bindings)
-                if (this.dbConnection.reducers.instakillPlayer) {
-                    this.dbConnection.reducers.instakillPlayer();
-                    this.logger.info('💀 Instakill command sent to server');
-                } else {
-                    this.logger.warn('instakillPlayer reducer not found - you may need to regenerate client bindings');
-                }
-            } catch (error) {
-                this.logger.error('❌ Error sending instakill command:', error);
-            }
-        } else {
-            this.logger.warn('Database connection not available - cannot instakill');
-        }
+        // Instakill is now an admin-only feature and cannot be called from the client
+        this.logger.warn('💀 Instakill is now an admin-only feature and has been disabled for security reasons');
+        this.logger.info('💡 To test death mechanics, take damage from enemies instead');
     }
 
     public destroy(): void {
