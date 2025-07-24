@@ -1,17 +1,20 @@
 import Phaser from "phaser";
 import { PlaygroundScene } from "./scenes/playground-scene";
-import { STAGE_CONFIG } from "@/stage";
 
 // Physics constants for game config
 const PHYSICS_GRAVITY_Y = 900;
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
-    width: STAGE_CONFIG.world.width,
-    height: STAGE_CONFIG.world.height,
+    width: window.innerWidth,
+    height: window.innerHeight,
     backgroundColor: "#87CEEB",
     scene: PlaygroundScene,
     parent: "game-container",
+    scale: {
+        mode: Phaser.Scale.RESIZE,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+    },
     fps: {
         target: 120,
         forceSetTimeOut: true,

@@ -28,9 +28,6 @@ export class SceneErrorHandler {
         // Wrap update methods
         this.wrapUpdateMethods(scene, context);
 
-        // Wrap event handlers
-        this.wrapEventHandlers(scene, context);
-
         // Add error logging
         this.addErrorLogging(scene);
     }
@@ -93,60 +90,6 @@ export class SceneErrorHandler {
         };
     }
 
-    /**
-     * Wrap common event handlers
-     */
-    private wrapEventHandlers(scene: Scene, context: ErrorContext): void {
-        // Wrap input events
-        const inputEvents = ['pointerdown', 'pointerup', 'pointermove'];
-        
-        for (const eventName of inputEvents) {
-            const originalEmit = scene.input.emit.bind(scene.input);
-            
-            scene.input.on(eventName, (...args: any[]) => {
-                try {
-                    originalEmit(eventName, ...args);
-                } catch (error) {
-                    this.errorBoundary.handleError(error as Error, {
-                        ...context,
-                        action: `input-${eventName}`
-                    });
-                }
-            });
-        }
-
-        // Wrap keyboard events if keyboard plugin exists
-        if (scene.input.keyboard) {
-            const originalAddKey = scene.input.keyboard.addKey.bind(scene.input.keyboard);
-            const errorBoundary = this.errorBoundary;
-            
-            scene.input.keyboard.addKey = function(key: any, ...args: any[]) {
-                const keyObj = originalAddKey(key, ...args);
-                
-                // Wrap key event handlers
-                const wrapKeyHandler = (handler: Function) => {
-                    return (...handlerArgs: any[]) => {
-                        try {
-                            return handler(...handlerArgs);
-                        } catch (error) {
-                            errorBoundary.handleError(error as Error, {
-                                ...context,
-                                action: `keyboard-${key}`
-                            });
-                        }
-                    };
-                };
-
-                // Override on method to wrap handlers
-                const originalOn = keyObj.on.bind(keyObj);
-                keyObj.on = function(event: string, handler: Function, ...onArgs: any[]) {
-                    return originalOn(event, wrapKeyHandler(handler), ...onArgs);
-                };
-
-                return keyObj;
-            };
-        }
-    }
 
     /**
      * Add error logging for scene
