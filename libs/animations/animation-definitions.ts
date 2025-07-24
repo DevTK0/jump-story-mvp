@@ -21,6 +21,7 @@ export const ANIMATION_DEFINITIONS = {
         attack2: { start: 27, end: 32, frameRate: 20 },
         attack3: { start: 36, end: 45, frameRate: 20 },
         damaged: { start: 45, end: 49, frameRate: 15 },
+        death: { start: 54, end: 57, frameRate: 15 },
     } satisfies SpriteAnimationSet,
 
     /**
@@ -29,7 +30,7 @@ export const ANIMATION_DEFINITIONS = {
     orc: {
         idle: { start: 0, end: 5, frameRate: 8 },
         walk: { start: 9, end: 16, frameRate: 10 },
-        hit: { start: 32, end: 35, frameRate: 15 },
+        damaged: { start: 32, end: 35, frameRate: 15 },
         death: { start: 40, end: 43, frameRate: 12 },
     } satisfies SpriteAnimationSet,
 } as const;

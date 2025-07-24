@@ -58,6 +58,12 @@ export class InteractionHandler {
         enemyManager: InteractionEnemyManager
     ): (_hitbox: AttackHitbox, enemy: EnemySprite) => void {
         return (_hitbox: AttackHitbox, enemy: EnemySprite) => {
+            // Don't allow attacks if player is dead
+            if (this.isPlayerDead()) {
+                console.log('Prevented attack - player is dead');
+                return;
+            }
+            
             // Get enemy ID first to use centralized validation
             const enemyId = enemyManager.getEnemyIdFromSprite(enemy);
             if (enemyId === null) {
@@ -104,6 +110,12 @@ export class InteractionHandler {
      */
     public handlePlayerTouchEnemy(player: Player): (playerSprite: PlayerSprite, enemy: EnemySprite) => void {
         return (playerSprite: PlayerSprite, enemy: EnemySprite) => {
+            // Don't allow any interactions with dead players
+            if (this.isPlayerDead()) {
+                console.log('Prevented enemy interaction - player is dead');
+                return;
+            }
+            
             // Debug: Log enemy physics body state
             console.log('Enemy collision - body exists:', !!enemy.body, 'body enabled:', enemy.body?.enable);
             
@@ -131,11 +143,26 @@ export class InteractionHandler {
             // Get the animation system and check/trigger damaged animation with knockback
             const animationSystem = player.getSystem("animations") as any;
             if (animationSystem && animationSystem.playDamagedAnimation) {
+                // Check invulnerability state before processing damage
+                console.log(`🔍 Damage attempt - Player invulnerable: ${animationSystem.isPlayerInvulnerable()}`);
+                
                 // Only trigger damaged if not already invulnerable
                 const wasDamaged = animationSystem.playDamagedAnimation(knockbackDirection);
                 if (wasDamaged) {
-                    console.log('Player damaged by enemy! Knockback direction:', knockbackDirection);
-                    // TODO: Call server reducer to damage player
+                    console.log('✅ Player damaged by enemy! Sending damage to server. Knockback direction:', knockbackDirection);
+                    
+                    // Call server reducer to damage player
+                    if (this.dbConnection && this.dbConnection.reducers && this.enemyManager) {
+                        const enemyId = this.enemyManager.getEnemyIdFromSprite(enemy);
+                        if (enemyId !== null) {
+                            console.log('📡 Sending damage to server for enemy:', enemyId);
+                            this.dbConnection.reducers.playerTakeDamage(enemyId);
+                        }
+                    } else {
+                        console.warn('Database connection not available - cannot damage player');
+                    }
+                } else {
+                    console.log('❌ Damage attempt blocked - player invulnerable or animation system rejected');
                 }
             }
         };
@@ -200,6 +227,23 @@ export class InteractionHandler {
      */
     public setEnemyManager(enemyManager: InteractionEnemyManager | null): void {
         this.enemyManager = enemyManager;
+    }
+
+    /**
+     * Check if the current player is dead on the server
+     */
+    private isPlayerDead(): boolean {
+        if (!this.dbConnection?.db?.player) return false;
+        
+        // Get current player from server state
+        for (const serverPlayer of this.dbConnection.db.player.iter()) {
+            if (this.dbConnection.identity && 
+                serverPlayer.identity.toHexString() === this.dbConnection.identity.toHexString()) {
+                return serverPlayer.currentHp <= 0 || serverPlayer.state.tag === 'Dead';
+            }
+        }
+        
+        return false;
     }
 
     /**

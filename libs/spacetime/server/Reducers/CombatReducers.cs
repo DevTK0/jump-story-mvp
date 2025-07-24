@@ -6,6 +6,20 @@ public static partial class Module
     [Reducer]
     public static void DamageEnemy(ReducerContext ctx, uint enemyId, AttackType attackType)
     {
+        // Check if the attacking player is dead
+        var player = ctx.Db.Player.identity.Find(ctx.Sender);
+        if (player == null)
+        {
+            Log.Info($"Player not found for attack: {ctx.Sender}");
+            return;
+        }
+
+        if (player.Value.current_hp <= 0 || player.Value.state == PlayerState.Dead)
+        {
+            Log.Info($"Dead player {ctx.Sender} cannot attack");
+            return;
+        }
+
         var enemy = ctx.Db.Enemy.enemy_id.Find(enemyId);
         if (enemy is null)
         {
@@ -30,11 +44,8 @@ public static partial class Module
             var newState = newHp <= 0 ? PlayerState.Dead : PlayerState.Damaged;
 
             // Calculate knockback position based on attacker's position
-            var player = ctx.Db.Player.identity.Find(ctx.Sender);
             var knockbackDistance = EnemyConstants.KNOCKBACK_DISTANCE;
-            var knockbackDirection = player != null 
-                ? (enemy.Value.position.x > player.Value.position.x ? 1 : -1)
-                : 1; // Default right direction
+            var knockbackDirection = enemy.Value.position.x > player.Value.position.x ? 1 : -1;
             
             var newX = enemy.Value.position.x + (knockbackDistance * knockbackDirection);
             

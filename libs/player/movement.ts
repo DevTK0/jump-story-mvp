@@ -43,6 +43,16 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
     update(time: number, _delta: number): void {
         let forceSyncOnGroundContact = false;
         
+        // Skip all movement if player is dead
+        const isPlayerDead = this.syncManager.isPlayerDeadPublic();
+        if (isPlayerDead) {
+            // Stop movement and return early
+            this.player.body.setVelocity(0, 0);
+            // Still sync position to server so server knows player stopped
+            this.syncManager.syncPosition(time, this.currentFacing, false);
+            return;
+        }
+        
         // Handle movement physics (skip if climbing or movement disabled, but still do position sync)
         if (!this.player.isClimbing && !this.movementDisabled) {
             const body = this.player.body;

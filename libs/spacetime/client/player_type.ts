@@ -44,6 +44,12 @@ export type Player = {
   state: __PlayerState,
   facing: __FacingDirection,
   lastActive: Timestamp,
+  currentHp: number,
+  maxHp: number,
+  currentMana: number,
+  maxMana: number,
+  level: number,
+  experience: number,
 };
 
 /**
@@ -63,6 +69,12 @@ export namespace Player {
       new ProductTypeElement("state", __PlayerState.getTypeScriptAlgebraicType()),
       new ProductTypeElement("facing", __FacingDirection.getTypeScriptAlgebraicType()),
       new ProductTypeElement("lastActive", AlgebraicType.createTimestampType()),
+      new ProductTypeElement("currentHp", AlgebraicType.createF32Type()),
+      new ProductTypeElement("maxHp", AlgebraicType.createF32Type()),
+      new ProductTypeElement("currentMana", AlgebraicType.createF32Type()),
+      new ProductTypeElement("maxMana", AlgebraicType.createF32Type()),
+      new ProductTypeElement("level", AlgebraicType.createU32Type()),
+      new ProductTypeElement("experience", AlgebraicType.createU32Type()),
     ]);
   }
 

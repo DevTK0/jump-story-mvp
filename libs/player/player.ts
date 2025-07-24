@@ -29,6 +29,7 @@ export class Player extends Phaser.GameObjects.Sprite {
     x: Phaser.Input.Keyboard.Key;
     v: Phaser.Input.Keyboard.Key;
     z: Phaser.Input.Keyboard.Key;
+    r: Phaser.Input.Keyboard.Key;
   };
 
   constructor(config: PlayerConfig) {
@@ -59,6 +60,7 @@ export class Player extends Phaser.GameObjects.Sprite {
       x: this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.X),
       v: this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.V),
       z: this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.Z),
+      r: this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.R),
     };
     
     // Setup physics properties
@@ -98,6 +100,11 @@ export class Player extends Phaser.GameObjects.Sprite {
   }
   
   private updateVisual(): void {
+    // Don't update visual if dead
+    if (this.stateMachine.isInState("Dead")) {
+      return;
+    }
+    
     // Flip sprite based on facing direction
     this.setFlipX(this.playerState.facingDirection === -1);
   }

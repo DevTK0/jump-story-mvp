@@ -4,7 +4,9 @@ import { MovementSystem } from './movement';
 import { ClimbingSystem } from './climbing';
 import { CombatSystem, type AttackConfig } from './combat';
 import { AnimationSystem } from './animations';
+import { RespawnSystem } from './respawn-system';
 import { DebugSystem } from '@/debug/debug-system';
+import { DeathMonitor } from './death-monitor';
 
 /**
  * Builder pattern implementation for creating fully configured Player instances.
@@ -136,6 +138,10 @@ export class PlayerBuilder {
         // Create movement system (always required)
         const movementSystem = new MovementSystem(player, inputSystem);
         systems.set('movement', movementSystem);
+        
+        // Create death monitor (always required)
+        const deathMonitor = new DeathMonitor(player);
+        systems.set('deathMonitor', deathMonitor);
 
         // Create optional systems based on configuration
         if (this.enabledSystems.has('climbing')) {
@@ -157,6 +163,10 @@ export class PlayerBuilder {
             const debugSystem = new DebugSystem(player, inputSystem, this.config.scene);
             systems.set('debug', debugSystem);
         }
+
+        // Create respawn system (always enabled for online play)
+        const respawnSystem = new RespawnSystem(player);
+        systems.set('respawn', respawnSystem);
 
         // Register all created systems with the player
         for (const [name, system] of systems.entries()) {

@@ -69,6 +69,28 @@ export class AnimationSystem implements System {
             return;
         }
 
+        // Check if player is dead
+        const stateMachine = this.player.getStateMachine();
+        if (stateMachine.isInState("Dead")) {
+            // Play death animation once and stop on last frame
+            const currentKey = this.animationManager.getCurrentAnimation();
+            const deathKey = this.animationFactory.getAnimationKey('soldier', 'death');
+            if (currentKey !== deathKey) {
+                // Play death animation once
+                this.animationManager.play('death', false);
+                // Stop on the last frame when animation completes
+                this.player.once('animationcomplete', (animation: any) => {
+                    if (animation.key === deathKey) {
+                        this.player.anims.stop();
+                        // Set to last frame of death animation
+                        const deathAnim = ANIMATION_DEFINITIONS.soldier.death;
+                        this.player.setFrame(deathAnim.end);
+                    }
+                });
+            }
+            return;
+        }
+
         // Don't change animations during attack or damaged
         if (this.isPlayingAttackAnimation || this.isPlayingDamagedAnimation) {
             return;
@@ -150,6 +172,7 @@ export class AnimationSystem implements System {
     public playDamagedAnimation(knockbackDirection?: { x: number; y: number }): boolean {
         // Don't play damaged animation if already invulnerable
         if (this.isInvulnerable) {
+            console.log('🛡️ Damage blocked - player is invulnerable');
             return false;
         }
 
@@ -240,6 +263,7 @@ export class AnimationSystem implements System {
     public isPlayerInvulnerable(): boolean {
         return this.isInvulnerable;
     }
+    
 
     /**
      * Promise-based delay utility for async animation patterns

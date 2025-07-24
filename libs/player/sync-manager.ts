@@ -38,6 +38,11 @@ export class SyncManager {
   public syncPosition(time: number, facing: FacingDirection, forceSync: boolean = false): void {
     if (!this.dbConnection) return;
     
+    // Don't sync position if player is dead or client thinks it's dead
+    if (this.isPlayerDead() || this.player.getStateMachine().isInState("Dead")) {
+      return;
+    }
+    
     const currentX = this.player.x;
     const currentY = this.player.y;
     const deltaX = Math.abs(currentX - this.lastSyncedPosition.x);
@@ -66,6 +71,12 @@ export class SyncManager {
   public syncState(newState: PlayerState): void {
     if (!this.dbConnection) return;
     
+    // Don't sync non-death states if player is dead (HP <= 0)
+    if (this.isPlayerDead() && newState.tag !== 'Dead') {
+      console.log(`Prevented state sync to ${newState.tag} - player is dead`);
+      return;
+    }
+    
     // Only sync if state actually changed
     if (newState.tag !== this.currentPlayerState.tag) {
       this.dbConnection.reducers.updatePlayerState(newState);
@@ -82,7 +93,31 @@ export class SyncManager {
     return { ...this.lastSyncedPosition };
   }
   
+  public updateLastSyncedPosition(x: number, y: number): void {
+    this.lastSyncedPosition.x = x;
+    this.lastSyncedPosition.y = y;
+    console.log(`Updated last synced position to (${x}, ${y})`);
+  }
+  
   public getConfig(): Readonly<SyncConfig> {
     return { ...this.config };
   }
+  
+  private isPlayerDead(): boolean {
+    if (!this.dbConnection?.db?.player || !this.dbConnection.identity) return false;
+    
+    // Find only the current player's data
+    for (const serverPlayer of this.dbConnection.db.player.iter()) {
+      if (serverPlayer.identity.toHexString() === this.dbConnection.identity.toHexString()) {
+        return serverPlayer.currentHp <= 0 || serverPlayer.state.tag === 'Dead';
+      }
+    }
+    
+    return false;
+  }
+  
+  public isPlayerDeadPublic(): boolean {
+    return this.isPlayerDead();
+  }
+  
 }

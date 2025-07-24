@@ -14,6 +14,12 @@ public static partial class Module
         public PlayerState state;
         public FacingDirection facing;
         public Timestamp last_active;
+        public float current_hp;
+        public float max_hp;
+        public float current_mana;
+        public float max_mana;
+        public uint level;
+        public uint experience;
     }
 
     [Table(Name = "EnemyRoute", Public = true)]
@@ -81,4 +87,5 @@ public static partial class Module
         public ulong scheduled_id;
         public ScheduleAt scheduled_at;
     }
+
 }

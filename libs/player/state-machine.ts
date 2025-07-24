@@ -80,7 +80,7 @@ export class IdleState extends PlayerState {
     }
 
     protected getAllowedTransitions(): string[] {
-        return ["Walk", "Jump", "Climbing", "Attack1", "Attack2", "Attack3", "Damaged"];
+        return ["Walk", "Jump", "Climbing", "Attack1", "Attack2", "Attack3", "Damaged", "Dead"];
     }
 }
 
@@ -117,7 +117,7 @@ export class WalkState extends PlayerState {
     }
 
     protected getAllowedTransitions(): string[] {
-        return ["Idle", "Jump", "Climbing", "Attack1", "Attack2", "Attack3", "Damaged"];
+        return ["Idle", "Jump", "Climbing", "Attack1", "Attack2", "Attack3", "Damaged", "Dead"];
     }
 }
 
@@ -160,7 +160,7 @@ export class JumpState extends PlayerState {
     }
 
     protected getAllowedTransitions(): string[] {
-        return ["Idle", "Walk", "Climbing", "Attack1", "Attack2", "Attack3", "Damaged"];
+        return ["Idle", "Walk", "Climbing", "Attack1", "Attack2", "Attack3", "Damaged", "Dead"];
     }
 }
 
@@ -195,7 +195,7 @@ export class ClimbingState extends PlayerState {
     }
 
     protected getAllowedTransitions(): string[] {
-        return ["Idle", "Walk", "Jump", "Damaged"];
+        return ["Idle", "Walk", "Jump", "Damaged", "Dead"];
     }
 }
 
@@ -241,7 +241,7 @@ export abstract class AttackState extends PlayerState {
     }
 
     protected getAllowedTransitions(): string[] {
-        return ["Idle", "Walk", "Damaged"];
+        return ["Idle", "Walk", "Damaged", "Dead"];
     }
 }
 
@@ -329,7 +329,48 @@ export class DamagedState extends PlayerState {
     }
 
     protected getAllowedTransitions(): string[] {
-        return ["Idle", "Walk", "Jump"];
+        return ["Idle", "Walk", "Jump", "Dead"];
+    }
+}
+
+
+/**
+ * Dead state - player has died and cannot perform actions
+ */
+export class DeadState extends PlayerState {
+    onEnter(previousState?: PlayerState): void {
+        console.log(`Player entering Dead state from ${previousState?.getName() || 'none'}`);
+        this.player.setPlayerState({ 
+            isAttacking: false,
+            isClimbing: false 
+        });
+        // Stop all movement
+        this.player.body.setVelocity(0, 0);
+        // Disable collision detection with enemies (but keep player collision body active for respawn positioning)
+        // This prevents collision callbacks from triggering while dead
+    }
+
+    onExit(nextState?: PlayerState): void {
+        console.log(`Player exiting Dead state to ${nextState?.getName() || 'none'}`);
+        // Re-enable collision detection when respawning
+    }
+
+    update(_time: number, _delta: number): void {
+        // Keep player velocity at zero while dead
+        this.player.body.setVelocity(0, 0);
+    }
+
+    getDbState(): DbPlayerState {
+        return { tag: "Dead" };
+    }
+
+    getName(): string {
+        return "Dead";
+    }
+
+    protected getAllowedTransitions(): string[] {
+        // Can transition back to Idle after respawn
+        return ["Idle"];
     }
 }
 
@@ -357,6 +398,7 @@ export class PlayerStateMachine {
         this.states.set("Attack2", new Attack2State(this.player, this));
         this.states.set("Attack3", new Attack3State(this.player, this));
         this.states.set("Damaged", new DamagedState(this.player, this));
+        this.states.set("Dead", new DeadState(this.player, this));
 
         // Start in idle state
         this.transitionTo("Idle");

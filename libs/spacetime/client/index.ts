@@ -48,8 +48,12 @@ import { Disconnect } from "./disconnect_reducer.ts";
 export { Disconnect };
 import { InitializeEnemyRoutes } from "./initialize_enemy_routes_reducer.ts";
 export { InitializeEnemyRoutes };
+import { PlayerTakeDamage } from "./player_take_damage_reducer.ts";
+export { PlayerTakeDamage };
 import { RecoverFromDamage } from "./recover_from_damage_reducer.ts";
 export { RecoverFromDamage };
+import { RespawnPlayer } from "./respawn_player_reducer.ts";
+export { RespawnPlayer };
 import { SpawnAllEnemies } from "./spawn_all_enemies_reducer.ts";
 export { SpawnAllEnemies };
 import { SpawnMissingEnemies } from "./spawn_missing_enemies_reducer.ts";
@@ -200,9 +204,17 @@ const REMOTE_MODULE = {
       reducerName: "InitializeEnemyRoutes",
       argsType: InitializeEnemyRoutes.getTypeScriptAlgebraicType(),
     },
+    PlayerTakeDamage: {
+      reducerName: "PlayerTakeDamage",
+      argsType: PlayerTakeDamage.getTypeScriptAlgebraicType(),
+    },
     RecoverFromDamage: {
       reducerName: "RecoverFromDamage",
       argsType: RecoverFromDamage.getTypeScriptAlgebraicType(),
+    },
+    RespawnPlayer: {
+      reducerName: "RespawnPlayer",
+      argsType: RespawnPlayer.getTypeScriptAlgebraicType(),
     },
     SpawnAllEnemies: {
       reducerName: "SpawnAllEnemies",
@@ -261,7 +273,9 @@ export type Reducer = never
 | { name: "Debug", args: Debug }
 | { name: "Disconnect", args: Disconnect }
 | { name: "InitializeEnemyRoutes", args: InitializeEnemyRoutes }
+| { name: "PlayerTakeDamage", args: PlayerTakeDamage }
 | { name: "RecoverFromDamage", args: RecoverFromDamage }
+| { name: "RespawnPlayer", args: RespawnPlayer }
 | { name: "SpawnAllEnemies", args: SpawnAllEnemies }
 | { name: "SpawnMissingEnemies", args: SpawnMissingEnemies }
 | { name: "UpdateEnemyPatrol", args: UpdateEnemyPatrol }
@@ -360,6 +374,22 @@ export class RemoteReducers {
     this.connection.offReducer("InitializeEnemyRoutes", callback);
   }
 
+  playerTakeDamage(enemyId: number) {
+    const __args = { enemyId };
+    let __writer = new BinaryWriter(1024);
+    PlayerTakeDamage.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("PlayerTakeDamage", __argsBuffer, this.setCallReducerFlags.playerTakeDamageFlags);
+  }
+
+  onPlayerTakeDamage(callback: (ctx: ReducerEventContext, enemyId: number) => void) {
+    this.connection.onReducer("PlayerTakeDamage", callback);
+  }
+
+  removeOnPlayerTakeDamage(callback: (ctx: ReducerEventContext, enemyId: number) => void) {
+    this.connection.offReducer("PlayerTakeDamage", callback);
+  }
+
   recoverFromDamage(enemyId: number) {
     const __args = { enemyId };
     let __writer = new BinaryWriter(1024);
@@ -374,6 +404,18 @@ export class RemoteReducers {
 
   removeOnRecoverFromDamage(callback: (ctx: ReducerEventContext, enemyId: number) => void) {
     this.connection.offReducer("RecoverFromDamage", callback);
+  }
+
+  respawnPlayer() {
+    this.connection.callReducer("RespawnPlayer", new Uint8Array(0), this.setCallReducerFlags.respawnPlayerFlags);
+  }
+
+  onRespawnPlayer(callback: (ctx: ReducerEventContext) => void) {
+    this.connection.onReducer("RespawnPlayer", callback);
+  }
+
+  removeOnRespawnPlayer(callback: (ctx: ReducerEventContext) => void) {
+    this.connection.offReducer("RespawnPlayer", callback);
   }
 
   spawnAllEnemies() {
@@ -480,9 +522,19 @@ export class SetReducerFlags {
     this.initializeEnemyRoutesFlags = flags;
   }
 
+  playerTakeDamageFlags: CallReducerFlags = 'FullUpdate';
+  playerTakeDamage(flags: CallReducerFlags) {
+    this.playerTakeDamageFlags = flags;
+  }
+
   recoverFromDamageFlags: CallReducerFlags = 'FullUpdate';
   recoverFromDamage(flags: CallReducerFlags) {
     this.recoverFromDamageFlags = flags;
+  }
+
+  respawnPlayerFlags: CallReducerFlags = 'FullUpdate';
+  respawnPlayer(flags: CallReducerFlags) {
+    this.respawnPlayerFlags = flags;
   }
 
   spawnAllEnemiesFlags: CallReducerFlags = 'FullUpdate';

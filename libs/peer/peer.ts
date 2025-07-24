@@ -84,6 +84,7 @@ export class Peer extends Phaser.GameObjects.Sprite {
         ) {
             // Check if this is an attack animation
             const isAttackAnim = animationKey.includes("attack");
+            const isDeathAnim = animationKey.includes("death");
             
             if (isAttackAnim) {
                 this.isPlayingAttackAnimation = true;
@@ -94,6 +95,20 @@ export class Peer extends Phaser.GameObjects.Sprite {
                 this.once('animationcomplete', () => {
                     this.isPlayingAttackAnimation = false;
                     console.log(`Attack animation ${animationKey} completed for peer ${this.playerData.name}`);
+                });
+            } else if (isDeathAnim) {
+                // Play death animation once and stop on last frame
+                this.play(animationKey);
+                this.currentAnimation = animationKey;
+                
+                // Stop on the last frame when animation completes
+                this.once('animationcomplete', (animation: any) => {
+                    if (animation.key === animationKey) {
+                        this.anims.stop();
+                        // Set to last frame of death animation (frame 57)
+                        this.setFrame(57);
+                        console.log(`Death animation completed for peer ${this.playerData.name}`);
+                    }
                 });
             } else {
                 // Don't interrupt attack animations with other animations
@@ -122,8 +137,7 @@ export class Peer extends Phaser.GameObjects.Sprite {
             case "Damaged":
                 return "soldier-damaged-anim";
             case "Dead":
-                // For now, use idle for dead (can add death animation later)
-                return "soldier-idle-anim";
+                return "soldier-death-anim";
             case "Idle":
                 return "soldier-idle-anim";
             case "Unknown":

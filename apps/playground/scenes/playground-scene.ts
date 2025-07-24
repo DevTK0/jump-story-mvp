@@ -8,6 +8,7 @@ import type { IDebuggable } from "@/debug/debug-interfaces";
 import { DEBUG_CONFIG } from "@/debug/config";
 import { DebugState } from "@/debug/debug-state";
 import { SpacetimeConnectionBuilder } from "@/networking";
+import { PlayerStatsUI } from "@/ui/player-stats-ui";
 import { PhysicsConfigurator, type CollisionGroups } from "@/physics";
 import { InteractionHandler } from "@/networking";
 import { DbConnection } from "@/spacetime/client";
@@ -23,7 +24,7 @@ const CAMERA_SHAKE_INTENSITY = 0.03;
 
 export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     private player!: Player;
-    
+
     // Database connection
     private dbConnectionManager!: import("@/networking").SpacetimeConnector;
 
@@ -35,6 +36,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     private physicsConfigurator!: PhysicsConfigurator;
     private interactionHandler!: InteractionHandler;
     private damageNumberRenderer!: DamageNumberRenderer;
+    private playerStatsUI: PlayerStatsUI | null = null;
 
     constructor() {
         super({ key: "playground" });
@@ -66,8 +68,12 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             .setModuleName("jump-story")
             .onConnect(this.handleDatabaseConnect.bind(this))
             .onDisconnect(() => console.log("Disconnected from SpacetimeDB"))
-            .onError((_ctx, err) => console.error("Error connecting to SpacetimeDB:", err))
-            .onSubscriptionApplied((_ctx) => console.log("Subscription applied!"))
+            .onError((_ctx, err) =>
+                console.error("Error connecting to SpacetimeDB:", err)
+            )
+            .onSubscriptionApplied((_ctx) =>
+                console.log("Subscription applied!")
+            )
             .build();
 
         // Start database connection
@@ -88,7 +94,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
 
         // Create player using Builder pattern
         this.player = new PlayerBuilder(this)
-            .setPosition(2200, 0)
+            .setPosition(1000, 0)
             .setTexture("soldier")
             .withAllSystems()
             .build();
@@ -99,7 +105,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             PLAYER_CONFIG.movement.hitboxWidth,
             PLAYER_CONFIG.movement.hitboxHeight
         );
-        
+
         // Set player depth to render above all other entities
         this.player.setDepth(10); // Higher than enemies (depth 5)
 
@@ -119,15 +125,23 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         this.physicsConfigurator = new PhysicsConfigurator(this);
         this.interactionHandler = new InteractionHandler(this, dbConnection, {
             cameraShakeDuration: CAMERA_SHAKE_DURATION,
-            cameraShakeIntensity: CAMERA_SHAKE_INTENSITY
+            cameraShakeIntensity: CAMERA_SHAKE_INTENSITY,
         });
+
+        // Player stats UI will be initialized when database connects
 
         // Create collision groups from map data
         const collisionGroups: CollisionGroups = {
             ground: this.mapLoader.createPhysicsFromGround(this.mapData.ground),
-            platforms: this.mapLoader.createPhysicsFromPlatforms(this.mapData.platforms),
-            climbeable: this.mapLoader.createClimbeablePhysics(this.mapData.climbeable),
-            boundaries: this.mapLoader.createBoundaryPhysics(this.mapData.boundaries)
+            platforms: this.mapLoader.createPhysicsFromPlatforms(
+                this.mapData.platforms
+            ),
+            climbeable: this.mapLoader.createClimbeablePhysics(
+                this.mapData.climbeable
+            ),
+            boundaries: this.mapLoader.createBoundaryPhysics(
+                this.mapData.boundaries
+            ),
         };
 
         // Get systems for collision setup
@@ -156,10 +170,11 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         this.interactionHandler.setEnemyManager(this.enemyManager);
 
         // Create interaction callbacks
-        const interactionCallbacks = this.interactionHandler.createInteractionCallbacks(
-            this.player,
-            this.enemyManager
-        );
+        const interactionCallbacks =
+            this.interactionHandler.createInteractionCallbacks(
+                this.player,
+                this.enemyManager
+            );
 
         // Set up all collisions using the PhysicsConfigurator
         this.physicsConfigurator.setupAllCollisions(
@@ -173,7 +188,11 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         );
     }
 
-    private handleDatabaseConnect(conn: DbConnection, identity: Identity, _token: string): void {
+    private handleDatabaseConnect(
+        conn: DbConnection,
+        identity: Identity,
+        _token: string
+    ): void {
         // Set up player systems if player exists
         if (this.player) {
             this.setupPlayerSystems(conn);
@@ -198,6 +217,10 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             this.interactionHandler.setDbConnection(conn);
         }
 
+        // Initialize player stats UI with identity
+        this.playerStatsUI = new PlayerStatsUI(this, identity);
+        this.playerStatsUI.setDbConnection(conn);
+
         // Set up damage event subscription if damage number renderer exists
         if (this.damageNumberRenderer) {
             this.setupDamageEventSubscription(conn);
@@ -216,16 +239,26 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
             const syncManager = movementSystem.syncManager;
             combatSystem.setSyncManager(syncManager);
         }
+
+        const respawnSystem = this.player.getSystem("respawn") as any;
+        if (respawnSystem && respawnSystem.setDbConnection) {
+            respawnSystem.setDbConnection(conn);
+        }
+
+        const deathMonitor = this.player.getSystem("deathMonitor") as any;
+        if (deathMonitor && deathMonitor.setDbConnection) {
+            deathMonitor.setDbConnection(conn);
+        }
     }
 
     private setupDamageEventSubscription(conn: DbConnection): void {
         // Subscribe to damage events from the database
         conn.db.damageEvent.onInsert((_ctx, damageEvent) => {
-            console.debug('Received damage event:', damageEvent);
-            
+            console.debug("Received damage event:", damageEvent);
+
             // Handle damage numbers
             this.damageNumberRenderer.handleDamageEvent(damageEvent);
-            
+
             // Handle hit animation for all clients
             this.enemyManager.playHitAnimation(damageEvent.enemyId);
         });
@@ -359,7 +392,9 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
                 ? `${this.mapData.tilemap.widthInPixels}x${this.mapData.tilemap.heightInPixels}`
                 : "N/A",
             peers: this.peerManager ? this.peerManager.getPeerCount() : 0,
-            damageNumbers: this.damageNumberRenderer ? this.damageNumberRenderer.getDebugInfo() : {},
+            damageNumbers: this.damageNumberRenderer
+                ? this.damageNumberRenderer.getDebugInfo()
+                : {},
         };
     }
 
