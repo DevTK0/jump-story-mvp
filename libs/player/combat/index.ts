@@ -6,6 +6,6 @@ export { DeathMonitor } from './death-monitor';
 export { DeathStateService } from './death-state-service';
 
 // Damage visualization
-export { DamageNumberRenderer } from './damage-number-renderer';
+export { EnemyDamageRenderer } from './enemy-damage-renderer';
 export { PlayerDamageRenderer } from './player-damage-renderer';
-export { DAMAGE_NUMBER_CONFIG, getDamageTypeKey, getDamageDisplayText } from './damage-number-config';
+export { DAMAGE_RENDERER_CONFIG, DAMAGE_COLOR_THEMES, getDamageTypeKey, getDamageDisplayText, getDamageStyle } from './damage-renderer-config';

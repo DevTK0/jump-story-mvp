@@ -1,12 +1,12 @@
 /**
- * Damage Number Renderer
- * Handles floating combat damage numbers above enemies
+ * Enemy Damage Renderer
+ * Handles floating damage numbers above enemies when they take damage
  */
 
 import Phaser from 'phaser';
 import { EnemyDamageEvent } from '@/spacetime/client';
 import { EnemyManager } from '@/enemy';
-import { DAMAGE_NUMBER_CONFIG, getDamageTypeKey, getDamageDisplayText } from './damage-number-config';
+import { DAMAGE_RENDERER_CONFIG, getDamageTypeKey, getDamageDisplayText, getDamageStyle } from './damage-renderer-config';
 
 interface DamageNumberState {
   text: Phaser.GameObjects.Text;
@@ -17,7 +17,7 @@ interface DamageNumberState {
   damageEvent: EnemyDamageEvent;
 }
 
-export class DamageNumberRenderer {
+export class EnemyDamageRenderer {
   private scene: Phaser.Scene;
   private enemyManager: EnemyManager | null = null;
   
@@ -43,7 +43,7 @@ export class DamageNumberRenderer {
    * Initialize the object pool
    */
   private initializePool(): void {
-    const { poolSize } = DAMAGE_NUMBER_CONFIG.performance;
+    const { poolSize } = DAMAGE_RENDERER_CONFIG.performance;
     
     for (let i = 0; i < poolSize; i++) {
       const text = this.createPooledText();
@@ -63,7 +63,7 @@ export class DamageNumberRenderer {
     
     text.setVisible(false);
     text.setActive(false);
-    text.setDepth(DAMAGE_NUMBER_CONFIG.display.baseDepth);
+    text.setDepth(DAMAGE_RENDERER_CONFIG.display.enemy.baseDepth);
     
     return text;
   }
@@ -74,7 +74,7 @@ export class DamageNumberRenderer {
   private getTextFromPool(): Phaser.GameObjects.Text | null {
     let text = this.textPool.pop();
     
-    if (!text && this.textPool.length < DAMAGE_NUMBER_CONFIG.performance.maxPoolSize) {
+    if (!text && this.textPool.length < DAMAGE_RENDERER_CONFIG.performance.maxPoolSize) {
       text = this.createPooledText();
     }
     
@@ -85,7 +85,7 @@ export class DamageNumberRenderer {
    * Return a text object to the pool
    */
   private returnTextToPool(text: Phaser.GameObjects.Text): void {
-    if (this.textPool.length < DAMAGE_NUMBER_CONFIG.performance.maxPoolSize) {
+    if (this.textPool.length < DAMAGE_RENDERER_CONFIG.performance.maxPoolSize) {
       text.setVisible(false);
       text.setActive(false);
       text.clearTint();
@@ -101,7 +101,7 @@ export class DamageNumberRenderer {
    */
   public handleDamageEvent(damageEvent: EnemyDamageEvent): void {
     if (!this.enemyManager) {
-      console.warn('DamageNumberRenderer: EnemyManager not set');
+      console.warn('EnemyDamageRenderer: EnemyManager not set');
       return;
     }
 
@@ -119,7 +119,7 @@ export class DamageNumberRenderer {
     }
 
     // Check if we're at max concurrent numbers
-    if (this.allActiveNumbers.length >= DAMAGE_NUMBER_CONFIG.performance.maxConcurrentNumbers) {
+    if (this.allActiveNumbers.length >= DAMAGE_RENDERER_CONFIG.performance.maxConcurrentNumbers) {
       console.debug('Max concurrent damage numbers reached - skipping');
       return;
     }
@@ -133,7 +133,7 @@ export class DamageNumberRenderer {
   private isEventStale(damageEvent: EnemyDamageEvent): boolean {
     const eventTime = damageEvent.timestamp.toDate().getTime();
     const now = Date.now();
-    return now - eventTime > DAMAGE_NUMBER_CONFIG.performance.staleEventThresholdMs;
+    return now - eventTime > DAMAGE_RENDERER_CONFIG.performance.staleEventThresholdMs;
   }
 
   /**
@@ -152,7 +152,7 @@ export class DamageNumberRenderer {
 
     return {
       x: enemySprite.x,
-      y: enemySprite.y + DAMAGE_NUMBER_CONFIG.display.baseYOffset
+      y: enemySprite.y + DAMAGE_RENDERER_CONFIG.display.enemy.baseYOffset
     };
   }
 
@@ -202,7 +202,7 @@ export class DamageNumberRenderer {
     const activeForEnemy = this.activeNumbers.get(enemyId) || [];
     const stackIndex = activeForEnemy.length;
     
-    const { verticalOffset, horizontalJitter } = DAMAGE_NUMBER_CONFIG.stacking;
+    const { verticalOffset, horizontalJitter } = DAMAGE_RENDERER_CONFIG.stacking;
     
     // Use deterministic jitter based on damage event data for synchronization
     const seed = this.createSeedFromDamageEvent(damageEvent);
@@ -219,18 +219,64 @@ export class DamageNumberRenderer {
    */
   private configureTextAppearance(text: Phaser.GameObjects.Text, damageEvent: EnemyDamageEvent): void {
     const damageTypeKey = getDamageTypeKey(damageEvent.damageType);
-    const style = DAMAGE_NUMBER_CONFIG.styles[damageTypeKey];
+    const style = getDamageStyle(damageTypeKey, 'enemy');
     const displayText = getDamageDisplayText(damageEvent.damageAmount, damageEvent.damageType);
 
     text.setText(displayText);
-    text.setStyle({
-      fontSize: style.fontSize,
-      fontFamily: style.fontFamily,
-      color: style.color,
-      stroke: style.stroke,
-      strokeThickness: style.strokeThickness,
-      fontStyle: style.fontStyle,
-    });
+    
+    // Apply gradient if specified
+    if (style.useGradient && style.gradientColors && text.context) {
+      // Get text dimensions for gradient
+      const textHeight = parseInt(style.fontSize);
+      
+      // Create vertical gradient (top to bottom)
+      const gradient = text.context.createLinearGradient(0, 0, 0, textHeight);
+      gradient.addColorStop(0, style.gradientColors[0]); // Top color
+      gradient.addColorStop(1, style.gradientColors[1]); // Bottom color
+      
+      text.setStyle({
+        fontSize: style.fontSize,
+        fontFamily: style.fontFamily,
+        color: gradient as any, // Use gradient as fill
+        stroke: style.stroke,
+        strokeThickness: style.strokeThickness,
+        fontStyle: style.fontStyle,
+      });
+    } else {
+      // Fallback to solid color
+      text.setStyle({
+        fontSize: style.fontSize,
+        fontFamily: style.fontFamily,
+        color: style.color,
+        stroke: style.stroke,
+        strokeThickness: style.strokeThickness,
+        fontStyle: style.fontStyle,
+      });
+    }
+    
+    // Apply shadow if defined
+    if (style.shadow) {
+      text.setShadow(
+        style.shadow.offsetX,
+        style.shadow.offsetY,
+        style.shadow.color,
+        style.shadow.blur,
+        style.shadow.stroke,
+        style.shadow.fill
+      );
+    }
+    
+    // Add scale effect for critical hits
+    if (damageTypeKey === 'Crit') {
+      text.setScale(1.5);
+      this.scene.tweens.add({
+        targets: text,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 300,
+        ease: 'Back.easeOut'
+      });
+    }
   }
 
   /**
@@ -252,7 +298,7 @@ export class DamageNumberRenderer {
    */
   private animateDamageNumber(damageNumberState: DamageNumberState): void {
     const { text, initialX, initialY, damageEvent } = damageNumberState;
-    const { duration, riseDistance, spreadRadius } = DAMAGE_NUMBER_CONFIG.animations;
+    const { duration, riseDistance, spreadRadius } = DAMAGE_RENDERER_CONFIG.animations;
 
     // Use deterministic spread based on damage event data for synchronization
     const seed = this.createSeedFromDamageEvent(damageEvent) + 1; // +1 to differentiate from jitter seed
@@ -264,7 +310,7 @@ export class DamageNumberRenderer {
     this.scene.tweens.add({
       targets: text,
       alpha: 1,
-      duration: DAMAGE_NUMBER_CONFIG.animations.fadeInDuration,
+      duration: DAMAGE_RENDERER_CONFIG.animations.fadeInDuration,
       ease: 'Power1.easeOut',
     });
 
@@ -274,15 +320,15 @@ export class DamageNumberRenderer {
       x: targetX,
       y: targetY,
       duration: duration,
-      ease: DAMAGE_NUMBER_CONFIG.animations.easingCurve,
+      ease: DAMAGE_RENDERER_CONFIG.animations.easingCurve,
     });
 
     // Fade out at the end
     this.scene.tweens.add({
       targets: text,
       alpha: 0,
-      duration: DAMAGE_NUMBER_CONFIG.animations.fadeOutDuration,
-      delay: duration - DAMAGE_NUMBER_CONFIG.animations.fadeOutDuration,
+      duration: DAMAGE_RENDERER_CONFIG.animations.fadeOutDuration,
+      delay: duration - DAMAGE_RENDERER_CONFIG.animations.fadeOutDuration,
       ease: 'Power1.easeIn',
       onComplete: () => {
         this.cleanupDamageNumber(damageNumberState);
@@ -370,7 +416,7 @@ export class DamageNumberRenderer {
       poolSize: this.textPool.length,
       activeNumbers: this.allActiveNumbers.length,
       activeEnemies: this.activeNumbers.size,
-      maxConcurrent: DAMAGE_NUMBER_CONFIG.performance.maxConcurrentNumbers,
+      maxConcurrent: DAMAGE_RENDERER_CONFIG.performance.maxConcurrentNumbers,
     };
   }
 

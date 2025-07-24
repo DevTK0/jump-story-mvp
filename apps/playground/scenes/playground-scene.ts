@@ -13,7 +13,7 @@ import { PhysicsConfigurator, type CollisionGroups } from "@/physics";
 import { InteractionHandler } from "@/networking";
 import { DbConnection } from "@/spacetime/client";
 import { Identity } from "@clockworklabs/spacetimedb-sdk";
-import { DamageNumberRenderer, PlayerDamageRenderer } from "@/player";
+import { EnemyDamageRenderer, PlayerDamageRenderer } from "@/player";
 import { PlayerQueryService } from "@/player";
 import { AnimationFactory, ANIMATION_DEFINITIONS } from "@/animations";
 
@@ -37,7 +37,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     private peerManager!: PeerManager;
     private physicsConfigurator!: PhysicsConfigurator;
     private interactionHandler!: InteractionHandler;
-    private damageNumberRenderer!: DamageNumberRenderer;
+    private enemyDamageRenderer!: EnemyDamageRenderer;
     private playerDamageRenderer!: PlayerDamageRenderer;
     private playerStatsUI: PlayerStatsUI | null = null;
     private fpsCounter!: FPSCounter;
@@ -170,8 +170,8 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         }
 
         // Initialize damage number renderer for enemies
-        this.damageNumberRenderer = new DamageNumberRenderer(this);
-        this.damageNumberRenderer.setEnemyManager(this.enemyManager);
+        this.enemyDamageRenderer = new EnemyDamageRenderer(this);
+        this.enemyDamageRenderer.setEnemyManager(this.enemyManager);
         
         // Initialize player damage renderer
         this.playerDamageRenderer = new PlayerDamageRenderer(this);
@@ -269,7 +269,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         this.playerStatsUI.setDbConnection(conn);
 
         // Set up damage event subscriptions if renderers exist
-        if (this.damageNumberRenderer) {
+        if (this.enemyDamageRenderer) {
             this.setupDamageEventSubscription(conn);
         }
         
@@ -312,7 +312,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         // Subscribe to enemy damage events from the database
         conn.db.enemyDamageEvent.onInsert((_ctx, damageEvent) => {
             // Handle damage numbers
-            this.damageNumberRenderer.handleDamageEvent(damageEvent);
+            this.enemyDamageRenderer.handleDamageEvent(damageEvent);
 
             // Handle hit animation for all clients
             this.enemyManager.playHitAnimation(damageEvent.enemyId);
@@ -453,8 +453,8 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
                 ? `${this.mapData.tilemap.widthInPixels}x${this.mapData.tilemap.heightInPixels}`
                 : "N/A",
             peers: this.peerManager ? this.peerManager.getPeerCount() : 0,
-            damageNumbers: this.damageNumberRenderer
-                ? this.damageNumberRenderer.getDebugInfo()
+            damageNumbers: this.enemyDamageRenderer
+                ? this.enemyDamageRenderer.getDebugInfo()
                 : {},
         };
     }
@@ -470,8 +470,8 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         }
 
         // Clean up damage number renderer
-        if (this.damageNumberRenderer) {
-            this.damageNumberRenderer.destroy();
+        if (this.enemyDamageRenderer) {
+            this.enemyDamageRenderer.destroy();
         }
     }
 

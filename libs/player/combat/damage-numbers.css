@@ -1,0 +1,212 @@
+/* MapleStory-style damage numbers */
+
+/* Base damage number style */
+.damage-number {
+    font-family: 'Impact', 'Arial Black', 'Helvetica Neue', sans-serif;
+    font-weight: 900;
+    text-align: center;
+    transform-origin: center center;
+    
+    /* Prevent text selection */
+    user-select: none;
+    -webkit-user-select: none;
+    
+    /* Better rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Normal damage - yellow/orange gradient */
+.damage-normal {
+    font-size: 28px;
+    
+    /* Gradient fill */
+    background: linear-gradient(to bottom, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    
+    /* Multiple shadows for 3D effect and outline */
+    filter: drop-shadow(2px 2px 0 #000)
+            drop-shadow(-2px -2px 0 #000)
+            drop-shadow(2px -2px 0 #000)
+            drop-shadow(-2px 2px 0 #000)
+            drop-shadow(3px 3px 2px rgba(0,0,0,0.8))
+            drop-shadow(0 0 8px rgba(255,165,0,0.6));
+}
+
+/* Critical damage - larger, red gradient */
+.damage-crit {
+    font-size: 36px;
+    
+    /* Red gradient */
+    background: linear-gradient(to bottom, #FF6B6B 0%, #FF0000 50%, #CC0000 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    
+    /* Dramatic shadows */
+    filter: drop-shadow(3px 3px 0 #000)
+            drop-shadow(-3px -3px 0 #000)
+            drop-shadow(3px -3px 0 #000)
+            drop-shadow(-3px 3px 0 #000)
+            drop-shadow(4px 4px 3px rgba(0,0,0,0.9))
+            drop-shadow(0 0 15px rgba(255,0,0,0.8));
+    
+    /* Add slight animation for impact */
+    animation: critPulse 0.3s ease-out;
+}
+
+/* Weak damage - smaller, muted colors */
+.damage-weak {
+    font-size: 22px;
+    
+    /* Gray/orange gradient */
+    background: linear-gradient(to bottom, #FFE4B5 0%, #DEB887 50%, #D2691E 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    
+    /* Softer shadows */
+    filter: drop-shadow(1px 1px 0 #000)
+            drop-shadow(-1px -1px 0 #000)
+            drop-shadow(1px -1px 0 #000)
+            drop-shadow(-1px 1px 0 #000)
+            drop-shadow(2px 2px 2px rgba(0,0,0,0.6));
+}
+
+/* Strong damage - purple/blue gradient */
+.damage-strong {
+    font-size: 32px;
+    
+    /* Purple gradient */
+    background: linear-gradient(to bottom, #9370DB 0%, #8A2BE2 50%, #6A0DAD 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    
+    /* Strong shadows */
+    filter: drop-shadow(2px 2px 0 #000)
+            drop-shadow(-2px -2px 0 #000)
+            drop-shadow(2px -2px 0 #000)
+            drop-shadow(-2px 2px 0 #000)
+            drop-shadow(3px 3px 3px rgba(0,0,0,0.8))
+            drop-shadow(0 0 12px rgba(138,43,226,0.7));
+}
+
+/* Immune text */
+.damage-immune {
+    font-size: 20px;
+    
+    /* Gray gradient */
+    background: linear-gradient(to bottom, #D3D3D3 0%, #A9A9A9 50%, #808080 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    
+    /* Subtle shadows */
+    filter: drop-shadow(1px 1px 0 #000)
+            drop-shadow(-1px -1px 0 #000)
+            drop-shadow(2px 2px 2px rgba(0,0,0,0.5));
+}
+
+/* Player damage variants - using red color scheme */
+.damage-player-normal {
+    font-size: 30px;
+    
+    /* Red gradient for player damage */
+    background: linear-gradient(to bottom, #FF9999 0%, #FF6666 50%, #FF3333 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    
+    filter: drop-shadow(2px 2px 0 #000)
+            drop-shadow(-2px -2px 0 #000)
+            drop-shadow(2px -2px 0 #000)
+            drop-shadow(-2px 2px 0 #000)
+            drop-shadow(3px 3px 2px rgba(0,0,0,0.8))
+            drop-shadow(0 0 8px rgba(255,102,102,0.6));
+}
+
+.damage-player-crit {
+    font-size: 38px;
+    
+    /* Bright red gradient */
+    background: linear-gradient(to bottom, #FF3333 0%, #FF0000 50%, #990000 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    
+    filter: drop-shadow(3px 3px 0 #000)
+            drop-shadow(-3px -3px 0 #000)
+            drop-shadow(3px -3px 0 #000)
+            drop-shadow(-3px 3px 0 #000)
+            drop-shadow(4px 4px 3px rgba(0,0,0,0.9))
+            drop-shadow(0 0 15px rgba(255,0,0,0.9));
+    
+    animation: critPulse 0.3s ease-out;
+}
+
+.damage-player-weak {
+    font-size: 24px;
+    
+    /* Orange-red gradient */
+    background: linear-gradient(to bottom, #FFCCCC 0%, #FFB3B3 50%, #FF9999 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    
+    filter: drop-shadow(1px 1px 0 #000)
+            drop-shadow(-1px -1px 0 #000)
+            drop-shadow(1px -1px 0 #000)
+            drop-shadow(-1px 1px 0 #000)
+            drop-shadow(2px 2px 2px rgba(0,0,0,0.6));
+}
+
+.damage-player-strong {
+    font-size: 34px;
+    
+    /* Dark red gradient */
+    background: linear-gradient(to bottom, #CC0000 0%, #990000 50%, #660000 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    
+    filter: drop-shadow(2px 2px 0 #000)
+            drop-shadow(-2px -2px 0 #000)
+            drop-shadow(2px -2px 0 #000)
+            drop-shadow(-2px 2px 0 #000)
+            drop-shadow(3px 3px 3px rgba(0,0,0,0.8))
+            drop-shadow(0 0 12px rgba(204,0,0,0.7));
+}
+
+/* Animation for critical hits */
+@keyframes critPulse {
+    0% {
+        transform: scale(1.5);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Miss text styling */
+.damage-miss {
+    font-size: 24px;
+    font-style: italic;
+    
+    /* White with blue tint */
+    background: linear-gradient(to bottom, #FFFFFF 0%, #E6F3FF 50%, #CCE5FF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    
+    filter: drop-shadow(2px 2px 0 #000)
+            drop-shadow(-2px -2px 0 #000)
+            drop-shadow(2px -2px 0 #000)
+            drop-shadow(-2px 2px 0 #000)
+            drop-shadow(2px 2px 2px rgba(0,0,0,0.6));
+}

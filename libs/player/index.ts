@@ -17,11 +17,13 @@ export {
     type AttackConfig,
     DeathMonitor,
     DeathStateService,
-    DamageNumberRenderer,
+    EnemyDamageRenderer,
     PlayerDamageRenderer,
-    DAMAGE_NUMBER_CONFIG,
+    DAMAGE_RENDERER_CONFIG,
+    DAMAGE_COLOR_THEMES,
     getDamageTypeKey,
-    getDamageDisplayText
+    getDamageDisplayText,
+    getDamageStyle
 } from './combat';
 
 // Player services

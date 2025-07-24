@@ -6,7 +6,7 @@
 import Phaser from 'phaser';
 import { PlayerDamageEvent } from '@/spacetime/client';
 import { Player } from '../player';
-import { getDamageTypeKey, getDamageDisplayText } from './damage-number-config';
+import { DAMAGE_RENDERER_CONFIG, getDamageTypeKey, getDamageDisplayText, getDamageStyle } from './damage-renderer-config';
 import { DbConnection } from '@/spacetime/client';
 
 interface PlayerDamageState {
@@ -17,67 +17,6 @@ interface PlayerDamageState {
   damageEvent: PlayerDamageEvent;
 }
 
-// Player damage specific configuration
-const PLAYER_DAMAGE_CONFIG = {
-  styles: {
-    Normal: { 
-      fontSize: '18px', 
-      fontFamily: 'monospace', 
-      color: '#FF6666', // Light red for player damage
-      stroke: '#000000', 
-      strokeThickness: 2,
-      fontStyle: 'normal'
-    },
-    Crit: { 
-      fontSize: '24px', 
-      fontFamily: 'monospace', 
-      color: '#FF0000', // Bright red for crits
-      stroke: '#000000', 
-      strokeThickness: 3,
-      fontStyle: 'bold'
-    },
-    Weak: { 
-      fontSize: '16px', 
-      fontFamily: 'monospace', 
-      color: '#FFB366', // Orange for resisted damage
-      stroke: '#000000', 
-      strokeThickness: 1,
-      fontStyle: 'normal'
-    },
-    Strong: { 
-      fontSize: '20px', 
-      fontFamily: 'monospace', 
-      color: '#CC0000', // Dark red for strong hits
-      stroke: '#000000', 
-      strokeThickness: 2,
-      fontStyle: 'bold'
-    },
-    Immune: { 
-      fontSize: '16px', 
-      fontFamily: 'monospace', 
-      color: '#00FF00', // Green for immune (shouldn't happen but just in case)
-      stroke: '#000000', 
-      strokeThickness: 1,
-      fontStyle: 'italic'
-    },
-  },
-  animations: {
-    duration: 2000,           // Longer duration for player damage
-    fadeInDuration: 200,      
-    fadeOutDuration: 400,     
-    riseDistance: 100,        // Rise higher for visibility
-    spreadRadius: 20,         
-    easingCurve: 'Power2.easeOut',
-  },
-  display: {
-    baseDepth: 200,           // Higher than enemy damage numbers
-    baseYOffset: -80,         // Position above player sprite
-  },
-  performance: {
-    maxConcurrentNumbers: 10, // Limit for player damage
-    staleEventThresholdMs: 5000,
-  },
-};
 
 export class PlayerDamageRenderer {
   private scene: Phaser.Scene;
@@ -148,7 +87,7 @@ export class PlayerDamageRenderer {
     
     text.setVisible(false);
     text.setActive(false);
-    text.setDepth(PLAYER_DAMAGE_CONFIG.display.baseDepth);
+    text.setDepth(DAMAGE_RENDERER_CONFIG.display.player.baseDepth);
     
     return text;
   }
@@ -192,7 +131,7 @@ export class PlayerDamageRenderer {
     }
 
     // Check if we're at max concurrent numbers
-    if (this.activeNumbers.length >= PLAYER_DAMAGE_CONFIG.performance.maxConcurrentNumbers) {
+    if (this.activeNumbers.length >= DAMAGE_RENDERER_CONFIG.performance.player.maxConcurrentNumbers) {
       // Remove oldest
       const oldest = this.activeNumbers.shift();
       if (oldest) {
@@ -209,7 +148,7 @@ export class PlayerDamageRenderer {
   private isEventStale(damageEvent: PlayerDamageEvent): boolean {
     const eventTime = damageEvent.timestamp.toDate().getTime();
     const now = Date.now();
-    return now - eventTime > PLAYER_DAMAGE_CONFIG.performance.staleEventThresholdMs;
+    return now - eventTime > DAMAGE_RENDERER_CONFIG.performance.staleEventThresholdMs;
   }
 
   /**
@@ -221,7 +160,7 @@ export class PlayerDamageRenderer {
 
     // Position above player
     const baseX = this.player.x;
-    const baseY = this.player.y + PLAYER_DAMAGE_CONFIG.display.baseYOffset;
+    const baseY = this.player.y + DAMAGE_RENDERER_CONFIG.display.player.baseYOffset;
     
     // Add some horizontal randomness
     const seed = this.createSeedFromDamageEvent(damageEvent);
@@ -257,18 +196,64 @@ export class PlayerDamageRenderer {
    */
   private configureTextAppearance(text: Phaser.GameObjects.Text, damageEvent: PlayerDamageEvent): void {
     const damageTypeKey = getDamageTypeKey(damageEvent.damageType);
-    const style = PLAYER_DAMAGE_CONFIG.styles[damageTypeKey];
+    const style = getDamageStyle(damageTypeKey, 'player');
     const displayText = '-' + getDamageDisplayText(damageEvent.damageAmount, damageEvent.damageType);
 
     text.setText(displayText);
-    text.setStyle({
-      fontSize: style.fontSize,
-      fontFamily: style.fontFamily,
-      color: style.color,
-      stroke: style.stroke,
-      strokeThickness: style.strokeThickness,
-      fontStyle: style.fontStyle,
-    });
+    
+    // Apply gradient if specified
+    if (style.useGradient && style.gradientColors && text.context) {
+      // Get text dimensions for gradient
+      const textHeight = parseInt(style.fontSize);
+      
+      // Create vertical gradient (top to bottom)
+      const gradient = text.context.createLinearGradient(0, 0, 0, textHeight);
+      gradient.addColorStop(0, style.gradientColors[0]); // Top color
+      gradient.addColorStop(1, style.gradientColors[1]); // Bottom color
+      
+      text.setStyle({
+        fontSize: style.fontSize,
+        fontFamily: style.fontFamily,
+        color: gradient as any, // Use gradient as fill
+        stroke: style.stroke,
+        strokeThickness: style.strokeThickness,
+        fontStyle: style.fontStyle,
+      });
+    } else {
+      // Fallback to solid color
+      text.setStyle({
+        fontSize: style.fontSize,
+        fontFamily: style.fontFamily,
+        color: style.color,
+        stroke: style.stroke,
+        strokeThickness: style.strokeThickness,
+        fontStyle: style.fontStyle,
+      });
+    }
+    
+    // Apply shadow if defined
+    if (style.shadow) {
+      text.setShadow(
+        style.shadow.offsetX,
+        style.shadow.offsetY,
+        style.shadow.color,
+        style.shadow.blur,
+        style.shadow.stroke,
+        style.shadow.fill
+      );
+    }
+    
+    // Add scale effect for critical hits
+    if (damageTypeKey === 'Crit') {
+      text.setScale(1.5);
+      this.scene.tweens.add({
+        targets: text,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 300,
+        ease: 'Back.easeOut'
+      });
+    }
   }
 
   /**
@@ -276,7 +261,7 @@ export class PlayerDamageRenderer {
    */
   private animateDamageNumber(damageNumberState: PlayerDamageState): void {
     const { text, initialX, initialY, damageEvent } = damageNumberState;
-    const { duration, riseDistance, spreadRadius } = PLAYER_DAMAGE_CONFIG.animations;
+    const { duration, riseDistance, spreadRadius } = DAMAGE_RENDERER_CONFIG.animations.player;
 
     // Use deterministic spread
     const seed = this.createSeedFromDamageEvent(damageEvent) + 1;
@@ -288,7 +273,7 @@ export class PlayerDamageRenderer {
     this.scene.tweens.add({
       targets: text,
       alpha: 1,
-      duration: PLAYER_DAMAGE_CONFIG.animations.fadeInDuration,
+      duration: DAMAGE_RENDERER_CONFIG.animations.fadeInDuration,
       ease: 'Power1.easeOut',
     });
 
@@ -298,15 +283,15 @@ export class PlayerDamageRenderer {
       x: targetX,
       y: targetY,
       duration: duration,
-      ease: PLAYER_DAMAGE_CONFIG.animations.easingCurve,
+      ease: DAMAGE_RENDERER_CONFIG.animations.easingCurve,
     });
 
     // Fade out
     this.scene.tweens.add({
       targets: text,
       alpha: 0,
-      duration: PLAYER_DAMAGE_CONFIG.animations.fadeOutDuration,
-      delay: duration - PLAYER_DAMAGE_CONFIG.animations.fadeOutDuration,
+      duration: DAMAGE_RENDERER_CONFIG.animations.player.fadeOutDuration,
+      delay: duration - DAMAGE_RENDERER_CONFIG.animations.player.fadeOutDuration,
       ease: 'Power1.easeIn',
       onComplete: () => {
         this.cleanupDamageNumber(damageNumberState);
