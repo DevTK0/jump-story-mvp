@@ -1,5 +1,6 @@
 import type { Scene } from 'phaser';
 import type { SpriteAnimationSet } from '../animations/animation-factory';
+import { AssetResolver } from './asset-resolver';
 
 export interface SpriteDefinition {
     path: string;
@@ -106,7 +107,7 @@ export class SpriteConfigLoader {
             return;
         }
 
-        scene.load.spritesheet(spriteKey, definition.path, {
+        scene.load.spritesheet(spriteKey, AssetResolver.getAssetPath(definition.path), {
             frameWidth: definition.frameWidth,
             frameHeight: definition.frameHeight,
         });
@@ -182,8 +183,8 @@ export class SpriteConfigLoader {
             if (sprites) {
                 for (const [spriteKey, definition] of Object.entries(sprites)) {
                     // Basic path validation
-                    if (!definition.path.startsWith('assets/') || 
-                        definition.path.includes('..') ||
+                    if (definition.path.includes('..') ||
+                        definition.path.includes('~') ||
                         !definition.path.endsWith('.png')) {
                         invalidPaths.push(`${spriteKey}: ${definition.path}`);
                     }

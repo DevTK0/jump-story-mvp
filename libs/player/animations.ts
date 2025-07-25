@@ -4,7 +4,7 @@ import { Player } from "./player";
 import { InputSystem } from "./input";
 import { gameEvents } from "../core/events";
 import { PlayerEvent } from "./player-events";
-import { AnimationFactory, AnimationManager, ANIMATION_DEFINITIONS, ANIMATION_TIMINGS } from "../animations";
+import { AnimationFactory, AnimationManager, ANIMATION_TIMINGS } from "../animations";
 
 export class AnimationSystem implements System {
     private player: Player;
@@ -82,8 +82,8 @@ export class AnimationSystem implements System {
                     if (animation.key === deathKey) {
                         this.player.anims.stop();
                         // Set to last frame of death animation
-                        const deathAnim = ANIMATION_DEFINITIONS.soldier.death;
-                        this.player.setFrame(deathAnim.end);
+                        // The death animation frames are defined in sprite-config.json
+                        this.player.setFrame(57); // Last frame of soldier death animation
                     }
                 });
             }

@@ -1,39 +1,9 @@
-import type { SpriteAnimationSet } from "./animation-factory";
-
 /**
- * Centralized animation definitions for all sprite types in the game
+ * Animation timing constants and behaviors
  *
- * This file contains all animation frame configurations, allowing for:
- * - Easy modification of animation parameters
- * - Consistent frame ranges across the codebase
- * - Single source of truth for animation definitions
- * - Type safety for animation configurations
+ * Note: Animation frame definitions have been moved to sprite-config.json
+ * to maintain a single source of truth for sprite data
  */
-
-export const ANIMATION_DEFINITIONS = {
-    /**
-     * Player soldier sprite animations
-     */
-    soldier: {
-        idle: { start: 0, end: 5, frameRate: 8 },
-        walk: { start: 9, end: 16, frameRate: 12 },
-        attack1: { start: 18, end: 23, frameRate: 20 },
-        attack2: { start: 27, end: 32, frameRate: 20 },
-        attack3: { start: 36, end: 45, frameRate: 20 },
-        damaged: { start: 45, end: 49, frameRate: 15 },
-        death: { start: 54, end: 57, frameRate: 15 },
-    } satisfies SpriteAnimationSet,
-
-    /**
-     * Enemy orc sprite animations
-     */
-    orc: {
-        idle: { start: 0, end: 5, frameRate: 8 },
-        walk: { start: 9, end: 16, frameRate: 10 },
-        damaged: { start: 32, end: 35, frameRate: 15 },
-        death: { start: 40, end: 43, frameRate: 12 },
-    } satisfies SpriteAnimationSet,
-} as const;
 
 /**
  * Animation timing constants for consistent durations across the game
@@ -105,16 +75,6 @@ export const ANIMATION_BEHAVIORS = {
     } as const,
 } as const;
 
-/**
- * Helper function to get animation definition for a sprite
- */
-export function getAnimationDefinition(
-    spriteKey: string
-): SpriteAnimationSet | undefined {
-    return ANIMATION_DEFINITIONS[
-        spriteKey as keyof typeof ANIMATION_DEFINITIONS
-    ];
-}
 
 /**
  * Helper function to check if an animation should loop

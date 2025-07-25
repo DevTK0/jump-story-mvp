@@ -6,3 +6,7 @@ export * from './error-boundary';
 export * from './scene-error-handler';
 export * from './error-recovery-strategies';
 export * from './error-decorators';
+
+// Asset management
+export * from './asset-resolver';
+export * from './sprite-config-loader';

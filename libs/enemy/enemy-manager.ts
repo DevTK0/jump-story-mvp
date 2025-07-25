@@ -4,7 +4,6 @@ import {
     Enemy as ServerEnemy,
     PlayerState,
 } from "@/spacetime/client";
-import { ANIMATION_DEFINITIONS } from "../animations";
 import {
     EnemyStateManager,
 } from "./state/enemy-state-service";
@@ -421,12 +420,14 @@ export class EnemyManager {
         // Just set the initial frame if dead
         if (isDead) {
             // Set to last frame of death animation
-            const deathAnim =
-                ANIMATION_DEFINITIONS[
-                    enemyType as keyof typeof ANIMATION_DEFINITIONS
-                ];
-            if (deathAnim && "death" in deathAnim) {
-                sprite.setFrame(deathAnim.death.end);
+            // Death frames are defined in sprite-config.json
+            const deathFrames: Record<string, number> = {
+                orc: 43,  // Last frame of orc death animation
+                // Add other enemy types as needed
+            };
+            const deathFrame = deathFrames[enemyType] ?? 0;
+            if (deathFrame > 0) {
+                sprite.setFrame(deathFrame);
             }
             sprite.setTint(0x666666);
             sprite.setAlpha(0.8);

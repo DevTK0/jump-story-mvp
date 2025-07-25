@@ -16,10 +16,8 @@ export {
 } from './animation-factory';
 
 export {
-  ANIMATION_DEFINITIONS,
   ANIMATION_TIMINGS,
   ANIMATION_BEHAVIORS,
-  getAnimationDefinition,
   shouldAnimationLoop,
   canAnimationBeInterrupted,
   getAnimationPriority,

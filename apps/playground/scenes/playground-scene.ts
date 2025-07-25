@@ -15,9 +15,12 @@ import { DbConnection } from "@/spacetime/client";
 import { Identity } from "@clockworklabs/spacetimedb-sdk";
 import { EnemyDamageRenderer, PlayerDamageRenderer } from "@/player";
 import { PlayerQueryService } from "@/player";
-import { AnimationFactory, ANIMATION_DEFINITIONS } from "@/animations";
+import { AnimationFactory } from "@/animations";
+import { SpriteConfigLoader } from "@/core";
+import spriteConfig from '../sprite-config.json';
 import { protectScene } from "@/core/scene-error-handler";
 import { ErrorBoundary, NetworkError, AssetError } from "@/core/error-boundary";
+import { AssetResolver } from "@/core";
 import { registerAllRecoveryStrategies } from "@/core/error-recovery-strategies";
 
 // Scene-specific constants
@@ -59,13 +62,13 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         this.mapLoader.loadMapAssets();
 
         // Load unified soldier spritesheet
-        this.load.spritesheet("soldier", "assets/spritesheet/classes/Soldier.png", {
+        this.load.spritesheet("soldier", AssetResolver.getAssetPath("assets/spritesheet/classes/Soldier.png"), {
             frameWidth: SPRITE_FRAME_WIDTH,
             frameHeight: SPRITE_FRAME_HEIGHT,
         });
 
         // Load unified orc spritesheet
-        this.load.spritesheet("orc", "assets/spritesheet/enemies/Orc.png", {
+        this.load.spritesheet("orc", AssetResolver.getAssetPath("assets/spritesheet/enemies/Orc.png"), {
             frameWidth: SPRITE_FRAME_WIDTH,
             frameHeight: SPRITE_FRAME_HEIGHT,
         });
@@ -89,7 +92,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         ];
         
         emotes.forEach(emote => {
-            this.load.spritesheet(emote.key, `assets/spritesheet/emotes/${emote.file}`, {
+            this.load.spritesheet(emote.key, AssetResolver.getAssetPath(`assets/spritesheet/emotes/${emote.file}`), {
                 frameWidth: 187,
                 frameHeight: 187,
             });
@@ -604,15 +607,20 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
      */
     private createAllAnimations(): void {
         const animFactory = new AnimationFactory(this);
+        const configLoader = new SpriteConfigLoader();
         
-        // Register all sprite animations
-        animFactory.registerSpriteAnimations('soldier', ANIMATION_DEFINITIONS.soldier);
-        animFactory.registerSpriteAnimations('orc', ANIMATION_DEFINITIONS.orc);
+        // Load sprite configuration
+        configLoader.setConfig(spriteConfig);
         
-        // Create all animations
-        animFactory.createSpriteAnimations('soldier');
-        animFactory.createSpriteAnimations('orc');
+        // Get all animation definitions from the config
+        const animationDefinitions = configLoader.getAllAnimationDefinitions();
         
-        console.log('Created all game animations at scene level');
+        // Register and create animations for each sprite
+        Object.entries(animationDefinitions).forEach(([spriteKey, animations]) => {
+            animFactory.registerSpriteAnimations(spriteKey, animations);
+            animFactory.createSpriteAnimations(spriteKey);
+        });
+        
+        console.log('Created all game animations from sprite config');
     }
 }

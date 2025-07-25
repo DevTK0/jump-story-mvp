@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { AssetResolver } from "@/core";
 
 export interface MapGround {
     x: number;
@@ -58,14 +59,11 @@ export class MapLoader {
     }
 
     public loadMapAssets(): void {
-        // Check if we're in cloud/production or local environment
-        // @ts-ignore - VITE_SPACETIME_TARGET is injected at build time
-        const target = import.meta.env.VITE_SPACETIME_TARGET || 'local';
+        // Set the app context for asset resolution
+        AssetResolver.setCurrentApp('playground');
         
         // Load map JSON from appropriate location
-        const mapPath = target === 'cloud' 
-            ? "maps/playground.tmj"  // Production: use public folder
-            : "apps/playground/maps/playground.tmj";  // Development: use source folder
+        const mapPath = AssetResolver.getMapPath("playground.tmj");
         
         this.scene.load.tilemapTiledJSON(
             "playground",
@@ -75,11 +73,11 @@ export class MapLoader {
         // Load tileset images
         this.scene.load.image(
             "ground-tiles",
-            "assets/textures/TX Tileset Ground.png"
+            AssetResolver.getAssetPath("assets/textures/TX Tileset Ground.png")
         );
         this.scene.load.image(
             "village-props",
-            "assets/textures/TX Village Props.png"
+            AssetResolver.getAssetPath("assets/textures/TX Village Props.png")
         );
     }
 
