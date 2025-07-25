@@ -40,4 +40,11 @@ public static partial class Module
         Attack2,
         Attack3
     }
+
+    [SpacetimeDB.Type]
+    public enum MessageType : byte
+    {
+        Message,
+        Command
+    }
 }

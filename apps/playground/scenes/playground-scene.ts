@@ -348,6 +348,11 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         if (this.levelUpAnimationManager) {
             this.peerManager.setLevelUpAnimationManager(this.levelUpAnimationManager);
         }
+        
+        // Connect peer manager with chat manager
+        if (this.chatManager) {
+            this.peerManager.setChatManager(this.chatManager);
+        }
 
         // Set database connection on enemy manager if it exists
         if (this.enemyManager) {
@@ -357,6 +362,11 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         // Set database connection on interaction handler if it exists
         if (this.interactionHandler) {
             this.interactionHandler.setDbConnection(conn);
+        }
+        
+        // Set database connection on chat manager if it exists
+        if (this.chatManager) {
+            this.chatManager.setDbConnection(conn);
         }
 
         // Initialize player stats UI with identity

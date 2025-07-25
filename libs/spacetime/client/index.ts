@@ -60,6 +60,8 @@ import { RecoverFromDamage } from "./recover_from_damage_reducer.ts";
 export { RecoverFromDamage };
 import { RespawnPlayer } from "./respawn_player_reducer.ts";
 export { RespawnPlayer };
+import { SendPlayerMessage } from "./send_player_message_reducer.ts";
+export { SendPlayerMessage };
 import { SpawnAllEnemies } from "./spawn_all_enemies_reducer.ts";
 export { SpawnAllEnemies };
 import { SpawnMissingEnemies } from "./spawn_missing_enemies_reducer.ts";
@@ -72,6 +74,8 @@ import { UpdatePlayerPosition } from "./update_player_position_reducer.ts";
 export { UpdatePlayerPosition };
 import { UpdatePlayerState } from "./update_player_state_reducer.ts";
 export { UpdatePlayerState };
+import { UpdatePlayerTyping } from "./update_player_typing_reducer.ts";
+export { UpdatePlayerTyping };
 
 // Import and reexport all table handle types
 import { EnemyTableHandle } from "./enemy_table.ts";
@@ -88,6 +92,8 @@ import { PlayerDamageEventTableHandle } from "./player_damage_event_table.ts";
 export { PlayerDamageEventTableHandle };
 import { PlayerLevelingConfigTableHandle } from "./player_leveling_config_table.ts";
 export { PlayerLevelingConfigTableHandle };
+import { PlayerMessageTableHandle } from "./player_message_table.ts";
+export { PlayerMessageTableHandle };
 import { CleanupDeadBodiesTimerTableHandle } from "./cleanup_dead_bodies_timer_table.ts";
 export { CleanupDeadBodiesTimerTableHandle };
 import { EnemyPatrolTimerTableHandle } from "./enemy_patrol_timer_table.ts";
@@ -118,12 +124,16 @@ import { EnemyRoute } from "./enemy_route_type.ts";
 export { EnemyRoute };
 import { FacingDirection } from "./facing_direction_type.ts";
 export { FacingDirection };
+import { MessageType } from "./message_type_type.ts";
+export { MessageType };
 import { Player } from "./player_type.ts";
 export { Player };
 import { PlayerDamageEvent } from "./player_damage_event_type.ts";
 export { PlayerDamageEvent };
 import { PlayerLevelingConfig } from "./player_leveling_config_type.ts";
 export { PlayerLevelingConfig };
+import { PlayerMessage } from "./player_message_type.ts";
+export { PlayerMessage };
 import { PlayerState } from "./player_state_type.ts";
 export { PlayerState };
 import { SpawnEnemiesTimer } from "./spawn_enemies_timer_type.ts";
@@ -192,6 +202,15 @@ const REMOTE_MODULE = {
       primaryKeyInfo: {
         colName: "level",
         colType: PlayerLevelingConfig.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    PlayerMessage: {
+      tableName: "PlayerMessage",
+      rowType: PlayerMessage.getTypeScriptAlgebraicType(),
+      primaryKey: "messageId",
+      primaryKeyInfo: {
+        colName: "messageId",
+        colType: PlayerMessage.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     cleanup_dead_bodies_timer: {
@@ -275,6 +294,10 @@ const REMOTE_MODULE = {
       reducerName: "RespawnPlayer",
       argsType: RespawnPlayer.getTypeScriptAlgebraicType(),
     },
+    SendPlayerMessage: {
+      reducerName: "SendPlayerMessage",
+      argsType: SendPlayerMessage.getTypeScriptAlgebraicType(),
+    },
     SpawnAllEnemies: {
       reducerName: "SpawnAllEnemies",
       argsType: SpawnAllEnemies.getTypeScriptAlgebraicType(),
@@ -298,6 +321,10 @@ const REMOTE_MODULE = {
     UpdatePlayerState: {
       reducerName: "UpdatePlayerState",
       argsType: UpdatePlayerState.getTypeScriptAlgebraicType(),
+    },
+    UpdatePlayerTyping: {
+      reducerName: "UpdatePlayerTyping",
+      argsType: UpdatePlayerTyping.getTypeScriptAlgebraicType(),
     },
   },
   versionInfo: {
@@ -342,12 +369,14 @@ export type Reducer = never
 | { name: "PopulatePlayerLevelingConfig", args: PopulatePlayerLevelingConfig }
 | { name: "RecoverFromDamage", args: RecoverFromDamage }
 | { name: "RespawnPlayer", args: RespawnPlayer }
+| { name: "SendPlayerMessage", args: SendPlayerMessage }
 | { name: "SpawnAllEnemies", args: SpawnAllEnemies }
 | { name: "SpawnMissingEnemies", args: SpawnMissingEnemies }
 | { name: "TeleportPlayer", args: TeleportPlayer }
 | { name: "UpdateEnemyPatrol", args: UpdateEnemyPatrol }
 | { name: "UpdatePlayerPosition", args: UpdatePlayerPosition }
 | { name: "UpdatePlayerState", args: UpdatePlayerState }
+| { name: "UpdatePlayerTyping", args: UpdatePlayerTyping }
 ;
 
 export class RemoteReducers {
@@ -541,6 +570,22 @@ export class RemoteReducers {
     this.connection.offReducer("RespawnPlayer", callback);
   }
 
+  sendPlayerMessage(message: string) {
+    const __args = { message };
+    let __writer = new BinaryWriter(1024);
+    SendPlayerMessage.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("SendPlayerMessage", __argsBuffer, this.setCallReducerFlags.sendPlayerMessageFlags);
+  }
+
+  onSendPlayerMessage(callback: (ctx: ReducerEventContext, message: string) => void) {
+    this.connection.onReducer("SendPlayerMessage", callback);
+  }
+
+  removeOnSendPlayerMessage(callback: (ctx: ReducerEventContext, message: string) => void) {
+    this.connection.offReducer("SendPlayerMessage", callback);
+  }
+
   spawnAllEnemies(adminApiKey: string) {
     const __args = { adminApiKey };
     let __writer = new BinaryWriter(1024);
@@ -637,6 +682,22 @@ export class RemoteReducers {
     this.connection.offReducer("UpdatePlayerState", callback);
   }
 
+  updatePlayerTyping(isTyping: boolean) {
+    const __args = { isTyping };
+    let __writer = new BinaryWriter(1024);
+    UpdatePlayerTyping.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("UpdatePlayerTyping", __argsBuffer, this.setCallReducerFlags.updatePlayerTypingFlags);
+  }
+
+  onUpdatePlayerTyping(callback: (ctx: ReducerEventContext, isTyping: boolean) => void) {
+    this.connection.onReducer("UpdatePlayerTyping", callback);
+  }
+
+  removeOnUpdatePlayerTyping(callback: (ctx: ReducerEventContext, isTyping: boolean) => void) {
+    this.connection.offReducer("UpdatePlayerTyping", callback);
+  }
+
 }
 
 export class SetReducerFlags {
@@ -695,6 +756,11 @@ export class SetReducerFlags {
     this.respawnPlayerFlags = flags;
   }
 
+  sendPlayerMessageFlags: CallReducerFlags = 'FullUpdate';
+  sendPlayerMessage(flags: CallReducerFlags) {
+    this.sendPlayerMessageFlags = flags;
+  }
+
   spawnAllEnemiesFlags: CallReducerFlags = 'FullUpdate';
   spawnAllEnemies(flags: CallReducerFlags) {
     this.spawnAllEnemiesFlags = flags;
@@ -723,6 +789,11 @@ export class SetReducerFlags {
   updatePlayerStateFlags: CallReducerFlags = 'FullUpdate';
   updatePlayerState(flags: CallReducerFlags) {
     this.updatePlayerStateFlags = flags;
+  }
+
+  updatePlayerTypingFlags: CallReducerFlags = 'FullUpdate';
+  updatePlayerTyping(flags: CallReducerFlags) {
+    this.updatePlayerTypingFlags = flags;
   }
 
 }
@@ -756,6 +827,10 @@ export class RemoteTables {
 
   get playerLevelingConfig(): PlayerLevelingConfigTableHandle {
     return new PlayerLevelingConfigTableHandle(this.connection.clientCache.getOrCreateTable<PlayerLevelingConfig>(REMOTE_MODULE.tables.PlayerLevelingConfig));
+  }
+
+  get playerMessage(): PlayerMessageTableHandle {
+    return new PlayerMessageTableHandle(this.connection.clientCache.getOrCreateTable<PlayerMessage>(REMOTE_MODULE.tables.PlayerMessage));
   }
 
   get cleanupDeadBodiesTimer(): CleanupDeadBodiesTimerTableHandle {

@@ -2,13 +2,16 @@ import Phaser from "phaser";
 import { ChatInput } from "./chat-input";
 import { SpeechBubble } from "./speech-bubble";
 import { Emote } from "./emote";
+import { DbConnection } from "@/spacetime/client";
 
 export class ChatManager {
     private scene: Phaser.Scene;
     private chatInput: ChatInput;
+    private dbConnection: DbConnection | null = null;
     private speechBubbles: Map<any, SpeechBubble> = new Map();
     private updateEvents: Map<any, Phaser.Time.TimerEvent> = new Map();
     private emoteUpdateEvents: Map<any, Phaser.Time.TimerEvent> = new Map();
+    private peerTypingIndicators: Map<any, Emote> = new Map();
     private typingIndicator: Emote | null = null;
     private typingUpdateEvent: Phaser.Time.TimerEvent | null = null;
     private lastMessageTime: number = 0;
@@ -39,6 +42,11 @@ export class ChatManager {
             // Show rate limit warning
             this.showSystemMessage("You're sending messages too quickly! Please wait a moment.");
             return;
+        }
+        
+        // Send message to backend if connection exists
+        if (this.dbConnection && this.dbConnection.reducers) {
+            this.dbConnection.reducers.sendPlayerMessage(message);
         }
         
         // Check if it's a command
@@ -359,6 +367,170 @@ export class ChatManager {
         this.emoteUpdateEvents.set(player, updateEvent);
     }
     
+    public showPeerCommand(peer: any, command: string): void {
+        // Handle special multi-character emote commands first
+        const commandWithoutSlash = command.slice(1);
+        let emoteName: string | null = null;
+        
+        // Check for exact matches with special characters
+        if (commandWithoutSlash === '!?') {
+            emoteName = 'question_exclamation';
+        } else if (commandWithoutSlash === '??') {
+            emoteName = 'question';
+        } else if (commandWithoutSlash === '!!') {
+            emoteName = 'exclamation';
+        } else {
+            // For other commands, extract normally
+            const parts = commandWithoutSlash.split(' ');
+            const commandName = parts[0].toLowerCase();
+            
+            // Map command names to emote names
+            const commandToEmote: { [key: string]: string } = {
+                'blush': 'blush',
+                'heart': 'heart',
+                'sad': 'sad',
+                'sparkle': 'sparkle',
+                'sweat': 'sweat',
+                'teardrop': 'teardrop',
+                'whistle': 'whistle',
+                'wow': 'wow',
+                'wtf': 'wtf',
+                'zzz': 'zzz'
+            };
+            
+            emoteName = commandToEmote[commandName] || null;
+        }
+        
+        // If we found a valid emote, play it for the peer
+        if (emoteName) {
+            this.playEmoteForEntity(peer, emoteName);
+        }
+    }
+    
+    private playEmoteForEntity(entity: any, emoteName: string): void {
+        // Clear any existing bubbles for this entity
+        this.clearBubblesForEntity(entity);
+        
+        // Map emote names to textures
+        const emoteTextures: { [key: string]: string } = {
+            'exclamation': 'exclamation_emote',
+            'question_exclamation': 'question_exclamation_emote',
+            'question': 'question_emote',
+            'blush': 'blush_emote',
+            'heart': 'heart_emote',
+            'sad': 'sad_emote',
+            'sparkle': 'sparkle_emote',
+            'sweat': 'sweat_emote',
+            'teardrop': 'teardrop_emote',
+            'whistle': 'whistle_emote',
+            'wow': 'wow_emote',
+            'wtf': 'wtf_emote',
+            'zzz': 'zzz_emote'
+        };
+        
+        const texture = emoteTextures[emoteName];
+        if (!texture) {
+            console.log(`Unknown emote: ${emoteName}`);
+            return;
+        }
+        
+        // Create emote without bubble (just the animation)
+        const emoteOffsetY = 40;
+        const emote = new Emote(this.scene, {
+            x: entity.x,
+            y: entity.y - emoteOffsetY,
+            texture: texture,
+            scale: 0.2,
+            duration: 2000,
+            frameRate: 12
+        });
+        
+        // Store in a temporary variable for the update event
+        const emoteSprite = emote;
+        
+        // Update emote position to follow entity
+        const updateEvent = this.scene.time.addEvent({
+            delay: 16, // ~60fps
+            callback: () => {
+                if (emoteSprite && emoteSprite.scene && entity && entity.x !== undefined) {
+                    emoteSprite.updatePosition(entity.x, entity.y - emoteOffsetY);
+                } else {
+                    updateEvent.remove();
+                    this.emoteUpdateEvents.delete(entity);
+                }
+            },
+            loop: true
+        });
+        
+        this.emoteUpdateEvents.set(entity, updateEvent);
+    }
+    
+    public setDbConnection(connection: DbConnection): void {
+        this.dbConnection = connection;
+        // Pass connection to chat input for typing status
+        this.chatInput.setDbConnection(connection);
+    }
+    
+    public showPeerTyping(peer: any): void {
+        // Use a special key for typing indicators
+        const typingKey = `${peer}_typing`;
+        
+        // Remove any existing typing indicator for this peer
+        this.clearTypingIndicatorForPeer(typingKey);
+        
+        // Show typing indicator without bubble
+        const indicatorOffsetY = 40;
+        const typingIndicator = new Emote(this.scene, {
+            x: peer.x,
+            y: peer.y - indicatorOffsetY,
+            texture: 'typing_emote',
+            scale: 0.15,
+            duration: 999999, // Don't auto-destroy
+            frameRate: 8
+        });
+        
+        // Store the typing indicator
+        this.peerTypingIndicators.set(typingKey, typingIndicator);
+        
+        // Update position to follow peer
+        const updateEvent = this.scene.time.addEvent({
+            delay: 16,
+            callback: () => {
+                if (typingIndicator && typingIndicator.scene && peer && peer.x !== undefined) {
+                    typingIndicator.updatePosition(peer.x, peer.y - indicatorOffsetY);
+                } else {
+                    updateEvent.remove();
+                    this.updateEvents.delete(typingKey);
+                    this.peerTypingIndicators.delete(typingKey);
+                }
+            },
+            loop: true
+        });
+        
+        this.updateEvents.set(typingKey, updateEvent);
+    }
+    
+    public hidePeerTyping(peer: any): void {
+        const typingKey = `${peer}_typing`;
+        this.clearTypingIndicatorForPeer(typingKey);
+    }
+    
+    private clearTypingIndicatorForPeer(typingKey: any): void {
+        // Remove typing indicator emote
+        const typingIndicator = this.peerTypingIndicators.get(typingKey);
+        if (typingIndicator && typingIndicator.destroy) {
+            typingIndicator.destroy();
+        }
+        this.peerTypingIndicators.delete(typingKey);
+        
+        // Remove update event
+        const updateEvent = this.updateEvents.get(typingKey);
+        if (updateEvent) {
+            updateEvent.remove();
+        }
+        this.updateEvents.delete(typingKey);
+    }
+    
     public destroy(): void {
         this.chatInput.destroy();
         
@@ -374,5 +546,9 @@ export class ChatManager {
         // Clean up all emote update events
         this.emoteUpdateEvents.forEach(event => event.remove());
         this.emoteUpdateEvents.clear();
+        
+        // Clean up all peer typing indicators
+        this.peerTypingIndicators.forEach(indicator => indicator.destroy());
+        this.peerTypingIndicators.clear();
     }
 }

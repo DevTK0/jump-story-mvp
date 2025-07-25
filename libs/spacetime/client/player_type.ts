@@ -50,6 +50,7 @@ export type Player = {
   maxMana: number,
   level: number,
   experience: number,
+  isTyping: boolean,
 };
 
 /**
@@ -75,6 +76,7 @@ export namespace Player {
       new ProductTypeElement("maxMana", AlgebraicType.createF32Type()),
       new ProductTypeElement("level", AlgebraicType.createU32Type()),
       new ProductTypeElement("experience", AlgebraicType.createU32Type()),
+      new ProductTypeElement("isTyping", AlgebraicType.createBoolType()),
     ]);
   }
 

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { DbConnection } from "@/spacetime/client";
 
 export class ChatInput {
     private scene: Phaser.Scene;
@@ -11,6 +12,7 @@ export class ChatInput {
     private messageHistory: string[] = [];
     private historyIndex: number = -1;
     private currentInput: string = '';
+    private dbConnection: DbConnection | null = null;
 
     constructor(scene: Phaser.Scene) {
         this.scene = scene;
@@ -27,6 +29,11 @@ export class ChatInput {
 
     private showInput(): void {
         this.isTyping = true;
+        
+        // Update typing status in database
+        if (this.dbConnection && this.dbConnection.reducers) {
+            this.dbConnection.reducers.updatePlayerTyping(true);
+        }
         
         // Notify typing started
         if (this.onTypingStartCallback) {
@@ -195,6 +202,11 @@ export class ChatInput {
         
         this.isTyping = false;
         
+        // Update typing status in database
+        if (this.dbConnection && this.dbConnection.reducers) {
+            this.dbConnection.reducers.updatePlayerTyping(false);
+        }
+        
         // Notify typing stopped
         if (this.onTypingStopCallback) {
             this.onTypingStopCallback();
@@ -228,6 +240,10 @@ export class ChatInput {
     
     public onTypingStop(callback: () => void): void {
         this.onTypingStopCallback = callback;
+    }
+
+    public setDbConnection(connection: DbConnection): void {
+        this.dbConnection = connection;
     }
 
     public destroy(): void {

@@ -53,7 +53,8 @@ public static partial class Module
             current_mana = maxMana,
             max_mana = maxMana,
             level = startingLevel,
-            experience = PlayerConstants.STARTING_EXPERIENCE
+            experience = PlayerConstants.STARTING_EXPERIENCE,
+            is_typing = false
         };
         ctx.Db.Player.Insert(newPlayer);
     }

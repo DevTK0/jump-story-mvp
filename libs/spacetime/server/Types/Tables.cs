@@ -20,6 +20,7 @@ public static partial class Module
         public float max_mana;
         public uint level;
         public uint experience;
+        public bool is_typing;
     }
 
     [Table(Name = "EnemyRoute", Public = true)]
@@ -121,6 +122,17 @@ public static partial class Module
         [PrimaryKey]
         public uint level;
         public uint exp_required; // Total EXP required to reach this level from level 1
+    }
+
+    [Table(Name = "PlayerMessage", Public = true)]
+    public partial struct PlayerMessage
+    {
+        [PrimaryKey, AutoInc]
+        public uint message_id;
+        public Identity player_id;
+        public MessageType message_type;
+        public string message;
+        public Timestamp sent_dt;
     }
 
 }

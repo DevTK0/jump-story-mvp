@@ -4,6 +4,7 @@ import type {
     Player as PlayerData,
     EventContext,
     DbConnection,
+    PlayerMessage,
 } from "@/spacetime/client";
 import { Identity } from "@clockworklabs/spacetimedb-sdk";
 
@@ -22,6 +23,7 @@ export class PeerManager {
     private localPlayerIdentity: Identity | null = null;
     private dbConnection: DbConnection | null = null;
     private levelUpAnimationManager: any = null;
+    private chatManager: any = null;
 
     // Proximity-based subscription configuration
     private subscriptionConfig: PeerSubscriptionConfig;
@@ -67,6 +69,13 @@ export class PeerManager {
             const playerData = peer.getPlayerData();
             manager.registerSprite(playerData.identity, peer);
         }
+    }
+
+    /**
+     * Set the chat manager for displaying messages from peers
+     */
+    public setChatManager(manager: any): void {
+        this.chatManager = manager;
     }
 
     private setupServerSubscriptions(): void {
@@ -118,6 +127,9 @@ export class PeerManager {
         this.dbConnection.db.player.onInsert(this.onPlayerInsert);
         this.dbConnection.db.player.onUpdate(this.onPlayerUpdate);
         this.dbConnection.db.player.onDelete(this.onPlayerDelete);
+        
+        // Subscribe to player messages
+        this.dbConnection.db.playerMessage.onInsert(this.onPlayerMessageInsert);
 
         console.log("✅ PeerManager: Global subscription active");
     }
@@ -132,6 +144,9 @@ export class PeerManager {
         this.dbConnection.db.player.onInsert(this.onPlayerInsert);
         this.dbConnection.db.player.onUpdate(this.onPlayerUpdate);
         this.dbConnection.db.player.onDelete(this.onPlayerDelete);
+        
+        // Subscribe to player messages
+        this.dbConnection.db.playerMessage.onInsert(this.onPlayerMessageInsert);
     }
 
     /**
@@ -351,6 +366,17 @@ export class PeerManager {
 
         if (peer) {
             peer.updateFromData(newPlayerData);
+            
+            // Handle typing indicator updates
+            if (this.chatManager) {
+                if (newPlayerData.isTyping) {
+                    // Show typing indicator for this peer
+                    this.chatManager.showPeerTyping(peer);
+                } else {
+                    // Hide typing indicator for this peer
+                    this.chatManager.hidePeerTyping(peer);
+                }
+            }
         }
     };
 
@@ -369,6 +395,42 @@ export class PeerManager {
             );
         }
     };
+
+    public onPlayerMessageInsert = (
+        _ctx: EventContext,
+        message: PlayerMessage
+    ): void => {
+        // Don't handle our own messages
+        if (
+            this.localPlayerIdentity &&
+            message.playerId.isEqual(this.localPlayerIdentity)
+        ) {
+            return;
+        }
+
+        // Find the peer who sent this message
+        const identityString = message.playerId.toHexString();
+        const peer = this.peers.get(identityString);
+        
+        if (peer && this.chatManager) {
+            // Only show regular messages as speech bubbles, not commands
+            if (message.messageType.tag === "Message") {
+                // Show speech bubble above the peer
+                this.chatManager.showSpeechBubble(peer, message.message);
+            } else if (message.messageType.tag === "Command" && message.message.startsWith('/')) {
+                // Handle emote commands for peers
+                this.handlePeerCommand(peer, message.message);
+            }
+        }
+    };
+
+    private handlePeerCommand(peer: Peer, command: string): void {
+        if (!this.chatManager) return;
+        
+        // For now, just pass through to the chat manager to handle emotes
+        // The chat manager already has logic to parse and display emotes
+        this.chatManager.showPeerCommand(peer, command);
+    }
 
     public getPeerCount(): number {
         return this.peers.size;
