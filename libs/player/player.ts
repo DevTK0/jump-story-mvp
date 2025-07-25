@@ -22,6 +22,9 @@ export class Player extends Phaser.GameObjects.Sprite {
   // Physics body reference for convenience
   public body!: Phaser.Physics.Arcade.Body;
   
+  // Chat system flag
+  public chatActive: boolean = false;
+  
   // Input references
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys; // Will be initialized by PlayerBuilder
   private keys!: {

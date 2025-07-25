@@ -8,7 +8,7 @@ import type { IDebuggable } from "@/debug/debug-interfaces";
 import { DEBUG_CONFIG } from "@/debug/config";
 import { DebugState } from "@/debug/debug-state";
 import { SpacetimeConnectionBuilder } from "@/networking";
-import { PlayerStatsUI, FPSCounter, PerformanceMetrics, DbMetricsTracker, LevelUpAnimationManager } from "@/ui";
+import { PlayerStatsUI, FPSCounter, PerformanceMetrics, DbMetricsTracker, LevelUpAnimationManager, ChatManager } from "@/ui";
 import { PhysicsConfigurator, type CollisionGroups } from "@/physics";
 import { InteractionHandler } from "@/networking";
 import { DbConnection } from "@/spacetime/client";
@@ -47,6 +47,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     private fpsCounter!: FPSCounter;
     private performanceMetrics!: PerformanceMetrics;
     private levelUpAnimationManager!: LevelUpAnimationManager;
+    private chatManager!: ChatManager;
 
     constructor() {
         super({ key: "playground" });
@@ -218,6 +219,9 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         
         // Create level up animation manager
         this.levelUpAnimationManager = new LevelUpAnimationManager(this);
+        
+        // Create chat manager
+        this.chatManager = new ChatManager(this);
 
         // Create FPS counter
         this.fpsCounter = new FPSCounter(this, {
@@ -548,6 +552,11 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         // Clean up damage number renderer
         if (this.enemyDamageRenderer) {
             this.enemyDamageRenderer.destroy();
+        }
+        
+        // Clean up chat manager
+        if (this.chatManager) {
+            this.chatManager.destroy();
         }
     }
 

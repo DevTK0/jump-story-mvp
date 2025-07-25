@@ -32,6 +32,24 @@ export class InputSystem implements System {
     // Store previous state for edge detection
     this.previousInputState = { ...this.inputState };
     
+    // Check if chat is active - if so, clear all input
+    if ((this.player as any).chatActive) {
+      this.inputState = {
+        left: false,
+        right: false,
+        up: false,
+        down: false,
+        jump: false,
+        attack1: false,
+        attack2: false,
+        attack3: false,
+        respawn: false,
+        teleport: false,
+        instakill: false,
+      };
+      return;
+    }
+    
     // Get current input
     const cursors = this.player.getCursors();
     const keys = this.player.getKeys();
@@ -85,6 +103,10 @@ export class InputSystem implements System {
   
   // Special input checks
   public isDoubleJumpPressed(): boolean {
+    // Check if chat is active
+    if ((this.player as any).chatActive) {
+      return false;
+    }
     // Double jump is now on z key since c is used for attack2
     const keys = this.player.getKeys();
     return Phaser.Input.Keyboard.JustDown(keys.z);

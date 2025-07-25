@@ -94,10 +94,11 @@ export class InteractionHandler {
             this.damagedInCurrentAttack.add(enemyId);
 
             // Visual feedback for successful hit
-            this.scene.cameras.main.shake(
-                this.config.cameraShakeDuration,
-                this.config.cameraShakeIntensity
-            );
+            // Screen shake disabled
+            // this.scene.cameras.main.shake(
+            //     this.config.cameraShakeDuration,
+            //     this.config.cameraShakeIntensity
+            // );
 
             // Damage enemy (hit animation will be handled by DamageEvent subscription)
             this.logger.info('Enemy hit!', enemyId);

@@ -8,3 +8,5 @@ export type { FPSCounterConfig } from './performance/fps-counter';
 export { PerformanceMetrics } from './performance/performance-metrics';
 export type { PerformanceMetricsConfig } from './performance/performance-metrics';
 export { DbMetricsTracker } from './performance/db-metrics-tracker';
+export { ChatManager, ChatInput, SpeechBubble } from './chat';
+export type { SpeechBubbleConfig } from './chat';
