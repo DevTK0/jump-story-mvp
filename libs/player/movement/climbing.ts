@@ -213,7 +213,11 @@ class ClimbingCollision {
             const body = climbeable.body;
             if (isValidStaticBody(body)) {
                 // Check if climbable is below player (within distance pixels)
-                const isBelow = body.y >= playerBottom && body.y <= playerBottom + distance;
+                // Also check if the top of the climbable extends above the player bottom
+                // This handles cases where the ladder starts at or slightly above the platform
+                const isBelow = body.y <= playerBottom + distance && 
+                               body.y + body.height > playerBottom;
+                
                 // Check horizontal alignment with center threshold
                 const climbeableCenterX = getClimbeableCenterX(body);
                 const maxAllowedDistance = (body.width / 2) * PLAYER_CONFIG.climbing.centerThreshold;
@@ -297,26 +301,31 @@ export class ClimbingSystem
         const inputState = this.inputSystem.getInputState();
         const onGround = this.movementSystem.isOnGround();
 
-        // Regular climbing start (overlapping with climbable area)
-        if (this.collision.isPlayerInClimbeableArea() && this.collision.isPlayerNearCenter()) {
-            if (inputState.up || (inputState.down && onGround)) {
-                this.startClimbing();
-            }
-            return;
-        }
-
-        // Special case: climb down from platform edge
+        // Special case: climb down from platform edge - check this FIRST
         if (inputState.down && onGround) {
-            const climbableBelow = this.collision.checkClimbableBelow(10);
+            // Check for climbable below with a larger distance to account for platform thickness
+            const climbableBelow = this.collision.checkClimbableBelow(20); // Increased from 10 to 20
             if (climbableBelow) {
                 // Set the climbable area and start climbing
                 this.collision.setTemporaryClimbableArea(climbableBelow);
                 this.startClimbing();
-                // Move player down slightly to ensure overlap for continued climbing
+                // Move player down enough to clear the platform and enter the ladder
                 if (this.player.body) {
-                    this.player.y += 5;
+                    this.player.y += 10; // Increased from 5 to 10
+                    // Also ensure we're centered on the ladder
+                    const climbeableCenterX = getClimbeableCenterX(climbableBelow);
+                    this.player.x = climbeableCenterX - this.player.body.width / 2;
                 }
+                return;
             }
+        }
+
+        // Regular climbing start (overlapping with climbable area)
+        if (this.collision.isPlayerInClimbeableArea() && this.collision.isPlayerNearCenter()) {
+            if (inputState.up || inputState.down) {
+                this.startClimbing();
+            }
+            return;
         }
     }
 
