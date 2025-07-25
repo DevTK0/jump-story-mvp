@@ -1,8 +1,12 @@
 import { Stagehand } from "@browserbasehq/stagehand";
 import fs from "fs";
 import path from "path";
+import * as dotenv from "dotenv";
 
-async function singleInstanceTest(instanceId: number): Promise<void> {
+// Load environment variables
+dotenv.config();
+
+async function singleInstanceTest(instanceId: number, gameUrl: string): Promise<void> {
     const stagehand = new Stagehand({
         env: "LOCAL",
         verbose: 1,
@@ -17,8 +21,8 @@ async function singleInstanceTest(instanceId: number): Promise<void> {
         await stagehand.init();
 
         // Navigate to the game page
-        console.log(`[Instance ${instanceId}] Navigating to game...`);
-        await stagehand.page.goto("http://localhost:4000");
+        console.log(`[Instance ${instanceId}] Navigating to game at ${gameUrl}...`);
+        await stagehand.page.goto(gameUrl);
 
         // Wait for game initialization
         console.log(`[Instance ${instanceId}] Waiting for game to load...`);
@@ -100,7 +104,7 @@ async function singleInstanceTest(instanceId: number): Promise<void> {
         if (error instanceof Error) {
             if (error.message.includes("net::ERR_CONNECTION_REFUSED")) {
                 console.error(
-                    "🔧 Make sure the game server is running on http://localhost:4000"
+                    `🔧 Make sure the game server is running on ${gameUrl}`
                 );
             } else if (
                 error.message.includes("ENOENT") ||
@@ -123,6 +127,15 @@ async function singleInstanceTest(instanceId: number): Promise<void> {
 }
 
 async function runLoadTest(): Promise<void> {
+    // Determine game URL based on deployment target
+    const target = process.env.VITE_SPACETIME_TARGET || 'local';
+    const gameUrl = target === 'cloud' 
+        ? "https://devtk0.github.io/jump-story-mvp/"
+        : "http://localhost:4000";
+    
+    console.log(`🎮 Running ${target} load test`);
+    console.log(`🎮 Game URL: ${gameUrl}`);
+    
     const numInstances = 200;
     console.log(
         `🚀 Starting load test with ${numInstances} browser instances...`
@@ -132,7 +145,7 @@ async function runLoadTest(): Promise<void> {
 
     // Create all instances
     for (let i = 1; i <= numInstances; i++) {
-        promises.push(singleInstanceTest(i));
+        promises.push(singleInstanceTest(i, gameUrl));
 
         // Add 10 second delay between each browser instance startup
         if (i < numInstances) {
