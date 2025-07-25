@@ -38,6 +38,8 @@ import { CleanupDeadBodies } from "./cleanup_dead_bodies_reducer.ts";
 export { CleanupDeadBodies };
 import { CleanupInactivePlayers } from "./cleanup_inactive_players_reducer.ts";
 export { CleanupInactivePlayers };
+import { CleanupOldMessages } from "./cleanup_old_messages_reducer.ts";
+export { CleanupOldMessages };
 import { Connect } from "./connect_reducer.ts";
 export { Connect };
 import { DamageEnemy } from "./damage_enemy_reducer.ts";
@@ -98,6 +100,8 @@ import { CleanupDeadBodiesTimerTableHandle } from "./cleanup_dead_bodies_timer_t
 export { CleanupDeadBodiesTimerTableHandle };
 import { EnemyPatrolTimerTableHandle } from "./enemy_patrol_timer_table.ts";
 export { EnemyPatrolTimerTableHandle };
+import { MessageCleanupTimerTableHandle } from "./message_cleanup_timer_table.ts";
+export { MessageCleanupTimerTableHandle };
 import { SpawnEnemiesTimerTableHandle } from "./spawn_enemies_timer_table.ts";
 export { SpawnEnemiesTimerTableHandle };
 
@@ -124,6 +128,8 @@ import { EnemyRoute } from "./enemy_route_type.ts";
 export { EnemyRoute };
 import { FacingDirection } from "./facing_direction_type.ts";
 export { FacingDirection };
+import { MessageCleanupTimer } from "./message_cleanup_timer_type.ts";
+export { MessageCleanupTimer };
 import { MessageType } from "./message_type_type.ts";
 export { MessageType };
 import { Player } from "./player_type.ts";
@@ -231,6 +237,15 @@ const REMOTE_MODULE = {
         colType: EnemyPatrolTimer.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
+    message_cleanup_timer: {
+      tableName: "message_cleanup_timer",
+      rowType: MessageCleanupTimer.getTypeScriptAlgebraicType(),
+      primaryKey: "scheduledId",
+      primaryKeyInfo: {
+        colName: "scheduledId",
+        colType: MessageCleanupTimer.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
     spawn_enemies_timer: {
       tableName: "spawn_enemies_timer",
       rowType: SpawnEnemiesTimer.getTypeScriptAlgebraicType(),
@@ -249,6 +264,10 @@ const REMOTE_MODULE = {
     CleanupInactivePlayers: {
       reducerName: "CleanupInactivePlayers",
       argsType: CleanupInactivePlayers.getTypeScriptAlgebraicType(),
+    },
+    CleanupOldMessages: {
+      reducerName: "CleanupOldMessages",
+      argsType: CleanupOldMessages.getTypeScriptAlgebraicType(),
     },
     Connect: {
       reducerName: "Connect",
@@ -358,6 +377,7 @@ const REMOTE_MODULE = {
 export type Reducer = never
 | { name: "CleanupDeadBodies", args: CleanupDeadBodies }
 | { name: "CleanupInactivePlayers", args: CleanupInactivePlayers }
+| { name: "CleanupOldMessages", args: CleanupOldMessages }
 | { name: "Connect", args: Connect }
 | { name: "DamageEnemy", args: DamageEnemy }
 | { name: "Debug", args: Debug }
@@ -412,6 +432,22 @@ export class RemoteReducers {
 
   removeOnCleanupInactivePlayers(callback: (ctx: ReducerEventContext, adminApiKey: string) => void) {
     this.connection.offReducer("CleanupInactivePlayers", callback);
+  }
+
+  cleanupOldMessages(timer: MessageCleanupTimer) {
+    const __args = { timer };
+    let __writer = new BinaryWriter(1024);
+    CleanupOldMessages.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("CleanupOldMessages", __argsBuffer, this.setCallReducerFlags.cleanupOldMessagesFlags);
+  }
+
+  onCleanupOldMessages(callback: (ctx: ReducerEventContext, timer: MessageCleanupTimer) => void) {
+    this.connection.onReducer("CleanupOldMessages", callback);
+  }
+
+  removeOnCleanupOldMessages(callback: (ctx: ReducerEventContext, timer: MessageCleanupTimer) => void) {
+    this.connection.offReducer("CleanupOldMessages", callback);
   }
 
   onConnect(callback: (ctx: ReducerEventContext) => void) {
@@ -711,6 +747,11 @@ export class SetReducerFlags {
     this.cleanupInactivePlayersFlags = flags;
   }
 
+  cleanupOldMessagesFlags: CallReducerFlags = 'FullUpdate';
+  cleanupOldMessages(flags: CallReducerFlags) {
+    this.cleanupOldMessagesFlags = flags;
+  }
+
   damageEnemyFlags: CallReducerFlags = 'FullUpdate';
   damageEnemy(flags: CallReducerFlags) {
     this.damageEnemyFlags = flags;
@@ -839,6 +880,10 @@ export class RemoteTables {
 
   get enemyPatrolTimer(): EnemyPatrolTimerTableHandle {
     return new EnemyPatrolTimerTableHandle(this.connection.clientCache.getOrCreateTable<EnemyPatrolTimer>(REMOTE_MODULE.tables.enemy_patrol_timer));
+  }
+
+  get messageCleanupTimer(): MessageCleanupTimerTableHandle {
+    return new MessageCleanupTimerTableHandle(this.connection.clientCache.getOrCreateTable<MessageCleanupTimer>(REMOTE_MODULE.tables.message_cleanup_timer));
   }
 
   get spawnEnemiesTimer(): SpawnEnemiesTimerTableHandle {

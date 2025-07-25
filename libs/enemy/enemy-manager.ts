@@ -17,8 +17,10 @@ export interface EnemySubscriptionConfig {
     useProximitySubscription: boolean;
     /** Distance around player to load enemies (in pixels) */
     proximityRadius: number;
-    /** How often to update proximity subscription (in milliseconds) */
-    proximityUpdateInterval: number;
+    /** How often to update proximity subscription (in milliseconds) - deprecated, use subscriptionDistanceThreshold instead */
+    proximityUpdateInterval?: number;
+    /** Distance player must move before updating subscription (in pixels) */
+    subscriptionDistanceThreshold?: number;
 }
 
 export class EnemyManager {
@@ -39,14 +41,15 @@ export class EnemyManager {
     // Proximity-based subscription configuration
     private subscriptionConfig: EnemySubscriptionConfig;
     private proximityUpdateTimer: Phaser.Time.TimerEvent | null = null;
-    private lastPlayerPosition: { x: number; y: number } | null = null;
+    private lastSubscriptionCenter: { x: number; y: number } | null = null;
 
     // Default configuration
     private static readonly DEFAULT_SUBSCRIPTION_CONFIG: EnemySubscriptionConfig =
         {
             useProximitySubscription: false, // Disabled by default for backward compatibility
             proximityRadius: 2000, // 2000 pixels around player
-            proximityUpdateInterval: 5000, // Update every 5 seconds
+            proximityUpdateInterval: 5000, // Update every 5 seconds (deprecated)
+            subscriptionDistanceThreshold: 100, // Update subscription when player moves 100 pixels
         };
 
     constructor(
@@ -145,8 +148,8 @@ export class EnemyManager {
         if (!this.dbConnection) return;
 
         try {
-            // Start proximity subscription timer
-            this.startProximityUpdateTimer();
+            // Set up distance-based proximity checking
+            this.setupDistanceBasedProximityUpdate();
 
             // Set up event listeners for targeted enemy data
             this.setupTargetedEnemyEventListeners();
@@ -199,10 +202,6 @@ export class EnemyManager {
 
         // With proximity subscription, events will only fire for nearby enemies
         this.dbConnection.db.enemy.onInsert((_ctx, enemy) => {
-            // console.log(
-            //     "🎯 EnemyManager: Nearby enemy spawned via proximity subscription:",
-            //     enemy.enemyId
-            // );
             this.spawnServerEnemy(enemy);
         });
 
@@ -221,19 +220,40 @@ export class EnemyManager {
     }
 
     /**
-     * Start timer to periodically update proximity subscription based on player movement
+     * Set up distance-based proximity update checking
+     * Updates subscription when player moves more than 1/4 of the proximity radius
      */
-    private startProximityUpdateTimer(): void {
-        if (this.proximityUpdateTimer) {
-            this.proximityUpdateTimer.destroy();
-        }
+    private setupDistanceBasedProximityUpdate(): void {
+        // Check player position every frame for distance-based updates
+        this.scene.events.on("update", this.checkProximityDistanceUpdate, this);
+    }
 
-        this.proximityUpdateTimer = this.scene.time.addEvent({
-            delay: this.subscriptionConfig.proximityUpdateInterval,
-            loop: true,
-            callback: this.updateProximitySubscription,
-            callbackScope: this,
-        });
+    /**
+     * Check if player has moved far enough to warrant a proximity subscription update
+     */
+    private checkProximityDistanceUpdate(): void {
+        if (!this.dbConnection) return;
+
+        const playerPosition = this.getPlayerPosition();
+        if (!playerPosition) return;
+
+        // Calculate distance threshold (1/4 of proximity radius)
+        const updateThreshold = this.subscriptionConfig.proximityRadius * 0.25;
+
+        // Check if we need to update based on distance moved
+        if (this.lastSubscriptionCenter) {
+            const distanceMoved = Math.sqrt(
+                Math.pow(playerPosition.x - this.lastSubscriptionCenter.x, 2) +
+                Math.pow(playerPosition.y - this.lastSubscriptionCenter.y, 2)
+            );
+
+            if (distanceMoved >= updateThreshold) {
+                this.updateProximitySubscription();
+            }
+        } else {
+            // First time - set initial center
+            this.updateProximitySubscription();
+        }
     }
 
     /**
@@ -251,22 +271,18 @@ export class EnemyManager {
             return;
         }
 
-        // Check if player has moved significantly since last update
-        if (
-            this.lastPlayerPosition &&
-            Math.abs(playerPosition.x - this.lastPlayerPosition.x) < 100 &&
-            Math.abs(playerPosition.y - this.lastPlayerPosition.y) < 100
-        ) {
-            // Player hasn't moved much, but still check for enemies to remove
-            this.loadProximityEnemies();
-            return;
-        }
+        // Update the last subscription center
+        this.lastSubscriptionCenter = { x: playerPosition.x, y: playerPosition.y };
 
         const radius = this.subscriptionConfig.proximityRadius;
         const minX = playerPosition.x - radius;
         const maxX = playerPosition.x + radius;
         const minY = playerPosition.y - radius;
         const maxY = playerPosition.y + radius;
+
+        console.log(
+            `🎯 EnemyManager: Updating proximity subscription - Center: (${playerPosition.x}, ${playerPosition.y}), radius: ${radius}px`
+        );
 
         try {
             // Subscribe to enemies within proximity using SQL query
@@ -276,10 +292,11 @@ export class EnemyManager {
                     this.loadProximityEnemies();
                 })
                 .subscribe([
-                    `SELECT * FROM Enemy WHERE x BETWEEN ${minX} AND ${maxX} AND y BETWEEN ${minY} AND ${maxY}`,
+                    `SELECT * FROM Enemy 
+                     WHERE x >= ${minX} AND x <= ${maxX}
+                     AND y >= ${minY} AND y <= ${maxY}`,
                 ]);
 
-            this.lastPlayerPosition = { ...playerPosition };
         } catch (error) {
             console.error(
                 "EnemyManager: Failed to update proximity subscription:",
@@ -311,22 +328,14 @@ export class EnemyManager {
             if (distance <= radius) {
                 currentEnemyIds.add(enemy.enemyId);
                 if (!this.enemies.has(enemy.enemyId)) {
-                    // console.log(
-                    //     `🎯 EnemyManager: Loading nearby enemy ${
-                    //         enemy.enemyId
-                    //     } at distance ${Math.round(distance)}`
-                    // );
                     this.spawnServerEnemy(enemy);
                 }
             }
         }
-
+        
         // Remove enemies that are no longer in proximity
         for (const [enemyId] of this.enemies) {
             if (!currentEnemyIds.has(enemyId)) {
-                // console.log(
-                //     `🎯 EnemyManager: Removing enemy ${enemyId} - now outside proximity`
-                // );
                 this.despawnServerEnemy(enemyId);
             }
         }
@@ -577,6 +586,23 @@ export class EnemyManager {
         const healthBar = this.enemyHealthBars.get(serverEnemy.enemyId);
         if (!sprite) return;
 
+        // Check proximity if using proximity subscription
+        if (this.subscriptionConfig.useProximitySubscription) {
+            const playerPosition = this.getPlayerPosition();
+            if (playerPosition) {
+                const distance = Math.sqrt(
+                    Math.pow(serverEnemy.x - playerPosition.x, 2) +
+                    Math.pow(serverEnemy.y - playerPosition.y, 2)
+                );
+                
+                if (distance > this.subscriptionConfig.proximityRadius) {
+                    // Enemy is now outside proximity - despawn it
+                    this.despawnServerEnemy(serverEnemy.enemyId);
+                    return;
+                }
+            }
+        }
+
         // Store previous position for movement detection
         const previousX = sprite.x;
 
@@ -675,6 +701,9 @@ export class EnemyManager {
             this.proximityUpdateTimer.destroy();
             this.proximityUpdateTimer = null;
         }
+
+        // Clean up distance-based update listener
+        this.scene.events.off("update", this.checkProximityDistanceUpdate, this);
 
         this.enemies.forEach((sprite) => {
             sprite.destroy();

@@ -224,8 +224,8 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         // Initialize enemy manager with proximity-based subscriptions enabled
         this.enemyManager = new EnemyManager(this, {
             useProximitySubscription: true,
-            proximityRadius: 3000, // Load enemies within 3000 pixels
-            proximityUpdateInterval: 10000, // Update subscription every 10 seconds
+            proximityRadius: 800, // Load and render enemies within 800 pixels
+            proximityUpdateInterval: 1000, // Update subscription every 1 second
         });
 
         // Set database connection if already available
@@ -340,7 +340,11 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         }
 
         // Initialize peer manager with proximity subscription enabled
-        this.peerManager = new PeerManager(this);
+        this.peerManager = new PeerManager(this, {
+            useProximitySubscription: true,
+            proximityRadius: 800, // Load and render peers within 800 pixels
+            proximityUpdateInterval: 1000, // Update subscription every 1 second
+        });
         this.peerManager.setLocalPlayerIdentity(identity);
         this.peerManager.setDbConnection(conn);
         

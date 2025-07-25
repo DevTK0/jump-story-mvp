@@ -1,0 +1,106 @@
+{
+  "sprites": {
+    "classes": {
+      "soldier": {
+        "path": "assets/spritesheet/classes/Soldier.png",
+        "frameWidth": 100,
+        "frameHeight": 100,
+        "animations": {
+          "idle": { "start": 0, "end": 5, "frameRate": 8 },
+          "walk": { "start": 9, "end": 16, "frameRate": 12 },
+          "attack1": { "start": 18, "end": 23, "frameRate": 20 },
+          "attack2": { "start": 27, "end": 32, "frameRate": 20 },
+          "attack3": { "start": 36, "end": 45, "frameRate": 20 },
+          "damaged": { "start": 45, "end": 49, "frameRate": 15 },
+          "death": { "start": 54, "end": 57, "frameRate": 15 }
+        }
+      },
+      "knight": {
+        "path": "assets/spritesheet/classes/Knight.png",
+        "frameWidth": 100,
+        "frameHeight": 100,
+        "animations": {
+          "idle": { "start": 0, "end": 5, "frameRate": 8 },
+          "walk": { "start": 9, "end": 16, "frameRate": 12 },
+          "attack1": { "start": 18, "end": 23, "frameRate": 20 },
+          "attack2": { "start": 27, "end": 32, "frameRate": 20 },
+          "attack3": { "start": 36, "end": 44, "frameRate": 20 },
+          "hurt": { "start": 45, "end": 49, "frameRate": 15 },
+          "death": { "start": 54, "end": 62, "frameRate": 15 }
+        }
+      },
+      "wizard": {
+        "path": "assets/spritesheet/classes/Wizard.png",
+        "frameWidth": 100,
+        "frameHeight": 100,
+        "animations": {
+          "idle": { "start": 0, "end": 5, "frameRate": 8 },
+          "walk": { "start": 9, "end": 16, "frameRate": 12 },
+          "attack1": { "start": 18, "end": 25, "frameRate": 20 },
+          "attack2": { "start": 27, "end": 35, "frameRate": 20 },
+          "hurt": { "start": 36, "end": 40, "frameRate": 15 },
+          "death": { "start": 45, "end": 52, "frameRate": 15 }
+        }
+      }
+    },
+    "enemies": {
+      "orc": {
+        "path": "assets/spritesheet/enemies/Orc.png",
+        "frameWidth": 100,
+        "frameHeight": 100,
+        "animations": {
+          "idle": { "start": 0, "end": 5, "frameRate": 8 },
+          "walk": { "start": 9, "end": 16, "frameRate": 10 },
+          "damaged": { "start": 32, "end": 35, "frameRate": 15 },
+          "death": { "start": 40, "end": 43, "frameRate": 12 }
+        }
+      },
+      "skeleton": {
+        "path": "assets/spritesheet/enemies/Skeleton.png",
+        "frameWidth": 100,
+        "frameHeight": 100,
+        "animations": {
+          "idle": { "start": 0, "end": 5, "frameRate": 8 },
+          "walk": { "start": 9, "end": 16, "frameRate": 10 },
+          "attack1": { "start": 18, "end": 22, "frameRate": 20 },
+          "attack2": { "start": 27, "end": 31, "frameRate": 20 },
+          "hurt": { "start": 36, "end": 40, "frameRate": 15 },
+          "death": { "start": 45, "end": 48, "frameRate": 12 }
+        }
+      },
+      "slime": {
+        "path": "assets/spritesheet/enemies/Slime.png",
+        "frameWidth": 100,
+        "frameHeight": 100,
+        "animations": {
+          "idle": { "start": 0, "end": 3, "frameRate": 6 },
+          "walk": { "start": 4, "end": 7, "frameRate": 8 },
+          "attack1": { "start": 8, "end": 11, "frameRate": 15 },
+          "attack2": { "start": 12, "end": 15, "frameRate": 15 },
+          "hurt": { "start": 16, "end": 18, "frameRate": 12 },
+          "death": { "start": 19, "end": 22, "frameRate": 10 }
+        }
+      }
+    },
+    "emotes": {
+      "exclamation": {
+        "path": "assets/spritesheet/emotes/!!.png",
+        "frameWidth": 187,
+        "frameHeight": 187,
+        "animations": {
+          "play": { "start": 0, "end": 6, "frameRate": 12 }
+        }
+      },
+      "heart": {
+        "path": "assets/spritesheet/emotes/heart.png",
+        "frameWidth": 187,
+        "frameHeight": 187,
+        "animations": {
+          "play": { "start": 0, "end": 6, "frameRate": 12 }
+        }
+      }
+    }
+  },
+  "defaultClass": "soldier",
+  "defaultEnemy": "orc"
+}

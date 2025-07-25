@@ -27,7 +27,13 @@ public static partial class Module
             scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(100))
         });
         
-        Log.Info("Initialized dead body cleanup, enemy spawning, and enemy patrol schedulers");
+        // Schedule message cleanup every 30 seconds
+        ctx.Db.message_cleanup_timer.Insert(new MessageCleanupTimer
+        {
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromSeconds(30))
+        });
+        
+        Log.Info("Initialized dead body cleanup, enemy spawning, enemy patrol, and message cleanup schedulers");
     }
 
     [Reducer(ReducerKind.ClientConnected)]

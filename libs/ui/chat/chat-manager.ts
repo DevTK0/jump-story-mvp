@@ -12,6 +12,7 @@ export class ChatManager {
     private updateEvents: Map<any, Phaser.Time.TimerEvent> = new Map();
     private emoteUpdateEvents: Map<any, Phaser.Time.TimerEvent> = new Map();
     private peerTypingIndicators: Map<any, Emote> = new Map();
+    private activeEmotes: Map<any, Emote> = new Map(); // Track active emotes per entity
     private typingIndicator: Emote | null = null;
     private typingUpdateEvent: Phaser.Time.TimerEvent | null = null;
     private lastMessageTime: number = 0;
@@ -197,6 +198,10 @@ export class ChatManager {
             this.updateEvents.delete(entity);
         }
         
+        // Hide typing indicator for this entity if it exists
+        const typingKey = `${entity}_typing`;
+        this.clearTypingIndicatorForPeer(typingKey);
+        
         // Create new speech bubble above the entity
         // Adjust Y position based on entity height (assuming ~32 pixel tall character)
         const bubbleOffsetY = 40; // Distance above character's head
@@ -287,6 +292,14 @@ export class ChatManager {
             this.speechBubbles.delete(entity);
         }
         
+        // Remove active emote
+        if (this.activeEmotes.has(entity)) {
+            const oldEmote = this.activeEmotes.get(entity);
+            if (oldEmote && oldEmote.destroy) {
+                oldEmote.destroy();
+            }
+            this.activeEmotes.delete(entity);
+        }
         
         // Remove update events
         if (this.updateEvents.has(entity)) {
@@ -368,6 +381,10 @@ export class ChatManager {
     }
     
     public showPeerCommand(peer: any, command: string): void {
+        // Hide typing indicator for this peer if it exists
+        const typingKey = `${peer}_typing`;
+        this.clearTypingIndicatorForPeer(typingKey);
+        
         // Handle special multi-character emote commands first
         const commandWithoutSlash = command.slice(1);
         let emoteName: string | null = null;
@@ -445,6 +462,9 @@ export class ChatManager {
             frameRate: 12
         });
         
+        // Store the active emote for this entity
+        this.activeEmotes.set(entity, emote);
+        
         // Store in a temporary variable for the update event
         const emoteSprite = emote;
         
@@ -457,6 +477,7 @@ export class ChatManager {
                 } else {
                     updateEvent.remove();
                     this.emoteUpdateEvents.delete(entity);
+                    this.activeEmotes.delete(entity);
                 }
             },
             loop: true
@@ -472,6 +493,24 @@ export class ChatManager {
     }
     
     public showPeerTyping(peer: any): void {
+        // Check if there's any active speech bubble or emote for this peer
+        let hasActiveBubbleOrEmote = false;
+        
+        // Check if peer has a speech bubble
+        if (this.speechBubbles.has(peer)) {
+            hasActiveBubbleOrEmote = true;
+        }
+        
+        // Check if peer has an active emote
+        if (this.activeEmotes.has(peer)) {
+            hasActiveBubbleOrEmote = true;
+        }
+        
+        if (hasActiveBubbleOrEmote) {
+            // Don't show typing indicator if there's an active speech bubble or emote
+            return;
+        }
+        
         // Use a special key for typing indicators
         const typingKey = `${peer}_typing`;
         
@@ -580,5 +619,9 @@ export class ChatManager {
         // Clean up all peer typing indicators
         this.peerTypingIndicators.forEach(indicator => indicator.destroy());
         this.peerTypingIndicators.clear();
+        
+        // Clean up all active emotes
+        this.activeEmotes.forEach(emote => emote.destroy());
+        this.activeEmotes.clear();
     }
 }

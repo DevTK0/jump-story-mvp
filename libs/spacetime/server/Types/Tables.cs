@@ -102,6 +102,14 @@ public static partial class Module
         public ulong scheduled_id;
         public ScheduleAt scheduled_at;
     }
+    
+    [Table(Name = "message_cleanup_timer", Scheduled = nameof(CleanupOldMessages), ScheduledAt = nameof(scheduled_at))]
+    public partial struct MessageCleanupTimer
+    {
+        [PrimaryKey, AutoInc]
+        public ulong scheduled_id;
+        public ScheduleAt scheduled_at;
+    }
 
     [Table(Name = "EnemyConfig", Public = true)]
     public partial struct EnemyConfig

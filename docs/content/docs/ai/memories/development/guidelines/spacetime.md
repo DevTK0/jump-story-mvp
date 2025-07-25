@@ -54,10 +54,51 @@ const radius = 2000;
 dbConnection.subscriptionBuilder()
     .subscribe([
         `SELECT * FROM Enemy WHERE 
-         position.x BETWEEN ${playerX - radius} AND ${playerX + radius} AND 
-         position.y BETWEEN ${playerY - radius} AND ${playerY + radius}`
+         x >= ${playerX - radius} AND x <= ${playerX + radius} AND 
+         y >= ${playerY - radius} AND y <= ${playerY + radius}`
     ]);
 ```
+
+#### SQL Subscription Rules
+SpacetimeDB has specific SQL limitations for subscriptions:
+
+1. **No BETWEEN operator** - Use `>=` and `<=` instead
+   ```sql
+   -- ❌ Bad
+   WHERE x BETWEEN 100 AND 200
+   
+   -- ✅ Good
+   WHERE x >= 100 AND x <= 200
+   ```
+
+2. **No non-inner joins** - Only inner joins are supported
+   ```sql
+   -- ❌ Bad - LEFT JOIN not supported
+   SELECT * FROM Player LEFT JOIN Inventory ON ...
+   
+   -- ✅ Good - INNER JOIN
+   SELECT * FROM Player JOIN Inventory ON ...
+   ```
+
+3. **No implicit joins** - Always use explicit JOIN syntax
+   ```sql
+   -- ❌ Bad - implicit join
+   SELECT * FROM Player, Inventory WHERE Player.id = Inventory.playerId
+   
+   -- ✅ Good - explicit join
+   SELECT * FROM Player JOIN Inventory ON Player.id = Inventory.playerId
+   ```
+
+4. **No object property queries** - Cannot query nested object properties
+   ```sql
+   -- ❌ Bad - if position is an object column
+   WHERE position.x > 0
+   
+   -- ✅ Good - use flat columns
+   WHERE x > 0
+   ```
+   
+   This is why we use `x` and `y` as separate columns instead of a `position` object.
 
 ### 4. Clean Up Subscriptions
 Always clean up subscriptions and timers when components are destroyed to prevent memory leaks:

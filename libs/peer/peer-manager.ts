@@ -13,6 +13,8 @@ export interface PeerSubscriptionConfig {
     useProximitySubscription: boolean;
     /** Distance around player to load peers (in pixels) */
     proximityRadius: number;
+    /** How often to update proximity subscription (in milliseconds) */
+    proximityUpdateInterval: number;
 }
 
 export class PeerManager {
@@ -25,12 +27,15 @@ export class PeerManager {
 
     // Proximity-based subscription configuration
     private subscriptionConfig: PeerSubscriptionConfig;
+    private proximityUpdateTimer?: Phaser.Time.TimerEvent;
+    private lastSubscriptionCenter: { x: number; y: number } | null = null;
 
     // Default configuration
     private static readonly DEFAULT_SUBSCRIPTION_CONFIG: PeerSubscriptionConfig =
         {
             useProximitySubscription: true, // Enable by default for peers
             proximityRadius: 1500, // 1500 pixels around player
+            proximityUpdateInterval: 5000, // Update subscription every 5 seconds
         };
 
     constructor(
@@ -100,6 +105,9 @@ export class PeerManager {
             // Set up proximity-based message subscription
             this.setupProximityMessageSubscription();
 
+            // Set up distance-based proximity checking
+            this.setupDistanceBasedProximityUpdate();
+
             console.log("✅ PeerManager: Proximity-based subscription active");
         } catch (error) {
             console.error(
@@ -151,6 +159,18 @@ export class PeerManager {
     private updateProximitySubscription(): void {
         if (!this.dbConnection || !this.localPlayerIdentity) return;
 
+        // Get player position
+        const playerPosition = this.getPlayerPosition();
+        if (!playerPosition) {
+            console.warn(
+                "⚠️ PeerManager: Cannot update proximity subscription - player position unknown"
+            );
+            return;
+        }
+
+        // Update the last subscription center
+        this.lastSubscriptionCenter = { x: playerPosition.x, y: playerPosition.y };
+
         const radius = this.subscriptionConfig.proximityRadius;
         const myIdentity = this.localPlayerIdentity.toHexString();
 
@@ -161,29 +181,32 @@ export class PeerManager {
                 .subscriptionBuilder()
                 .onApplied(() => {
                     console.log(
-                        `🎯 PeerManager: Proximity subscription applied (radius: ${radius}px)`
+                        `🎯 PeerManager: Proximity subscription applied for area (${playerPosition.x - radius},${playerPosition.y - radius}) to (${playerPosition.x + radius},${playerPosition.y + radius})`
                     );
-                    // SpacetimeDB will handle insert/delete events for peers entering/leaving the area
+                    // Load existing peers within proximity
+                    this.loadProximityPeers();
                 })
                 .subscribe([
                     `SELECT * FROM Player 
                      WHERE identity != x'${myIdentity}'
-                     AND x BETWEEN ((SELECT x FROM Player WHERE identity = x'${myIdentity}') - ${radius}) 
-                                        AND ((SELECT x FROM Player WHERE identity = x'${myIdentity}') + ${radius})
-                     AND y BETWEEN ((SELECT y FROM Player WHERE identity = x'${myIdentity}') - ${radius}) 
-                                        AND ((SELECT y FROM Player WHERE identity = x'${myIdentity}') + ${radius})`
+                     AND x >= ${playerPosition.x - radius} AND x <= ${playerPosition.x + radius}
+                     AND y >= ${playerPosition.y - radius} AND y <= ${playerPosition.y + radius}`
                 ]);
             
-            // Also update message subscription using the same self-join pattern
+            // Also update message subscription for the new area
+            // Only subscribe to messages from the last 30 seconds (typical message display duration)
+            const messageAgeLimit = 30000; // 30 seconds in milliseconds
+            const cutoffTimeMicros = (Date.now() - messageAgeLimit) * 1000; // Convert to microseconds
+            
             this.dbConnection
                 .subscriptionBuilder()
                 .subscribe([
                     `SELECT pm.* FROM PlayerMessage pm
-                     JOIN Player p ON pm.playerId = p.identity
-                     JOIN Player me ON me.identity = x'${myIdentity}'
+                     JOIN Player p ON pm.player_id = p.identity
                      WHERE p.identity != x'${myIdentity}'
-                     AND p.x BETWEEN (me.x - ${radius}) AND (me.x + ${radius})
-                     AND p.y BETWEEN (me.y - ${radius}) AND (me.y + ${radius})`
+                     AND p.x >= ${playerPosition.x - radius} AND p.x <= ${playerPosition.x + radius}
+                     AND p.y >= ${playerPosition.y - radius} AND p.y <= ${playerPosition.y + radius}
+                     AND pm.sent_dt >= ${cutoffTimeMicros}i64`
                 ]);
         } catch (error) {
             console.error(
@@ -240,6 +263,9 @@ export class PeerManager {
                     if (this.levelUpAnimationManager) {
                         this.levelUpAnimationManager.registerSprite(player.identity, peer);
                     }
+                    
+                    // Don't load recent messages - we only want to show new messages
+                    // this.loadRecentMessagesForPeer(player.identity);
                 }
             }
         }
@@ -280,19 +306,76 @@ export class PeerManager {
         try {
             // Subscribe to messages only from players within proximity using a JOIN
             // This query joins PlayerMessage with Player to filter by distance
+            // Only subscribe to messages from the last 30 seconds (typical message display duration)
+            const messageAgeLimit = 30000; // 30 seconds in milliseconds
+            const cutoffTimeMicros = (Date.now() - messageAgeLimit) * 1000; // Convert to microseconds
+            
             this.dbConnection.subscriptionBuilder()
                 .subscribe([
                     `SELECT pm.* FROM PlayerMessage pm
-                     JOIN Player p ON pm.playerId = p.identity
+                     JOIN Player p ON pm.player_id = p.identity
                      WHERE p.identity != x'${myIdentityHex}'
-                     AND p.x BETWEEN ${playerPosition.x - radius} AND ${playerPosition.x + radius}
-                     AND p.y BETWEEN ${playerPosition.y - radius} AND ${playerPosition.y + radius}`
+                     AND p.x >= ${playerPosition.x - radius} AND p.x <= ${playerPosition.x + radius}
+                     AND p.y >= ${playerPosition.y - radius} AND p.y <= ${playerPosition.y + radius}
+                     AND pm.sent_dt >= ${cutoffTimeMicros}i64`
                 ]);
 
-            console.log(`📬 PeerManager: Subscribed to messages within ${radius}px radius`);
+            console.log(`📬 PeerManager: Subscribed to messages within ${radius}px radius from last 30 seconds`);
         } catch (error) {
             console.error("❌ PeerManager: Failed to set up proximity message subscription:", error);
         }
+    }
+
+    /**
+     * Set up distance-based proximity update checking
+     * Updates subscription when player moves more than 1/4 of the proximity radius
+     */
+    private setupDistanceBasedProximityUpdate(): void {
+        // Check player position every frame for distance-based updates
+        this.scene.events.on("update", this.checkProximityDistanceUpdate, this);
+    }
+
+    /**
+     * Check if player has moved far enough to warrant a proximity subscription update
+     */
+    private checkProximityDistanceUpdate(): void {
+        if (!this.dbConnection || !this.localPlayerIdentity) return;
+
+        const playerPosition = this.getPlayerPosition();
+        if (!playerPosition) return;
+
+        // Calculate distance threshold (1/4 of proximity radius)
+        const updateThreshold = this.subscriptionConfig.proximityRadius * 0.25;
+
+        // Check if we need to update based on distance moved
+        if (this.lastSubscriptionCenter) {
+            const distanceMoved = Math.sqrt(
+                Math.pow(playerPosition.x - this.lastSubscriptionCenter.x, 2) +
+                Math.pow(playerPosition.y - this.lastSubscriptionCenter.y, 2)
+            );
+
+            if (distanceMoved >= updateThreshold) {
+                console.log(`📍 PeerManager: Player moved ${Math.round(distanceMoved)}px, updating proximity subscription`);
+                this.updateProximitySubscription();
+                this.setupProximityMessageSubscription();
+            }
+        } else {
+            // First time - set initial center
+            this.updateProximitySubscription();
+            this.setupProximityMessageSubscription();
+        }
+    }
+
+    /**
+     * Stop the proximity update timer
+     */
+    private stopProximityUpdateTimer(): void {
+        if (this.proximityUpdateTimer) {
+            this.proximityUpdateTimer.destroy();
+            this.proximityUpdateTimer = undefined;
+        }
+        // Clean up distance-based update listener
+        this.scene.events.off("update", this.checkProximityDistanceUpdate, this);
     }
 
     /**
@@ -342,6 +425,24 @@ export class PeerManager {
         if (this.peers.has(identityString)) {
             return;
         }
+        
+        // If using proximity subscription, check if player is within range
+        if (this.subscriptionConfig.useProximitySubscription) {
+            const playerPosition = this.getPlayerPosition();
+            if (playerPosition) {
+                const distance = Math.sqrt(
+                    Math.pow(playerData.x - playerPosition.x, 2) +
+                    Math.pow(playerData.y - playerPosition.y, 2)
+                );
+                
+                if (distance > this.subscriptionConfig.proximityRadius) {
+                    console.log(
+                        `⚠️ PeerManager: Ignoring player ${playerData.name} - outside proximity (distance: ${Math.round(distance)}px)`
+                    );
+                    return;
+                }
+            }
+        }
 
         // Create new peer
         const peer = new Peer({ scene: this.scene, playerData });
@@ -355,6 +456,9 @@ export class PeerManager {
         console.log(
             `Created peer for player: ${playerData.name} (${identityString})`
         );
+        
+        // Don't load recent messages - we only want to show new messages
+        // this.loadRecentMessagesForPeer(playerData.identity);
     };
 
     public onPlayerUpdate = (
@@ -373,6 +477,54 @@ export class PeerManager {
         const identityString = newPlayerData.identity.toHexString();
         const peer = this.peers.get(identityString);
 
+        // Check proximity if using proximity subscription
+        if (this.subscriptionConfig.useProximitySubscription) {
+            const playerPosition = this.getPlayerPosition();
+            if (playerPosition) {
+                const distance = Math.sqrt(
+                    Math.pow(newPlayerData.x - playerPosition.x, 2) +
+                    Math.pow(newPlayerData.y - playerPosition.y, 2)
+                );
+                
+                const isWithinProximity = distance <= this.subscriptionConfig.proximityRadius;
+                
+                if (peer && !isWithinProximity) {
+                    // Peer exists but is now outside proximity - remove them
+                    console.log(
+                        `🚪 PeerManager: Removing peer ${newPlayerData.name} - now outside proximity (distance: ${Math.round(distance)}px)`
+                    );
+                    
+                    // Clean up any chat UI elements for this peer
+                    if (this.chatManager) {
+                        this.chatManager.clearAllForEntity(peer);
+                    }
+                    
+                    peer.destroy();
+                    this.peers.delete(identityString);
+                    return;
+                } else if (!peer && isWithinProximity) {
+                    // Peer doesn't exist but is now within proximity - create them
+                    console.log(
+                        `👋 PeerManager: Player ${newPlayerData.name} entered proximity (distance: ${Math.round(distance)}px)`
+                    );
+                    
+                    // Create new peer
+                    const newPeer = new Peer({ scene: this.scene, playerData: newPlayerData });
+                    this.peers.set(identityString, newPeer);
+                    
+                    // Register peer sprite with level up animation manager
+                    if (this.levelUpAnimationManager) {
+                        this.levelUpAnimationManager.registerSprite(newPlayerData.identity, newPeer);
+                    }
+                    
+                    // Don't load recent messages - we only want to show new messages
+                    // this.loadRecentMessagesForPeer(newPlayerData.identity);
+                    return;
+                }
+            }
+        }
+
+        // Update existing peer if they exist
         if (peer) {
             peer.updateFromData(newPlayerData);
             
@@ -422,6 +574,18 @@ export class PeerManager {
             return;
         }
 
+        // Check if message is older than the display duration (5 seconds - default speech bubble duration)
+        const messageDisplayDuration = 5000; // 5 seconds in milliseconds
+        const currentTimeMicros = Date.now() * 1000; // Convert to microseconds
+        const messageTimeMicros = Number(message.sentDt); // Timestamp is in microseconds
+        const messageAgeMs = (currentTimeMicros - messageTimeMicros) / 1000; // Convert back to milliseconds
+        
+        if (messageAgeMs > messageDisplayDuration) {
+            // Message is too old, don't display it
+            console.log(`⏰ PeerManager: Ignoring message older than ${messageDisplayDuration/1000}s (age: ${Math.round(messageAgeMs / 1000)}s)`);
+            return;
+        }
+
         // Find the peer who sent this message
         const identityString = message.playerId.toHexString();
         const peer = this.peers.get(identityString);
@@ -436,6 +600,8 @@ export class PeerManager {
                 this.handlePeerCommand(peer, message.message);
             }
         }
+        // Note: Messages from players not in proximity are intentionally ignored
+        // They won't have a peer object and thus won't be displayed
     };
 
     private handlePeerCommand(peer: Peer, command: string): void {
@@ -444,6 +610,52 @@ export class PeerManager {
         // For now, just pass through to the chat manager to handle emotes
         // The chat manager already has logic to parse and display emotes
         this.chatManager.showPeerCommand(peer, command);
+    }
+
+    /**
+     * Load recent messages for a peer that just entered proximity
+     * This ensures we see their recent chat messages even if they were sent while outside range
+     */
+    private loadRecentMessagesForPeer(peerIdentity: Identity): void {
+        if (!this.dbConnection || !this.chatManager) return;
+        
+        const peer = this.peers.get(peerIdentity.toHexString());
+        if (!peer) return;
+        
+        // Get the most recent message from this player (if any)
+        // We'll only show the latest message to avoid spam when entering proximity
+        let latestMessage: PlayerMessage | null = null;
+        
+        for (const message of this.dbConnection.db.playerMessage.iter()) {
+            if (message.playerId.isEqual(peerIdentity)) {
+                // Assuming messages have a timestamp or we can use the order
+                // For now, we'll just get the last one we find (they should be ordered)
+                latestMessage = message;
+            }
+        }
+        
+        if (latestMessage) {
+            // Check if message is older than the display duration (5 seconds - default speech bubble duration)
+            const messageDisplayDuration = 5000; // 5 seconds in milliseconds
+            const currentTimeMicros = Date.now() * 1000; // Convert to microseconds
+            const messageTimeMicros = Number(latestMessage.sentDt); // Timestamp is in microseconds
+            const messageAgeMs = (currentTimeMicros - messageTimeMicros) / 1000; // Convert back to milliseconds
+            
+            if (messageAgeMs > messageDisplayDuration) {
+                // Message is too old, don't display it
+                console.log(`⏰ PeerManager: Not showing old message from ${peer.getPlayerData().name} (age: ${Math.round(messageAgeMs / 1000)}s)`);
+                return;
+            }
+            
+            // Show the latest message as a speech bubble
+            if (latestMessage.messageType.tag === "Message") {
+                console.log(`💬 PeerManager: Showing recent message from ${peer.getPlayerData().name}`);
+                this.chatManager.showSpeechBubble(peer, latestMessage.message);
+            } else if (latestMessage.messageType.tag === "Command" && latestMessage.message.startsWith('/')) {
+                // Show recent emote
+                this.chatManager.showPeerCommand(peer, latestMessage.message);
+            }
+        }
     }
 
     public getPeerCount(): number {
@@ -459,16 +671,20 @@ export class PeerManager {
         for (const peer of this.peers.values()) {
             peer.update();
         }
+        // Proximity updates now handled by timer instead of movement-based checks
     }
 
     public cleanup(): void {
+        // Stop proximity update timer
+        this.stopProximityUpdateTimer();
+        
         // Clean up all peers
         for (const peer of this.peers.values()) {
             peer.destroy();
         }
         this.peers.clear();
     }
-
+    
     public destroy(): void {
         this.cleanup();
     }
