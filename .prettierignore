@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.log
+
+# Auto-generated files
+libs/spacetime/client/**
+libs/spacetime/server/bin/**
+libs/spacetime/server/obj/**
+
+# Package manager files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# IDE
+.vscode/
+.idea/
+
+# Other
+downloads/
+*.min.js
+*.min.css

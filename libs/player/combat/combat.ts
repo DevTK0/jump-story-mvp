@@ -25,17 +25,17 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
   private player: Player;
   private inputSystem: InputSystem;
   private scene: Phaser.Scene;
-  
+
   // Attack configuration
   private config: AttackConfig;
-  
+
   // Attack state
   private isOnCooldown = false;
   private attackTimer: Phaser.Time.TimerEvent | null = null;
-  
+
   // Combat components
   private hitboxSprite: Phaser.Physics.Arcade.Sprite;
-  
+
   // Attack configurations for each attack type
   private static readonly ATTACK_CONFIGS: Record<number, AttackConfig> = {
     1: {
@@ -72,7 +72,7 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
       damage: 12,
     },
   };
-  
+
   constructor(
     player: Player,
     inputSystem: InputSystem,
@@ -84,7 +84,7 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
     this.inputSystem = inputSystem;
     this.scene = scene;
     this.config = config || CombatSystem.ATTACK_CONFIGS[1];
-    
+
     // Create hitbox for attack detection
     this.hitboxSprite = this.createHitbox();
   }
@@ -93,21 +93,21 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
   public setSyncManager(_syncManager: any): void {
     // State machine handles synchronization now
   }
-  
+
   private createHitbox(): Phaser.Physics.Arcade.Sprite {
     const hitbox = this.scene.physics.add.sprite(-200, -200, '');
     hitbox.setCircle(this.config.reach / 2);
-    
+
     if (hitbox.body) {
       hitbox.body.enable = false;
       (hitbox.body as Phaser.Physics.Arcade.Body).immovable = true;
       (hitbox.body as Phaser.Physics.Arcade.Body).setGravityY(0);
     }
-    
+
     hitbox.setVisible(false);
     return hitbox;
   }
-  
+
   update(_time: number, _delta: number): void {
     // Check for attack input
     if (this.inputSystem.isJustPressed('attack1')) {
@@ -118,105 +118,107 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
       this.tryAttack(3);
     }
   }
-  
+
   private tryAttack(attackType: number): boolean {
     if (this.isOnCooldown || this.player.isAttacking) {
       return false;
     }
-    
+
     // Cannot attack when climbing
     if (this.player.isClimbing) {
       return false;
     }
-    
+
     // Cannot attack when dead
-    if (this.player.getStateMachine().isInState("Dead")) {
+    if (this.player.getStateMachine().isInState('Dead')) {
       console.log('Prevented attack - player is dead');
       return false;
     }
-    
+
     this.performAttack(attackType);
     return true;
   }
-  
+
   private performAttack(attackType: number): void {
     // Get the specific attack configuration
     const attackConfig = CombatSystem.ATTACK_CONFIGS[attackType];
-    
+
     const facing = this.player.facingDirection;
     const playerX = this.player.x;
     const playerY = this.player.y;
-    
+
     // Calculate attack position using the specific attack's reach
-    const attackX = facing === 1 
-      ? playerX + PLAYER_CONFIG.attack.edgeOffset 
-      : playerX - PLAYER_CONFIG.attack.edgeOffset;
-    
+    const attackX =
+      facing === 1
+        ? playerX + PLAYER_CONFIG.attack.edgeOffset
+        : playerX - PLAYER_CONFIG.attack.edgeOffset;
+
     // Position hitbox using the specific attack's reach
-    const hitboxX = facing === 1
-      ? attackX + (attackConfig.reach * PLAYER_CONFIG.attack.hitboxPositionMultiplier)
-      : attackX - (attackConfig.reach * PLAYER_CONFIG.attack.hitboxPositionMultiplier);
-      
+    const hitboxX =
+      facing === 1
+        ? attackX + attackConfig.reach * PLAYER_CONFIG.attack.hitboxPositionMultiplier
+        : attackX - attackConfig.reach * PLAYER_CONFIG.attack.hitboxPositionMultiplier;
+
     this.hitboxSprite.setPosition(hitboxX, playerY);
-    
+
     // Update hitbox size for this attack
     this.hitboxSprite.setCircle(attackConfig.reach / 2);
-    
+
     // Update player state
     this.player.setPlayerState({ isAttacking: true });
     this.isOnCooldown = true;
-    
+
     // Transition to attack state using state machine
     const attackStateName = `Attack${attackType}`;
     if (this.player.getStateMachine().canTransitionTo(attackStateName)) {
       this.player.transitionToState(attackStateName);
     }
-    
+
     // Emit attack event with attack type information
     gameEvents.emit(PlayerEvent.PLAYER_ATTACKED, {
       type: 'melee',
       direction: facing,
       attackType: attackType,
     });
-    
+
     // Attack phases using the specific attack configuration
     this.executeAttackPhases(attackConfig);
   }
-  
+
   private async executeAttackPhases(attackConfig: AttackConfig): Promise<void> {
     try {
       // Startup phase
       await this.delay(attackConfig.startupMs);
-      
+
       // Active phase - enable hitbox
       if (this.hitboxSprite.body) {
         this.hitboxSprite.body.enable = true;
         const body = this.hitboxSprite.body as Phaser.Physics.Arcade.Body;
         body.reset(this.hitboxSprite.x, this.hitboxSprite.y);
       }
-      
+
       // Emit damage event for any overlapping enemies
       gameEvents.emit(CoreGameEvent.DAMAGE_DEALT, {
         source: 'player',
         target: 'enemy',
         damage: attackConfig.damage,
       });
-      
+
       // Active phase duration
       await this.delay(attackConfig.activeMs);
-      
+
       // Disable hitbox
       if (this.hitboxSprite.body) {
         this.hitboxSprite.body.enable = false;
       }
-      
+
       // Recovery phase
       await this.delay(attackConfig.recoveryMs);
-      
+
       this.player.setPlayerState({ isAttacking: false });
-      
+
       // State machine will automatically handle transition back to appropriate state
-      
+
       this.onAttackComplete(attackConfig);
     } catch (error) {
       // Handle any errors in attack execution
@@ -224,15 +226,16 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
       this.cleanupAttack();
     }
   }
-  
+
   private async onAttackComplete(attackConfig: AttackConfig): Promise<void> {
     // Schedule cooldown end
-    const cooldownRemaining = attackConfig.totalCooldownMs - this.getTotalAttackDuration(attackConfig);
-    
+    const cooldownRemaining =
+      attackConfig.totalCooldownMs - this.getTotalAttackDuration(attackConfig);
+
     await this.delay(cooldownRemaining);
     this.isOnCooldown = false;
   }
-  
+
   private getTotalAttackDuration(attackConfig: AttackConfig): number {
     return attackConfig.startupMs + attackConfig.activeMs + attackConfig.recoveryMs;
   }
@@ -254,43 +257,43 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
     if (this.hitboxSprite.body) {
       this.hitboxSprite.body.enable = false;
     }
-    
+
     // Reset player state
     this.player.setPlayerState({ isAttacking: false });
     this.isOnCooldown = false;
   }
-  
+
   // Public API
   public getHitboxSprite(): Phaser.Physics.Arcade.Sprite {
     return this.hitboxSprite;
   }
-  
+
   public isAttacking(): boolean {
     return this.player.isAttacking;
   }
-  
+
   public canAttack(): boolean {
     return !this.isOnCooldown && !this.player.isAttacking;
   }
-  
+
   public getConfig(): Readonly<AttackConfig> {
     return { ...this.config };
   }
-  
+
   public setConfig(config: AttackConfig): void {
     this.config = { ...config };
-    
+
     // Update hitbox size
     this.hitboxSprite.setCircle(this.config.reach / 2);
   }
-  
+
   // Debug rendering implementation
   protected performDebugRender(graphics: Phaser.GameObjects.Graphics): void {
     // Always show attack hitbox when attacking (even if body is not enabled)
     if (this.player.isAttacking) {
       const body = this.hitboxSprite.body as Phaser.Physics.Arcade.Body;
       const radius = body.halfWidth;
-      
+
       // Draw attack hitbox circle with different style based on whether it's active
       if (this.hitboxSprite.body?.enable) {
         // Active hitbox - solid and bright
@@ -301,12 +304,12 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
         graphics.lineStyle(2, DEBUG_CONFIG.colors.attackHitbox, 0.5);
         graphics.fillStyle(DEBUG_CONFIG.colors.attackHitbox, 0.1);
       }
-      
+
       graphics.fillCircle(this.hitboxSprite.x, this.hitboxSprite.y, radius);
       graphics.strokeCircle(this.hitboxSprite.x, this.hitboxSprite.y, radius);
     }
   }
-  
+
   protected provideDebugInfo(): Record<string, any> {
     return {
       isAttacking: this.player.isAttacking,
@@ -316,8 +319,7 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
       hitboxEnabled: this.hitboxSprite.body?.enable || false,
     };
   }
-  
-  
+
   destroy(): void {
     if (this.attackTimer) {
       this.attackTimer.destroy();

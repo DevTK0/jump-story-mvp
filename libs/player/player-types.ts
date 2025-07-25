@@ -14,7 +14,7 @@ export interface InputState {
   down: boolean;
   jump: boolean;
   attack1: boolean;
-  attack2: boolean; 
+  attack2: boolean;
   attack3: boolean;
   respawn: boolean;
   teleport: boolean;

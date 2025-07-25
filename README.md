@@ -32,30 +32,35 @@ vite.config.ts         # Vite build configuration
 ## Development
 
 ### Prerequisites
+
 - [pnpm](https://pnpm.io/) installed globally
 - [SpacetimeDB CLI](https://spacetimedb.com) (optional, for multiplayer)
 
 ### Install Dependencies
+
 ```bash
 pnpm install
 ```
 
 ### Run Development Server
+
 ```bash
 pnpm dev
 ```
+
 Open http://localhost:4000 in your browser.
 
 ### Build for Production
+
 ```bash
 pnpm build
 ```
 
 ### Preview Production Build
+
 ```bash
 pnpm preview
 ```
-
 
 ## Features
 
@@ -84,6 +89,7 @@ pnpm preview
 The project uses a per-app asset management system where each application manages its own assets:
 
 ### Asset Structure
+
 ```
 apps/playground/
   public/
@@ -95,17 +101,21 @@ apps/playground/
 ```
 
 ### Adding New Assets
+
 1. Place assets in `apps/[app-name]/public/assets/`
 2. Reference them in code using standard paths: `assets/category/file.png`
 3. The AssetResolver handles environment-specific path resolution automatically
 
 ### Asset Loading
+
 Assets are loaded using the centralized AssetResolver:
+
 - **Development**: Served directly from `apps/[app]/public/`
 - **Production**: Copied to `dist/` and served with proper base path
 - **GitHub Pages**: Automatically handles subdirectory deployment
 
 ### GitHub Pages Deployment
+
 ```bash
 # Build for GitHub Pages
 pnpm build
@@ -118,6 +128,7 @@ pnpm build
 ## SpacetimeDB Integration
 
 ### Local Development
+
 ```bash
 # Start SpacetimeDB
 spacetime start
@@ -130,6 +141,7 @@ pnpm run init:local
 ```
 
 ### Cloud Deployment
+
 ```bash
 # First, publish the SpacetimeDB module
 cd libs/spacetime/server
@@ -141,6 +153,7 @@ pnpm run init:cloud
 ```
 
 ### Connecting to Different Backends
+
 ```bash
 # To run locally but connect to cloud backend:
 # Edit .env: VITE_SPACETIME_TARGET=cloud
@@ -157,6 +170,7 @@ This project includes Stagehand MCP server for AI-powered browser automation and
 
 1. **Configure API Keys** (optional for basic usage):
    Edit `.mcp.json` and add your API keys:
+
    ```json
    {
      "mcpServers": {
@@ -194,40 +208,44 @@ The `.mcp.json` file is included in the repository for team collaboration. API k
 To add a new application to the monorepo:
 
 1. **Create the app structure**:
+
    ```bash
    mkdir -p apps/my-app/public/assets
    mkdir -p apps/my-app/scenes
    ```
 
 2. **Create `apps/my-app/index.html`**:
+
    ```html
    <!DOCTYPE html>
    <html>
-   <head>
+     <head>
        <title>My App</title>
-   </head>
-   <body>
+     </head>
+     <body>
        <div id="game-container"></div>
        <script type="module" src="./main.ts"></script>
-   </body>
+     </body>
    </html>
    ```
 
 3. **Create `apps/my-app/main.ts`**:
+
    ```typescript
-   import Phaser from "phaser";
-   import { MyScene } from "./scenes/my-scene";
-   
+   import Phaser from 'phaser';
+   import { MyScene } from './scenes/my-scene';
+
    const game = new Phaser.Game({
-       type: Phaser.AUTO,
-       width: window.innerWidth,
-       height: window.innerHeight,
-       scene: MyScene,
-       parent: "game-container",
+     type: Phaser.AUTO,
+     width: window.innerWidth,
+     height: window.innerHeight,
+     scene: MyScene,
+     parent: 'game-container',
    });
    ```
 
 4. **Update `vite.config.ts`** to point to your app:
+
    ```typescript
    root: "apps/my-app",  // Change from "apps/playground"
    ```

@@ -1,7 +1,6 @@
 import { defineConfig } from "astro/config";
 
 import starlight from "@astrojs/starlight";
-import starlightThemeBlack from "starlight-theme-black";
 import starlightThemeNova from "starlight-theme-nova";
 import starlightAutoSidebar from "starlight-auto-sidebar";
 import d2 from "astro-d2";

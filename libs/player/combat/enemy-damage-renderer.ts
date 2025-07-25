@@ -6,7 +6,12 @@
 import Phaser from 'phaser';
 import { EnemyDamageEvent } from '@/spacetime/client';
 import { EnemyManager } from '@/enemy';
-import { DAMAGE_RENDERER_CONFIG, getDamageTypeKey, getDamageDisplayText, getDamageStyle } from './damage-renderer-config';
+import {
+  DAMAGE_RENDERER_CONFIG,
+  getDamageTypeKey,
+  getDamageDisplayText,
+  getDamageStyle,
+} from './damage-renderer-config';
 
 interface DamageNumberState {
   text: Phaser.GameObjects.Text;
@@ -20,12 +25,11 @@ interface DamageNumberState {
 export class EnemyDamageRenderer {
   private scene: Phaser.Scene;
   private enemyManager: EnemyManager | null = null;
-  
+
   // Object pooling
   private textPool: Phaser.GameObjects.Text[] = [];
   private activeNumbers: Map<number, DamageNumberState[]> = new Map();
   private allActiveNumbers: DamageNumberState[] = [];
-  
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -44,7 +48,7 @@ export class EnemyDamageRenderer {
    */
   private initializePool(): void {
     const { poolSize } = DAMAGE_RENDERER_CONFIG.performance;
-    
+
     for (let i = 0; i < poolSize; i++) {
       const text = this.createPooledText();
       this.textPool.push(text);
@@ -60,11 +64,11 @@ export class EnemyDamageRenderer {
       fontFamily: 'monospace',
       color: '#FFFFFF',
     });
-    
+
     text.setVisible(false);
     text.setActive(false);
     text.setDepth(DAMAGE_RENDERER_CONFIG.display.enemy.baseDepth);
-    
+
     return text;
   }
 
@@ -73,11 +77,11 @@ export class EnemyDamageRenderer {
    */
   private getTextFromPool(): Phaser.GameObjects.Text | null {
     let text = this.textPool.pop();
-    
+
     if (!text && this.textPool.length < DAMAGE_RENDERER_CONFIG.performance.maxPoolSize) {
       text = this.createPooledText();
     }
-    
+
     return text || null;
   }
 
@@ -114,7 +118,9 @@ export class EnemyDamageRenderer {
     // Get enemy position
     const position = this.getEnemyPosition(damageEvent.enemyId);
     if (!position) {
-      console.warn(`[EnemyDamageRenderer] No position found for enemy ${damageEvent.enemyId} - enemy sprite may be missing or invisible`);
+      console.warn(
+        `[EnemyDamageRenderer] No position found for enemy ${damageEvent.enemyId} - enemy sprite may be missing or invisible`
+      );
       return;
     }
 
@@ -145,8 +151,7 @@ export class EnemyDamageRenderer {
     // Get enemy sprite from enemy manager's enemies map
     const enemies = (this.enemyManager as any).enemies as Map<number, Phaser.Physics.Arcade.Sprite>;
     const enemySprite = enemies.get(enemyId);
-    
-    
+
     // Allow damage numbers on dead enemies that are still visible (playing death animation)
     if (!enemySprite || !enemySprite.visible) {
       return null;
@@ -154,7 +159,7 @@ export class EnemyDamageRenderer {
 
     return {
       x: enemySprite.x,
-      y: enemySprite.y + DAMAGE_RENDERER_CONFIG.display.enemy.baseYOffset
+      y: enemySprite.y + DAMAGE_RENDERER_CONFIG.display.enemy.baseYOffset,
     };
   }
 
@@ -170,10 +175,10 @@ export class EnemyDamageRenderer {
 
     // Calculate stacked position
     const position = this.calculateStackedPosition(damageEvent.enemyId, baseX, baseY, damageEvent);
-    
+
     // Configure text appearance
     this.configureTextAppearance(text, damageEvent);
-    
+
     // Position and show text
     text.setPosition(position.x, position.y);
     text.setVisible(true);
@@ -200,42 +205,50 @@ export class EnemyDamageRenderer {
   /**
    * Calculate position for stacked damage numbers
    */
-  private calculateStackedPosition(enemyId: number, baseX: number, baseY: number, damageEvent: EnemyDamageEvent): { x: number; y: number } {
+  private calculateStackedPosition(
+    enemyId: number,
+    baseX: number,
+    baseY: number,
+    damageEvent: EnemyDamageEvent
+  ): { x: number; y: number } {
     const activeForEnemy = this.activeNumbers.get(enemyId) || [];
     const stackIndex = activeForEnemy.length;
-    
+
     const { verticalOffset, horizontalJitter } = DAMAGE_RENDERER_CONFIG.stacking;
-    
+
     // Use deterministic jitter based on damage event data for synchronization
     const seed = this.createSeedFromDamageEvent(damageEvent);
     const jitterX = (this.seededRandom(seed) - 0.5) * horizontalJitter * 2;
-    
+
     return {
       x: baseX + jitterX,
-      y: baseY - (stackIndex * verticalOffset)
+      y: baseY - stackIndex * verticalOffset,
     };
   }
 
   /**
    * Configure text appearance based on damage type
    */
-  private configureTextAppearance(text: Phaser.GameObjects.Text, damageEvent: EnemyDamageEvent): void {
+  private configureTextAppearance(
+    text: Phaser.GameObjects.Text,
+    damageEvent: EnemyDamageEvent
+  ): void {
     const damageTypeKey = getDamageTypeKey(damageEvent.damageType);
     const style = getDamageStyle(damageTypeKey, 'enemy');
     const displayText = getDamageDisplayText(damageEvent.damageAmount, damageEvent.damageType);
 
     text.setText(displayText);
-    
+
     // Apply gradient if specified
     if (style.useGradient && style.gradientColors && text.context) {
       // Get text dimensions for gradient
       const textHeight = parseInt(style.fontSize);
-      
+
       // Create vertical gradient (top to bottom)
       const gradient = text.context.createLinearGradient(0, 0, 0, textHeight);
       gradient.addColorStop(0, style.gradientColors[0]); // Top color
       gradient.addColorStop(1, style.gradientColors[1]); // Bottom color
-      
+
       text.setStyle({
         fontSize: style.fontSize,
         fontFamily: style.fontFamily,
@@ -255,7 +268,7 @@ export class EnemyDamageRenderer {
         fontStyle: style.fontStyle,
       });
     }
-    
+
     // Add scale effect for critical hits
     if (damageTypeKey === 'Crit') {
       text.setScale(1.5);
@@ -264,7 +277,7 @@ export class EnemyDamageRenderer {
         scaleX: 1,
         scaleY: 1,
         duration: 300,
-        ease: 'Back.easeOut'
+        ease: 'Back.easeOut',
       });
     }
   }
@@ -363,12 +376,12 @@ export class EnemyDamageRenderer {
     const timestamp = damageEvent.timestamp.toDate().getTime();
     const enemyId = damageEvent.enemyId;
     const damage = Math.round(damageEvent.damageAmount * 100); // Convert to integer
-    
+
     // Convert damage type tag to number
     const damageTypeNum = this.damageTypeToNumber(damageEvent.damageType);
-    
+
     // Combine values to create a unique but deterministic seed
-    return (timestamp % 10000) + (enemyId * 1000) + damage + (damageTypeNum * 10000);
+    return (timestamp % 10000) + enemyId * 1000 + damage + damageTypeNum * 10000;
   }
 
   /**
@@ -376,12 +389,18 @@ export class EnemyDamageRenderer {
    */
   private damageTypeToNumber(damageType: any): number {
     switch (damageType.tag) {
-      case 'Normal': return 1;
-      case 'Crit': return 2;
-      case 'Weak': return 3;
-      case 'Strong': return 4;
-      case 'Immune': return 5;
-      default: return 0;
+      case 'Normal':
+        return 1;
+      case 'Crit':
+        return 2;
+      case 'Weak':
+        return 3;
+      case 'Strong':
+        return 4;
+      case 'Immune':
+        return 5;
+      default:
+        return 0;
     }
   }
 
@@ -393,9 +412,9 @@ export class EnemyDamageRenderer {
     const a = 1664525;
     const c = 1013904223;
     const m = 2 ** 32;
-    
+
     seed = (a * seed + c) % m;
-    return (seed / m);
+    return seed / m;
   }
 
   /**
@@ -415,13 +434,13 @@ export class EnemyDamageRenderer {
    */
   public destroy(): void {
     // Clean up all active numbers
-    this.allActiveNumbers.forEach(state => {
+    this.allActiveNumbers.forEach((state) => {
       this.scene.tweens.killTweensOf(state.text);
       state.text.destroy();
     });
 
     // Clean up pool
-    this.textPool.forEach(text => text.destroy());
+    this.textPool.forEach((text) => text.destroy());
 
     // Clear collections
     this.activeNumbers.clear();

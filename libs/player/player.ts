@@ -18,13 +18,13 @@ export class Player extends Phaser.GameObjects.Sprite {
   private playerState: PlayerState;
   private systems: Map<string, System> = new Map();
   private stateMachine!: PlayerStateMachine; // Will be initialized by PlayerBuilder
-  
+
   // Physics body reference for convenience
   public body!: Phaser.Physics.Arcade.Body;
-  
+
   // Chat system flag
   public chatActive: boolean = false;
-  
+
   // Input references
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys; // Will be initialized by PlayerBuilder
   private keys!: {
@@ -44,23 +44,24 @@ export class Player extends Phaser.GameObjects.Sprite {
 
   private constructor(config: PlayerConfig) {
     super(config.scene, config.x, config.y, config.texture, config.frame);
-    
+
     // Add to scene
     config.scene.add.existing(this);
     config.scene.physics.add.existing(this);
-    
+
     // Type-cast body
-    this.body = this.body as Phaser.Physics.Arcade.Body;
-    
+    const arcadeBody = this.body as Phaser.Physics.Arcade.Body;
+    this.body = arcadeBody;
+
     // Initialize with default state - PlayerBuilder will configure the rest
     this.playerState = this.createDefaultPlayerState();
-    
+
     // Setup physics properties
     this.setupPhysics();
-    
+
     // State machine will be initialized by PlayerBuilder
   }
-  
+
   private createDefaultPlayerState(): PlayerState {
     return {
       health: 100,
@@ -72,7 +73,7 @@ export class Player extends Phaser.GameObjects.Sprite {
       facingDirection: 1,
     };
   }
-  
+
   // Initialize input - called by PlayerBuilder
   public initializeInput(): void {
     this.cursors = this.scene.input.keyboard!.createCursorKeys();
@@ -86,60 +87,60 @@ export class Player extends Phaser.GameObjects.Sprite {
       e: this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E),
     };
   }
-  
+
   // Initialize state machine - called by PlayerBuilder
   public initializeStateMachine(): void {
     this.stateMachine = new PlayerStateMachine(this);
   }
-  
+
   private setupPhysics(): void {
     this.body.setSize(14, 30);
     this.body.setOffset(9, 2);
     this.body.setCollideWorldBounds(true);
   }
-  
+
   public registerSystem(name: string, system: System): void {
     this.systems.set(name, system);
   }
-  
+
   public getSystem<T extends System>(name: string): T | undefined {
     return this.systems.get(name) as T | undefined;
   }
-  
+
   public update(time: number, delta: number): void {
     if (!this.playerState.isAlive) return;
-    
+
     // Update state machine
     this.stateMachine.update(time, delta);
-    
+
     // Update all registered systems
     for (const system of this.systems.values()) {
       system.update(time, delta);
     }
-    
+
     // Update visual representation
     this.updateVisual();
   }
-  
+
   private updateVisual(): void {
     // Don't update visual if dead
-    if (this.stateMachine.isInState("Dead")) {
+    if (this.stateMachine.isInState('Dead')) {
       return;
     }
-    
+
     // Flip sprite based on facing direction
     this.setFlipX(this.playerState.facingDirection === -1);
   }
-  
+
   // State getters and setters
   public getPlayerState(): Readonly<PlayerState> {
     return { ...this.playerState };
   }
-  
+
   public setPlayerState(updates: Partial<PlayerState>): void {
     const oldHealth = this.playerState.health;
     this.playerState = { ...this.playerState, ...updates };
-    
+
     // Emit events for state changes
     if (updates.health !== undefined && updates.health < oldHealth) {
       gameEvents.emit(PlayerEvent.PLAYER_DAMAGED, {
@@ -147,7 +148,7 @@ export class Player extends Phaser.GameObjects.Sprite {
         health: updates.health,
       });
     }
-    
+
     if (updates.health !== undefined && updates.health <= 0 && this.playerState.isAlive) {
       this.playerState.isAlive = false;
       gameEvents.emit(PlayerEvent.PLAYER_DIED, {
@@ -155,78 +156,77 @@ export class Player extends Phaser.GameObjects.Sprite {
       });
     }
   }
-  
+
   // Convenience methods
   public get facingDirection(): 1 | -1 {
     return this.playerState.facingDirection;
   }
-  
+
   public set facingDirection(direction: 1 | -1) {
     this.setPlayerState({ facingDirection: direction });
   }
-  
+
   public get isClimbing(): boolean {
     return this.playerState.isClimbing;
   }
-  
+
   public get isAttacking(): boolean {
     return this.playerState.isAttacking;
   }
-  
+
   public get isAlive(): boolean {
     return this.playerState.isAlive;
   }
-  
+
   // State machine methods
   public getStateMachine(): PlayerStateMachine {
     return this.stateMachine;
   }
-  
+
   public getCurrentStateName(): string {
     return this.stateMachine.getCurrentStateName();
   }
-  
+
   public transitionToState(stateName: string): boolean {
     return this.stateMachine.transitionTo(stateName);
   }
-  
+
   public isInState(stateName: string): boolean {
     return this.stateMachine.isInState(stateName);
   }
-  
+
   public takeDamage(amount: number): void {
     if (!this.playerState.isAlive) return;
-    
+
     const newHealth = Math.max(0, this.playerState.health - amount);
     this.setPlayerState({ health: newHealth });
   }
-  
+
   public heal(amount: number): void {
     if (!this.playerState.isAlive) return;
-    
+
     const newHealth = Math.min(this.playerState.maxHealth, this.playerState.health + amount);
     this.setPlayerState({ health: newHealth });
   }
-  
+
   // Input accessors for systems
   public getCursors(): Phaser.Types.Input.Keyboard.CursorKeys {
     return this.cursors;
   }
-  
+
   public getKeys() {
     return this.keys;
   }
-  
+
   // Config accessors
   public getSpeed(): number {
     return PLAYER_CONFIG.movement.speed;
   }
-  
+
   public getJumpSpeed(): number {
     return PLAYER_CONFIG.movement.jumpSpeed;
   }
-  
-  
+
   public destroy(): void {
     // Destroy all systems
     for (const system of this.systems.values()) {
@@ -235,7 +235,7 @@ export class Player extends Phaser.GameObjects.Sprite {
       }
     }
     this.systems.clear();
-    
+
     // Call parent destroy
     super.destroy();
   }

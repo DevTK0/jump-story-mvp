@@ -71,15 +71,15 @@ Each attack consists of three distinct phases:
 
 ```typescript
 interface AttackConfig {
-  name: string;              // Attack identifier
-  startupMs: number;         // Startup phase duration
-  activeMs: number;          // Active phase duration  
-  recoveryMs: number;        // Recovery phase duration
-  totalCooldownMs: number;   // Total cooldown before next attack
-  arcStart: number;          // Attack arc start angle
-  arcEnd: number;            // Attack arc end angle
-  reach: number;             // Attack range
-  damage: number;            // Damage dealt
+  name: string; // Attack identifier
+  startupMs: number; // Startup phase duration
+  activeMs: number; // Active phase duration
+  recoveryMs: number; // Recovery phase duration
+  totalCooldownMs: number; // Total cooldown before next attack
+  arcStart: number; // Attack arc start angle
+  arcEnd: number; // Attack arc end angle
+  reach: number; // Attack range
+  damage: number; // Damage dealt
 }
 ```
 
@@ -104,16 +104,19 @@ interface AttackConfig {
 ```typescript
 tryAttack(): boolean
 ```
+
 Attempts to perform an attack. Returns false if on cooldown or already attacking.
 
 ```typescript
 getHitboxSprite(): Phaser.Physics.Arcade.Sprite
 ```
+
 Returns the hitbox sprite for collision detection with enemies.
 
 ```typescript
 setConfig(config: AttackConfig): void
 ```
+
 Updates attack configuration at runtime.
 
 ## Usage Example
@@ -133,8 +136,8 @@ const player = createPlayer({
     arcStart: -45,
     arcEnd: 60,
     reach: 70,
-    damage: 20
-  }
+    damage: 20,
+  },
 });
 
 // Access combat system
@@ -152,15 +155,19 @@ const hitbox = combatSystem.getHitboxSprite();
 ## Integration Points
 
 ### Events Emitted
+
 - `PLAYER_ATTACKED`: Fired when attack starts (includes type and direction)
 - `DAMAGE_DEALT`: Fired during active phase for damage calculation
 
 ### State Updates
+
 - Sets `player.isAttacking` to true during attack
 - Resets to false after recovery phase completes
 
 ### Hitbox Positioning
+
 The hitbox is positioned dynamically based on:
+
 - Player position
 - Facing direction (1 or -1)
 - Attack reach configuration

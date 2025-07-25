@@ -37,31 +37,33 @@ export class StateValidator {
         return false;
       }
     }
-    
+
     return this.playerQueryService.isCurrentPlayerDead();
   }
 
   /**
    * Check if a player can perform an action based on their state
    */
-  public canPlayerPerformAction(action: 'attack' | 'move' | 'jump' | 'respawn' | 'climb'): StateValidationResult {
+  public canPlayerPerformAction(
+    action: 'attack' | 'move' | 'jump' | 'respawn' | 'climb'
+  ): StateValidationResult {
     const isDead = this.isCurrentPlayerDead();
-    
+
     if (isDead) {
       if (action === 'respawn') {
         return { isValid: true };
       }
-      return { 
-        isValid: false, 
-        reason: 'Player is dead and cannot perform this action' 
+      return {
+        isValid: false,
+        reason: 'Player is dead and cannot perform this action',
       };
     }
 
     // Alive players can't respawn
     if (action === 'respawn') {
-      return { 
-        isValid: false, 
-        reason: 'Player must be dead to respawn' 
+      return {
+        isValid: false,
+        reason: 'Player must be dead to respawn',
       };
     }
 
@@ -75,19 +77,19 @@ export class StateValidator {
       case 'attack':
         // Can't attack while climbing or in certain states
         if (player.state.tag === 'Climbing') {
-          return { 
-            isValid: false, 
-            reason: 'Cannot attack while climbing' 
+          return {
+            isValid: false,
+            reason: 'Cannot attack while climbing',
           };
         }
         break;
-      
+
       case 'jump':
         // Can't jump while attacking or climbing
         if (this.isAttackState(player.state) || player.state.tag === 'Climbing') {
-          return { 
-            isValid: false, 
-            reason: 'Cannot jump in current state' 
+          return {
+            isValid: false,
+            reason: 'Cannot jump in current state',
           };
         }
         break;
@@ -100,17 +102,14 @@ export class StateValidator {
    * Check if a player state is an attack state
    */
   public isAttackState(state: PlayerState): boolean {
-    return state.tag === 'Attack1' || 
-           state.tag === 'Attack2' || 
-           state.tag === 'Attack3';
+    return state.tag === 'Attack1' || state.tag === 'Attack2' || state.tag === 'Attack3';
   }
 
   /**
    * Check if a player state is a movement state
    */
   public isMovementState(state: PlayerState): boolean {
-    return state.tag === 'Idle' || 
-           state.tag === 'Walk';
+    return state.tag === 'Idle' || state.tag === 'Walk';
   }
 
   /**
@@ -119,17 +118,17 @@ export class StateValidator {
   public canTransitionState(from: PlayerState, to: PlayerState): StateValidationResult {
     // Dead players can only transition to Dead or Idle (after respawn)
     if (from.tag === 'Dead' && to.tag !== 'Dead' && to.tag !== 'Idle') {
-      return { 
-        isValid: false, 
-        reason: 'Dead players can only respawn to Idle state' 
+      return {
+        isValid: false,
+        reason: 'Dead players can only respawn to Idle state',
       };
     }
 
     // Attack states can only transition to Idle
     if (this.isAttackState(from) && to.tag !== 'Idle') {
-      return { 
-        isValid: false, 
-        reason: 'Attack states must transition to Idle' 
+      return {
+        isValid: false,
+        reason: 'Attack states must transition to Idle',
       };
     }
 
@@ -149,7 +148,7 @@ export class StateValidator {
     // Dead enemies can't damage
     if (enemyHp <= 0) return false;
     if (enemyState && enemyState.tag === 'Dead') return false;
-    
+
     return true;
   }
 
@@ -160,7 +159,7 @@ export class StateValidator {
     // Already dead enemies can't take more damage
     if (enemyHp <= 0) return false;
     if (enemyState && enemyState.tag === 'Dead') return false;
-    
+
     return true;
   }
 
@@ -169,16 +168,16 @@ export class StateValidator {
    */
   public validateHealthStateConsistency(hp: number, state: PlayerState): StateValidationResult {
     if (hp <= 0 && state.tag !== 'Dead') {
-      return { 
-        isValid: false, 
-        reason: 'Player with 0 HP must be in Dead state' 
+      return {
+        isValid: false,
+        reason: 'Player with 0 HP must be in Dead state',
       };
     }
-    
+
     if (hp > 0 && state.tag === 'Dead') {
-      return { 
-        isValid: false, 
-        reason: 'Player with positive HP cannot be in Dead state' 
+      return {
+        isValid: false,
+        reason: 'Player with positive HP cannot be in Dead state',
       };
     }
 

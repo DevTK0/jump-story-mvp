@@ -78,45 +78,45 @@ The player controller implements a sophisticated system-based architecture where
 
 The Player controller consists of six main systems:
 
--   **Player** - Central entity extending Phaser.GameObjects.Sprite that manages system registry and player state
--   **InputSystem** - Centralized input processing with edge detection and state tracking
--   **MovementSystem** - Basic movement, jumping, double-jump mechanics with shadow trajectory rendering
--   **ClimbingSystem** - Complex climbing mechanics with physics override and collision detection
--   **CombatSystem** - Multi-phase attack system with dynamic hitbox management
--   **AnimationSystem** - Event-driven animation controller with state-based selection
+- **Player** - Central entity extending Phaser.GameObjects.Sprite that manages system registry and player state
+- **InputSystem** - Centralized input processing with edge detection and state tracking
+- **MovementSystem** - Basic movement, jumping, double-jump mechanics with shadow trajectory rendering
+- **ClimbingSystem** - Complex climbing mechanics with physics override and collision detection
+- **CombatSystem** - Multi-phase attack system with dynamic hitbox management
+- **AnimationSystem** - Event-driven animation controller with state-based selection
 
 ## Usage
 
 The factory function handles system creation and wiring automatically:
 
 ```typescript
-import { createPlayer } from "./features/player";
+import { createPlayer } from './features/player';
 
 const player = createPlayer({
-    scene: this,
-    x: 100,
-    y: 200,
-    texture: "soldier",
-    attackConfig: {
-        name: "quick_slash",
-        damage: 8,
-        reach: 45,
-        startupMs: 60,
-        activeMs: 80,
-        recoveryMs: 100,
-    },
+  scene: this,
+  x: 100,
+  y: 200,
+  texture: 'soldier',
+  attackConfig: {
+    name: 'quick_slash',
+    damage: 8,
+    reach: 45,
+    startupMs: 60,
+    activeMs: 80,
+    recoveryMs: 100,
+  },
 });
 ```
 
 Access individual systems for advanced control:
 
 ```typescript
-const inputSystem = player.getSystem<InputSystem>("input");
-const movementSystem = player.getSystem<MovementSystem>("movement");
+const inputSystem = player.getSystem<InputSystem>('input');
+const movementSystem = player.getSystem<MovementSystem>('movement');
 
 // Check if player can perform actions
 if (movementSystem.isOnGround() && !player.isClimbing) {
-    // Allow special ground attacks
+  // Allow special ground attacks
 }
 ```
 
@@ -125,8 +125,8 @@ State management through the Player entity:
 ```typescript
 // Update player state
 player.setPlayerState({
-    health: 50,
-    isClimbing: true,
+  health: 50,
+  isClimbing: true,
 });
 
 // Read current state
@@ -178,7 +178,7 @@ Player -> "All Systems": coordinates via registry
 Key integration patterns:
 
 - **State-Driven Coordination** - Systems check `player.isClimbing`, `player.isAttacking` to coordinate behavior
-- **Event Communication** - Global events enable loose coupling between systems and external components  
+- **Event Communication** - Global events enable loose coupling between systems and external components
 - **Physics Override** - ClimbingSystem temporarily overrides physics while maintaining original state
 - **Cross-System Validation** - CombatSystem validates against ClimbingSystem state before allowing attacks
 
@@ -188,27 +188,27 @@ Core player settings are centralized in `PLAYER_CONFIG`:
 
 ```typescript
 export const PLAYER_CONFIG = {
-    movement: {
-        speed: 200, // Horizontal movement speed
-        jumpSpeed: 450, // Jump velocity
+  movement: {
+    speed: 200, // Horizontal movement speed
+    jumpSpeed: 450, // Jump velocity
+  },
+  attack: {
+    edgeOffset: 16, // Attack origin offset
+    hitboxPositionMultiplier: 0.25, // Hitbox positioning
+  },
+  climbing: {
+    speed: 150, // Climbing movement speed
+    centerThreshold: 0.7, // Required alignment for climbing
+    snapSpeed: 300, // Center-snapping speed
+    alignmentTolerance: 2, // Pixel tolerance for alignment
+  },
+  animations: {
+    soldier: {
+      idle: { framerate: 8 },
+      walk: { framerate: 12 },
+      attack: { framerate: 20 },
     },
-    attack: {
-        edgeOffset: 16, // Attack origin offset
-        hitboxPositionMultiplier: 0.25, // Hitbox positioning
-    },
-    climbing: {
-        speed: 150, // Climbing movement speed
-        centerThreshold: 0.7, // Required alignment for climbing
-        snapSpeed: 300, // Center-snapping speed
-        alignmentTolerance: 2, // Pixel tolerance for alignment
-    },
-    animations: {
-        soldier: {
-            idle: { framerate: 8 },
-            walk: { framerate: 12 },
-            attack: { framerate: 20 },
-        },
-    },
+  },
 };
 ```
 

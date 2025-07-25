@@ -39,7 +39,6 @@ export abstract class BaseDebugRenderer implements IDebuggable {
   protected abstract provideDebugInfo(): Record<string, any>;
 }
 
-
 /**
  * Formats debug information for display
  * Extracted from DebugSystem to follow Single Responsibility Principle
@@ -50,11 +49,11 @@ export class DebugInfoFormatter {
    */
   static format(debugInfo: Record<string, any>): string {
     const lines: string[] = ['Debug Info:'];
-    
+
     Object.entries(debugInfo).forEach(([key, value]) => {
       lines.push(this.formatEntry(key, value));
     });
-    
+
     return lines.join('\n');
   }
 
@@ -63,16 +62,16 @@ export class DebugInfoFormatter {
    */
   private static formatEntry(key: string, value: any, indent: number = 0): string {
     const indentation = '  '.repeat(indent);
-    
+
     if (value === null || value === undefined) {
       return `${indentation}${key}: null`;
     }
-    
+
     if (typeof value === 'object') {
       if (Array.isArray(value)) {
         return `${indentation}${key}: [${value.join(', ')}]`;
       }
-      
+
       // Handle nested objects
       const nestedLines: string[] = [`${indentation}${key}:`];
       Object.entries(value).forEach(([nestedKey, nestedValue]) => {
@@ -80,7 +79,7 @@ export class DebugInfoFormatter {
       });
       return nestedLines.join('\n');
     }
-    
+
     // Handle primitives
     return `${indentation}${key}: ${value}`;
   }

@@ -8,15 +8,15 @@ permalink: development/guidelines/testing-changes
 
 Always run `pnpm run build` after making code changes to ensure:
 
--   All imports are valid
--   TypeScript compilation succeeds
--   No breaking changes were introduced
+- All imports are valid
+- TypeScript compilation succeeds
+- No breaking changes were introduced
 
 ## Common Issues
 
--   **Import path errors** - Check file renaming has updated all import statements
--   **Case sensitivity** - Ensure file names match import paths exactly
--   **Unused imports** - Remove unused variables to keep code clean
+- **Import path errors** - Check file renaming has updated all import statements
+- **Case sensitivity** - Ensure file names match import paths exactly
+- **Unused imports** - Remove unused variables to keep code clean
 
 ## Workflow
 

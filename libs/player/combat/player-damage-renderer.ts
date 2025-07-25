@@ -6,7 +6,12 @@
 import Phaser from 'phaser';
 import { PlayerDamageEvent } from '@/spacetime/client';
 import { Player } from '../player';
-import { DAMAGE_RENDERER_CONFIG, getDamageTypeKey, getDamageDisplayText, getDamageStyle } from './damage-renderer-config';
+import {
+  DAMAGE_RENDERER_CONFIG,
+  getDamageTypeKey,
+  getDamageDisplayText,
+  getDamageStyle,
+} from './damage-renderer-config';
 import { DbConnection } from '@/spacetime/client';
 
 interface PlayerDamageState {
@@ -17,16 +22,15 @@ interface PlayerDamageState {
   damageEvent: PlayerDamageEvent;
 }
 
-
 export class PlayerDamageRenderer {
   private scene: Phaser.Scene;
   private player: Player | null = null;
   private dbConnection: DbConnection | null = null;
-  
+
   // Object pooling
   private textPool: Phaser.GameObjects.Text[] = [];
   private activeNumbers: PlayerDamageState[] = [];
-  
+
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.initializePool();
@@ -56,8 +60,10 @@ export class PlayerDamageRenderer {
     // Subscribe to player damage events from the database
     this.dbConnection.db.playerDamageEvent.onInsert((_ctx, damageEvent) => {
       // Only show damage for the local player
-      if (this.dbConnection && 
-          damageEvent.playerIdentity.toHexString() === this.dbConnection.identity?.toHexString()) {
+      if (
+        this.dbConnection &&
+        damageEvent.playerIdentity.toHexString() === this.dbConnection.identity?.toHexString()
+      ) {
         this.handleDamageEvent(damageEvent);
       }
     });
@@ -68,7 +74,7 @@ export class PlayerDamageRenderer {
    */
   private initializePool(): void {
     const poolSize = 20; // Smaller pool for player
-    
+
     for (let i = 0; i < poolSize; i++) {
       const text = this.createPooledText();
       this.textPool.push(text);
@@ -84,11 +90,11 @@ export class PlayerDamageRenderer {
       fontFamily: 'monospace',
       color: '#FFFFFF',
     });
-    
+
     text.setVisible(false);
     text.setActive(false);
     text.setDepth(DAMAGE_RENDERER_CONFIG.display.player.baseDepth);
-    
+
     return text;
   }
 
@@ -97,11 +103,11 @@ export class PlayerDamageRenderer {
    */
   private getTextFromPool(): Phaser.GameObjects.Text | null {
     let text = this.textPool.pop();
-    
+
     if (!text) {
       text = this.createPooledText();
     }
-    
+
     return text || null;
   }
 
@@ -131,7 +137,9 @@ export class PlayerDamageRenderer {
     }
 
     // Check if we're at max concurrent numbers
-    if (this.activeNumbers.length >= DAMAGE_RENDERER_CONFIG.performance.player.maxConcurrentNumbers) {
+    if (
+      this.activeNumbers.length >= DAMAGE_RENDERER_CONFIG.performance.player.maxConcurrentNumbers
+    ) {
       // Remove oldest
       const oldest = this.activeNumbers.shift();
       if (oldest) {
@@ -161,14 +169,14 @@ export class PlayerDamageRenderer {
     // Position above player
     const baseX = this.player.x;
     const baseY = this.player.y + DAMAGE_RENDERER_CONFIG.display.player.baseYOffset;
-    
+
     // Add some horizontal randomness
     const seed = this.createSeedFromDamageEvent(damageEvent);
     const jitterX = (this.seededRandom(seed) - 0.5) * 20;
-    
+
     // Configure text appearance
     this.configureTextAppearance(text, damageEvent);
-    
+
     // Position and show text
     text.setPosition(baseX + jitterX, baseY);
     text.setVisible(true);
@@ -194,23 +202,26 @@ export class PlayerDamageRenderer {
   /**
    * Configure text appearance based on damage type
    */
-  private configureTextAppearance(text: Phaser.GameObjects.Text, damageEvent: PlayerDamageEvent): void {
+  private configureTextAppearance(
+    text: Phaser.GameObjects.Text,
+    damageEvent: PlayerDamageEvent
+  ): void {
     const damageTypeKey = getDamageTypeKey(damageEvent.damageType);
     const style = getDamageStyle(damageTypeKey, 'player');
     const displayText = getDamageDisplayText(damageEvent.damageAmount, damageEvent.damageType);
 
     text.setText(displayText);
-    
+
     // Apply gradient if specified
     if (style.useGradient && style.gradientColors && text.context) {
       // Get text dimensions for gradient
       const textHeight = parseInt(style.fontSize);
-      
+
       // Create vertical gradient (top to bottom)
       const gradient = text.context.createLinearGradient(0, 0, 0, textHeight);
       gradient.addColorStop(0, style.gradientColors[0]); // Top color
       gradient.addColorStop(1, style.gradientColors[1]); // Bottom color
-      
+
       text.setStyle({
         fontSize: style.fontSize,
         fontFamily: style.fontFamily,
@@ -230,7 +241,7 @@ export class PlayerDamageRenderer {
         fontStyle: style.fontStyle,
       });
     }
-    
+
     // Add scale effect for critical hits
     if (damageTypeKey === 'Crit') {
       text.setScale(1.5);
@@ -239,7 +250,7 @@ export class PlayerDamageRenderer {
         scaleX: 1,
         scaleY: 1,
         duration: 300,
-        ease: 'Back.easeOut'
+        ease: 'Back.easeOut',
       });
     }
   }
@@ -310,8 +321,8 @@ export class PlayerDamageRenderer {
     const timestamp = damageEvent.timestamp.toDate().getTime();
     const damage = Math.round(damageEvent.damageAmount * 100);
     const damageTypeNum = this.damageTypeToNumber(damageEvent.damageType);
-    
-    return (timestamp % 10000) + damage + (damageTypeNum * 10000);
+
+    return (timestamp % 10000) + damage + damageTypeNum * 10000;
   }
 
   /**
@@ -319,12 +330,18 @@ export class PlayerDamageRenderer {
    */
   private damageTypeToNumber(damageType: any): number {
     switch (damageType.tag) {
-      case 'Normal': return 1;
-      case 'Crit': return 2;
-      case 'Weak': return 3;
-      case 'Strong': return 4;
-      case 'Immune': return 5;
-      default: return 0;
+      case 'Normal':
+        return 1;
+      case 'Crit':
+        return 2;
+      case 'Weak':
+        return 3;
+      case 'Strong':
+        return 4;
+      case 'Immune':
+        return 5;
+      default:
+        return 0;
     }
   }
 
@@ -335,9 +352,9 @@ export class PlayerDamageRenderer {
     const a = 1664525;
     const c = 1013904223;
     const m = 2 ** 32;
-    
+
     seed = (a * seed + c) % m;
-    return (seed / m);
+    return seed / m;
   }
 
   /**
@@ -345,13 +362,13 @@ export class PlayerDamageRenderer {
    */
   public destroy(): void {
     // Clean up all active numbers
-    this.activeNumbers.forEach(state => {
+    this.activeNumbers.forEach((state) => {
       this.scene.tweens.killTweensOf(state.text);
       state.text.destroy();
     });
 
     // Clean up pool
-    this.textPool.forEach(text => text.destroy());
+    this.textPool.forEach((text) => text.destroy());
 
     // Clear collections
     this.activeNumbers.length = 0;

@@ -1,29 +1,29 @@
 {
-    "compilerOptions": {
-        "target": "ES2020",
-        "module": "ESNext",
-        "lib": ["ES2020", "DOM", "DOM.Iterable"],
-        "moduleResolution": "node",
-        "allowImportingTsExtensions": true,
-        "resolveJsonModule": true,
-        "isolatedModules": true,
-        "noEmit": true,
-        "strict": true,
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "noFallthroughCasesInSwitch": true,
-        "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true,
-        "forceConsistentCasingInFileNames": true,
-        "skipLibCheck": true,
-        "strictNullChecks": true, // add if using `base` template
-        "allowJs": true, // required, and included with all Astro templates
-        "baseUrl": ".",
-        "paths": {
-            "@/*": ["libs/*"]
-        }
-    },
-    "include": ["apps/**/*", "libs/**/*", "test.ts", "scripts/clear-logs.ts"],
-    "exclude": ["node_modules", "dist"],
-    "extends": "astro/tsconfigs/base"
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "moduleResolution": "node",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true, // add if using `base` template
+    "allowJs": true, // required, and included with all Astro templates
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["libs/*"]
+    }
+  },
+  "include": ["apps/**/*", "libs/**/*", "test.ts", "scripts/clear-logs.ts"],
+  "exclude": ["node_modules", "dist"],
+  "extends": "astro/tsconfigs/base"
 }

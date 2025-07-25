@@ -10,70 +10,70 @@ import { createLogger } from '../../core/logger';
  * Separated from movement to maintain single responsibility principle.
  */
 export class SyncSystem implements System {
-    private player: Player;
-    private syncManager: SyncManager;
-    private movementSystem: MovementSystem | null = null;
-    private logger = createLogger('SyncSystem');
+  private player: Player;
+  private syncManager: SyncManager;
+  private movementSystem: MovementSystem | null = null;
+  private logger = createLogger('SyncSystem');
 
-    constructor(player: Player) {
-        this.player = player;
-        this.syncManager = new SyncManager(player);
+  constructor(player: Player) {
+    this.player = player;
+    this.syncManager = new SyncManager(player);
+  }
+
+  public setMovementSystem(movementSystem: MovementSystem): void {
+    this.movementSystem = movementSystem;
+  }
+
+  public setDbConnection(connection: DbConnection): void {
+    this.syncManager.setDbConnection(connection);
+  }
+
+  update(time: number, _delta: number): void {
+    if (!this.movementSystem) {
+      this.logger.warn('Movement system not set - cannot sync');
+      return;
     }
 
-    public setMovementSystem(movementSystem: MovementSystem): void {
-        this.movementSystem = movementSystem;
+    // Get current facing direction from movement system
+    const currentFacing = this.movementSystem.getCurrentFacing();
+
+    // Check for special sync conditions
+    let forceSync = false;
+
+    // Force sync on important movement events
+    const body = this.player.body;
+    const onGround = body.onFloor();
+
+    // Movement system tracks wasOnGround, but we need our own tracking for sync
+    if (this.shouldForceSync(onGround)) {
+      forceSync = true;
+      this.logger.debug('Forcing position sync due to movement event');
     }
 
-    public setDbConnection(connection: DbConnection): void {
-        this.syncManager.setDbConnection(connection);
-    }
+    // Sync position to server
+    this.syncManager.syncPosition(time, currentFacing, forceSync);
 
-    update(time: number, _delta: number): void {
-        if (!this.movementSystem) {
-            this.logger.warn('Movement system not set - cannot sync');
-            return;
-        }
+    // Sync state to server if needed
+    const newState = this.determinePlayerState();
+    this.syncManager.syncState(newState);
+  }
 
-        // Get current facing direction from movement system
-        const currentFacing = this.movementSystem.getCurrentFacing();
-        
-        // Check for special sync conditions
-        let forceSync = false;
-        
-        // Force sync on important movement events
-        const body = this.player.body;
-        const onGround = body.onFloor();
-        
-        // Movement system tracks wasOnGround, but we need our own tracking for sync
-        if (this.shouldForceSync(onGround)) {
-            forceSync = true;
-            this.logger.debug('Forcing position sync due to movement event');
-        }
+  private shouldForceSync(_onGround: boolean): boolean {
+    // You could track landing/jumping events here if needed
+    // For now, let SyncManager handle the sync timing
+    return false;
+  }
 
-        // Sync position to server
-        this.syncManager.syncPosition(time, currentFacing, forceSync);
+  private determinePlayerState(): PlayerState {
+    // Use the state machine's current DB state
+    return this.player.getStateMachine().getCurrentDbState();
+  }
 
-        // Sync state to server if needed
-        const newState = this.determinePlayerState();
-        this.syncManager.syncState(newState);
-    }
+  public getSyncManager(): SyncManager {
+    return this.syncManager;
+  }
 
-    private shouldForceSync(_onGround: boolean): boolean {
-        // You could track landing/jumping events here if needed
-        // For now, let SyncManager handle the sync timing
-        return false;
-    }
-
-    private determinePlayerState(): PlayerState {
-        // Use the state machine's current DB state
-        return this.player.getStateMachine().getCurrentDbState();
-    }
-
-    public getSyncManager(): SyncManager {
-        return this.syncManager;
-    }
-
-    destroy(): void {
-        // Cleanup if needed
-    }
+  destroy(): void {
+    // Cleanup if needed
+  }
 }

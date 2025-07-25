@@ -54,6 +54,7 @@ The MovementSystem handles all physics-based player movement including horizonta
 ## Implementation Details
 
 ### Dependencies
+
 - `Player`: The main player entity that owns this system
 - `InputSystem`: Provides processed input state
 - `Phaser.Physics.Arcade.Body`: The physics body for velocity control
@@ -63,7 +64,9 @@ The MovementSystem handles all physics-based player movement including horizonta
 ```typescript
 update(time: number, delta: number): void
 ```
+
 Main update loop that:
+
 1. Checks if player is climbing (movement disabled during climb)
 2. Handles horizontal movement when grounded
 3. Processes jump input
@@ -72,16 +75,19 @@ Main update loop that:
 ```typescript
 forceJump(velocityMultiplier: number = 1): void
 ```
+
 Public method allowing other systems to trigger a jump with optional velocity multiplier.
 
 ```typescript
 setVelocity(x?: number, y?: number): void
 ```
+
 Direct velocity control for special movement scenarios.
 
 ### State Management
 
 The system tracks:
+
 - `hasUsedDoubleJump`: Boolean flag reset on landing
 - Ground state via `body.onFloor()`
 
@@ -105,9 +111,11 @@ movementSystem.stopMovement();
 ## Integration Points
 
 ### Events Emitted
+
 - `PLAYER_JUMP`: Emitted when player jumps (includes velocity data)
 
 ### Interactions with Other Systems
+
 - **ClimbingSystem**: Movement is disabled when `player.isClimbing` is true
 - **CombatSystem**: Can trigger movement via public API methods
 - **InputSystem**: Reads input state each frame
@@ -115,6 +123,7 @@ movementSystem.stopMovement();
 ## Configuration
 
 Movement parameters are defined on the Player entity:
+
 - `player.getSpeed()`: Horizontal movement speed
 - `player.getJumpSpeed()`: Vertical jump velocity
 

@@ -9,56 +9,56 @@ import { DbConnection } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 
 export class LevelUpAnimationManager {
-    private levelUpRenderer: LevelUpRenderer;
-    private dbConnection: DbConnection | null = null;
-    
-    constructor(scene: Phaser.Scene) {
-        this.levelUpRenderer = new LevelUpRenderer(scene);
-    }
+  private levelUpRenderer: LevelUpRenderer;
+  private dbConnection: DbConnection | null = null;
 
-    /**
-     * Initialize the manager with database connection
-     */
-    public initialize(dbConnection: DbConnection, _localPlayerIdentity: Identity): void {
-        this.dbConnection = dbConnection;
-        this.levelUpRenderer.initialize(dbConnection);
-        this.setupLevelUpSubscriptions();
-    }
+  constructor(scene: Phaser.Scene) {
+    this.levelUpRenderer = new LevelUpRenderer(scene);
+  }
 
-    /**
-     * Register a sprite for smooth animation tracking
-     */
-    public registerSprite(identity: Identity, sprite: Phaser.GameObjects.Sprite): void {
-        this.levelUpRenderer.registerPlayerSprite(identity, sprite);
-    }
+  /**
+   * Initialize the manager with database connection
+   */
+  public initialize(dbConnection: DbConnection, _localPlayerIdentity: Identity): void {
+    this.dbConnection = dbConnection;
+    this.levelUpRenderer.initialize(dbConnection);
+    this.setupLevelUpSubscriptions();
+  }
 
-    /**
-     * Set up database subscriptions for level up events
-     */
-    private setupLevelUpSubscriptions(): void {
-        if (!this.dbConnection) return;
+  /**
+   * Register a sprite for smooth animation tracking
+   */
+  public registerSprite(identity: Identity, sprite: Phaser.GameObjects.Sprite): void {
+    this.levelUpRenderer.registerPlayerSprite(identity, sprite);
+  }
 
-        // Listen to all player updates (local and peers)
-        this.dbConnection.db.player.onUpdate((_ctx, oldPlayer, newPlayer) => {
-            // Check for level up
-            if (oldPlayer && oldPlayer.level < newPlayer.level) {
-                // Show level up animation for any player
-                this.levelUpRenderer.showLevelUpAnimation(newPlayer.identity, newPlayer.level);
-            }
-        });
-    }
+  /**
+   * Set up database subscriptions for level up events
+   */
+  private setupLevelUpSubscriptions(): void {
+    if (!this.dbConnection) return;
 
-    /**
-     * Manually trigger a level up animation (for testing)
-     */
-    public triggerLevelUpAnimation(identity: Identity, level: number): void {
-        this.levelUpRenderer.showLevelUpAnimation(identity, level);
-    }
+    // Listen to all player updates (local and peers)
+    this.dbConnection.db.player.onUpdate((_ctx, oldPlayer, newPlayer) => {
+      // Check for level up
+      if (oldPlayer && oldPlayer.level < newPlayer.level) {
+        // Show level up animation for any player
+        this.levelUpRenderer.showLevelUpAnimation(newPlayer.identity, newPlayer.level);
+      }
+    });
+  }
 
-    /**
-     * Clean up
-     */
-    public destroy(): void {
-        this.levelUpRenderer.destroy();
-    }
+  /**
+   * Manually trigger a level up animation (for testing)
+   */
+  public triggerLevelUpAnimation(identity: Identity, level: number): void {
+    this.levelUpRenderer.showLevelUpAnimation(identity, level);
+  }
+
+  /**
+   * Clean up
+   */
+  public destroy(): void {
+    this.levelUpRenderer.destroy();
+  }
 }

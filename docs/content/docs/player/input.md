@@ -56,15 +56,15 @@ The InputSystem processes keyboard input and provides a clean interface for othe
 
 ## Input Mapping
 
-| Physical Key | Logical Action | Description |
-|-------------|----------------|-------------|
-| Arrow Left / A | `left` | Move left |
-| Arrow Right / D | `right` | Move right |
-| Arrow Up / W | `up` | Climb up / Enter climb |
-| Arrow Down / S | `down` | Climb down |
-| Space | `jump` | Jump |
-| C | Double Jump | Special double jump |
-| Z | `attack` | Attack action |
+| Physical Key    | Logical Action | Description            |
+| --------------- | -------------- | ---------------------- |
+| Arrow Left / A  | `left`         | Move left              |
+| Arrow Right / D | `right`        | Move right             |
+| Arrow Up / W    | `up`           | Climb up / Enter climb |
+| Arrow Down / S  | `down`         | Climb down             |
+| Space           | `jump`         | Jump                   |
+| C               | Double Jump    | Special double jump    |
+| Z               | `attack`       | Attack action          |
 
 ## Implementation Details
 
@@ -86,21 +86,25 @@ interface InputState {
 ```typescript
 getInputState(): Readonly<InputState>
 ```
+
 Returns the current frame's input state.
 
 ```typescript
 isJustPressed(input: keyof InputState): boolean
 ```
+
 Returns true if the input was pressed this frame but not last frame.
 
 ```typescript
 isJustReleased(input: keyof InputState): boolean
 ```
+
 Returns true if the input was released this frame.
 
 ```typescript
 isPressed(input: keyof InputState): boolean
 ```
+
 Returns true if the input is currently pressed.
 
 ### Direction Helpers
@@ -108,11 +112,13 @@ Returns true if the input is currently pressed.
 ```typescript
 getHorizontalDirection(): -1 | 0 | 1
 ```
+
 Returns -1 for left, 1 for right, 0 for no input or both.
 
 ```typescript
 getClimbDirection(): -1 | 0 | 1
 ```
+
 Returns 1 for up, -1 for down, 0 for no input or both.
 
 ## Usage Example
@@ -128,18 +134,18 @@ update(time: number, delta: number) {
   if (inputSystem.isJustPressed('jump')) {
     // Trigger jump (edge detection)
   }
-  
+
   // Get movement direction
   const moveDir = inputSystem.getHorizontalDirection();
   if (moveDir !== 0) {
     // Apply horizontal movement
   }
-  
+
   // Check if attack is held
   if (inputSystem.isPressed('attack')) {
     // Charge attack
   }
-  
+
   // Special double jump check
   if (inputSystem.isDoubleJumpPressed()) {
     // Perform double jump
@@ -160,11 +166,14 @@ This prevents actions from repeating every frame and enables precise timing for 
 ## Integration Points
 
 ### Automatic Updates
+
 - Updates player facing direction when not climbing
 - Maintains input history for edge detection
 
 ### System Dependencies
+
 All player systems depend on InputSystem for control:
+
 - **MovementSystem**: Reads movement and jump input
 - **CombatSystem**: Checks for attack input
 - **ClimbingSystem**: Monitors climb direction and entry

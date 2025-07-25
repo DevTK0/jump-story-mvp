@@ -45,10 +45,10 @@ The core class responsible for loading Tiled maps and converting them into Phase
 
 Key responsibilities:
 
--   Load map assets (JSON and tilesets)
--   Create Phaser tilemap from Tiled data
--   Extract collision objects from map layers
--   Generate physics groups with appropriate collision behaviors
+- Load map assets (JSON and tilesets)
+- Create Phaser tilemap from Tiled data
+- Extract collision objects from map layers
+- Generate physics groups with appropriate collision behaviors
 
 ### STAGE_CONFIG
 
@@ -58,12 +58,12 @@ Configuration object defining visual and physical properties for stage elements.
 
 TypeScript interfaces defining the structure of map collision objects:
 
--   `MapData` - Complete map data structure
--   `MapGround` - Solid collision surfaces
--   `MapPlatform` - One-way platforms
--   `MapClimbeable` - Pass-through climbing areas
--   `MapBoundary` - World boundaries
--   `MapChest` - Interactive objects
+- `MapData` - Complete map data structure
+- `MapGround` - Solid collision surfaces
+- `MapPlatform` - One-way platforms
+- `MapClimbeable` - Pass-through climbing areas
+- `MapBoundary` - World boundaries
+- `MapChest` - Interactive objects
 
 ## Usage
 
@@ -71,46 +71,32 @@ TypeScript interfaces defining the structure of map collision objects:
 
 ```ts
 class YourScene extends Phaser.Scene {
-    private mapLoader!: MapLoader;
-    private mapData!: MapData;
+  private mapLoader!: MapLoader;
+  private mapData!: MapData;
 
-    preload(): void {
-        // Initialize and load map assets
-        this.mapLoader = new MapLoader(this); // [!code ++]
-        this.mapLoader.loadMapAssets(); // [!code ++]
-    }
+  preload(): void {
+    // Initialize and load map assets
+    this.mapLoader = new MapLoader(this); // [!code ++]
+    this.mapLoader.loadMapAssets(); // [!code ++]
+  }
 
-    create(): void {
-        // Create map and extract collision data
-        this.mapData = this.mapLoader.createMap(); // [!code ++]
+  create(): void {
+    // Create map and extract collision data
+    this.mapData = this.mapLoader.createMap(); // [!code ++]
 
-        // Generate physics groups
-        const groundGroup = this.mapLoader.createPhysicsFromGround(
-            this.mapData.ground
-        ); // [!code ++]
-        const platformGroup = this.mapLoader.createPhysicsFromPlatforms(
-            this.mapData.platforms
-        ); // [!code ++]
-        const climbeableGroup = this.mapLoader.createClimbeablePhysics(
-            this.mapData.climbeable
-        ); // [!code ++]
+    // Generate physics groups
+    const groundGroup = this.mapLoader.createPhysicsFromGround(this.mapData.ground); // [!code ++]
+    const platformGroup = this.mapLoader.createPhysicsFromPlatforms(this.mapData.platforms); // [!code ++]
+    const climbeableGroup = this.mapLoader.createClimbeablePhysics(this.mapData.climbeable); // [!code ++]
 
-        // Set up collisions with player
-        this.physics.add.collider(this.player, groundGroup); // [!code ++]
-        this.physics.add.collider(
-            this.player,
-            platformGroup,
-            undefined,
-            (player, platform) => {
-                // [!code ++]
-                // One-way platform logic // [!code ++]
-                return (
-                    player.body.velocity.y > 0 &&
-                    player.body.y < platform.body.y
-                ); // [!code ++]
-            }
-        ); // [!code ++]
-    }
+    // Set up collisions with player
+    this.physics.add.collider(this.player, groundGroup); // [!code ++]
+    this.physics.add.collider(this.player, platformGroup, undefined, (player, platform) => {
+      // [!code ++]
+      // One-way platform logic // [!code ++]
+      return player.body.velocity.y > 0 && player.body.y < platform.body.y; // [!code ++]
+    }); // [!code ++]
+  }
 }
 ```
 
@@ -174,10 +160,10 @@ Enemy: {
 
 The Stage system integrates with multiple game systems:
 
--   **PlaygroundScene**: Orchestrates the loading and setup process
--   **Player Systems**: Receives collision groups for movement, climbing, and combat
--   **Enemy Systems**: Uses same physics groups for consistent collision behavior
--   **Climbing System**: Receives climbeable group for overlap detection
+- **PlaygroundScene**: Orchestrates the loading and setup process
+- **Player Systems**: Receives collision groups for movement, climbing, and combat
+- **Enemy Systems**: Uses same physics groups for consistent collision behavior
+- **Climbing System**: Receives climbeable group for overlap detection
 
 ## Configuration
 
@@ -204,7 +190,7 @@ Current defaults in `STAGE_CONFIG`:
 }
 ```
 
--   `world`: Default dimensions for physics world bounds
--   `platform`: Visual styling for platform collision debugging
--   `ground`: Height specification for ground collision areas
--   `climbeable`: Color scheme for climbeable surface visualization
+- `world`: Default dimensions for physics world bounds
+- `platform`: Visual styling for platform collision debugging
+- `ground`: Height specification for ground collision areas
+- `climbeable`: Color scheme for climbeable surface visualization

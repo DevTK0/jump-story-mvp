@@ -3,7 +3,7 @@ export enum LogLevel {
   INFO = 1,
   WARN = 2,
   ERROR = 3,
-  NONE = 4
+  NONE = 4,
 }
 
 export interface LoggerConfig {
@@ -19,15 +19,15 @@ export class Logger {
   private config: LoggerConfig = {
     level: LogLevel.INFO,
     timestampFormat: true,
-    colorize: true
+    colorize: true,
   };
-  
+
   private colors = {
     debug: '\x1b[36m', // Cyan
-    info: '\x1b[37m',  // White
-    warn: '\x1b[33m',  // Yellow
+    info: '\x1b[37m', // White
+    warn: '\x1b[33m', // Yellow
     error: '\x1b[31m', // Red
-    reset: '\x1b[0m'
+    reset: '\x1b[0m',
   };
 
   private constructor() {}
@@ -49,12 +49,13 @@ export class Logger {
 
   public shouldLog(level: LogLevel, moduleName?: string): boolean {
     if (level < this.config.level) return false;
-    
+
     if (moduleName) {
       if (this.config.disabledModules?.includes(moduleName)) return false;
-      if (this.config.enabledModules && !this.config.enabledModules.includes(moduleName)) return false;
+      if (this.config.enabledModules && !this.config.enabledModules.includes(moduleName))
+        return false;
     }
-    
+
     return true;
   }
 
@@ -68,7 +69,7 @@ export class Logger {
     const reset = this.config.colorize ? this.colors.reset : '';
 
     const formattedMessage = `${timestamp}${color}[${levelName}]${reset} ${modulePrefix}${message}`;
-    
+
     switch (level) {
       case LogLevel.ERROR:
         console.error(formattedMessage, ...args);
@@ -83,11 +84,16 @@ export class Logger {
 
   private getColor(level: LogLevel): string {
     switch (level) {
-      case LogLevel.DEBUG: return this.colors.debug;
-      case LogLevel.INFO: return this.colors.info;
-      case LogLevel.WARN: return this.colors.warn;
-      case LogLevel.ERROR: return this.colors.error;
-      default: return '';
+      case LogLevel.DEBUG:
+        return this.colors.debug;
+      case LogLevel.INFO:
+        return this.colors.info;
+      case LogLevel.WARN:
+        return this.colors.warn;
+      case LogLevel.ERROR:
+        return this.colors.error;
+      default:
+        return '';
     }
   }
 }
@@ -124,12 +130,12 @@ if (process.env.NODE_ENV === 'development') {
   logger.configure({
     level: LogLevel.DEBUG,
     colorize: true,
-    timestampFormat: true
+    timestampFormat: true,
   });
 } else {
   logger.configure({
     level: LogLevel.INFO,
     colorize: false,
-    timestampFormat: true
+    timestampFormat: true,
   });
 }

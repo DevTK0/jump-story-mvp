@@ -44,11 +44,11 @@ The AnimationSystem coordinates sprite animations based on player state, movemen
 
 ## Key Features
 
--   **State-based Animations**: Automatically switches based on player state
--   **Event-driven Updates**: Responds to combat events for attack animations
--   **Priority System**: Attack animations take precedence
--   **Smooth Transitions**: Only changes animation when needed
--   **Custom Animation Support**: API for adding new animations
+- **State-based Animations**: Automatically switches based on player state
+- **Event-driven Updates**: Responds to combat events for attack animations
+- **Priority System**: Attack animations take precedence
+- **Smooth Transitions**: Only changes animation when needed
+- **Custom Animation Support**: API for adding new animations
 
 ## Animation Definitions
 
@@ -66,15 +66,15 @@ The AnimationSystem coordinates sprite animations based on player state, movemen
 
 ```typescript
 interface PlayerAnimationConfig {
-    key: string; // Unique animation identifier
-    spriteKey: string; // Sprite sheet key
-    frames: {
-        // Frame range
-        start: number;
-        end: number;
-    };
-    frameRate: number; // Playback speed
-    repeat: number; // -1 for loop, 0 for once
+  key: string; // Unique animation identifier
+  spriteKey: string; // Sprite sheet key
+  frames: {
+    // Frame range
+    start: number;
+    end: number;
+  };
+  frameRate: number; // Playback speed
+  repeat: number; // -1 for loop, 0 for once
 }
 ```
 
@@ -116,19 +116,19 @@ Returns the currently playing animation key.
 ```typescript
 // Access animation system
 const player = createPlayer(config);
-const animationSystem = player.getSystem<AnimationSystem>("animations");
+const animationSystem = player.getSystem<AnimationSystem>('animations');
 
 // Add custom animation
 animationSystem.createCustomAnimation(
-    "player-dash-anim",
-    "player-sprite",
-    { start: 24, end: 28 },
-    15, // 15 fps
-    0 // Play once
+  'player-dash-anim',
+  'player-sprite',
+  { start: 24, end: 28 },
+  15, // 15 fps
+  0 // Play once
 );
 
 // Force play specific animation
-animationSystem.forcePlayAnimation("player-dash-anim");
+animationSystem.forcePlayAnimation('player-dash-anim');
 
 // Check current animation
 const currentAnim = animationSystem.getCurrentAnimation();
@@ -152,19 +152,19 @@ The system determines animations based on:
 
 ### Event Listeners
 
--   `PLAYER_ATTACKED`: Triggers attack animation sequence
--   Attack animation blocks other animations for duration
+- `PLAYER_ATTACKED`: Triggers attack animation sequence
+- Attack animation blocks other animations for duration
 
 ### State Dependencies
 
--   Reads `player.isAlive` for death state
--   Reads `player.isClimbing` for climb animations
--   Monitors physics body velocity for movement
+- Reads `player.isAlive` for death state
+- Reads `player.isClimbing` for climb animations
+- Monitors physics body velocity for movement
 
 ### Animation Timing
 
--   Attack animations use timeout (300ms) to reset state
--   Consider using animation complete events for better accuracy
+- Attack animations use timeout (300ms) to reset state
+- Consider using animation complete events for better accuracy
 
 ## Best Practices
 

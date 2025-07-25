@@ -1,27 +1,34 @@
-import Phaser from "phaser";
-import { Player, PlayerBuilder } from "@/player";
-import { EnemyManager } from "@/enemy";
-import { MapLoader, type MapData } from "@/stage";
-import { PeerManager } from "@/peer";
-import { PLAYER_CONFIG } from "@/player";
-import type { IDebuggable } from "@/debug/debug-interfaces";
-import { DEBUG_CONFIG } from "@/debug/config";
-import { DebugState } from "@/debug/debug-state";
-import { SpacetimeConnectionBuilder } from "@/networking";
-import { PlayerStatsUI, FPSCounter, PerformanceMetrics, DbMetricsTracker, LevelUpAnimationManager, ChatManager } from "@/ui";
-import { PhysicsConfigurator, type CollisionGroups } from "@/physics";
-import { InteractionHandler } from "@/networking";
-import { DbConnection } from "@/spacetime/client";
-import { Identity } from "@clockworklabs/spacetimedb-sdk";
-import { EnemyDamageRenderer, PlayerDamageRenderer } from "@/player";
-import { PlayerQueryService } from "@/player";
-import { AnimationFactory } from "@/animations";
-import { SpriteConfigLoader } from "@/core";
+import Phaser from 'phaser';
+import { Player, PlayerBuilder } from '@/player';
+import { EnemyManager } from '@/enemy';
+import { MapLoader, type MapData } from '@/stage';
+import { PeerManager } from '@/peer';
+import { PLAYER_CONFIG } from '@/player';
+import type { IDebuggable } from '@/debug/debug-interfaces';
+import { DEBUG_CONFIG } from '@/debug/config';
+import { DebugState } from '@/debug/debug-state';
+import { SpacetimeConnectionBuilder } from '@/networking';
+import {
+  PlayerStatsUI,
+  FPSCounter,
+  PerformanceMetrics,
+  DbMetricsTracker,
+  LevelUpAnimationManager,
+  ChatManager,
+} from '@/ui';
+import { PhysicsConfigurator, type CollisionGroups } from '@/physics';
+import { InteractionHandler } from '@/networking';
+import { DbConnection } from '@/spacetime/client';
+import { Identity } from '@clockworklabs/spacetimedb-sdk';
+import { EnemyDamageRenderer, PlayerDamageRenderer } from '@/player';
+import { PlayerQueryService } from '@/player';
+import { AnimationFactory } from '@/animations';
+import { SpriteConfigLoader } from '@/core';
 import spriteConfig from '../sprite-config.json';
-import { protectScene } from "@/core/scene-error-handler";
-import { ErrorBoundary, NetworkError, AssetError } from "@/core/error-boundary";
-import { AssetResolver } from "@/core";
-import { registerAllRecoveryStrategies } from "@/core/error-recovery-strategies";
+import { protectScene } from '@/core/scene-error-handler';
+import { ErrorBoundary, NetworkError, AssetError } from '@/core/error-boundary';
+import { AssetResolver } from '@/core';
+import { registerAllRecoveryStrategies } from '@/core/error-recovery-strategies';
 
 // Scene-specific constants
 const COLOR_BACKGROUND = 0x2c3e50;
@@ -31,596 +38,584 @@ const CAMERA_SHAKE_DURATION = 100;
 const CAMERA_SHAKE_INTENSITY = 0.03;
 
 export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
-    private errorBoundary: ErrorBoundary = ErrorBoundary.getInstance();
-    private player!: Player;
+  private errorBoundary: ErrorBoundary = ErrorBoundary.getInstance();
+  private player!: Player;
 
-    // Database connection
-    private dbConnectionManager!: import("@/networking").SpacetimeConnector;
+  // Database connection
+  private dbConnectionManager!: import('@/networking').SpacetimeConnector;
 
-    // System managers
-    private enemyManager!: EnemyManager;
-    private mapLoader!: MapLoader;
-    private mapData!: MapData;
-    private peerManager!: PeerManager;
-    private physicsConfigurator!: PhysicsConfigurator;
-    private interactionHandler!: InteractionHandler;
-    private enemyDamageRenderer!: EnemyDamageRenderer;
-    private playerDamageRenderer!: PlayerDamageRenderer;
-    private playerStatsUI: PlayerStatsUI | null = null;
-    private fpsCounter!: FPSCounter;
-    private performanceMetrics!: PerformanceMetrics;
-    private levelUpAnimationManager!: LevelUpAnimationManager;
-    private chatManager!: ChatManager;
+  // System managers
+  private enemyManager!: EnemyManager;
+  private mapLoader!: MapLoader;
+  private mapData!: MapData;
+  private peerManager!: PeerManager;
+  private physicsConfigurator!: PhysicsConfigurator;
+  private interactionHandler!: InteractionHandler;
+  private enemyDamageRenderer!: EnemyDamageRenderer;
+  private playerDamageRenderer!: PlayerDamageRenderer;
+  private playerStatsUI: PlayerStatsUI | null = null;
+  private fpsCounter!: FPSCounter;
+  private performanceMetrics!: PerformanceMetrics;
+  private levelUpAnimationManager!: LevelUpAnimationManager;
+  private chatManager!: ChatManager;
 
-    constructor() {
-        super({ key: "playground" });
+  constructor() {
+    super({ key: 'playground' });
+  }
+
+  preload(): void {
+    // Initialize map loader and load map assets
+    this.mapLoader = new MapLoader(this);
+    this.mapLoader.loadMapAssets();
+
+    // Load unified soldier spritesheet
+    this.load.spritesheet(
+      'soldier',
+      AssetResolver.getAssetPath('assets/spritesheet/classes/Soldier.png'),
+      {
+        frameWidth: SPRITE_FRAME_WIDTH,
+        frameHeight: SPRITE_FRAME_HEIGHT,
+      }
+    );
+
+    // Load unified orc spritesheet
+    this.load.spritesheet('orc', AssetResolver.getAssetPath('assets/spritesheet/enemies/Orc.png'), {
+      frameWidth: SPRITE_FRAME_WIDTH,
+      frameHeight: SPRITE_FRAME_HEIGHT,
+    });
+
+    // Load all emote spritesheets
+    const emotes = [
+      { key: 'exclamation_emote', file: '!!.png' },
+      { key: 'question_exclamation_emote', file: 'question_exclamation.png' },
+      { key: 'question_emote', file: 'question.png' },
+      { key: 'blush_emote', file: 'blush.png' },
+      { key: 'heart_emote', file: 'heart.png' },
+      { key: 'sad_emote', file: 'sad.png' },
+      { key: 'sparkle_emote', file: 'sparkle.png' },
+      { key: 'sweat_emote', file: 'sweat.png' },
+      { key: 'teardrop_emote', file: 'teardrop.png' },
+      { key: 'typing_emote', file: 'typing.png' },
+      { key: 'whistle_emote', file: 'whistle.png' },
+      { key: 'wow_emote', file: 'wow.png' },
+      { key: 'wtf_emote', file: 'wtf.png' },
+      { key: 'zzz_emote', file: 'zzz.png' },
+    ];
+
+    emotes.forEach((emote) => {
+      this.load.spritesheet(
+        emote.key,
+        AssetResolver.getAssetPath(`assets/spritesheet/emotes/${emote.file}`),
+        {
+          frameWidth: 187,
+          frameHeight: 187,
+        }
+      );
+    });
+
+    // Add error handler for asset loading
+    this.load.on('loaderror', (file: any) => {
+      this.errorBoundary.handleError(
+        new AssetError(`Failed to load asset: ${file.key}`, {
+          scene: this,
+          system: 'loader',
+          action: 'load-asset',
+          metadata: { file },
+        })
+      );
+    });
+  }
+
+  create(): void {
+    // Protect this scene with error boundaries
+    protectScene(this);
+
+    // Register recovery strategies
+    registerAllRecoveryStrategies();
+
+    // Determine database URI based on environment variable
+    // @ts-ignore - VITE_SPACETIME_TARGET is injected at build time
+    const target = import.meta.env.VITE_SPACETIME_TARGET || 'local';
+    const dbUri = target === 'cloud' ? 'wss://maincloud.spacetimedb.com' : 'ws://localhost:3000';
+
+    console.log(`🚀 Connecting to SpaceTimeDB (${target}): ${dbUri}`);
+
+    // Initialize database connection manager using Builder pattern
+    this.dbConnectionManager = new SpacetimeConnectionBuilder()
+      .setUri(dbUri)
+      .setModuleName('jump-story')
+      .onConnect(this.handleDatabaseConnect.bind(this))
+      .onDisconnect(() => console.log('Disconnected from SpacetimeDB'))
+      .onError((_ctx, err) => {
+        console.error('Error connecting to SpacetimeDB:', err);
+        this.errorBoundary.handleError(
+          new NetworkError('Database connection error', {
+            scene: this,
+            system: 'database',
+            action: 'connection',
+          })
+        );
+      })
+      .onSubscriptionApplied((_ctx) => console.log('Subscription applied!'))
+      .build();
+
+    // Start database connection
+    this.dbConnectionManager.connect().catch((err: any) => {
+      console.error('Failed to connect to database:', err);
+      this.errorBoundary.handleError(
+        new NetworkError('Failed to connect to database', {
+          scene: this,
+          system: 'database',
+          action: 'connect',
+        })
+      );
+    });
+
+    // Create all animations at scene level
+    this.createAllAnimations();
+
+    // Create background
+    this.cameras.main.setBackgroundColor(COLOR_BACKGROUND);
+
+    // Create map from Tiled data
+    this.mapData = this.mapLoader.createMap();
+
+    // Set physics world bounds to match tilemap dimensions
+    const mapWidth = this.mapData.tilemap.widthInPixels;
+    const mapHeight = this.mapData.tilemap.heightInPixels;
+    this.physics.world.setBounds(0, 0, mapWidth, mapHeight);
+
+    // Create player using Builder pattern
+    this.player = new PlayerBuilder(this)
+      .setPosition(1000, 0)
+      .setTexture('soldier')
+      .withAllSystems()
+      .build();
+
+    this.player.setScale(PLAYER_CONFIG.movement.scale);
+    this.player.body.setCollideWorldBounds(true);
+    this.player.body.setSize(
+      PLAYER_CONFIG.movement.hitboxWidth,
+      PLAYER_CONFIG.movement.hitboxHeight
+    );
+
+    // Set player depth to render above all other entities
+    this.player.setDepth(10); // Higher than enemies (depth 5)
+
+    // Set camera to follow player
+    this.cameras.main.startFollow(this.player);
+
+    // Set camera bounds to match tilemap dimensions
+    this.cameras.main.setBounds(0, 0, mapWidth, mapHeight);
+
+    // Set database connection on player's systems if connection exists
+    const dbConnection = this.dbConnectionManager.getConnection();
+    if (dbConnection) {
+      this.setupPlayerSystems(dbConnection);
     }
 
-    preload(): void {
-        // Initialize map loader and load map assets
-        this.mapLoader = new MapLoader(this);
-        this.mapLoader.loadMapAssets();
+    // Initialize managers
+    this.physicsConfigurator = new PhysicsConfigurator(this);
+    this.interactionHandler = new InteractionHandler(this, dbConnection, {
+      cameraShakeDuration: CAMERA_SHAKE_DURATION,
+      cameraShakeIntensity: CAMERA_SHAKE_INTENSITY,
+    });
 
-        // Load unified soldier spritesheet
-        this.load.spritesheet("soldier", AssetResolver.getAssetPath("assets/spritesheet/classes/Soldier.png"), {
-            frameWidth: SPRITE_FRAME_WIDTH,
-            frameHeight: SPRITE_FRAME_HEIGHT,
-        });
+    // Player stats UI will be initialized when database connects
 
-        // Load unified orc spritesheet
-        this.load.spritesheet("orc", AssetResolver.getAssetPath("assets/spritesheet/enemies/Orc.png"), {
-            frameWidth: SPRITE_FRAME_WIDTH,
-            frameHeight: SPRITE_FRAME_HEIGHT,
-        });
-        
-        // Load all emote spritesheets
-        const emotes = [
-            { key: "exclamation_emote", file: "!!.png" },
-            { key: "question_exclamation_emote", file: "question_exclamation.png" },
-            { key: "question_emote", file: "question.png" },
-            { key: "blush_emote", file: "blush.png" },
-            { key: "heart_emote", file: "heart.png" },
-            { key: "sad_emote", file: "sad.png" },
-            { key: "sparkle_emote", file: "sparkle.png" },
-            { key: "sweat_emote", file: "sweat.png" },
-            { key: "teardrop_emote", file: "teardrop.png" },
-            { key: "typing_emote", file: "typing.png" },
-            { key: "whistle_emote", file: "whistle.png" },
-            { key: "wow_emote", file: "wow.png" },
-            { key: "wtf_emote", file: "wtf.png" },
-            { key: "zzz_emote", file: "zzz.png" }
-        ];
-        
-        emotes.forEach(emote => {
-            this.load.spritesheet(emote.key, AssetResolver.getAssetPath(`assets/spritesheet/emotes/${emote.file}`), {
-                frameWidth: 187,
-                frameHeight: 187,
-            });
-        });
-        
-        // Add error handler for asset loading
-        this.load.on('loaderror', (file: any) => {
-            this.errorBoundary.handleError(new AssetError(`Failed to load asset: ${file.key}`, {
-                scene: this,
-                system: 'loader',
-                action: 'load-asset',
-                metadata: { file }
-            }));
-        });
+    // Create collision groups from map data
+    const collisionGroups: CollisionGroups = {
+      ground: this.mapLoader.createPhysicsFromGround(this.mapData.ground),
+      platforms: this.mapLoader.createPhysicsFromPlatforms(this.mapData.platforms),
+      climbeable: this.mapLoader.createClimbeablePhysics(this.mapData.climbeable),
+      boundaries: this.mapLoader.createBoundaryPhysics(this.mapData.boundaries),
+    };
+
+    // Get systems for collision setup
+    const climbingSystem = this.player.getSystem('climbing');
+    const combatSystem = this.player.getSystem('combat');
+
+    // Initialize enemy manager with proximity-based subscriptions enabled
+    this.enemyManager = new EnemyManager(this, {
+      useProximitySubscription: true,
+      proximityRadius: 800, // Load and render enemies within 800 pixels
+      proximityUpdateInterval: 1000, // Update subscription every 1 second
+    });
+
+    // Set database connection if already available
+    const dbConn = this.dbConnectionManager.getConnection();
+    if (dbConn) {
+      this.enemyManager.setDbConnection(dbConn);
     }
 
-    create(): void {
-        // Protect this scene with error boundaries
-        protectScene(this);
-        
-        // Register recovery strategies
-        registerAllRecoveryStrategies();
-        
-        // Determine database URI based on environment variable
-        // @ts-ignore - VITE_SPACETIME_TARGET is injected at build time
-        const target = import.meta.env.VITE_SPACETIME_TARGET || 'local';
-        const dbUri = target === 'cloud' 
-            ? 'wss://maincloud.spacetimedb.com'
-            : 'ws://localhost:3000';
-            
-        console.log(`🚀 Connecting to SpaceTimeDB (${target}): ${dbUri}`);
+    // Initialize damage number renderer for enemies
+    this.enemyDamageRenderer = new EnemyDamageRenderer(this);
+    this.enemyDamageRenderer.setEnemyManager(this.enemyManager);
 
-        // Initialize database connection manager using Builder pattern
-        this.dbConnectionManager = new SpacetimeConnectionBuilder()
-            .setUri(dbUri)
-            .setModuleName("jump-story")
-            .onConnect(this.handleDatabaseConnect.bind(this))
-            .onDisconnect(() => console.log("Disconnected from SpacetimeDB"))
-            .onError((_ctx, err) => {
-                console.error("Error connecting to SpacetimeDB:", err);
-                this.errorBoundary.handleError(new NetworkError("Database connection error", {
-                    scene: this,
-                    system: 'database',
-                    action: 'connection'
-                }));
-            })
-            .onSubscriptionApplied((_ctx) =>
-                console.log("Subscription applied!")
-            )
-            .build();
+    // Initialize player damage renderer
+    this.playerDamageRenderer = new PlayerDamageRenderer(this);
+    this.playerDamageRenderer.setPlayer(this.player);
 
-        // Start database connection
-        this.dbConnectionManager.connect().catch((err: any) => {
-            console.error("Failed to connect to database:", err);
-            this.errorBoundary.handleError(new NetworkError("Failed to connect to database", {
-                scene: this,
-                system: 'database',
-                action: 'connect'
-            }));
-        });
+    // Create level up animation manager
+    this.levelUpAnimationManager = new LevelUpAnimationManager(this);
 
-        // Create all animations at scene level
-        this.createAllAnimations();
+    // Create chat manager
+    this.chatManager = new ChatManager(this);
 
-        // Create background
-        this.cameras.main.setBackgroundColor(COLOR_BACKGROUND);
+    // Create FPS counter
+    this.fpsCounter = new FPSCounter(this, {
+      x: this.scale.width - 130, // Position on right side
+      y: 10,
+      fontSize: '14px',
+      alpha: 0.7,
+    });
 
-        // Create map from Tiled data
-        this.mapData = this.mapLoader.createMap();
+    // Add keyboard shortcut to toggle FPS counter (F key)
+    this.input.keyboard?.on('keydown-F', () => {
+      this.fpsCounter.toggle();
+    });
 
-        // Set physics world bounds to match tilemap dimensions
-        const mapWidth = this.mapData.tilemap.widthInPixels;
-        const mapHeight = this.mapData.tilemap.heightInPixels;
-        this.physics.world.setBounds(0, 0, mapWidth, mapHeight);
+    // Create performance metrics panel
+    this.performanceMetrics = new PerformanceMetrics(this, {
+      x: 10,
+      y: 100,
+      fontSize: '14px',
+      alpha: 0.7,
+    });
 
-        // Create player using Builder pattern
-        this.player = new PlayerBuilder(this)
-            .setPosition(1000, 0)
-            .setTexture("soldier")
-            .withAllSystems()
-            .build();
+    // Add keyboard shortcut to toggle performance metrics (P key)
+    this.input.keyboard?.on('keydown-P', () => {
+      this.performanceMetrics.toggle();
+    });
 
-        this.player.setScale(PLAYER_CONFIG.movement.scale);
-        this.player.body.setCollideWorldBounds(true);
-        this.player.body.setSize(
-            PLAYER_CONFIG.movement.hitboxWidth,
-            PLAYER_CONFIG.movement.hitboxHeight
+    // Add keyboard shortcut to test level up animation (U key)
+    this.input.keyboard?.on('keydown-U', () => {
+      if (this.levelUpAnimationManager && this.dbConnectionManager.getConnection()) {
+        const identity = this.dbConnectionManager.getConnection()!.identity;
+        if (identity) {
+          // Get current level from database
+          let currentLevel = 1;
+          for (const player of this.dbConnectionManager.getConnection()!.db.player.iter()) {
+            if (player.identity.toHexString() === identity.toHexString()) {
+              currentLevel = player.level;
+              break;
+            }
+          }
+          // Trigger level up animation
+          this.levelUpAnimationManager.triggerLevelUpAnimation(identity, currentLevel + 1);
+        }
+      }
+    });
+
+    // Set up damage event subscriptions if database connection exists
+    if (dbConn) {
+      this.setupDamageEventSubscription(dbConn);
+      this.playerDamageRenderer.setDbConnection(dbConn);
+    }
+
+    // Set enemy manager reference on interaction handler
+    this.interactionHandler.setEnemyManager(this.enemyManager);
+
+    // Create interaction callbacks
+    const interactionCallbacks = this.interactionHandler.createInteractionCallbacks(
+      this.player,
+      this.enemyManager
+    );
+
+    // Set up all collisions using the PhysicsConfigurator
+    this.physicsConfigurator.setupAllCollisions(
+      this.player,
+      this.enemyManager,
+      collisionGroups,
+      combatSystem,
+      climbingSystem,
+      interactionCallbacks,
+      this
+    );
+  }
+
+  private handleDatabaseConnect(conn: DbConnection, identity: Identity, _token: string): void {
+    // Initialize the PlayerQueryService singleton immediately
+    PlayerQueryService.getInstance(conn);
+    console.log('✅ PlayerQueryService singleton initialized');
+
+    // Initialize the DbMetricsTracker
+    DbMetricsTracker.getInstance().initialize(conn);
+    console.log('✅ DbMetricsTracker initialized');
+
+    // Set up player systems if player exists
+    if (this.player) {
+      this.setupPlayerSystems(conn);
+    }
+
+    // Initialize peer manager with proximity subscription enabled
+    this.peerManager = new PeerManager(this, {
+      useProximitySubscription: true,
+      proximityRadius: 800, // Load and render peers within 800 pixels
+      proximityUpdateInterval: 1000, // Update subscription every 1 second
+    });
+    this.peerManager.setLocalPlayerIdentity(identity);
+    this.peerManager.setDbConnection(conn);
+
+    // Connect peer manager with level up animation manager
+    if (this.levelUpAnimationManager) {
+      this.peerManager.setLevelUpAnimationManager(this.levelUpAnimationManager);
+    }
+
+    // Connect peer manager with chat manager
+    if (this.chatManager) {
+      this.peerManager.setChatManager(this.chatManager);
+    }
+
+    // Set database connection on enemy manager if it exists
+    if (this.enemyManager) {
+      this.enemyManager.setDbConnection(conn);
+    }
+
+    // Set database connection on interaction handler if it exists
+    if (this.interactionHandler) {
+      this.interactionHandler.setDbConnection(conn);
+    }
+
+    // Set database connection on chat manager if it exists
+    if (this.chatManager) {
+      this.chatManager.setDbConnection(conn);
+    }
+
+    // Initialize player stats UI with identity
+    this.playerStatsUI = new PlayerStatsUI(this, identity);
+    this.playerStatsUI.setDbConnection(conn);
+
+    // Initialize level up animation manager
+    if (this.levelUpAnimationManager) {
+      this.levelUpAnimationManager.initialize(conn, identity);
+
+      // Register player sprite for smooth tracking
+      if (this.player) {
+        this.levelUpAnimationManager.registerSprite(identity, this.player);
+      }
+    }
+
+    // Set up damage event subscriptions if renderers exist
+    if (this.enemyDamageRenderer) {
+      this.setupDamageEventSubscription(conn);
+    }
+
+    // Set up player damage renderer connection
+    if (this.playerDamageRenderer) {
+      this.playerDamageRenderer.setDbConnection(conn);
+    }
+  }
+
+  private setupPlayerSystems(conn: DbConnection): void {
+    const syncSystem = this.player.getSystem('sync') as any;
+    if (syncSystem && syncSystem.setDbConnection) {
+      syncSystem.setDbConnection(conn);
+    }
+
+    const combatSystem = this.player.getSystem('combat') as any;
+    if (combatSystem && combatSystem.setSyncManager && syncSystem) {
+      // Get the sync manager from sync system
+      const syncManager = syncSystem.getSyncManager();
+      combatSystem.setSyncManager(syncManager);
+    }
+
+    const respawnSystem = this.player.getSystem('respawn') as any;
+    if (respawnSystem && respawnSystem.setDbConnection) {
+      respawnSystem.setDbConnection(conn);
+    }
+
+    const deathMonitor = this.player.getSystem('deathMonitor') as any;
+    if (deathMonitor && deathMonitor.setDbConnection) {
+      deathMonitor.setDbConnection(conn);
+    }
+
+    const teleportSystem = this.player.getSystem('teleport') as any;
+    if (teleportSystem && teleportSystem.setDbConnection) {
+      teleportSystem.setDbConnection(conn);
+    }
+  }
+
+  private setupDamageEventSubscription(conn: DbConnection): void {
+    // Subscribe to enemy damage events from the database
+    conn.db.enemyDamageEvent.onInsert((_ctx, damageEvent) => {
+      // Handle damage numbers
+      this.enemyDamageRenderer.handleDamageEvent(damageEvent);
+
+      // Handle hit animation for all clients
+      this.enemyManager.playHitAnimation(damageEvent.enemyId);
+    });
+  }
+
+  update(time: number, delta: number): void {
+    // Update player (which handles all its systems)
+    this.player.update(time, delta);
+
+    // Update FPS counter
+    this.fpsCounter.update(time, delta);
+
+    // Update performance metrics
+    this.performanceMetrics.update(time, delta);
+
+    // Enemy manager doesn't need updates (server-driven)
+
+    // Update peer system for smooth interpolation
+    if (this.peerManager) {
+      this.peerManager.update();
+    }
+  }
+
+  // Debug methods
+  renderDebug(graphics: Phaser.GameObjects.Graphics): void {
+    if (!DebugState.getInstance().enabled || !this.player) return;
+
+    this.drawNearbyCollisionBoundaries(graphics);
+    this.drawAllObjectHitboxes(graphics);
+  }
+
+  private drawNearbyCollisionBoundaries(graphics: Phaser.GameObjects.Graphics): void {
+    const playerX = this.player.x;
+    const playerY = this.player.y;
+    const checkRadius = DEBUG_CONFIG.ui.collisionCheckRadius;
+
+    // Set style for collision boundaries
+    graphics.lineStyle(2, DEBUG_CONFIG.colors.collision, 0.8);
+
+    // Get all physics bodies in the world
+    const bodies = this.physics.world.staticBodies.entries;
+
+    for (const body of bodies) {
+      // Only draw bodies near the player
+      const distance = Phaser.Math.Distance.Between(
+        playerX,
+        playerY,
+        body.x + body.halfWidth,
+        body.y + body.halfHeight
+      );
+
+      if (distance < checkRadius) {
+        // Draw collision boundary rectangle
+        graphics.strokeRect(body.x, body.y, body.width, body.height);
+      }
+    }
+  }
+
+  private drawAllObjectHitboxes(graphics: Phaser.GameObjects.Graphics): void {
+    const playerX = this.player.x;
+    const playerY = this.player.y;
+    const checkRadius = DEBUG_CONFIG.ui.collisionCheckRadius;
+
+    // Set style for object hitboxes
+    graphics.lineStyle(2, 0xff0000, 0.7); // Red color for enemy hitboxes
+
+    // Draw enemy hitboxes
+    this.enemyManager.getEnemyGroup().children.entries.forEach((enemy) => {
+      const enemySprite = enemy as Phaser.Physics.Arcade.Sprite;
+      if (enemySprite.body) {
+        const body = enemySprite.body as Phaser.Physics.Arcade.Body;
+        const distance = Phaser.Math.Distance.Between(
+          playerX,
+          playerY,
+          enemySprite.x,
+          enemySprite.y
         );
 
-        // Set player depth to render above all other entities
-        this.player.setDepth(10); // Higher than enemies (depth 5)
+        if (distance < checkRadius) {
+          // Draw enemy hitbox
+          graphics.strokeRect(body.x, body.y, body.width, body.height);
 
-        // Set camera to follow player
-        this.cameras.main.startFollow(this.player);
-
-        // Set camera bounds to match tilemap dimensions
-        this.cameras.main.setBounds(0, 0, mapWidth, mapHeight);
-
-        // Set database connection on player's systems if connection exists
-        const dbConnection = this.dbConnectionManager.getConnection();
-        if (dbConnection) {
-            this.setupPlayerSystems(dbConnection);
+          // Draw center point
+          graphics.fillStyle(0xff0000, 0.8);
+          graphics.fillCircle(enemySprite.x, enemySprite.y, 2);
         }
+      }
+    });
 
-        // Initialize managers
-        this.physicsConfigurator = new PhysicsConfigurator(this);
-        this.interactionHandler = new InteractionHandler(this, dbConnection, {
-            cameraShakeDuration: CAMERA_SHAKE_DURATION,
-            cameraShakeIntensity: CAMERA_SHAKE_INTENSITY,
-        });
+    // Draw all dynamic bodies (non-player entities)
+    graphics.lineStyle(1, 0xffff00, 0.5); // Yellow for other dynamic bodies
 
-        // Player stats UI will be initialized when database connects
+    // Get combat system to check for attack hitbox
+    const combatSystem = this.player.getSystem('combat');
+    const attackHitbox = combatSystem ? (combatSystem as any).getHitboxSprite().body : null;
 
-        // Create collision groups from map data
-        const collisionGroups: CollisionGroups = {
-            ground: this.mapLoader.createPhysicsFromGround(this.mapData.ground),
-            platforms: this.mapLoader.createPhysicsFromPlatforms(
-                this.mapData.platforms
-            ),
-            climbeable: this.mapLoader.createClimbeablePhysics(
-                this.mapData.climbeable
-            ),
-            boundaries: this.mapLoader.createBoundaryPhysics(
-                this.mapData.boundaries
-            ),
-        };
+    this.physics.world.bodies.entries.forEach((body) => {
+      // Skip player body (it's handled by Player class)
+      if (body === this.player.body) return;
 
-        // Get systems for collision setup
-        const climbingSystem = this.player.getSystem("climbing");
-        const combatSystem = this.player.getSystem("combat");
+      // Skip attack hitbox (it's handled by Combat system)
+      if (attackHitbox && body === attackHitbox) return;
 
-        // Initialize enemy manager with proximity-based subscriptions enabled
-        this.enemyManager = new EnemyManager(this, {
-            useProximitySubscription: true,
-            proximityRadius: 800, // Load and render enemies within 800 pixels
-            proximityUpdateInterval: 1000, // Update subscription every 1 second
-        });
+      const distance = Phaser.Math.Distance.Between(
+        playerX,
+        playerY,
+        body.x + body.halfWidth,
+        body.y + body.halfHeight
+      );
 
-        // Set database connection if already available
-        const dbConn = this.dbConnectionManager.getConnection();
-        if (dbConn) {
-            this.enemyManager.setDbConnection(dbConn);
-        }
+      if (distance < checkRadius) {
+        graphics.strokeRect(body.x, body.y, body.width, body.height);
+      }
+    });
+  }
 
-        // Initialize damage number renderer for enemies
-        this.enemyDamageRenderer = new EnemyDamageRenderer(this);
-        this.enemyDamageRenderer.setEnemyManager(this.enemyManager);
-        
-        // Initialize player damage renderer
-        this.playerDamageRenderer = new PlayerDamageRenderer(this);
-        this.playerDamageRenderer.setPlayer(this.player);
-        
-        // Create level up animation manager
-        this.levelUpAnimationManager = new LevelUpAnimationManager(this);
-        
-        // Create chat manager
-        this.chatManager = new ChatManager(this);
+  getDebugInfo(): Record<string, any> {
+    if (!DebugState.getInstance().enabled) return {};
 
-        // Create FPS counter
-        this.fpsCounter = new FPSCounter(this, {
-            x: this.scale.width - 130, // Position on right side
-            y: 10,
-            fontSize: '14px',
-            alpha: 0.7
-        });
+    const staticBodies = this.physics.world.staticBodies.entries.length;
+    const dynamicBodies = this.physics.world.bodies.entries.length;
 
-        // Add keyboard shortcut to toggle FPS counter (F key)
-        this.input.keyboard?.on('keydown-F', () => {
-            this.fpsCounter.toggle();
-        });
+    return {
+      staticBodies,
+      dynamicBodies,
+      totalBodies: staticBodies + dynamicBodies,
+      mapSize: this.mapData
+        ? `${this.mapData.tilemap.widthInPixels}x${this.mapData.tilemap.heightInPixels}`
+        : 'N/A',
+      peers: this.peerManager ? this.peerManager.getPeerCount() : 0,
+      damageNumbers: this.enemyDamageRenderer ? this.enemyDamageRenderer.getDebugInfo() : {},
+    };
+  }
 
-        // Create performance metrics panel
-        this.performanceMetrics = new PerformanceMetrics(this, {
-            x: 10,
-            y: 100,
-            fontSize: '14px',
-            alpha: 0.7
-        });
+  isDebugEnabled(): boolean {
+    return DebugState.getInstance().enabled;
+  }
 
-        // Add keyboard shortcut to toggle performance metrics (P key)
-        this.input.keyboard?.on('keydown-P', () => {
-            this.performanceMetrics.toggle();
-        });
-        
-        // Add keyboard shortcut to test level up animation (U key)
-        this.input.keyboard?.on('keydown-U', () => {
-            if (this.levelUpAnimationManager && this.dbConnectionManager.getConnection()) {
-                const identity = this.dbConnectionManager.getConnection()!.identity;
-                if (identity) {
-                    // Get current level from database
-                    let currentLevel = 1;
-                    for (const player of this.dbConnectionManager.getConnection()!.db.player.iter()) {
-                        if (player.identity.toHexString() === identity.toHexString()) {
-                            currentLevel = player.level;
-                            break;
-                        }
-                    }
-                    // Trigger level up animation
-                    this.levelUpAnimationManager.triggerLevelUpAnimation(identity, currentLevel + 1);
-                }
-            }
-        });
-
-        // Set up damage event subscriptions if database connection exists
-        if (dbConn) {
-            this.setupDamageEventSubscription(dbConn);
-            this.playerDamageRenderer.setDbConnection(dbConn);
-        }
-
-        // Set enemy manager reference on interaction handler
-        this.interactionHandler.setEnemyManager(this.enemyManager);
-
-        // Create interaction callbacks
-        const interactionCallbacks =
-            this.interactionHandler.createInteractionCallbacks(
-                this.player,
-                this.enemyManager
-            );
-
-        // Set up all collisions using the PhysicsConfigurator
-        this.physicsConfigurator.setupAllCollisions(
-            this.player,
-            this.enemyManager,
-            collisionGroups,
-            combatSystem,
-            climbingSystem,
-            interactionCallbacks,
-            this
-        );
+  shutdown(): void {
+    // Clean up peer manager
+    if (this.peerManager) {
+      this.peerManager.destroy();
     }
 
-    private handleDatabaseConnect(
-        conn: DbConnection,
-        identity: Identity,
-        _token: string
-    ): void {
-        // Initialize the PlayerQueryService singleton immediately
-        PlayerQueryService.getInstance(conn);
-        console.log('✅ PlayerQueryService singleton initialized');
-        
-        // Initialize the DbMetricsTracker
-        DbMetricsTracker.getInstance().initialize(conn);
-        console.log('✅ DbMetricsTracker initialized');
-
-        // Set up player systems if player exists
-        if (this.player) {
-            this.setupPlayerSystems(conn);
-        }
-
-        // Initialize peer manager with proximity subscription enabled
-        this.peerManager = new PeerManager(this, {
-            useProximitySubscription: true,
-            proximityRadius: 800, // Load and render peers within 800 pixels
-            proximityUpdateInterval: 1000, // Update subscription every 1 second
-        });
-        this.peerManager.setLocalPlayerIdentity(identity);
-        this.peerManager.setDbConnection(conn);
-        
-        // Connect peer manager with level up animation manager
-        if (this.levelUpAnimationManager) {
-            this.peerManager.setLevelUpAnimationManager(this.levelUpAnimationManager);
-        }
-        
-        // Connect peer manager with chat manager
-        if (this.chatManager) {
-            this.peerManager.setChatManager(this.chatManager);
-        }
-
-        // Set database connection on enemy manager if it exists
-        if (this.enemyManager) {
-            this.enemyManager.setDbConnection(conn);
-        }
-
-        // Set database connection on interaction handler if it exists
-        if (this.interactionHandler) {
-            this.interactionHandler.setDbConnection(conn);
-        }
-        
-        // Set database connection on chat manager if it exists
-        if (this.chatManager) {
-            this.chatManager.setDbConnection(conn);
-        }
-
-        // Initialize player stats UI with identity
-        this.playerStatsUI = new PlayerStatsUI(this, identity);
-        this.playerStatsUI.setDbConnection(conn);
-        
-        // Initialize level up animation manager
-        if (this.levelUpAnimationManager) {
-            this.levelUpAnimationManager.initialize(conn, identity);
-            
-            // Register player sprite for smooth tracking
-            if (this.player) {
-                this.levelUpAnimationManager.registerSprite(identity, this.player);
-            }
-        }
-
-        // Set up damage event subscriptions if renderers exist
-        if (this.enemyDamageRenderer) {
-            this.setupDamageEventSubscription(conn);
-        }
-        
-        // Set up player damage renderer connection
-        if (this.playerDamageRenderer) {
-            this.playerDamageRenderer.setDbConnection(conn);
-        }
+    // Clean up damage number renderer
+    if (this.enemyDamageRenderer) {
+      this.enemyDamageRenderer.destroy();
     }
 
-    private setupPlayerSystems(conn: DbConnection): void {
-        const syncSystem = this.player.getSystem("sync") as any;
-        if (syncSystem && syncSystem.setDbConnection) {
-            syncSystem.setDbConnection(conn);
-        }
-
-        const combatSystem = this.player.getSystem("combat") as any;
-        if (combatSystem && combatSystem.setSyncManager && syncSystem) {
-            // Get the sync manager from sync system
-            const syncManager = syncSystem.getSyncManager();
-            combatSystem.setSyncManager(syncManager);
-        }
-
-        const respawnSystem = this.player.getSystem("respawn") as any;
-        if (respawnSystem && respawnSystem.setDbConnection) {
-            respawnSystem.setDbConnection(conn);
-        }
-
-        const deathMonitor = this.player.getSystem("deathMonitor") as any;
-        if (deathMonitor && deathMonitor.setDbConnection) {
-            deathMonitor.setDbConnection(conn);
-        }
-
-        const teleportSystem = this.player.getSystem("teleport") as any;
-        if (teleportSystem && teleportSystem.setDbConnection) {
-            teleportSystem.setDbConnection(conn);
-        }
+    // Clean up chat manager
+    if (this.chatManager) {
+      this.chatManager.destroy();
     }
+  }
 
-    private setupDamageEventSubscription(conn: DbConnection): void {
-        // Subscribe to enemy damage events from the database
-        conn.db.enemyDamageEvent.onInsert((_ctx, damageEvent) => {
-            // Handle damage numbers
-            this.enemyDamageRenderer.handleDamageEvent(damageEvent);
+  /**
+   * Create all animations at scene level to ensure they exist before any sprites are created
+   */
+  private createAllAnimations(): void {
+    const animFactory = new AnimationFactory(this);
+    const configLoader = new SpriteConfigLoader();
 
-            // Handle hit animation for all clients
-            this.enemyManager.playHitAnimation(damageEvent.enemyId);
-        });
-    }
+    // Load sprite configuration
+    configLoader.setConfig(spriteConfig);
 
-    update(time: number, delta: number): void {
-        // Update player (which handles all its systems)
-        this.player.update(time, delta);
+    // Get all animation definitions from the config
+    const animationDefinitions = configLoader.getAllAnimationDefinitions();
 
-        // Update FPS counter
-        this.fpsCounter.update(time, delta);
+    // Register and create animations for each sprite
+    Object.entries(animationDefinitions).forEach(([spriteKey, animations]) => {
+      animFactory.registerSpriteAnimations(spriteKey, animations);
+      animFactory.createSpriteAnimations(spriteKey);
+    });
 
-        // Update performance metrics
-        this.performanceMetrics.update(time, delta);
-
-        // Enemy manager doesn't need updates (server-driven)
-
-        // Update peer system for smooth interpolation
-        if (this.peerManager) {
-            this.peerManager.update();
-        }
-    }
-
-    // Debug methods
-    renderDebug(graphics: Phaser.GameObjects.Graphics): void {
-        if (!DebugState.getInstance().enabled || !this.player) return;
-
-        this.drawNearbyCollisionBoundaries(graphics);
-        this.drawAllObjectHitboxes(graphics);
-    }
-
-    private drawNearbyCollisionBoundaries(
-        graphics: Phaser.GameObjects.Graphics
-    ): void {
-        const playerX = this.player.x;
-        const playerY = this.player.y;
-        const checkRadius = DEBUG_CONFIG.ui.collisionCheckRadius;
-
-        // Set style for collision boundaries
-        graphics.lineStyle(2, DEBUG_CONFIG.colors.collision, 0.8);
-
-        // Get all physics bodies in the world
-        const bodies = this.physics.world.staticBodies.entries;
-
-        for (const body of bodies) {
-            // Only draw bodies near the player
-            const distance = Phaser.Math.Distance.Between(
-                playerX,
-                playerY,
-                body.x + body.halfWidth,
-                body.y + body.halfHeight
-            );
-
-            if (distance < checkRadius) {
-                // Draw collision boundary rectangle
-                graphics.strokeRect(body.x, body.y, body.width, body.height);
-            }
-        }
-    }
-
-    private drawAllObjectHitboxes(graphics: Phaser.GameObjects.Graphics): void {
-        const playerX = this.player.x;
-        const playerY = this.player.y;
-        const checkRadius = DEBUG_CONFIG.ui.collisionCheckRadius;
-
-        // Set style for object hitboxes
-        graphics.lineStyle(2, 0xff0000, 0.7); // Red color for enemy hitboxes
-
-        // Draw enemy hitboxes
-        this.enemyManager.getEnemyGroup().children.entries.forEach((enemy) => {
-            const enemySprite = enemy as Phaser.Physics.Arcade.Sprite;
-            if (enemySprite.body) {
-                const body = enemySprite.body as Phaser.Physics.Arcade.Body;
-                const distance = Phaser.Math.Distance.Between(
-                    playerX,
-                    playerY,
-                    enemySprite.x,
-                    enemySprite.y
-                );
-
-                if (distance < checkRadius) {
-                    // Draw enemy hitbox
-                    graphics.strokeRect(
-                        body.x,
-                        body.y,
-                        body.width,
-                        body.height
-                    );
-
-                    // Draw center point
-                    graphics.fillStyle(0xff0000, 0.8);
-                    graphics.fillCircle(enemySprite.x, enemySprite.y, 2);
-                }
-            }
-        });
-
-        // Draw all dynamic bodies (non-player entities)
-        graphics.lineStyle(1, 0xffff00, 0.5); // Yellow for other dynamic bodies
-
-        // Get combat system to check for attack hitbox
-        const combatSystem = this.player.getSystem("combat");
-        const attackHitbox = combatSystem
-            ? (combatSystem as any).getHitboxSprite().body
-            : null;
-
-        this.physics.world.bodies.entries.forEach((body) => {
-            // Skip player body (it's handled by Player class)
-            if (body === this.player.body) return;
-
-            // Skip attack hitbox (it's handled by Combat system)
-            if (attackHitbox && body === attackHitbox) return;
-
-            const distance = Phaser.Math.Distance.Between(
-                playerX,
-                playerY,
-                body.x + body.halfWidth,
-                body.y + body.halfHeight
-            );
-
-            if (distance < checkRadius) {
-                graphics.strokeRect(body.x, body.y, body.width, body.height);
-            }
-        });
-    }
-
-    getDebugInfo(): Record<string, any> {
-        if (!DebugState.getInstance().enabled) return {};
-
-        const staticBodies = this.physics.world.staticBodies.entries.length;
-        const dynamicBodies = this.physics.world.bodies.entries.length;
-
-        return {
-            staticBodies,
-            dynamicBodies,
-            totalBodies: staticBodies + dynamicBodies,
-            mapSize: this.mapData
-                ? `${this.mapData.tilemap.widthInPixels}x${this.mapData.tilemap.heightInPixels}`
-                : "N/A",
-            peers: this.peerManager ? this.peerManager.getPeerCount() : 0,
-            damageNumbers: this.enemyDamageRenderer
-                ? this.enemyDamageRenderer.getDebugInfo()
-                : {},
-        };
-    }
-
-    isDebugEnabled(): boolean {
-        return DebugState.getInstance().enabled;
-    }
-
-    shutdown(): void {
-        // Clean up peer manager
-        if (this.peerManager) {
-            this.peerManager.destroy();
-        }
-
-        // Clean up damage number renderer
-        if (this.enemyDamageRenderer) {
-            this.enemyDamageRenderer.destroy();
-        }
-        
-        // Clean up chat manager
-        if (this.chatManager) {
-            this.chatManager.destroy();
-        }
-    }
-
-    /**
-     * Create all animations at scene level to ensure they exist before any sprites are created
-     */
-    private createAllAnimations(): void {
-        const animFactory = new AnimationFactory(this);
-        const configLoader = new SpriteConfigLoader();
-        
-        // Load sprite configuration
-        configLoader.setConfig(spriteConfig);
-        
-        // Get all animation definitions from the config
-        const animationDefinitions = configLoader.getAllAnimationDefinitions();
-        
-        // Register and create animations for each sprite
-        Object.entries(animationDefinitions).forEach(([spriteKey, animations]) => {
-            animFactory.registerSpriteAnimations(spriteKey, animations);
-            animFactory.createSpriteAnimations(spriteKey);
-        });
-        
-        console.log('Created all game animations from sprite config');
-    }
+    console.log('Created all game animations from sprite config');
+  }
 }

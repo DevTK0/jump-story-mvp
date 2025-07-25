@@ -1,13 +1,13 @@
 /**
  * Animation Factory Module
- * 
+ *
  * Provides standardized animation creation and management for Phaser games.
  * Includes factory pattern implementation, centralized configurations,
  * and utility classes for easy animation management.
  */
 
-export { 
-  AnimationFactory, 
+export {
+  AnimationFactory,
   AnimationManager,
   type AnimationConfig,
   type AnimationFrameConfig,

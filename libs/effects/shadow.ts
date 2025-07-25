@@ -64,26 +64,16 @@ export class ShadowTrajectoryRenderer {
     this.cleanupSprites();
 
     // Create shadow sprites for trajectory points
-    for (
-      let i = 0;
-      i < this.trajectoryPoints.length;
-      i += DEBUG_CONFIG.trajectory.shadowSkipRate
-    ) {
+    for (let i = 0; i < this.trajectoryPoints.length; i += DEBUG_CONFIG.trajectory.shadowSkipRate) {
       const point = this.trajectoryPoints[i];
 
       // Calculate fade based on age
-      const age =
-        (this.trajectoryPoints.length - i) / this.trajectoryPoints.length;
+      const age = (this.trajectoryPoints.length - i) / this.trajectoryPoints.length;
       const [minAlpha, maxAlpha] = DEBUG_CONFIG.trajectory.shadowAlphaRange;
       const alpha = minAlpha + age * (maxAlpha - minAlpha);
 
       // Create shadow sprite
-      const shadowSprite = this.scene.add.sprite(
-        point.x,
-        point.y,
-        point.texture,
-        point.frame
-      );
+      const shadowSprite = this.scene.add.sprite(point.x, point.y, point.texture, point.frame);
       shadowSprite.setFlipX(point.flipX);
       shadowSprite.setScale(point.scaleX, point.scaleY);
       shadowSprite.setAlpha(alpha);
