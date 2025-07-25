@@ -59,15 +59,40 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
         this.mapLoader.loadMapAssets();
 
         // Load unified soldier spritesheet
-        this.load.spritesheet("soldier", "assets/spritesheet/Soldier.png", {
+        this.load.spritesheet("soldier", "assets/spritesheet/classes/Soldier.png", {
             frameWidth: SPRITE_FRAME_WIDTH,
             frameHeight: SPRITE_FRAME_HEIGHT,
         });
 
         // Load unified orc spritesheet
-        this.load.spritesheet("orc", "assets/spritesheet/Orc.png", {
+        this.load.spritesheet("orc", "assets/spritesheet/enemies/Orc.png", {
             frameWidth: SPRITE_FRAME_WIDTH,
             frameHeight: SPRITE_FRAME_HEIGHT,
+        });
+        
+        // Load all emote spritesheets
+        const emotes = [
+            { key: "exclamation_emote", file: "!!.png" },
+            { key: "question_exclamation_emote", file: "question_exclamation.png" },
+            { key: "question_emote", file: "question.png" },
+            { key: "blush_emote", file: "blush.png" },
+            { key: "heart_emote", file: "heart.png" },
+            { key: "sad_emote", file: "sad.png" },
+            { key: "sparkle_emote", file: "sparkle.png" },
+            { key: "sweat_emote", file: "sweat.png" },
+            { key: "teardrop_emote", file: "teardrop.png" },
+            { key: "typing_emote", file: "typing.png" },
+            { key: "whistle_emote", file: "whistle.png" },
+            { key: "wow_emote", file: "wow.png" },
+            { key: "wtf_emote", file: "wtf.png" },
+            { key: "zzz_emote", file: "zzz.png" }
+        ];
+        
+        emotes.forEach(emote => {
+            this.load.spritesheet(emote.key, `assets/spritesheet/emotes/${emote.file}`, {
+                frameWidth: 187,
+                frameHeight: 187,
+            });
         });
         
         // Add error handler for asset loading

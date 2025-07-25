@@ -269,6 +269,14 @@ export class ClimbingSystem
         // Initialize component classes
         this.physics = new ClimbingPhysics(player, scene);
         this.collision = new ClimbingCollision(player, scene);
+        
+        // Listen for player death to exit climbing
+        gameEvents.on(PlayerEvent.PLAYER_DIED, () => {
+            if (this.player.isClimbing) {
+                this.exitClimbing();
+            }
+            this.climbingDisabled = true;
+        });
     }
 
     // Set up climbeable areas from tilemap
@@ -277,6 +285,19 @@ export class ClimbingSystem
     }
 
     update(_time: number, _delta: number): void {
+        // Don't allow climbing if player is dead
+        if (!this.player.isAlive) {
+            if (this.player.isClimbing) {
+                this.exitClimbing();
+            }
+            return;
+        }
+        
+        // Re-enable climbing when player is alive (after respawn)
+        if (this.player.isAlive && this.climbingDisabled) {
+            this.climbingDisabled = false;
+        }
+
         // Update collision detection
         this.collision.updateCollision();
 
@@ -293,8 +314,8 @@ export class ClimbingSystem
     }
 
     private checkClimbingStart(): void {
-        // Don't start climbing if disabled (e.g., during hurt state)
-        if (this.climbingDisabled) {
+        // Don't start climbing if disabled (e.g., during hurt state) or if dead
+        if (this.climbingDisabled || !this.player.isAlive) {
             return;
         }
         

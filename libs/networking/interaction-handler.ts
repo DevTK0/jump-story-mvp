@@ -23,8 +23,6 @@ export interface InteractionConfig {
 }
 
 export class InteractionHandler {
-    private scene: Phaser.Scene;
-    private config: InteractionConfig;
     private dbConnection: DatabaseConnection | null;
     private currentAttackType: number = 1; // Default to attack1
     private enemyManager: InteractionEnemyManager | null = null;
@@ -34,19 +32,8 @@ export class InteractionHandler {
     // Track enemies damaged in current attack to prevent duplicates
     private damagedInCurrentAttack = new Set<number>();
 
-    // Default configuration
-    private static readonly DEFAULT_CONFIG: Required<InteractionConfig> = {
-        cameraShakeDuration: 100,
-        cameraShakeIntensity: 0.03
-    };
-
-    constructor(scene: Phaser.Scene, dbConnection: DatabaseConnection | null, config?: InteractionConfig) {
-        this.scene = scene;
+    constructor(_scene: Phaser.Scene, dbConnection: DatabaseConnection | null, _config?: InteractionConfig) {
         this.dbConnection = dbConnection;
-        this.config = {
-            ...InteractionHandler.DEFAULT_CONFIG,
-            ...config
-        };
 
         // Get PlayerQueryService singleton if available
         this.playerQueryService = PlayerQueryService.getInstance();

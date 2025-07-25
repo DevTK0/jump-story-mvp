@@ -5,6 +5,8 @@ export class ChatInput {
     private isTyping: boolean = false;
     private inputElement: HTMLInputElement | null = null;
     private onSubmitCallback: ((message: string) => void) | null = null;
+    private onTypingStartCallback: (() => void) | null = null;
+    private onTypingStopCallback: (() => void) | null = null;
     private originalKeyboardEnabled: boolean = true;
     private messageHistory: string[] = [];
     private historyIndex: number = -1;
@@ -25,6 +27,11 @@ export class ChatInput {
 
     private showInput(): void {
         this.isTyping = true;
+        
+        // Notify typing started
+        if (this.onTypingStartCallback) {
+            this.onTypingStartCallback();
+        }
         
         // Create HTML input element
         this.inputElement = document.createElement('input');
@@ -188,6 +195,11 @@ export class ChatInput {
         
         this.isTyping = false;
         
+        // Notify typing stopped
+        if (this.onTypingStopCallback) {
+            this.onTypingStopCallback();
+        }
+        
         // Re-enable game input
         this.restoreGameInput();
     }
@@ -208,6 +220,14 @@ export class ChatInput {
 
     public onSubmit(callback: (message: string) => void): void {
         this.onSubmitCallback = callback;
+    }
+    
+    public onTypingStart(callback: () => void): void {
+        this.onTypingStartCallback = callback;
+    }
+    
+    public onTypingStop(callback: () => void): void {
+        this.onTypingStopCallback = callback;
     }
 
     public destroy(): void {
