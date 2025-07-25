@@ -615,48 +615,50 @@ export class PeerManager {
     /**
      * Load recent messages for a peer that just entered proximity
      * This ensures we see their recent chat messages even if they were sent while outside range
+     * 
+     * NOTE: Currently disabled as we don't want to show old messages
      */
-    private loadRecentMessagesForPeer(peerIdentity: Identity): void {
-        if (!this.dbConnection || !this.chatManager) return;
-        
-        const peer = this.peers.get(peerIdentity.toHexString());
-        if (!peer) return;
-        
-        // Get the most recent message from this player (if any)
-        // We'll only show the latest message to avoid spam when entering proximity
-        let latestMessage: PlayerMessage | null = null;
-        
-        for (const message of this.dbConnection.db.playerMessage.iter()) {
-            if (message.playerId.isEqual(peerIdentity)) {
-                // Assuming messages have a timestamp or we can use the order
-                // For now, we'll just get the last one we find (they should be ordered)
-                latestMessage = message;
-            }
-        }
-        
-        if (latestMessage) {
-            // Check if message is older than the display duration (5 seconds - default speech bubble duration)
-            const messageDisplayDuration = 5000; // 5 seconds in milliseconds
-            const currentTimeMicros = Date.now() * 1000; // Convert to microseconds
-            const messageTimeMicros = Number(latestMessage.sentDt); // Timestamp is in microseconds
-            const messageAgeMs = (currentTimeMicros - messageTimeMicros) / 1000; // Convert back to milliseconds
-            
-            if (messageAgeMs > messageDisplayDuration) {
-                // Message is too old, don't display it
-                console.log(`⏰ PeerManager: Not showing old message from ${peer.getPlayerData().name} (age: ${Math.round(messageAgeMs / 1000)}s)`);
-                return;
-            }
-            
-            // Show the latest message as a speech bubble
-            if (latestMessage.messageType.tag === "Message") {
-                console.log(`💬 PeerManager: Showing recent message from ${peer.getPlayerData().name}`);
-                this.chatManager.showSpeechBubble(peer, latestMessage.message);
-            } else if (latestMessage.messageType.tag === "Command" && latestMessage.message.startsWith('/')) {
-                // Show recent emote
-                this.chatManager.showPeerCommand(peer, latestMessage.message);
-            }
-        }
-    }
+    // private loadRecentMessagesForPeer(peerIdentity: Identity): void {
+    //     if (!this.dbConnection || !this.chatManager) return;
+    //     
+    //     const peer = this.peers.get(peerIdentity.toHexString());
+    //     if (!peer) return;
+    //     
+    //     // Get the most recent message from this player (if any)
+    //     // We'll only show the latest message to avoid spam when entering proximity
+    //     let latestMessage: PlayerMessage | null = null;
+    //     
+    //     for (const message of this.dbConnection.db.playerMessage.iter()) {
+    //         if (message.playerId.isEqual(peerIdentity)) {
+    //             // Assuming messages have a timestamp or we can use the order
+    //             // For now, we'll just get the last one we find (they should be ordered)
+    //             latestMessage = message;
+    //         }
+    //     }
+    //     
+    //     if (latestMessage) {
+    //         // Check if message is older than the display duration (5 seconds - default speech bubble duration)
+    //         const messageDisplayDuration = 5000; // 5 seconds in milliseconds
+    //         const currentTimeMicros = Date.now() * 1000; // Convert to microseconds
+    //         const messageTimeMicros = Number(latestMessage.sentDt); // Timestamp is in microseconds
+    //         const messageAgeMs = (currentTimeMicros - messageTimeMicros) / 1000; // Convert back to milliseconds
+    //         
+    //         if (messageAgeMs > messageDisplayDuration) {
+    //             // Message is too old, don't display it
+    //             console.log(`⏰ PeerManager: Not showing old message from ${peer.getPlayerData().name} (age: ${Math.round(messageAgeMs / 1000)}s)`);
+    //             return;
+    //         }
+    //         
+    //         // Show the latest message as a speech bubble
+    //         if (latestMessage.messageType.tag === "Message") {
+    //             console.log(`💬 PeerManager: Showing recent message from ${peer.getPlayerData().name}`);
+    //             this.chatManager.showSpeechBubble(peer, latestMessage.message);
+    //         } else if (latestMessage.messageType.tag === "Command" && latestMessage.message.startsWith('/')) {
+    //             // Show recent emote
+    //             this.chatManager.showPeerCommand(peer, latestMessage.message);
+    //         }
+    //     }
+    // }
 
     public getPeerCount(): number {
         return this.peers.size;
