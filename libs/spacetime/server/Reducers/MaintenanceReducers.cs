@@ -27,7 +27,7 @@ public static partial class Module
         if (enemy.last_updated < recoveryTimeAgo)
         {
             // Return enemy to idle state
-            var idleEnemy = CreateEnemyUpdate(enemy, enemy.position, enemy.moving_right, 
+            var idleEnemy = CreateEnemyUpdate(enemy, enemy.x, enemy.y, enemy.moving_right, 
                 enemy.aggro_target, enemy.aggro_target.HasValue, ctx.Timestamp, PlayerState.Idle);
             ctx.Db.Enemy.enemy_id.Update(idleEnemy);
         }
@@ -35,13 +35,14 @@ public static partial class Module
     }
 
     // Helper method to process aggro detection and validation
-    private static (bool hasAggro, bool shouldChase, DbVector2 targetPosition, Identity? aggroTarget) ProcessAggroDetection(
+    private static (bool hasAggro, bool shouldChase, float targetX, float targetY, Identity? aggroTarget) ProcessAggroDetection(
         ReducerContext ctx, Enemy enemy, EnemyConfig enemyConfig, float leftBound, float rightBound)
     {
 
         var hasAggro = enemy.aggro_target.HasValue;
         var shouldChase = false;
-        var targetPosition = enemy.position;
+        var targetX = enemy.x;
+        var targetY = enemy.y;
         var newAggroTarget = enemy.aggro_target;
 
         if (hasAggro)
@@ -51,10 +52,11 @@ public static partial class Module
             if (aggroPlayer != null)
             {
                 // Maintain aggro if player is within leash distance
-                if (IsPlayerInLeashRange(aggroPlayer.Value.position, enemy.position))
+                if (IsPlayerInLeashRange(aggroPlayer.Value.x, aggroPlayer.Value.y, enemy.x, enemy.y))
                 {
                     shouldChase = true;
-                    targetPosition = aggroPlayer.Value.position;
+                    targetX = aggroPlayer.Value.x;
+                    targetY = aggroPlayer.Value.y;
                 }
                 else
                 {
@@ -81,8 +83,8 @@ public static partial class Module
 
                 // Calculate distance to player
                 var distance = Math.Sqrt(
-                    Math.Pow(player.position.x - enemy.position.x, 2) + 
-                    Math.Pow(player.position.y - enemy.position.y, 2)
+                    Math.Pow(player.x - enemy.x, 2) + 
+                    Math.Pow(player.y - enemy.y, 2)
                 );
 
                 // Check if player is within aggro range
@@ -91,32 +93,32 @@ public static partial class Module
                     hasAggro = true;
                     shouldChase = true;
                     newAggroTarget = player.identity;
-                    targetPosition = player.position;
+                    targetX = player.x;
+                    targetY = player.y;
                     break; // Aggro on first valid target found
                 }
             }
         }
 
-        return (hasAggro, shouldChase, targetPosition, newAggroTarget);
+        return (hasAggro, shouldChase, targetX, targetY, newAggroTarget);
     }
 
     // Helper method to calculate chase movement
     private static (float newX, bool newMovingRight) CalculateChaseMovement(
-        Enemy enemy, DbVector2 targetPosition, float movement, float leftBound, float rightBound)
+        Enemy enemy, float targetX, float targetY, float movement, float leftBound, float rightBound)
     {
         // Chase behavior - try to move towards target
-        var targetX = targetPosition.x;
-        var proposedX = enemy.position.x;
+        var proposedX = enemy.x;
         var newMovingRight = enemy.moving_right;
         
-        if (targetX > enemy.position.x)
+        if (targetX > enemy.x)
         {
-            proposedX = enemy.position.x + movement;
+            proposedX = enemy.x + movement;
             newMovingRight = true;
         }
-        else if (targetX < enemy.position.x)
+        else if (targetX < enemy.x)
         {
-            proposedX = enemy.position.x - movement;
+            proposedX = enemy.x - movement;
             newMovingRight = false;
         }
         
@@ -124,13 +126,13 @@ public static partial class Module
         proposedX = Math.Max(leftBound, Math.Min(rightBound, proposedX));
         
         // If we can't move closer to the target, step back a bit more
-        if (Math.Abs(proposedX - enemy.position.x) < EnemyConstants.MOVEMENT_EPSILON)
+        if (Math.Abs(proposedX - enemy.x) < EnemyConstants.MOVEMENT_EPSILON)
         {
             // Can't move towards target, step back in opposite direction
             var stepBackDistance = movement * EnemyConstants.STEP_BACK_MULTIPLIER;
-            return targetX > enemy.position.x
-                ? (Math.Max(enemy.position.x - stepBackDistance, leftBound), false) // Target right, step left
-                : (Math.Min(enemy.position.x + stepBackDistance, rightBound), true); // Target left, step right
+            return targetX > enemy.x
+                ? (Math.Max(enemy.x - stepBackDistance, leftBound), false) // Target right, step left
+                : (Math.Min(enemy.x + stepBackDistance, rightBound), true); // Target left, step right
         }
         else
         {
@@ -142,7 +144,7 @@ public static partial class Module
     private static (float newX, bool newMovingRight) CalculatePatrolMovement(
         Enemy enemy, float movement, float leftBound, float rightBound)
     {
-        float newX = enemy.position.x;
+        float newX = enemy.x;
         bool newMovingRight = enemy.moving_right;
 
         // Normal patrol behavior
@@ -171,7 +173,7 @@ public static partial class Module
     }
 
     // Helper method to create enemy update struct
-    private static Enemy CreateEnemyUpdate(Enemy originalEnemy, DbVector2 newPosition, bool newMovingRight, 
+    private static Enemy CreateEnemyUpdate(Enemy originalEnemy, float newX, float newY, bool newMovingRight, 
         Identity? newAggroTarget, bool hasAggro, Timestamp currentTimestamp, PlayerState? newState = null)
     {
         var newFacing = newMovingRight ? FacingDirection.Right : FacingDirection.Left;
@@ -181,7 +183,8 @@ public static partial class Module
             enemy_id = originalEnemy.enemy_id,
             route_id = originalEnemy.route_id,
             enemy_type = originalEnemy.enemy_type,
-            position = newPosition,
+            x = newX,
+            y = newY,
             state = newState ?? originalEnemy.state,
             facing = newFacing,
             current_hp = originalEnemy.current_hp,
@@ -202,11 +205,11 @@ public static partial class Module
     }
 
     // Helper method to check if player is within leash range
-    private static bool IsPlayerInLeashRange(DbVector2 playerPosition, DbVector2 enemyPosition)
+    private static bool IsPlayerInLeashRange(float playerX, float playerY, float enemyX, float enemyY)
     {
         var distanceToPlayer = Math.Sqrt(
-            Math.Pow(playerPosition.x - enemyPosition.x, 2) + 
-            Math.Pow(playerPosition.y - enemyPosition.y, 2)
+            Math.Pow(playerX - enemyX, 2) + 
+            Math.Pow(playerY - enemyY, 2)
         );
         
         return distanceToPlayer <= EnemyConstants.LEASH_DISTANCE;
@@ -217,14 +220,13 @@ public static partial class Module
         Identity? newAggroTarget, bool hasAggro)
     {
         // Update enemy position and direction if changed
-        var positionChanged = Math.Abs(newX - enemy.position.x) > EnemyConstants.POSITION_EPSILON;
+        var positionChanged = Math.Abs(newX - enemy.x) > EnemyConstants.POSITION_EPSILON;
         var directionChanged = newMovingRight != enemy.moving_right;
         var aggroChanged = (newAggroTarget?.Equals(enemy.aggro_target) != true) || (!hasAggro && enemy.aggro_target.HasValue);
 
         if (positionChanged || directionChanged || aggroChanged)
         {
-            var newPosition = new DbVector2(newX, enemy.position.y);
-            var updatedEnemy = CreateEnemyUpdate(enemy, newPosition, newMovingRight, newAggroTarget, hasAggro, ctx.Timestamp);
+            var updatedEnemy = CreateEnemyUpdate(enemy, newX, enemy.y, newMovingRight, newAggroTarget, hasAggro, ctx.Timestamp);
             ctx.Db.Enemy.enemy_id.Update(updatedEnemy);
         }
     }
@@ -383,7 +385,7 @@ public static partial class Module
                         aggro_start_time = ctx.Timestamp
                     };
                     
-                    var newEnemy = CreateEnemyUpdate(baseEnemy, spawnPosition, true, null, false, ctx.Timestamp, PlayerState.Idle);
+                    var newEnemy = CreateEnemyUpdate(baseEnemy, spawnPosition.x, spawnPosition.y, true, null, false, ctx.Timestamp, PlayerState.Idle);
 
                     ctx.Db.Enemy.Insert(newEnemy);
                     totalSpawned++;
@@ -445,7 +447,7 @@ public static partial class Module
             var (leftBound, rightBound) = CalculateRouteBounds(route.Value);
 
             // Process aggro detection and validation
-            var (hasAggro, shouldChase, targetPosition, newAggroTarget) = ProcessAggroDetection(ctx, enemy, enemyConfig.Value, leftBound, rightBound);
+            var (hasAggro, shouldChase, targetX, targetY, newAggroTarget) = ProcessAggroDetection(ctx, enemy, enemyConfig.Value, leftBound, rightBound);
             
             // Calculate new position based on behavior
             var movement = enemyConfig.Value.movement_speed * deltaTime;
@@ -454,7 +456,7 @@ public static partial class Module
 
             if (shouldChase)
             {
-                (newX, newMovingRight) = CalculateChaseMovement(enemy, targetPosition, movement, leftBound, rightBound);
+                (newX, newMovingRight) = CalculateChaseMovement(enemy, targetX, targetY, movement, leftBound, rightBound);
             }
             else if (enemyConfig.Value.behavior == "patrol" && !hasAggro)
             {
@@ -462,7 +464,7 @@ public static partial class Module
             }
             else
             {
-                (newX, newMovingRight) = (enemy.position.x, enemy.moving_right);
+                (newX, newMovingRight) = (enemy.x, enemy.moving_right);
             }
 
             // Update enemy if any values changed

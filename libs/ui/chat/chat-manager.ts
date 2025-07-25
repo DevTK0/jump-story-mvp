@@ -531,6 +531,36 @@ export class ChatManager {
         this.updateEvents.delete(typingKey);
     }
     
+    public clearAllForEntity(entity: any): void {
+        // Clear speech bubbles
+        const bubble = this.speechBubbles.get(entity);
+        if (bubble) {
+            bubble.destroy();
+            this.speechBubbles.delete(entity);
+        }
+        
+        // Clear update events
+        const updateEvent = this.updateEvents.get(entity);
+        if (updateEvent) {
+            updateEvent.remove();
+            this.updateEvents.delete(entity);
+        }
+        
+        // Clear emote update events
+        const emoteEvent = this.emoteUpdateEvents.get(entity);
+        if (emoteEvent) {
+            emoteEvent.remove();
+            this.emoteUpdateEvents.delete(entity);
+        }
+        
+        // Clear typing indicator
+        const typingKey = `${entity}_typing`;
+        this.clearTypingIndicatorForPeer(typingKey);
+        
+        // Clear any other entity-specific UI elements
+        this.clearBubblesForEntity(entity);
+    }
+    
     public destroy(): void {
         this.chatInput.destroy();
         

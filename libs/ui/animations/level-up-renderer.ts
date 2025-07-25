@@ -64,7 +64,7 @@ export class LevelUpRenderer {
         }
 
         // Create level up text
-        const levelUpText = this.createLevelUpText(player.position.x, player.position.y);
+        const levelUpText = this.createLevelUpText(player.x, player.y);
         
         // Create update handler for following player
         const updateHandler = () => {
@@ -82,8 +82,8 @@ export class LevelUpRenderer {
                 for (const p of this.dbConnection.db.player.iter()) {
                     if (p.identity.toHexString() === playerIdentityHex) {
                         levelUpText.setPosition(
-                            p.position.x, 
-                            p.position.y + PLAYER_STATS_UI_CONFIG.levelUp.offset.y
+                            p.x, 
+                            p.y + PLAYER_STATS_UI_CONFIG.levelUp.offset.y
                         );
                         break;
                     }

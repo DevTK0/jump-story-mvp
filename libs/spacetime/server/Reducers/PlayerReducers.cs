@@ -44,7 +44,8 @@ public static partial class Module
         {
             identity = ctx.Sender,
             name = "Player",
-            position = new DbVector2(PlayerConstants.SPAWN_POSITION_X, PlayerConstants.SPAWN_POSITION_Y), // Default spawn position
+            x = PlayerConstants.SPAWN_POSITION_X,
+            y = PlayerConstants.SPAWN_POSITION_Y,
             state = PlayerState.Idle,
             facing = FacingDirection.Right,
             last_active = ctx.Timestamp,
@@ -83,13 +84,14 @@ public static partial class Module
             return;
         }
 
-        var currentPos = player.Value.position;
+        var currentX = player.Value.x;
+        var currentY = player.Value.y;
         
         // For dead players, only allow gravity-based movement (falling)
         if (player.Value.current_hp <= 0 || player.Value.state == PlayerState.Dead)
         {
             // Check if this is just gravity movement (only Y position changing, or very small X changes)
-            var xDelta = Math.Abs(x - currentPos.x);
+            var xDelta = Math.Abs(x - currentX);
             
             // Allow if X movement is minimal (just physics drift) and Y is changing (falling)
             if (xDelta > 5.0f) // More than 5 pixels of horizontal movement
@@ -101,19 +103,20 @@ public static partial class Module
         }
 
         // Prevent teleportation by checking distance between current and new position
-        var distance = Math.Sqrt(Math.Pow(x - currentPos.x, 2) + Math.Pow(y - currentPos.y, 2));
+        var distance = Math.Sqrt(Math.Pow(x - currentX, 2) + Math.Pow(y - currentY, 2));
         
         // Reject position updates that are too far from current position (likely teleportation attempts)
         if (distance > PlayerConstants.MAX_POSITION_UPDATE_DISTANCE)
         {
-            Log.Info($"Rejected position update for {ctx.Sender} - too large movement ({distance:F1} pixels from ({currentPos.x}, {currentPos.y}) to ({x}, {y}))");
+            Log.Info($"Rejected position update for {ctx.Sender} - too large movement ({distance:F1} pixels from ({currentX}, {currentY}) to ({x}, {y}))");
             return;
         }
 
         // Update player position
         ctx.Db.Player.identity.Update(player.Value with
         {
-            position = new DbVector2(x, y),
+            x = x,
+            y = y,
             facing = facing,
             last_active = ctx.Timestamp
         });
@@ -278,7 +281,8 @@ public static partial class Module
         {
             current_hp = maxHp,
             current_mana = maxMana,
-            position = new DbVector2(PlayerConstants.SPAWN_POSITION_X, PlayerConstants.SPAWN_POSITION_Y), // Set spawn position
+            x = PlayerConstants.SPAWN_POSITION_X,
+            y = PlayerConstants.SPAWN_POSITION_Y,
             last_active = ctx.Timestamp
         };
         ctx.Db.Player.identity.Update(respawnedPlayer);
@@ -324,17 +328,18 @@ public static partial class Module
             return;
         }
 
-        var oldPos = player.Value.position;
-        var newPos = new DbVector2(x, y);
+        var oldX = player.Value.x;
+        var oldY = player.Value.y;
 
         // Update player position
         ctx.Db.Player.identity.Update(player.Value with
         {
-            position = newPos,
+            x = x,
+            y = y,
             last_active = ctx.Timestamp
         });
 
-        Log.Info($"Player {ctx.Sender} teleported from ({oldPos.x}, {oldPos.y}) to ({x}, {y})");
+        Log.Info($"Player {ctx.Sender} teleported from ({oldX}, {oldY}) to ({x}, {y})");
     }
 
     [Reducer]

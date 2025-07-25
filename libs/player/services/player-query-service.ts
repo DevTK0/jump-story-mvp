@@ -235,6 +235,6 @@ export class PlayerQueryService {
      */
     public getCurrentPlayerPosition(): { x: number; y: number } | null {
         const player = this.findCurrentPlayer();
-        return player?.position ? { x: player.position.x, y: player.position.y } : null;
+        return player ? { x: player.x, y: player.y } : null;
     }
 }

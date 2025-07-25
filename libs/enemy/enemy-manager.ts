@@ -276,7 +276,7 @@ export class EnemyManager {
                     this.loadProximityEnemies();
                 })
                 .subscribe([
-                    `SELECT * FROM Enemy WHERE position.x BETWEEN ${minX} AND ${maxX} AND position.y BETWEEN ${minY} AND ${maxY}`,
+                    `SELECT * FROM Enemy WHERE x BETWEEN ${minX} AND ${maxX} AND y BETWEEN ${minY} AND ${maxY}`,
                 ]);
 
             this.lastPlayerPosition = { ...playerPosition };
@@ -304,8 +304,8 @@ export class EnemyManager {
         // Load enemies that are within proximity
         for (const enemy of this.dbConnection.db.enemy.iter()) {
             const distance = Math.sqrt(
-                Math.pow(enemy.position.x - playerPosition.x, 2) +
-                    Math.pow(enemy.position.y - playerPosition.y, 2)
+                Math.pow(enemy.x - playerPosition.x, 2) +
+                    Math.pow(enemy.y - playerPosition.y, 2)
             );
 
             if (distance <= radius) {
@@ -382,8 +382,8 @@ export class EnemyManager {
         const spriteKey = serverEnemy.enemyType;
 
         return this.scene.physics.add.sprite(
-            serverEnemy.position.x,
-            serverEnemy.position.y,
+            serverEnemy.x,
+            serverEnemy.y,
             spriteKey
         );
     }
@@ -581,7 +581,7 @@ export class EnemyManager {
         const previousX = sprite.x;
 
         // Start interpolation to new X position instead of direct setting
-        const targetX = serverEnemy.position.x;
+        const targetX = serverEnemy.x;
         if (Math.abs(targetX - sprite.x) > 0.1) {
             this.enemyInterpolation.set(serverEnemy.enemyId, {
                 targetX: targetX,

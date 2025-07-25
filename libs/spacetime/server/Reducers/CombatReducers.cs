@@ -48,9 +48,9 @@ public static partial class Module
 
             // Calculate knockback position based on attacker's position
             var knockbackDistance = EnemyConstants.KNOCKBACK_DISTANCE;
-            var knockbackDirection = enemy.Value.position.x > player.Value.position.x ? 1 : -1;
+            var knockbackDirection = enemy.Value.x > player.Value.x ? 1 : -1;
             
-            var newX = enemy.Value.position.x + (knockbackDistance * knockbackDirection);
+            var newX = enemy.Value.x + (knockbackDistance * knockbackDirection);
             
             // Get route boundaries to clamp knockback
             var route = ctx.Db.EnemyRoute.route_id.Find(enemy.Value.route_id);
@@ -60,11 +60,12 @@ public static partial class Module
                 newX = Math.Max(leftBound, Math.Min(rightBound, newX));
             }
             
-            var knockbackPosition = new DbVector2(newX, enemy.Value.position.y);
+            var knockbackX = newX;
+            var knockbackY = enemy.Value.y;
 
             // Update enemy health, state, and position with knockback
             // Also set aggro target to the attacking player
-            var damagedEnemy = CreateEnemyUpdate(enemy.Value, knockbackPosition, enemy.Value.moving_right, 
+            var damagedEnemy = CreateEnemyUpdate(enemy.Value, knockbackX, knockbackY, enemy.Value.moving_right, 
                 ctx.Sender, true, ctx.Timestamp, newState);
             damagedEnemy = damagedEnemy with { current_hp = newHp };
             ctx.Db.Enemy.enemy_id.Update(damagedEnemy);
@@ -113,7 +114,7 @@ public static partial class Module
         }
 
         // Return enemy to idle state so they can resume patrol/chase
-        var recoveredEnemy = CreateEnemyUpdate(enemy.Value, enemy.Value.position, enemy.Value.moving_right, 
+        var recoveredEnemy = CreateEnemyUpdate(enemy.Value, enemy.Value.x, enemy.Value.y, enemy.Value.moving_right, 
             enemy.Value.aggro_target, enemy.Value.aggro_target.HasValue, ctx.Timestamp, PlayerState.Idle);
         ctx.Db.Enemy.enemy_id.Update(recoveredEnemy);
 

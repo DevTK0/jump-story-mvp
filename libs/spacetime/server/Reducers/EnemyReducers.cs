@@ -170,7 +170,7 @@ public static partial class Module
                     aggro_start_time = ctx.Timestamp
                 };
                 
-                var newEnemy = CreateEnemyUpdate(baseEnemy, spawnPosition, true, null, false, ctx.Timestamp, PlayerState.Idle);
+                var newEnemy = CreateEnemyUpdate(baseEnemy, spawnPosition.x, spawnPosition.y, true, null, false, ctx.Timestamp, PlayerState.Idle);
 
                 ctx.Db.Enemy.Insert(newEnemy);
                 Log.Info($"Spawned {route.enemy_type} (Level {enemyConfig.Value.level}) at ({spawnPosition.x}, {spawnPosition.y}) for route {route.route_id}");

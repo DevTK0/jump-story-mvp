@@ -20,14 +20,14 @@ public static partial class Module
         /// </summary>
         public static MovementValidationResult ValidateMovement(
             ReducerContext ctx,
-            DbVector2 oldPosition, 
-            DbVector2 newPosition, 
+            float oldX, float oldY,
+            float newX, float newY,
             PlayerState currentState,
             double timeDelta)
         {
             // Calculate distance moved
-            var deltaX = newPosition.x - oldPosition.x;
-            var deltaY = newPosition.y - oldPosition.y;
+            var deltaX = newX - oldX;
+            var deltaY = newY - oldY;
             var distance = Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
             
             // Validate time delta is reasonable (prevent timestamp manipulation)
@@ -37,7 +37,8 @@ public static partial class Module
                 {
                     IsValid = false,
                     Reason = "Invalid time delta",
-                    CorrectedPosition = oldPosition
+                    CorrectedX = oldX,
+                    CorrectedY = oldY
                 };
             }
             
@@ -48,7 +49,8 @@ public static partial class Module
                 {
                     IsValid = false,
                     Reason = "Position jump too large (possible teleportation)",
-                    CorrectedPosition = oldPosition
+                    CorrectedX = oldX,
+                    CorrectedY = oldY
                 };
             }
             
@@ -64,11 +66,8 @@ public static partial class Module
                 {
                     IsValid = false,
                     Reason = $"Movement speed too high: {speed:F1} > {MAX_MOVEMENT_SPEED}",
-                    CorrectedPosition = new DbVector2
-                    {
-                        x = oldPosition.x + (float)(deltaX * correctionRatio),
-                        y = oldPosition.y + (float)(deltaY * correctionRatio)
-                    }
+                    CorrectedX = oldX + (float)(deltaX * correctionRatio),
+                    CorrectedY = oldY + (float)(deltaY * correctionRatio)
                 };
             }
             
@@ -83,7 +82,8 @@ public static partial class Module
             {
                 IsValid = true,
                 Reason = "Movement valid",
-                CorrectedPosition = newPosition
+                CorrectedX = newX,
+                CorrectedY = newY
             };
         }
         
@@ -263,7 +263,8 @@ public static partial class Module
     {
         public bool IsValid;
         public string Reason;
-        public DbVector2? CorrectedPosition;
+        public float? CorrectedX;
+        public float? CorrectedY;
     }
     
     public struct ActionValidationResult

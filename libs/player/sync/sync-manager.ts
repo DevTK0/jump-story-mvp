@@ -67,11 +67,10 @@ export class SyncManager {
       return;
     }
     
-    if (serverPlayer.position && 
-        typeof serverPlayer.position.x === 'number' && 
-        typeof serverPlayer.position.y === 'number') {
+    if (typeof serverPlayer.x === 'number' && 
+        typeof serverPlayer.y === 'number') {
       
-      const serverPos = { x: serverPlayer.position.x, y: serverPlayer.position.y };
+      const serverPos = { x: serverPlayer.x, y: serverPlayer.y };
       
       // Server position update received
       

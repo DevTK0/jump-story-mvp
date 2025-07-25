@@ -34,13 +34,13 @@ import {
 } from "@clockworklabs/spacetimedb-sdk";
 import { FacingDirection as __FacingDirection } from "./facing_direction_type";
 import { PlayerState as __PlayerState } from "./player_state_type";
-import { DbVector2 as __DbVector2 } from "./db_vector_2_type";
 
 export type Enemy = {
   enemyId: number,
   routeId: number,
   enemyType: string,
-  position: __DbVector2,
+  x: number,
+  y: number,
   state: __PlayerState,
   facing: __FacingDirection,
   currentHp: number,
@@ -64,7 +64,8 @@ export namespace Enemy {
       new ProductTypeElement("enemyId", AlgebraicType.createU32Type()),
       new ProductTypeElement("routeId", AlgebraicType.createU32Type()),
       new ProductTypeElement("enemyType", AlgebraicType.createStringType()),
-      new ProductTypeElement("position", __DbVector2.getTypeScriptAlgebraicType()),
+      new ProductTypeElement("x", AlgebraicType.createF32Type()),
+      new ProductTypeElement("y", AlgebraicType.createF32Type()),
       new ProductTypeElement("state", __PlayerState.getTypeScriptAlgebraicType()),
       new ProductTypeElement("facing", __FacingDirection.getTypeScriptAlgebraicType()),
       new ProductTypeElement("currentHp", AlgebraicType.createF32Type()),

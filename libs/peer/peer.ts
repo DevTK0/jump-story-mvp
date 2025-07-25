@@ -27,8 +27,8 @@ export class Peer extends Phaser.GameObjects.Sprite {
         // Create soldier sprite with initial frame
         super(
             config.scene,
-            config.playerData.position.x,
-            config.playerData.position.y,
+            config.playerData.x,
+            config.playerData.y,
             "soldier",
             0
         );
@@ -50,8 +50,8 @@ export class Peer extends Phaser.GameObjects.Sprite {
 
         // Initialize target position
         this.targetPosition = {
-            x: config.playerData.position.x,
-            y: config.playerData.position.y,
+            x: config.playerData.x,
+            y: config.playerData.y,
         };
 
         // Animations are now created at scene level
@@ -155,8 +155,8 @@ export class Peer extends Phaser.GameObjects.Sprite {
         // State machine will handle respawn animation reset
 
         // Update target position for interpolation
-        const newTargetX = playerData.position.x;
-        const newTargetY = playerData.position.y;
+        const newTargetX = playerData.x;
+        const newTargetY = playerData.y;
 
         // Check if target position changed significantly
         const targetDistance = Phaser.Math.Distance.Between(

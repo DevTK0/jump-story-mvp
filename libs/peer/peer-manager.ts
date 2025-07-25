@@ -13,8 +13,6 @@ export interface PeerSubscriptionConfig {
     useProximitySubscription: boolean;
     /** Distance around player to load peers (in pixels) */
     proximityRadius: number;
-    /** How often to update proximity subscription (in milliseconds) */
-    proximityUpdateInterval: number;
 }
 
 export class PeerManager {
@@ -27,15 +25,12 @@ export class PeerManager {
 
     // Proximity-based subscription configuration
     private subscriptionConfig: PeerSubscriptionConfig;
-    private proximityUpdateTimer: Phaser.Time.TimerEvent | null = null;
-    private lastPlayerPosition: { x: number; y: number } | null = null;
 
     // Default configuration
     private static readonly DEFAULT_SUBSCRIPTION_CONFIG: PeerSubscriptionConfig =
         {
             useProximitySubscription: true, // Enable by default for peers
             proximityRadius: 1500, // 1500 pixels around player
-            proximityUpdateInterval: 3000, // Update every 3 seconds
         };
 
     constructor(
@@ -96,14 +91,14 @@ export class PeerManager {
         if (!this.dbConnection) return;
 
         try {
-            // Start proximity subscription timer
-            this.startProximityUpdateTimer();
-
             // Set up event listeners for targeted peer data
             this.setupTargetedPeerEventListeners();
 
             // Initial proximity subscription
             this.updateProximitySubscription();
+            
+            // Set up proximity-based message subscription
+            this.setupProximityMessageSubscription();
 
             console.log("✅ PeerManager: Proximity-based subscription active");
         } catch (error) {
@@ -145,25 +140,10 @@ export class PeerManager {
         this.dbConnection.db.player.onUpdate(this.onPlayerUpdate);
         this.dbConnection.db.player.onDelete(this.onPlayerDelete);
         
-        // Subscribe to player messages
+        // Subscribe to player messages (filtered by proximity subscription)
         this.dbConnection.db.playerMessage.onInsert(this.onPlayerMessageInsert);
     }
 
-    /**
-     * Start timer to periodically update proximity subscription based on player movement
-     */
-    private startProximityUpdateTimer(): void {
-        if (this.proximityUpdateTimer) {
-            this.proximityUpdateTimer.destroy();
-        }
-
-        this.proximityUpdateTimer = this.scene.time.addEvent({
-            delay: this.subscriptionConfig.proximityUpdateInterval,
-            loop: true,
-            callback: this.updateProximitySubscription,
-            callbackScope: this,
-        });
-    }
 
     /**
      * Update proximity subscription based on current player position
@@ -171,48 +151,40 @@ export class PeerManager {
     private updateProximitySubscription(): void {
         if (!this.dbConnection || !this.localPlayerIdentity) return;
 
-        // Get player position
-        const playerPosition = this.getPlayerPosition();
-        if (!playerPosition) {
-            console.warn(
-                "⚠️ PeerManager: Cannot update proximity subscription - player position unknown"
-            );
-            return;
-        }
-
-        // Check if player has moved significantly since last update
-        if (
-            this.lastPlayerPosition &&
-            Math.abs(playerPosition.x - this.lastPlayerPosition.x) < 100 &&
-            Math.abs(playerPosition.y - this.lastPlayerPosition.y) < 100
-        ) {
-            // Player hasn't moved much, but still check for peers to remove
-            this.loadProximityPeers();
-            return;
-        }
-
         const radius = this.subscriptionConfig.proximityRadius;
-        const minX = playerPosition.x - radius;
-        const maxX = playerPosition.x + radius;
-        const minY = playerPosition.y - radius;
-        const maxY = playerPosition.y + radius;
         const myIdentity = this.localPlayerIdentity.toHexString();
 
         try {
-            // Subscribe to players within proximity, excluding ourselves
+            // Subscribe to players within proximity using a self-join with our position
+            // This makes the subscription reactive to our own position changes!
             this.dbConnection
                 .subscriptionBuilder()
                 .onApplied(() => {
                     console.log(
-                        "🎯 PeerManager: Proximity subscription applied"
+                        `🎯 PeerManager: Proximity subscription applied (radius: ${radius}px)`
                     );
-                    this.loadProximityPeers();
+                    // SpacetimeDB will handle insert/delete events for peers entering/leaving the area
                 })
                 .subscribe([
-                    `SELECT * FROM Player WHERE position.x BETWEEN ${minX} AND ${maxX} AND position.y BETWEEN ${minY} AND ${maxY} AND identity != x'${myIdentity}'`,
+                    `SELECT * FROM Player 
+                     WHERE identity != x'${myIdentity}'
+                     AND x BETWEEN ((SELECT x FROM Player WHERE identity = x'${myIdentity}') - ${radius}) 
+                                        AND ((SELECT x FROM Player WHERE identity = x'${myIdentity}') + ${radius})
+                     AND y BETWEEN ((SELECT y FROM Player WHERE identity = x'${myIdentity}') - ${radius}) 
+                                        AND ((SELECT y FROM Player WHERE identity = x'${myIdentity}') + ${radius})`
                 ]);
-
-            this.lastPlayerPosition = { ...playerPosition };
+            
+            // Also update message subscription using the same self-join pattern
+            this.dbConnection
+                .subscriptionBuilder()
+                .subscribe([
+                    `SELECT pm.* FROM PlayerMessage pm
+                     JOIN Player p ON pm.playerId = p.identity
+                     JOIN Player me ON me.identity = x'${myIdentity}'
+                     WHERE p.identity != x'${myIdentity}'
+                     AND p.x BETWEEN (me.x - ${radius}) AND (me.x + ${radius})
+                     AND p.y BETWEEN (me.y - ${radius}) AND (me.y + ${radius})`
+                ]);
         } catch (error) {
             console.error(
                 "❌ PeerManager: Failed to update proximity subscription:",
@@ -243,8 +215,8 @@ export class PeerManager {
             }
 
             const distance = Math.sqrt(
-                Math.pow(player.position.x - playerPosition.x, 2) +
-                    Math.pow(player.position.y - playerPosition.y, 2)
+                Math.pow(player.x - playerPosition.x, 2) +
+                    Math.pow(player.y - playerPosition.y, 2)
             );
 
             const identityString = player.identity.toHexString();
@@ -280,9 +252,46 @@ export class PeerManager {
                         peer.getPlayerData().name
                     } - now outside proximity`
                 );
+                
+                // Clean up any chat UI elements for this peer
+                if (this.chatManager) {
+                    this.chatManager.clearAllForEntity(peer);
+                }
+                
                 peer.destroy();
                 this.peers.delete(identityString);
             }
+        }
+    }
+
+    /**
+     * Set up proximity-based subscription for chat messages
+     * Only subscribes to messages from players within proximity radius
+     */
+    private setupProximityMessageSubscription(): void {
+        if (!this.dbConnection || !this.localPlayerIdentity) return;
+
+        const playerPosition = this.getPlayerPosition();
+        if (!playerPosition) return;
+
+        const radius = this.subscriptionConfig.proximityRadius;
+        const myIdentityHex = this.localPlayerIdentity.toHexString();
+
+        try {
+            // Subscribe to messages only from players within proximity using a JOIN
+            // This query joins PlayerMessage with Player to filter by distance
+            this.dbConnection.subscriptionBuilder()
+                .subscribe([
+                    `SELECT pm.* FROM PlayerMessage pm
+                     JOIN Player p ON pm.playerId = p.identity
+                     WHERE p.identity != x'${myIdentityHex}'
+                     AND p.x BETWEEN ${playerPosition.x - radius} AND ${playerPosition.x + radius}
+                     AND p.y BETWEEN ${playerPosition.y - radius} AND ${playerPosition.y + radius}`
+                ]);
+
+            console.log(`📬 PeerManager: Subscribed to messages within ${radius}px radius`);
+        } catch (error) {
+            console.error("❌ PeerManager: Failed to set up proximity message subscription:", error);
         }
     }
 
@@ -388,6 +397,11 @@ export class PeerManager {
         const peer = this.peers.get(identityString);
 
         if (peer) {
+            // Clean up any chat UI elements for this peer
+            if (this.chatManager) {
+                this.chatManager.clearAllForEntity(peer);
+            }
+            
             peer.destroy();
             this.peers.delete(identityString);
             console.log(
@@ -456,12 +470,6 @@ export class PeerManager {
     }
 
     public destroy(): void {
-        // Clean up proximity timer if it exists
-        if (this.proximityUpdateTimer) {
-            this.proximityUpdateTimer.destroy();
-            this.proximityUpdateTimer = null;
-        }
-
         this.cleanup();
     }
 }

@@ -10,7 +10,8 @@ public static partial class Module
         [Unique, AutoInc]
         public uint player_id;
         public string name;
-        public DbVector2 position;
+        public float x;
+        public float y;
         public PlayerState state;
         public FacingDirection facing;
         public Timestamp last_active;
@@ -42,7 +43,8 @@ public static partial class Module
         public uint enemy_id;
         public uint route_id;
         public string enemy_type;
-        public DbVector2 position;
+        public float x;
+        public float y;
         public PlayerState state;
         public FacingDirection facing;
         public float current_hp;
