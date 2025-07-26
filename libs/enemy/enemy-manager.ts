@@ -8,12 +8,14 @@ import {
   type EnemySubscriptionConfig,
 } from './managers/enemy-subscription-manager';
 import { createLogger } from '@/core/logger';
+import type { PhysicsEntity } from '@/physics/physics-entity';
+import type { PhysicsRegistry } from '@/physics/physics-registry';
 
 /**
  * Refactored EnemyManager - orchestrates enemy subsystems
  * Delegates specific responsibilities to focused managers
  */
-export class EnemyManager {
+export class EnemyManager implements PhysicsEntity {
   private scene: Phaser.Scene;
   private logger = createLogger('EnemyManager');
 
@@ -247,6 +249,22 @@ export class EnemyManager {
 
   public getEnemyGroup(): Phaser.Physics.Arcade.Group {
     return this.spawnManager.getEnemyGroup();
+  }
+
+  // PhysicsEntity implementation
+  public setupPhysics(registry: PhysicsRegistry): void {
+    const enemyGroup = this.getEnemyGroup();
+    
+    // Register enemy group with registry for other entities to reference
+    registry.registerGroup('enemies', enemyGroup);
+    
+    // Set up enemy collisions with world
+    registry.addGroupCollider('enemies', 'ground');
+    registry.addGroupCollider('enemies', 'platforms', undefined, registry.createOneWayPlatformCallback());
+    registry.addGroupCollider('enemies', 'boundaries');
+    
+    // Note: Enemy-player and enemy-attack collisions will be set up by
+    // InteractionHandler and CombatSystem respectively
   }
 
   public destroy(): void {

@@ -1,12 +1,13 @@
 import Phaser from 'phaser';
 import { createLogger, type ModuleLogger } from './logger';
-import { AssetLoaderService } from './asset-loader-service';
+import { AssetLoaderService } from './asset/asset-loader-service';
 import { ManagerRegistry } from './manager-registry';
 import { UIFactory } from '@/ui/ui-factory';
 import { SceneConnectionHelper } from '@/networking/scene-connection-helper';
 import { DebugSceneExtension } from '@/debug/debug-scene-extension';
 import { Player } from '@/player';
-import type { MapData } from '@/stage';
+import type { MapData } from './asset/map-loader';
+import type { SpriteConfig } from './asset/sprite-config-loader';
 
 export interface SceneConfig {
   key: string;
@@ -24,6 +25,7 @@ export interface SceneConfig {
     shadow?: boolean;  // Enable shadow effect in debug mode
     invulnerable?: boolean;  // Prevent player from taking damage (useful for testing)
   };
+  sprites?: SpriteConfig;  // Optional sprite configuration
 }
 
 export interface InitializedSystems {
@@ -56,8 +58,11 @@ export class SceneInitializer {
     this.config = config;
     this.logger = createLogger('SceneInitializer');
     
-    // Initialize core services
-    this.assetLoader = new AssetLoaderService(scene);
+    // Initialize core services with sprite config if provided
+    if (!config.sprites) {
+      throw new Error('Sprite configuration is required in SceneConfig');
+    }
+    this.assetLoader = new AssetLoaderService(scene, config.sprites);
   }
   
   /**

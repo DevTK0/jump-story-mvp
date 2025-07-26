@@ -1,12 +1,10 @@
 import Phaser from 'phaser';
-import { createLogger, type ModuleLogger } from './logger';
-import { MapLoader, type MapData } from '@/stage';
-import { AnimationFactory, type AnimationFrameConfig, type SpriteAnimationSet } from '@/animations';
-import { SpriteConfigLoader } from './sprite-config-loader';
+import { createLogger, type ModuleLogger } from '../logger';
+import { MapLoader, type MapData } from './map-loader';
+import { AnimationFactory, type AnimationFrameConfig, type SpriteAnimationSet } from '../animations';
+import { SpriteConfigLoader, type SpriteConfig } from './sprite-config-loader';
 import { AssetResolver } from './asset-resolver';
-import { ErrorBoundary, AssetError } from './error-boundary';
-import { DISPLAY_CONFIG } from './display-config';
-import spriteConfig from '../../apps/playground/config/sprite-config.json';
+import { ErrorBoundary, AssetError } from '../error-boundary';
 
 /**
  * Service responsible for loading and managing scene assets
@@ -16,12 +14,14 @@ export class AssetLoaderService {
   private logger: ModuleLogger;
   private mapLoader: MapLoader;
   private errorBoundary: ErrorBoundary;
+  private spriteConfig: SpriteConfig;
   
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, spriteConfig: SpriteConfig) {
     this.scene = scene;
     this.logger = createLogger('AssetLoaderService');
     this.mapLoader = new MapLoader(scene);
     this.errorBoundary = ErrorBoundary.getInstance();
+    this.spriteConfig = spriteConfig;
   }
   
   /**
@@ -61,7 +61,7 @@ export class AssetLoaderService {
     const configLoader = new SpriteConfigLoader();
     
     // Load sprite configuration
-    configLoader.setConfig(spriteConfig);
+    configLoader.setConfig(this.spriteConfig);
     
     // Get all animation definitions from the config
     const animationDefinitions = configLoader.getAllAnimationDefinitions();
@@ -110,31 +110,31 @@ export class AssetLoaderService {
   }
   
   private loadSpriteSheets(): void {
-    // Load character sprites
-    this.loadSpriteSheet('soldier', 'assets/spritesheet/classes/Soldier.png');
-    this.loadSpriteSheet('orc', 'assets/spritesheet/enemies/Orc.png');
+    this.logger.debug('Loading sprite sheets from config...');
+    
+    const configLoader = new SpriteConfigLoader();
+    configLoader.setConfig(this.spriteConfig);
+    
+    // Load all character and enemy sprites from config
+    if (this.spriteConfig.sprites.classes) {
+      configLoader.loadSpritesForCategory(this.scene, 'classes');
+    }
+    
+    if (this.spriteConfig.sprites.enemies) {
+      configLoader.loadSpritesForCategory(this.scene, 'enemies');
+    }
   }
   
-  private loadSpriteSheet(key: string, path: string): void {
-    this.scene.load.spritesheet(
-      key,
-      AssetResolver.getAssetPath(path),
-      {
-        frameWidth: DISPLAY_CONFIG.sprite.defaultFrameWidth,
-        frameHeight: DISPLAY_CONFIG.sprite.defaultFrameHeight,
-      }
-    );
-  }
   
   private loadEmotes(): void {
     // Get emotes from sprite config
     const configLoader = new SpriteConfigLoader();
-    configLoader.setConfig(spriteConfig);
+    configLoader.setConfig(this.spriteConfig);
     
     
     // Load emotes based on sprite config structure
-    if (spriteConfig.sprites.emotes) {
-      Object.entries(spriteConfig.sprites.emotes).forEach(([emoteName, emoteConfig]) => {
+    if (this.spriteConfig.sprites.emotes) {
+      Object.entries(this.spriteConfig.sprites.emotes).forEach(([emoteName, emoteConfig]) => {
         if (emoteConfig.path && emoteConfig.frameWidth && emoteConfig.frameHeight) {
           // Convert emote name to key format (e.g., exclamation -> exclamation_emote)
           const key = `${emoteName}_emote`;

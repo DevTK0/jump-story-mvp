@@ -5,7 +5,7 @@
 
 import Phaser from 'phaser';
 import type { AnimationType } from './types';
-import { AnimationFactory } from '@/animations';
+import { AnimationFactory } from '@/core/animations';
 
 /**
  * Player Animation Manager for controlling player sprite animations

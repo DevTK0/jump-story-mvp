@@ -8,9 +8,10 @@ export * from './error-recovery-strategies';
 export * from './error-decorators';
 
 // Asset management
-export * from './asset-resolver';
-export * from './sprite-config-loader';
-export * from './asset-loader-service';
+export * from './asset';
+
+// Animation system
+export * from './animations';
 
 // Scene management
 export * from './scene-initializer';

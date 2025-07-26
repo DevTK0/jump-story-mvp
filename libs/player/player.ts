@@ -4,6 +4,8 @@ import { emitSceneEvent } from '../core/scene-events';
 import type { PlayerState } from './player-types';
 import { PLAYER_CONFIG } from './config';
 import { PlayerStateMachine } from './state/state-machine';
+import type { PhysicsEntity } from '@/physics/physics-entity';
+import type { PhysicsRegistry } from '@/physics/physics-registry';
 
 export interface PlayerConfig {
   scene: Phaser.Scene;
@@ -13,7 +15,7 @@ export interface PlayerConfig {
   frame?: string | number;
 }
 
-export class Player extends Phaser.GameObjects.Sprite {
+export class Player extends Phaser.GameObjects.Sprite implements PhysicsEntity {
   private playerState: PlayerState;
   private systems: Map<string, System> = new Map();
   private stateMachine!: PlayerStateMachine; // Will be initialized by PlayerBuilder
@@ -56,7 +58,7 @@ export class Player extends Phaser.GameObjects.Sprite {
     this.playerState = this.createDefaultPlayerState();
 
     // Setup physics properties
-    this.setupPhysics();
+    this.setupPhysicsBody();
 
     // State machine will be initialized by PlayerBuilder
   }
@@ -92,7 +94,7 @@ export class Player extends Phaser.GameObjects.Sprite {
     this.stateMachine = new PlayerStateMachine(this);
   }
 
-  private setupPhysics(): void {
+  private setupPhysicsBody(): void {
     this.body.setSize(14, 30);
     this.body.setOffset(9, 2);
     this.body.setCollideWorldBounds(true);
@@ -220,6 +222,38 @@ export class Player extends Phaser.GameObjects.Sprite {
     return PLAYER_CONFIG.movement.jumpSpeed;
   }
 
+  // PhysicsEntity implementation
+  public setupPhysics(registry: PhysicsRegistry): void {
+    // Register collisions with ground (solid collision)
+    registry.addCollider(this, 'ground');
+    
+    // Register collisions with platforms (one-way)
+    registry.addCollider(this, 'platforms', undefined, registry.createOneWayPlatformCallback());
+    
+    // Register collisions with boundaries
+    registry.addCollider(this, 'boundaries');
+    
+    // Register overlap with climbeable objects (no collision, just detection)
+    registry.addOverlap(this, 'climbeable', (_player, _climbeable) => {
+      // Climbeable interaction handled by ClimbingSystem
+    });
+    
+    // Register overlap with enemies (for damage)
+    // This will be handled by InteractionHandler which will call registry methods
+    
+    // Let climbing system know about climbeable group if it exists
+    const climbingSystem = this.getSystem('climbing');
+    if (climbingSystem && 'setClimbeableGroup' in climbingSystem) {
+      const climbeableGroup = registry.getGroup('climbeable');
+      if (climbeableGroup) {
+        (climbingSystem as any).setClimbeableGroup(climbeableGroup);
+      }
+    }
+  }
+
+  public getPhysicsBody(): Phaser.Physics.Arcade.Body {
+    return this.body;
+  }
 
   public destroy(): void {
     // Destroy all systems

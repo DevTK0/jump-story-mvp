@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { SceneInitializer, type SceneConfig } from '@/core';
 import type { IDebuggable } from '@/debug/debug-interfaces';
 import { DebugState } from '@/debug/debug-state';
+import spriteConfig from '../config/sprite-config';
 
 // Scene configuration
 const sceneConfig: SceneConfig = {
@@ -20,6 +21,7 @@ const sceneConfig: SceneConfig = {
     shadow: false, // Shadow effect enabled independently
     invulnerable: true, // Set to true to prevent player from taking damage (useful for testing)
   },
+  sprites: spriteConfig, // Pass sprite configuration
 };
 
 /**

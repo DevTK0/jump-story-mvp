@@ -77,6 +77,24 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     });
   }
 
+  // New method to register hitboxes with PhysicsRegistry
+  public registerHitboxPhysics(
+    registry: any, // Using any to avoid circular dependency
+    onHitCallback: Function,
+    context: any
+  ): void {
+    // Register each hitbox sprite to overlap with enemies
+    this.hitboxSprites.forEach((hitboxSprite) => {
+      registry.addOverlap(
+        hitboxSprite,
+        'enemies',
+        onHitCallback,
+        undefined,
+        context
+      );
+    });
+  }
+
   private initializeHitboxes(): void {
     // Create hitbox sprites for each standard attack
     for (let i = 1; i <= 3; i++) {

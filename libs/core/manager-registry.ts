@@ -2,13 +2,13 @@ import Phaser from 'phaser';
 import { createLogger, type ModuleLogger } from './logger';
 import { EnemyManager } from '@/enemy';
 import { PeerManager } from '@/peer';
-import { PhysicsConfigurator, type CollisionGroups } from '@/physics';
+import { PhysicsSetupCoordinator } from '@/physics/physics-setup-coordinator';
+import { MapPhysicsFactory } from '@/physics/map-physics-factory';
 import { InteractionHandler } from '@/networking';
 import { EnemyDamageRenderer, PlayerDamageRenderer } from '@/player';
 import { LevelUpAnimationManager, ChatManager } from '@/ui';
 import { Player } from '@/player';
-import { MapLoader } from '@/stage';
-import type { MapData } from '@/stage';
+import type { MapData } from './asset/map-loader';
 import { DbConnection } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { PROXIMITY_CONFIG } from '@/networking/proximity-config';
@@ -31,7 +31,7 @@ export class ManagerRegistry {
   // Managers
   private enemyManager!: EnemyManager;
   private peerManager?: PeerManager;
-  private physicsConfigurator!: PhysicsConfigurator;
+  private physicsCoordinator!: PhysicsSetupCoordinator;
   private interactionHandler!: InteractionHandler;
   private enemyDamageRenderer!: EnemyDamageRenderer;
   private playerDamageRenderer!: PlayerDamageRenderer;
@@ -75,33 +75,47 @@ export class ManagerRegistry {
   async setupPhysics(player: Player, mapData: MapData): Promise<void> {
     this.logger.debug('Setting up physics...');
     
-    // Create collision groups from map data
-    const mapLoader = new MapLoader(this.scene);
-    const collisionGroups: CollisionGroups = {
-      ground: mapLoader.createPhysicsFromGround(mapData.ground),
-      platforms: mapLoader.createPhysicsFromPlatforms(mapData.platforms),
-      climbeable: mapLoader.createClimbeablePhysics(mapData.climbeable),
-      boundaries: mapLoader.createBoundaryPhysics(mapData.boundaries),
-    };
+    // Create collision groups from map data using MapPhysicsFactory
+    const collisionGroups = MapPhysicsFactory.createAllCollisionGroups(this.scene, mapData);
     
-    // Get player systems
-    const climbingSystem = player.getSystem('climbing');
+    // Register collision groups with the coordinator
+    this.physicsCoordinator.registerCollisionGroups(collisionGroups);
+    
+    // Register entities that implement PhysicsEntity
+    this.physicsCoordinator.registerEntity(player);
+    this.physicsCoordinator.registerEntity(this.enemyManager);
+    
+    // Set up physics for all registered entities
+    this.physicsCoordinator.setupAllPhysics();
+    
+    // Get combat system and register hitboxes if enhanced combat is used
     const combatSystem = player.getSystem('combat');
+    if (combatSystem && 'registerHitboxPhysics' in combatSystem) {
+      const registry = this.physicsCoordinator.getRegistry();
+      const interactionCallbacks = this.interactionHandler.createInteractionCallbacks(
+        player,
+        this.enemyManager
+      );
+      
+      (combatSystem as any).registerHitboxPhysics(
+        registry,
+        interactionCallbacks.onAttackHitEnemy,
+        this.scene
+      );
+    }
     
-    // Create interaction callbacks
+    // Set up player-enemy interaction overlaps
+    const registry = this.physicsCoordinator.getRegistry();
     const interactionCallbacks = this.interactionHandler.createInteractionCallbacks(
       player,
       this.enemyManager
     );
     
-    // Setup all collisions
-    this.physicsConfigurator.setupAllCollisions(
+    registry.addOverlap(
       player,
-      this.enemyManager,
-      collisionGroups,
-      combatSystem,
-      climbingSystem,
-      interactionCallbacks,
+      'enemies',
+      interactionCallbacks.onPlayerTouchEnemy as any,
+      undefined,
       this.scene
     );
   }
@@ -142,8 +156,8 @@ export class ManagerRegistry {
       proximityRadius: PROXIMITY_CONFIG.enemy.defaultRadius,
     });
     
-    // Physics configurator
-    this.physicsConfigurator = new PhysicsConfigurator(this.scene);
+    // Physics coordinator
+    this.physicsCoordinator = new PhysicsSetupCoordinator(this.scene);
     
     // Interaction handler
     this.interactionHandler = new InteractionHandler(this.scene, config.connection || null, {

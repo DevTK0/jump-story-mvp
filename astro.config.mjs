@@ -23,8 +23,8 @@ export default defineConfig({
           autogenerate: { directory: 'ai' },
         },
         {
-          label: 'Animation',
-          autogenerate: { directory: 'animation' },
+          label: 'Core',
+          autogenerate: { directory: 'core' },
         },
         {
           label: 'Player',

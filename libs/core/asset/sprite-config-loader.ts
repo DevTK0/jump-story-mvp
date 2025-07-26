@@ -22,8 +22,6 @@ export interface SpriteConfig {
     emotes?: Record<string, SpriteDefinition>;
     [category: string]: Record<string, SpriteDefinition> | undefined;
   };
-  defaultClass?: string;
-  defaultEnemy?: string;
 }
 
 /**
@@ -162,20 +160,6 @@ export class SpriteConfigLoader {
     return null;
   }
 
-  /**
-   * Get the default sprite for a category
-   */
-  public getDefaultSprite(category: 'class' | 'enemy'): string | null {
-    if (!this.config) return null;
-
-    if (category === 'class') {
-      return this.config.defaultClass || null;
-    } else if (category === 'enemy') {
-      return this.config.defaultEnemy || null;
-    }
-
-    return null;
-  }
 
   /**
    * Validate sprite paths exist (security check)

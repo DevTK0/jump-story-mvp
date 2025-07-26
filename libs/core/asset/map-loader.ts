@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { AssetResolver } from '@/core';
+import { AssetResolver } from './asset-resolver';
 
 export interface MapGround {
   x: number;
@@ -59,9 +59,6 @@ export class MapLoader {
   }
 
   public loadMapAssets(): void {
-    // Set the app context for asset resolution
-    AssetResolver.setCurrentApp('playground');
-
     // Load map JSON from appropriate location
     const mapPath = AssetResolver.getMapPath('playground.tmj');
 
@@ -238,120 +235,6 @@ export class MapLoader {
     return chests;
   }
 
-  public createPhysicsFromGround(ground: MapGround[]): Phaser.Physics.Arcade.StaticGroup {
-    const groundGroup = this.scene.physics.add.staticGroup();
-
-    ground.forEach((groundRect) => {
-      // Create invisible rectangle for ground physics
-      const rect = this.scene.add.rectangle(
-        groundRect.x + groundRect.width / 2,
-        groundRect.y + groundRect.height / 2,
-        groundRect.width,
-        groundRect.height,
-        0x654321, // Color (invisible)
-        0.0 // Invisible
-      );
-
-      // Add physics body
-      this.scene.physics.add.existing(rect, true);
-
-      // Ground has solid collision from all directions
-      const body = rect.body as Phaser.Physics.Arcade.StaticBody;
-      if (body) {
-        body.checkCollision.up = true;
-        body.checkCollision.down = true;
-        body.checkCollision.left = true;
-        body.checkCollision.right = true;
-      }
-
-      groundGroup.add(rect);
-    });
-
-    return groundGroup;
-  }
-
-  public createPhysicsFromPlatforms(platforms: MapPlatform[]): Phaser.Physics.Arcade.StaticGroup {
-    const platformGroup = this.scene.physics.add.staticGroup();
-
-    platforms.forEach((platform) => {
-      // Create invisible rectangle for platform physics
-      const rect = this.scene.add.rectangle(
-        platform.x + platform.width / 2,
-        platform.y + platform.height / 2,
-        platform.width,
-        platform.height,
-        0x8b4513, // Color (invisible)
-        0.0 // Invisible
-      );
-
-      // Add physics body
-      this.scene.physics.add.existing(rect, true);
-
-      // Set platform as one-way (can only collide from above)
-      const body = rect.body as Phaser.Physics.Arcade.StaticBody;
-      if (body) {
-        body.checkCollision.down = false;
-        body.checkCollision.left = false;
-        body.checkCollision.right = false;
-        body.checkCollision.up = true; // Only collide from above
-      }
-
-      platformGroup.add(rect);
-    });
-
-    return platformGroup;
-  }
-
-  public createClimbeablePhysics(climbeable: MapClimbeable[]): Phaser.Physics.Arcade.StaticGroup {
-    const climbeableGroup = this.scene.physics.add.staticGroup();
-
-    climbeable.forEach((climb) => {
-      // Create invisible rectangle for climbeable physics
-      const rect = this.scene.add.rectangle(
-        climb.x + climb.width / 2,
-        climb.y + climb.height / 2,
-        climb.width,
-        climb.height,
-        0x00ff00, // Color (invisible)
-        0.0 // Invisible
-      );
-
-      // Add physics body
-      this.scene.physics.add.existing(rect, true);
-
-      // Set climbeable as pass-through (no collision, only overlap detection)
-      const body = rect.body as Phaser.Physics.Arcade.StaticBody;
-      if (body) {
-        body.checkCollision.none = true; // No collision from any direction
-      }
-
-      climbeableGroup.add(rect);
-    });
-
-    return climbeableGroup;
-  }
-
-  public createBoundaryPhysics(boundaries: MapBoundary[]): Phaser.Physics.Arcade.StaticGroup {
-    const boundaryGroup = this.scene.physics.add.staticGroup();
-
-    boundaries.forEach((boundary) => {
-      // Create invisible rectangle for boundary physics
-      const rect = this.scene.add.rectangle(
-        boundary.x + boundary.width / 2,
-        boundary.y + boundary.height / 2,
-        boundary.width,
-        boundary.height,
-        0xff0000, // Color (invisible)
-        0.0 // Invisible
-      );
-
-      // Add physics body
-      this.scene.physics.add.existing(rect, true);
-      boundaryGroup.add(rect);
-    });
-
-    return boundaryGroup;
-  }
 
   public destroy(): void {
     // Cleanup if needed
