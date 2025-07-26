@@ -4,6 +4,7 @@ import { PLAYER_CONFIG } from '../player/config';
 import { PEER_CONFIG } from './peer-config';
 import { PeerHealthBar } from './ui/peer-health-bar';
 import { PeerStateMachine } from './state/peer-state-machine';
+import { createLogger, type ModuleLogger } from '@/core/logger';
 
 export interface PeerConfig {
   scene: Phaser.Scene;
@@ -14,6 +15,7 @@ export class Peer extends Phaser.GameObjects.Sprite {
   private playerData: PlayerData;
   private nameLabel!: Phaser.GameObjects.Text;
   private healthBar!: PeerHealthBar;
+  private logger: ModuleLogger = createLogger('Peer');
 
   // Interpolation properties
   private targetPosition = { x: 0, y: 0 };
@@ -59,7 +61,7 @@ export class Peer extends Phaser.GameObjects.Sprite {
     // Initialize state machine
     this.stateMachine = new PeerStateMachine(this, this.playerData.state);
 
-    console.log(
+    this.logger.debug(
       `Created peer sprite for ${this.playerData.name} at (${this.x}, ${this.y}) with scale ${PLAYER_CONFIG.movement.scale} in state ${this.playerData.state.tag}`
     );
   }
@@ -89,7 +91,7 @@ export class Peer extends Phaser.GameObjects.Sprite {
 
   public playAnimation(animationKey: string): void {
     if (!this.scene.anims.exists(animationKey)) {
-      console.warn(`Animation ${animationKey} does not exist for peer ${this.playerData.name}`);
+      this.logger.warn(`Animation ${animationKey} does not exist for peer ${this.playerData.name}`);
       return;
     }
 
@@ -164,11 +166,11 @@ export class Peer extends Phaser.GameObjects.Sprite {
         this.targetPosition = { x: newTargetX, y: newTargetY };
         this.nameLabel.setPosition(this.x, this.y + PEER_CONFIG.display.nameLabel.offsetY);
         this.healthBar.updatePosition(this.x, this.y);
-        console.log(`Teleported peer ${this.playerData.name} to (${this.x}, ${this.y})`);
+        this.logger.debug(`Teleported peer ${this.playerData.name} to (${this.x}, ${this.y}`);
       } else {
         // Set new target for smooth interpolation
         this.targetPosition = { x: newTargetX, y: newTargetY };
-        console.log(
+        this.logger.debug(
           `Updated peer ${this.playerData.name} target to (${newTargetX}, ${newTargetY})`
         );
       }
@@ -179,7 +181,7 @@ export class Peer extends Phaser.GameObjects.Sprite {
 
     // Check if state changed and let state machine handle it
     if (previousState !== playerData.state.tag) {
-      console.log(
+      this.logger.debug(
         `Peer ${this.playerData.name} state changed from ${previousState} to ${playerData.state.tag}`
       );
       this.stateMachine.handleServerStateChange(playerData.state);

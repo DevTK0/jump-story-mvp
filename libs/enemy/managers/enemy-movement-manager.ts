@@ -66,7 +66,7 @@ export class EnemyMovementManager {
   /**
    * Check if enemy is moving based on interpolation
    */
-  public isEnemyMoving(enemyId: number, currentX: number, targetX: number): boolean {
+  public isEnemyMoving(_enemyId: number, currentX: number, targetX: number): boolean {
     return Math.abs(targetX - currentX) > 0.1;
   }
 

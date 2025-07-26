@@ -7,6 +7,7 @@ import {
   EnemySubscriptionManager,
   type EnemySubscriptionConfig,
 } from './managers/enemy-subscription-manager';
+import { createLogger } from '@/core/logger';
 
 /**
  * Refactored EnemyManager - orchestrates enemy subsystems
@@ -14,7 +15,7 @@ import {
  */
 export class EnemyManager {
   private scene: Phaser.Scene;
-  private dbConnection: DbConnection | null = null;
+  private logger = createLogger('EnemyManager');
 
   // Subsystem managers
   private spawnManager: EnemySpawnManager;
@@ -50,14 +51,13 @@ export class EnemyManager {
   }
 
   public setDbConnection(connection: DbConnection): void {
-    this.dbConnection = connection;
     this.subscriptionManager.setDbConnection(connection);
   }
 
   private verifyEnemyAnimations(): void {
     // Verify animations exist (they should be created at scene level)
     if (!this.scene.anims.exists('orc-idle-anim')) {
-      console.warn('Enemy animations not found! They should be created at scene level.');
+      this.logger.warn('Enemy animations not found! They should be created at scene level.');
     }
   }
 
@@ -215,6 +215,10 @@ export class EnemyManager {
       }
     }
     return null;
+  }
+
+  public getEnemySprite(enemyId: number): Phaser.Physics.Arcade.Sprite | null {
+    return this.spawnManager.getEnemy(enemyId) || null;
   }
 
   public isEnemyDead(enemySprite: Phaser.Physics.Arcade.Sprite): boolean {

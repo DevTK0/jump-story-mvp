@@ -4,7 +4,7 @@ import { PlayerEvent } from '../player-events';
 import { Player } from '../player';
 import { InputSystem } from '../input';
 import type { IDebuggable } from '@/debug/debug-interfaces';
-import { DebugState, ShadowState } from '@/debug/debug-state';
+import { ShadowState } from '@/debug/debug-state';
 import { DEBUG_CONFIG } from '@/debug/config';
 import { BaseDebugRenderer } from '@/debug/debug-renderer';
 import { ShadowTrajectoryRenderer } from '@/effects/shadow';
@@ -87,8 +87,8 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
       this.handleDoubleJump();
     }
 
-    // Sample trajectory for debug mode OR shadow effect (always do this)
-    const shouldShowShadow = DebugState.getInstance().enabled || ShadowState.getInstance().enabled;
+    // Sample trajectory only if shadow effect is explicitly enabled
+    const shouldShowShadow = ShadowState.getInstance().enabled;
     if (shouldShowShadow) {
       this.shadowRenderer.sampleTrajectory(
         time,
@@ -101,7 +101,7 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
         this.player.scaleY
       );
     } else if (this.shadowRenderer.getTrajectoryPointCount() > 0) {
-      // Clear trajectory when both debug and shadow are disabled
+      // Clear trajectory when shadow is disabled
       this.shadowRenderer.clearTrajectory();
       this.shadowRenderer.cleanupSprites();
     }
@@ -196,7 +196,7 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
    * This allows shadow to be shown independently
    */
   public renderShadowEffect(): void {
-    if (DebugState.getInstance().enabled || ShadowState.getInstance().enabled) {
+    if (ShadowState.getInstance().enabled) {
       this.shadowRenderer.render();
     }
   }

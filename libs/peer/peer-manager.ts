@@ -7,6 +7,7 @@ import type {
   PlayerMessage,
 } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
+import { createLogger } from '@/core/logger';
 
 export interface PeerSubscriptionConfig {
   /** Use proximity-based subscriptions to limit peers loaded */
@@ -24,6 +25,7 @@ export class PeerManager {
   private dbConnection: DbConnection | null = null;
   private levelUpAnimationManager: any = null;
   private chatManager: any = null;
+  private logger = createLogger('PeerManager');
 
   // Proximity-based subscription configuration
   private subscriptionConfig: PeerSubscriptionConfig;
@@ -104,9 +106,9 @@ export class PeerManager {
       // Set up distance-based proximity checking
       this.setupDistanceBasedProximityUpdate();
 
-      console.log('✅ PeerManager: Proximity-based subscription active');
+      this.logger.info('✅ PeerManager: Proximity-based subscription active');
     } catch (error) {
-      console.error('❌ PeerManager: Failed to set up proximity subscription:', error);
+      this.logger.error('❌ PeerManager: Failed to set up proximity subscription:', error);
       // Fall back to global subscription
       this.setupGlobalSubscription();
     }
@@ -127,7 +129,7 @@ export class PeerManager {
     // Subscribe to player messages
     this.dbConnection.db.playerMessage.onInsert(this.onPlayerMessageInsert);
 
-    console.log('✅ PeerManager: Global subscription active');
+    this.logger.info('✅ PeerManager: Global subscription active');
   }
 
   /**
@@ -154,7 +156,7 @@ export class PeerManager {
     // Get player position
     const playerPosition = this.getPlayerPosition();
     if (!playerPosition) {
-      console.warn(
+      this.logger.warn(
         '⚠️ PeerManager: Cannot update proximity subscription - player position unknown'
       );
       return;
@@ -172,7 +174,7 @@ export class PeerManager {
       this.dbConnection
         .subscriptionBuilder()
         .onApplied(() => {
-          console.log(
+          this.logger.info(
             `🎯 PeerManager: Proximity subscription applied for area (${playerPosition.x - radius},${playerPosition.y - radius}) to (${playerPosition.x + radius},${playerPosition.y + radius})`
           );
           // Load existing peers within proximity
@@ -199,7 +201,7 @@ export class PeerManager {
                      AND pm.sent_dt >= ${cutoffTimeMicros}i64`,
       ]);
     } catch (error) {
-      console.error('❌ PeerManager: Failed to update proximity subscription:', error);
+      this.logger.error('❌ PeerManager: Failed to update proximity subscription:', error);
     }
   }
 
@@ -233,7 +235,7 @@ export class PeerManager {
       if (distance <= radius) {
         currentPeerIdentities.add(identityString);
         if (!this.peers.has(identityString)) {
-          console.log(
+          this.logger.info(
             `🎯 PeerManager: Loading nearby peer ${player.name} at distance ${Math.round(distance)}`
           );
           // Create peer manually since onPlayerInsert might not fire for existing players
@@ -257,7 +259,7 @@ export class PeerManager {
     // Remove peers that are no longer in proximity
     for (const [identityString, peer] of this.peers) {
       if (!currentPeerIdentities.has(identityString)) {
-        console.log(
+        this.logger.info(
           `🎯 PeerManager: Removing peer ${peer.getPlayerData().name} - now outside proximity`
         );
 
@@ -301,11 +303,11 @@ export class PeerManager {
                      AND pm.sent_dt >= ${cutoffTimeMicros}i64`,
       ]);
 
-      console.log(
+      this.logger.info(
         `📬 PeerManager: Subscribed to messages within ${radius}px radius from last 30 seconds`
       );
     } catch (error) {
-      console.error('❌ PeerManager: Failed to set up proximity message subscription:', error);
+      this.logger.error('❌ PeerManager: Failed to set up proximity message subscription:', error);
     }
   }
 
@@ -338,7 +340,7 @@ export class PeerManager {
       );
 
       if (distanceMoved >= updateThreshold) {
-        console.log(
+        this.logger.info(
           `📍 PeerManager: Player moved ${Math.round(distanceMoved)}px, updating proximity subscription`
         );
         this.updateProximitySubscription();
@@ -415,7 +417,7 @@ export class PeerManager {
         );
 
         if (distance > this.subscriptionConfig.proximityRadius) {
-          console.log(
+          this.logger.info(
             `⚠️ PeerManager: Ignoring player ${playerData.name} - outside proximity (distance: ${Math.round(distance)}px)`
           );
           return;
@@ -432,7 +434,7 @@ export class PeerManager {
       this.levelUpAnimationManager.registerSprite(playerData.identity, peer);
     }
 
-    console.log(`Created peer for player: ${playerData.name} (${identityString})`);
+    this.logger.info(`Created peer for player: ${playerData.name} (${identityString})`);
 
     // Don't load recent messages - we only want to show new messages
     // this.loadRecentMessagesForPeer(playerData.identity);
@@ -464,7 +466,7 @@ export class PeerManager {
 
         if (peer && !isWithinProximity) {
           // Peer exists but is now outside proximity - remove them
-          console.log(
+          this.logger.info(
             `🚪 PeerManager: Removing peer ${newPlayerData.name} - now outside proximity (distance: ${Math.round(distance)}px)`
           );
 
@@ -478,7 +480,7 @@ export class PeerManager {
           return;
         } else if (!peer && isWithinProximity) {
           // Peer doesn't exist but is now within proximity - create them
-          console.log(
+          this.logger.info(
             `👋 PeerManager: Player ${newPlayerData.name} entered proximity (distance: ${Math.round(distance)}px)`
           );
 
@@ -527,7 +529,7 @@ export class PeerManager {
 
       peer.destroy();
       this.peers.delete(identityString);
-      console.log(`Removed peer for player: ${playerData.name} (${identityString})`);
+      this.logger.info(`Removed peer for player: ${playerData.name} (${identityString})`);
     }
   };
 
@@ -545,7 +547,7 @@ export class PeerManager {
 
     if (messageAgeMs > messageDisplayDuration) {
       // Message is too old, don't display it
-      console.log(
+      this.logger.debug(
         `⏰ PeerManager: Ignoring message older than ${messageDisplayDuration / 1000}s (age: ${Math.round(messageAgeMs / 1000)}s)`
       );
       return;

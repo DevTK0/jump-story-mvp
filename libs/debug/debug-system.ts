@@ -105,9 +105,6 @@ export class DebugSystem implements System {
       this.componentsRefreshed = true;
     }
 
-    // Check for debug toggle
-    this.handleDebugToggle();
-
     // Check for shadow effect toggle
     this.handleShadowToggle();
 
@@ -132,22 +129,6 @@ export class DebugSystem implements System {
     this.debugWindow.updateDisplay(this.debuggableComponents);
   }
 
-  private handleDebugToggle(): void {
-    // Check if 'D' key was just pressed
-    const keys = this.scene.input.keyboard!;
-    const dKey = keys.addKey(DEBUG_CONFIG.input.toggleKey);
-
-    if (Phaser.Input.Keyboard.JustDown(dKey)) {
-      const debugState = DebugState.getInstance();
-      debugState.toggle();
-
-      if (debugState.enabled) {
-        this.enableDebugMode();
-      } else {
-        this.disableDebugMode();
-      }
-    }
-  }
 
   private handleShadowToggle(): void {
     // Shadow toggle removed - S key reserved for game features

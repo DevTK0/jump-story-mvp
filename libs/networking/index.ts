@@ -5,3 +5,5 @@ export {
 } from './spacetime-connector';
 export { SpacetimeConnectionBuilder } from './spacetime-connection-builder';
 export { InteractionHandler, type InteractionConfig } from './interaction-handler';
+export { SceneConnectionHelper, type ConnectionConfig } from './scene-connection-helper';
+export { PROXIMITY_CONFIG } from './proximity-config';

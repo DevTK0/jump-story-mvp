@@ -1,4 +1,5 @@
 import { DbConnection } from '@/spacetime/client';
+import { createLogger, type ModuleLogger } from '@/core/logger';
 
 export interface TableMetrics {
   [tableName: string]: number;
@@ -14,6 +15,7 @@ export class DbMetricsTracker {
   private static instance: DbMetricsTracker | null = null;
   private tableMetrics: TableMetrics = {};
   private dbConnection: DbConnection | null = null;
+  private logger: ModuleLogger = createLogger('DbMetricsTracker');
 
   // Event tracking
   private eventCount: number = 0;
@@ -37,7 +39,7 @@ export class DbMetricsTracker {
 
   private setupTableTracking(): void {
     if (!this.dbConnection?.db) {
-      console.error('DbMetricsTracker: No db connection available');
+      this.logger.error('No db connection available');
       return;
     }
 
@@ -59,7 +61,7 @@ export class DbMetricsTracker {
         const table = (this.dbConnection!.db as any)[tableName];
         return table && typeof table.iter === 'function';
       } catch (e) {
-        console.warn(`Failed to validate table ${tableName}:`, e);
+        this.logger.warn(`Failed to validate table ${tableName}:`, e);
         return false;
       }
     });

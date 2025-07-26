@@ -200,7 +200,7 @@ export class AnimationRecoveryStrategy implements ErrorRecoveryStrategy {
         try {
           scene.player.play('soldier-idle-anim');
         } catch (e) {
-          console.debug('Failed to reset player animation during recovery:', e);
+          this.logger.debug('Failed to reset player animation during recovery:', e);
           // Continue recovery even if animation doesn't exist
         }
       }

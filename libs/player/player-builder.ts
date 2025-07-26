@@ -2,7 +2,7 @@ import { Player, type PlayerConfig } from './player';
 import { InputSystem } from './input';
 import { MovementSystem } from './movement/movement';
 import { ClimbingSystem } from './movement/climbing';
-import { CombatSystem, type AttackConfig } from './combat/combat';
+import { CombatSystemEnhanced } from './combat/combat-enhanced';
 import { AnimationSystem } from './animations';
 import { RespawnSystem } from './state/respawn-system';
 import { SyncSystem } from './sync/sync-system';
@@ -26,7 +26,6 @@ import { DeathMonitor } from './combat/death-monitor';
  */
 export class PlayerBuilder {
   private config: PlayerConfig;
-  private attackConfig?: AttackConfig;
   private enabledSystems: Set<string> = new Set(['input', 'movement']); // Always include core systems
 
   constructor(scene: Phaser.Scene) {
@@ -62,11 +61,8 @@ export class PlayerBuilder {
   /**
    * Configure combat system with custom attack configuration
    */
-  public withCombat(attackConfig?: AttackConfig): PlayerBuilder {
+  public withCombat(): PlayerBuilder {
     this.enabledSystems.add('combat');
-    if (attackConfig) {
-      this.attackConfig = attackConfig;
-    }
     return this;
   }
 
@@ -166,11 +162,13 @@ export class PlayerBuilder {
     }
 
     if (this.enabledSystems.has('combat')) {
-      const combatSystem = new CombatSystem(
+      // Use enhanced combat system for auto hitbox generation
+      const playerClass = this.config.texture || 'soldier';
+      const combatSystem = new CombatSystemEnhanced(
         player,
         inputSystem,
         this.config.scene,
-        this.attackConfig
+        playerClass
       );
       systems.set('combat', combatSystem);
     }

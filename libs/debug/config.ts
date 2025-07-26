@@ -25,7 +25,4 @@ export const DEBUG_CONFIG = {
     arrowAngle: Math.PI / 6,
     centerPointRadius: 3,
   },
-  input: {
-    toggleKey: Phaser.Input.Keyboard.KeyCodes.D,
-  },
 } as const;

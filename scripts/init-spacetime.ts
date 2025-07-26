@@ -120,7 +120,7 @@ async function initializeSpacetime() {
     console.log('Populating enemy configurations...');
 
     // Read and populate enemy config from JSON
-    const enemyAttributesPath = join(process.cwd(), 'apps/playground/enemy_attributes.json');
+    const enemyAttributesPath = join(process.cwd(), 'apps/playground/config/enemy_attributes.json');
     const enemyConfigContent = readFileSync(enemyAttributesPath, 'utf8');
     await connection.reducers.populateEnemyConfig(adminApiKey, enemyConfigContent);
 
@@ -129,7 +129,7 @@ async function initializeSpacetime() {
     console.log('Populating player leveling curve...');
 
     // Read and populate player leveling curve from JSON
-    const playerLevelingPath = join(process.cwd(), 'apps/playground/player_leveling_curve.json');
+    const playerLevelingPath = join(process.cwd(), 'apps/playground/config/player_leveling_curve.json');
     const levelingCurveContent = readFileSync(playerLevelingPath, 'utf8');
     await connection.reducers.populatePlayerLevelingConfig(adminApiKey, levelingCurveContent);
 

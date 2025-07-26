@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { UI_CONFIG } from '../ui-config';
+import { createLogger, type ModuleLogger } from '@/core/logger';
 
 export interface EmoteConfig {
   x: number;
@@ -13,13 +14,14 @@ export interface EmoteConfig {
 export class Emote extends Phaser.GameObjects.Container {
   private sprite!: Phaser.GameObjects.Sprite;
   private config!: Required<EmoteConfig>;
+  private logger: ModuleLogger = createLogger('Emote');
 
   constructor(scene: Phaser.Scene, config: EmoteConfig) {
     super(scene, config.x, config.y);
 
     // Validate config
     if (!config || !config.texture) {
-      console.error('Invalid emote config provided');
+      this.logger.error('Invalid emote config provided');
       super.destroy();
       return;
     }
@@ -36,9 +38,9 @@ export class Emote extends Phaser.GameObjects.Container {
 
     // Create the sprite
     if (!scene.textures.exists(this.config.texture)) {
-      console.error(`Texture "${this.config.texture}" not found!`);
-      // Create a placeholder or return early
-      super.destroy();
+      this.logger.error(`Texture "${this.config.texture}" not found!`);
+      // Don't continue initialization if texture is missing
+      this.destroy();
       return;
     }
     this.sprite = scene.add.sprite(0, 0, this.config.texture);

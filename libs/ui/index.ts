@@ -14,3 +14,5 @@ export type { PerformanceMetricsConfig } from './performance/performance-metrics
 export { DbMetricsTracker } from './performance/db-metrics-tracker';
 export { ChatManager, ChatInput, SpeechBubble } from './chat';
 export type { SpeechBubbleConfig } from './chat';
+export { UIFactory } from './ui-factory';
+export type { UICreateConfig } from './ui-factory';

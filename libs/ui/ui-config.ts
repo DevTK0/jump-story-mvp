@@ -50,4 +50,16 @@ export const UI_CONFIG = {
       fadeDuration: 500, // 0.5 second fade
     },
   },
+
+  /**
+   * FPS counter settings
+   */
+  fpsCounter: {
+    defaultPosition: {
+      xOffset: -130, // From right edge
+      y: 10,
+    },
+    fontSize: '14px',
+    alpha: 0.7,
+  },
 } as const;

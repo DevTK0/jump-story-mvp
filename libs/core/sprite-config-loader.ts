@@ -1,12 +1,18 @@
 import type { Scene } from 'phaser';
-import type { SpriteAnimationSet } from '../animations/animation-factory';
+import type { SpriteAnimationSet, AnimationFrameConfig } from '../animations/animation-factory';
 import { AssetResolver } from './asset-resolver';
+
+// Flexible animation type that supports both regular sprites and emotes
+export type FlexibleAnimationSet = SpriteAnimationSet | {
+  play: AnimationFrameConfig & { frameRate: number };
+  [key: string]: (AnimationFrameConfig & { frameRate: number }) | undefined;
+};
 
 export interface SpriteDefinition {
   path: string;
   frameWidth: number;
   frameHeight: number;
-  animations: SpriteAnimationSet;
+  animations: FlexibleAnimationSet;
 }
 
 export interface SpriteConfig {
@@ -118,13 +124,13 @@ export class SpriteConfigLoader {
   /**
    * Get all animation definitions for the AnimationFactory
    */
-  public getAllAnimationDefinitions(): Record<string, SpriteAnimationSet> {
+  public getAllAnimationDefinitions(): Record<string, FlexibleAnimationSet> {
     if (!this.config) {
       console.error('No sprite config loaded');
       return {};
     }
 
-    const animations: Record<string, SpriteAnimationSet> = {};
+    const animations: Record<string, FlexibleAnimationSet> = {};
 
     for (const sprites of Object.values(this.config.sprites)) {
       if (sprites) {
@@ -140,7 +146,7 @@ export class SpriteConfigLoader {
   /**
    * Get animation definition for a specific sprite
    */
-  public getAnimationDefinition(spriteKey: string): SpriteAnimationSet | null {
+  public getAnimationDefinition(spriteKey: string): FlexibleAnimationSet | null {
     if (!this.config) {
       console.error('No sprite config loaded');
       return null;

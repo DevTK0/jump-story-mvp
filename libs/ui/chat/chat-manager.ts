@@ -3,12 +3,14 @@ import { ChatInput } from './chat-input';
 import { SpeechBubble } from './speech-bubble';
 import { Emote } from './emote';
 import { DbConnection } from '@/spacetime/client';
+import { createLogger, type ModuleLogger } from '@/core/logger';
 
 export class ChatManager {
   private scene: Phaser.Scene;
   private chatInput: ChatInput;
   private dbConnection: DbConnection | null = null;
   private speechBubbles: Map<any, SpeechBubble> = new Map();
+  private logger: ModuleLogger = createLogger('ChatManager');
   private updateEvents: Map<any, Phaser.Time.TimerEvent> = new Map();
   private emoteUpdateEvents: Map<any, Phaser.Time.TimerEvent> = new Map();
   private peerTypingIndicators: Map<any, Emote> = new Map();
@@ -62,7 +64,7 @@ export class ChatManager {
       message.length > maxLength ? message.substring(0, maxLength) + '...' : message;
 
     // For regular messages, show the speech bubble above the local player
-    const player = (this.scene as any).player;
+    const player = this.scene.data.get('player');
 
     if (player) {
       this.showSpeechBubble(player, truncatedMessage);
@@ -98,7 +100,7 @@ export class ChatManager {
   }
 
   private showSystemMessage(message: string): void {
-    const player = (this.scene as any).player;
+    const player = this.scene.data.get('player');
     if (player) {
       // Show system message with different styling
       const bubble = new SpeechBubble(this.scene, {
@@ -233,7 +235,7 @@ export class ChatManager {
   }
 
   private showTypingIndicator(): void {
-    const player = (this.scene as any).player;
+    const player = this.scene.data.get('player');
     if (!player) return;
 
     // Remove existing speech bubble and emote
@@ -319,7 +321,7 @@ export class ChatManager {
   }
 
   private playEmote(emoteName: string): void {
-    const player = (this.scene as any).player;
+    const player = this.scene.data.get('player');
     if (!player) return;
 
     // Clear any existing bubbles
@@ -344,7 +346,7 @@ export class ChatManager {
 
     const texture = emoteTextures[emoteName];
     if (!texture) {
-      console.log(`Unknown emote: ${emoteName}`);
+      this.logger.debug(`Unknown emote: ${emoteName}`);
       return;
     }
 
@@ -446,7 +448,7 @@ export class ChatManager {
 
     const texture = emoteTextures[emoteName];
     if (!texture) {
-      console.log(`Unknown emote: ${emoteName}`);
+      this.logger.debug(`Unknown emote: ${emoteName}`);
       return;
     }
 

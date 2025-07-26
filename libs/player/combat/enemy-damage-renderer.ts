@@ -148,9 +148,8 @@ export class EnemyDamageRenderer {
   private getEnemyPosition(enemyId: number): { x: number; y: number } | null {
     if (!this.enemyManager) return null;
 
-    // Get enemy sprite from enemy manager's enemies map
-    const enemies = (this.enemyManager as any).enemies as Map<number, Phaser.Physics.Arcade.Sprite>;
-    const enemySprite = enemies.get(enemyId);
+    // Get enemy sprite from enemy manager
+    const enemySprite = this.enemyManager.getEnemySprite(enemyId);
 
     // Allow damage numbers on dead enemies that are still visible (playing death animation)
     if (!enemySprite || !enemySprite.visible) {

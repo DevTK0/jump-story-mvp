@@ -1,4 +1,5 @@
 import { DbConnection, Player } from '@/spacetime/client';
+import { createLogger, type ModuleLogger } from '@/core/logger';
 
 // Player query specific error types
 export class PlayerQueryError extends Error {
@@ -23,6 +24,7 @@ export class PlayerQueryService {
   private dbConnection: DbConnection;
   private currentPlayerData: Player | null = null;
   private isTargetedSubscriptionActive = false;
+  private logger: ModuleLogger = createLogger('PlayerQueryService');
 
   private constructor(dbConnection: DbConnection) {
     this.dbConnection = dbConnection;
@@ -65,13 +67,13 @@ export class PlayerQueryService {
       this.dbConnection
         .subscriptionBuilder()
         .onApplied(() => {
-          console.log('Player-specific subscription applied');
+          this.logger.info('Player-specific subscription applied');
           this.updateCurrentPlayerFromSubscription();
         })
         .subscribe([`SELECT * FROM Player WHERE identity = x'${myIdentity}'`]);
 
       this.isTargetedSubscriptionActive = true;
-      console.log('Subscribed to targeted player data');
+      this.logger.info('Subscribed to targeted player data');
 
       // Set up event listeners for the targeted data
       this.setupTargetedEventListeners();
@@ -80,7 +82,7 @@ export class PlayerQueryService {
         identity: this.dbConnection.identity?.toHexString(),
         originalError: error,
       });
-      console.error('Player subscription error:', queryError.message, queryError.context, error);
+      this.logger.error('Player subscription error:', queryError.message, queryError.context, error);
       // Fallback to the old inefficient approach if targeted subscription fails
       this.setupFallbackEventListeners();
     }

@@ -5,9 +5,11 @@ import { InputSystem } from './input';
 import { gameEvents } from '../core/events';
 import { PlayerEvent } from './player-events';
 import { AnimationFactory, AnimationManager, ANIMATION_TIMINGS } from '../animations';
+import { createLogger, type ModuleLogger } from '@/core/logger';
 
 export class AnimationSystem implements System {
   private player: Player;
+  private logger: ModuleLogger = createLogger('AnimationSystem');
 
   // Animation factory and manager
   private animationFactory: AnimationFactory;
@@ -33,7 +35,7 @@ export class AnimationSystem implements System {
   private setupAnimations(): void {
     // Animations are now created at scene level, so we just verify they exist
     if (!this.animationFactory.hasAnimation('soldier-idle-anim')) {
-      console.warn('Player animations not found! They should be created at scene level.');
+      this.logger.warn('Player animations not found! They should be created at scene level.');
     }
   }
 
@@ -294,7 +296,7 @@ export class AnimationSystem implements System {
         climbingSystem.setClimbingDisabled(false);
       }
     } catch (error) {
-      console.warn('Damaged animation completion interrupted:', error);
+      this.logger.warn('Damaged animation completion interrupted:', error);
       this.isPlayingDamagedAnimation = false;
     }
   }
@@ -312,7 +314,7 @@ export class AnimationSystem implements System {
       this.isInvulnerable = false;
       this.player.clearTint(); // Remove flashing effect
     } catch (error) {
-      console.warn('Invulnerability end interrupted:', error);
+      this.logger.warn('Invulnerability end interrupted:', error);
       this.isInvulnerable = false;
       this.player.clearTint();
     }

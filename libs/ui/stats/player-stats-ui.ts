@@ -8,12 +8,14 @@ import { DbConnection } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { PlayerQueryService } from '@/player';
 import { PLAYER_STATS_UI_CONFIG, getBarColors, createTextStyle } from './player-stats-ui-config';
+import { createLogger, type ModuleLogger } from '@/core/logger';
 
 export class PlayerStatsUI {
   private scene: Phaser.Scene;
   private dbConnection: DbConnection | null = null;
   private playerIdentity: Identity;
   private playerQueryService: PlayerQueryService | null = null;
+  private logger: ModuleLogger = createLogger('PlayerStatsUI');
 
   // UI Elements
   private container!: Phaser.GameObjects.Container;
@@ -191,8 +193,8 @@ export class PlayerStatsUI {
     // Get the singleton PlayerQueryService
     this.playerQueryService = PlayerQueryService.getInstance();
     if (!this.playerQueryService) {
-      console.warn(
-        '⚠️ PlayerStatsUI: PlayerQueryService singleton not available, falling back to direct subscription'
+      this.logger.warn(
+        'PlayerQueryService singleton not available, falling back to direct subscription'
       );
       this.setupFallbackSubscription();
       return;
@@ -245,7 +247,7 @@ export class PlayerStatsUI {
   private setupFallbackSubscription(): void {
     if (!this.dbConnection) return;
 
-    console.warn('⚠️ PlayerStatsUI: Using fallback subscription - less efficient');
+    this.logger.warn('Using fallback subscription - less efficient');
 
     this.dbConnection.db.player.onUpdate((_ctx, _oldPlayer, newPlayer) => {
       if (newPlayer.identity.toHexString() === this.playerIdentity.toHexString()) {

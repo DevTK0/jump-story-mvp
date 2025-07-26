@@ -146,13 +146,23 @@ export class PhysicsConfigurator {
     this.setupPlayerEnemyInteractions(player, enemyManager, callbacks.onPlayerTouchEnemy, context);
 
     // Set up attack collisions if combat system exists
-    if (combatSystem && combatSystem.getHitboxSprite) {
-      this.setupAttackCollisions(
-        combatSystem.getHitboxSprite(),
-        enemyManager,
-        callbacks.onAttackHitEnemy,
-        context
-      );
+    if (combatSystem) {
+      // Check if it's the enhanced combat system with multiple hitboxes
+      if (combatSystem.setupCollisions && enemyManager.getEnemyGroup()) {
+        combatSystem.setupCollisions(
+          enemyManager.getEnemyGroup(),
+          callbacks.onAttackHitEnemy,
+          context
+        );
+      } else if (combatSystem.getHitboxSprite) {
+        // Fallback for regular combat system
+        this.setupAttackCollisions(
+          combatSystem.getHitboxSprite(),
+          enemyManager,
+          callbacks.onAttackHitEnemy,
+          context
+        );
+      }
     }
   }
 }

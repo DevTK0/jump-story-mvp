@@ -91,12 +91,108 @@
           "play": { "start": 0, "end": 6, "frameRate": 12 }
         }
       },
+      "question_exclamation": {
+        "path": "assets/spritesheet/emotes/question_exclamation.png",
+        "frameWidth": 187,
+        "frameHeight": 187,
+        "animations": {
+          "play": { "start": 0, "end": 6, "frameRate": 12 }
+        }
+      },
+      "question": {
+        "path": "assets/spritesheet/emotes/question.png",
+        "frameWidth": 187,
+        "frameHeight": 187,
+        "animations": {
+          "play": { "start": 0, "end": 6, "frameRate": 12 }
+        }
+      },
+      "blush": {
+        "path": "assets/spritesheet/emotes/blush.png",
+        "frameWidth": 187,
+        "frameHeight": 187,
+        "animations": {
+          "play": { "start": 0, "end": 6, "frameRate": 12 }
+        }
+      },
       "heart": {
         "path": "assets/spritesheet/emotes/heart.png",
         "frameWidth": 187,
         "frameHeight": 187,
         "animations": {
           "play": { "start": 0, "end": 6, "frameRate": 12 }
+        }
+      },
+      "sad": {
+        "path": "assets/spritesheet/emotes/sad.png",
+        "frameWidth": 187,
+        "frameHeight": 187,
+        "animations": {
+          "play": { "start": 0, "end": 6, "frameRate": 12 }
+        }
+      },
+      "sparkle": {
+        "path": "assets/spritesheet/emotes/sparkle.png",
+        "frameWidth": 187,
+        "frameHeight": 187,
+        "animations": {
+          "play": { "start": 0, "end": 6, "frameRate": 12 }
+        }
+      },
+      "sweat": {
+        "path": "assets/spritesheet/emotes/sweat.png",
+        "frameWidth": 187,
+        "frameHeight": 187,
+        "animations": {
+          "play": { "start": 0, "end": 6, "frameRate": 12 }
+        }
+      },
+      "teardrop": {
+        "path": "assets/spritesheet/emotes/teardrop.png",
+        "frameWidth": 187,
+        "frameHeight": 187,
+        "animations": {
+          "play": { "start": 0, "end": 6, "frameRate": 12 }
+        }
+      },
+      "whistle": {
+        "path": "assets/spritesheet/emotes/whistle.png",
+        "frameWidth": 187,
+        "frameHeight": 187,
+        "animations": {
+          "play": { "start": 0, "end": 6, "frameRate": 12 }
+        }
+      },
+      "wow": {
+        "path": "assets/spritesheet/emotes/wow.png",
+        "frameWidth": 187,
+        "frameHeight": 187,
+        "animations": {
+          "play": { "start": 0, "end": 6, "frameRate": 12 }
+        }
+      },
+      "wtf": {
+        "path": "assets/spritesheet/emotes/wtf.png",
+        "frameWidth": 187,
+        "frameHeight": 187,
+        "animations": {
+          "play": { "start": 0, "end": 6, "frameRate": 12 }
+        }
+      },
+      "zzz": {
+        "path": "assets/spritesheet/emotes/zzz.png",
+        "frameWidth": 187,
+        "frameHeight": 187,
+        "animations": {
+          "play": { "start": 0, "end": 6, "frameRate": 12 }
+        }
+      },
+      "typing": {
+        "path": "assets/spritesheet/emotes/typing.png",
+        "frameWidth": 187,
+        "frameHeight": 187,
+        "animations": {
+          "play": { "start": 0, "end": 6, "frameRate": 8 }
         }
       }
     }
