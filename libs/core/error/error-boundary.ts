@@ -4,7 +4,7 @@
  */
 
 import { Scene } from 'phaser';
-import { createLogger, type ModuleLogger } from './logger';
+import { createLogger, type ModuleLogger } from '../logger';
 
 export interface ErrorContext {
   scene?: Scene;

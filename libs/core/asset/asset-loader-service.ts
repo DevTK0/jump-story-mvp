@@ -4,7 +4,7 @@ import { MapLoader, type MapData } from './map-loader';
 import { AnimationFactory, type AnimationFrameConfig, type SpriteAnimationSet } from '../animations';
 import { SpriteConfigLoader, type SpriteConfig } from './sprite-config-loader';
 import { AssetResolver } from './asset-resolver';
-import { ErrorBoundary, AssetError } from '../error-boundary';
+import { ErrorBoundary, AssetError } from '../error';
 
 /**
  * Service responsible for loading and managing scene assets

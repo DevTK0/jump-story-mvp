@@ -1,7 +1,7 @@
 import { Scene } from 'phaser';
 import type { ErrorRecoveryStrategy, ErrorContext } from './error-boundary';
 import { NetworkError, GameStateError } from './error-boundary';
-import { createLogger, type ModuleLogger } from './logger';
+import { createLogger, type ModuleLogger } from '../logger';
 
 /**
  * Player State Recovery Strategy
