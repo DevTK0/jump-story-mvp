@@ -195,7 +195,7 @@ export class DebugSceneExtension {
             enemySprite.y
           );
           
-          if (distance < checkRadius) {
+          if (distance < checkRadius && this.graphics) {
             // Draw enemy hitbox
             this.graphics.strokeRect(body.x, body.y, body.width, body.height);
             

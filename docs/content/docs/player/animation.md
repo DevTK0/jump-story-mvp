@@ -6,36 +6,61 @@ title: Animation
 direction: right
 
 Player: {
+  shape: class
   label: "Player\n(Sprite)"
 }
 
 AnimationSystem: {
+  shape: class
   label: "AnimationSystem"
+  animationManager: PlayerAnimationManager
+  isPlayingAttackAnimation: boolean
+  isPlayingDamagedAnimation: boolean
+  isInvulnerable: boolean
 }
 
-GameEvents: {
-  label: "Game Events"
+PlayerAnimationManager: {
+  shape: class
+  sprite: Phaser.GameObjects.Sprite
+  scene: Phaser.Scene
+  play(): boolean
+  stop(): void
+  getCurrentAnimation(): string
+  isPlaying(): boolean
 }
 
-AnimationConfigs: {
-  label: "Animation Configs\n(idle, walk, attack)"
+SceneEvents: {
+  shape: class
+  label: "Scene Events"
+  player:attacked: event
+  player:died: event
+}
+
+AnimationFactory: {
+  shape: class
+  label: "AnimationFactory\n(Static)"
+  getAnimationKey(): string
 }
 
 PhysicsBody: {
-  label: "Physics Body\n(Velocity)"
+  shape: class
+  label: "Physics Body"
+  velocity: {x: number, y: number}
 }
 
 # Dependencies
 Player -> AnimationSystem: owns
-AnimationSystem -> AnimationConfigs: manages
+AnimationSystem -> PlayerAnimationManager: uses
+PlayerAnimationManager -> Player: controls sprite
 AnimationSystem -> PhysicsBody: reads velocity
+PlayerAnimationManager -> AnimationFactory: uses static method
 
 # Event Communication
-GameEvents -> AnimationSystem: PLAYER_ATTACKED
+SceneEvents -> AnimationSystem: player:attacked
 
 # Animation Flow
-AnimationSystem -> Player: play(animationKey)
-PhysicsBody -> AnimationSystem: velocity state
+AnimationSystem -> Player: determines animation
+PlayerAnimationManager -> Player: sprite.play()
 ```
 
 ## Overview
@@ -48,7 +73,7 @@ The AnimationSystem coordinates sprite animations based on player state, movemen
 - **Event-driven Updates**: Responds to combat events for attack animations
 - **Priority System**: Attack animations take precedence
 - **Smooth Transitions**: Only changes animation when needed
-- **Custom Animation Support**: API for adding new animations
+- **Invulnerability System**: Visual feedback and damage immunity after taking damage
 
 ## Animation Definitions
 
@@ -62,41 +87,7 @@ The AnimationSystem coordinates sprite animations based on player state, movemen
 
 ## Implementation Details
 
-### Animation Configuration
-
-```typescript
-interface PlayerAnimationConfig {
-  key: string; // Unique animation identifier
-  spriteKey: string; // Sprite sheet key
-  frames: {
-    // Frame range
-    start: number;
-    end: number;
-  };
-  frameRate: number; // Playback speed
-  repeat: number; // -1 for loop, 0 for once
-}
-```
-
 ### Core Methods
-
-```typescript
-createCustomAnimation(
-  key: string,
-  spriteKey: string,
-  frames: { start: number; end: number },
-  frameRate: number,
-  repeat: number = -1
-): void
-```
-
-Creates a new animation at runtime.
-
-```typescript
-forcePlayAnimation(animationKey: string): void
-```
-
-Immediately plays specified animation, overriding current state.
 
 ```typescript
 getCurrentAnimation(): string | null
@@ -117,18 +108,6 @@ Returns the currently playing animation key.
 // Access animation system
 const player = createPlayer(config);
 const animationSystem = player.getSystem<AnimationSystem>('animations');
-
-// Add custom animation
-animationSystem.createCustomAnimation(
-  'player-dash-anim',
-  'player-sprite',
-  { start: 24, end: 28 },
-  15, // 15 fps
-  0 // Play once
-);
-
-// Force play specific animation
-animationSystem.forcePlayAnimation('player-dash-anim');
 
 // Check current animation
 const currentAnim = animationSystem.getCurrentAnimation();
@@ -152,7 +131,8 @@ The system determines animations based on:
 
 ### Event Listeners
 
-- `PLAYER_ATTACKED`: Triggers attack animation sequence
+- `player:attacked`: Triggers attack animation sequence based on attackType
+- `player:died`: Could trigger death animation (if implemented)
 - Attack animation blocks other animations for duration
 
 ### State Dependencies
@@ -165,6 +145,18 @@ The system determines animations based on:
 
 - Attack animations use timeout (300ms) to reset state
 - Consider using animation complete events for better accuracy
+
+### Comparison with Other Entities
+
+**Player vs Enemy/Peer Animation Systems:**
+
+- **Player (Local)**: Uses separate AnimationSystem that runs every frame, considers velocity + state + events
+- **Enemy**: Uses state-based animations where each state directly plays its animation (simpler 1:1 mapping)
+- **Peer (Remote Players)**: Uses same state-based approach as enemies, with states directly controlling animations
+
+This architectural difference reflects gameplay needs:
+- Players need complex, responsive animations reacting to multiple inputs
+- Enemies and peers need predictable, server-driven animations that follow state changes
 
 ## Best Practices
 

@@ -80,7 +80,7 @@ export class PhysicsConfigurator {
     onPlayerTouchEnemy: (player: any, enemy: any) => void,
     context: any
   ): void {
-    // Set up player-enemy collision for hurt animation
+    // Set up player-enemy collision for damaged animation
     this.scene.physics.add.overlap(
       player,
       enemyManager.getEnemyGroup(),

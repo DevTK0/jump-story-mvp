@@ -23,12 +23,16 @@ export class AnimationError extends Error {
 export interface AnimationFrameConfig {
   start: number;
   end: number;
+  frameRate: number;
 }
 
 export interface AnimationConfig {
   key: string;
   spriteKey: string;
-  frames: AnimationFrameConfig;
+  frames: {
+    start: number;
+    end: number;
+  };
   frameRate: number;
   repeat: number;
   yoyo?: boolean;
@@ -36,15 +40,14 @@ export interface AnimationConfig {
 }
 
 export interface SpriteAnimationSet {
-  idle: AnimationFrameConfig & { frameRate: number };
-  walk: AnimationFrameConfig & { frameRate: number };
-  attack1?: AnimationFrameConfig & { frameRate: number };
-  attack2?: AnimationFrameConfig & { frameRate: number };
-  attack3?: AnimationFrameConfig & { frameRate: number };
-  hurt?: AnimationFrameConfig & { frameRate: number };
-  damaged?: AnimationFrameConfig & { frameRate: number };
-  death?: AnimationFrameConfig & { frameRate: number };
-  [key: string]: (AnimationFrameConfig & { frameRate: number }) | undefined;
+  idle: AnimationFrameConfig;
+  walk: AnimationFrameConfig;
+  attack1?: AnimationFrameConfig;
+  attack2?: AnimationFrameConfig;
+  attack3?: AnimationFrameConfig;
+  damaged?: AnimationFrameConfig;
+  death?: AnimationFrameConfig;
+  [key: string]: AnimationFrameConfig | undefined;
 }
 
 export type AnimationType =
@@ -53,10 +56,9 @@ export type AnimationType =
   | 'attack1'
   | 'attack2'
   | 'attack3'
-  | 'hurt'
+  | 'damaged'
   | 'hit'
-  | 'death'
-  | 'damaged';
+  | 'death';
 
 /**
  * Animation Factory for creating and managing standardized sprite animations
@@ -141,6 +143,13 @@ export class AnimationFactory {
   }
 
   /**
+   * Static helper to generate animation keys without factory instance
+   */
+  public static getAnimationKey(spriteKey: string, animationType: string): string {
+    return `${spriteKey}-${animationType}-anim`;
+  }
+
+  /**
    * Get animation key for a specific sprite and animation type
    */
   public getAnimationKey(spriteKey: string, animationType: AnimationType): string {
@@ -169,53 +178,6 @@ export class AnimationFactory {
     return this.registeredAnimations.get(key);
   }
 
-  /**
-   * Create a custom animation with validation and standardized naming
-   */
-  public createCustomAnimation(
-    spriteKey: string,
-    animationType: string,
-    frames: AnimationFrameConfig,
-    frameRate: number,
-    repeat: number = -1,
-    options?: { yoyo?: boolean; delay?: number }
-  ): string {
-    const key = this.generateAnimationKey(spriteKey, animationType);
-
-    return this.createSingleAnimation({
-      key,
-      spriteKey,
-      frames,
-      frameRate,
-      repeat,
-      yoyo: options?.yoyo,
-      delay: options?.delay,
-    });
-  }
-
-  /**
-   * Batch create animations from a configuration object
-   */
-  public createAnimationsFromConfig(
-    spriteKey: string,
-    configurations: Record<string, Omit<AnimationConfig, 'key' | 'spriteKey'>>
-  ): string[] {
-    const createdKeys: string[] = [];
-
-    for (const [animationType, config] of Object.entries(configurations)) {
-      const key = this.generateAnimationKey(spriteKey, animationType);
-      const fullConfig: AnimationConfig = {
-        ...config,
-        key,
-        spriteKey,
-      };
-
-      this.createSingleAnimation(fullConfig);
-      createdKeys.push(key);
-    }
-
-    return createdKeys;
-  }
 
   /**
    * Get default repeat value based on animation type
@@ -228,7 +190,7 @@ export class AnimationFactory {
       case 'attack1':
       case 'attack2':
       case 'attack3':
-      case 'hurt':
+      case 'damaged':
       case 'hit':
       case 'death':
         return 0; // Play once
@@ -271,27 +233,6 @@ export class AnimationFactory {
     return false;
   }
 
-  /**
-   * Static helper to create pre-configured animation sets for common sprite types
-   */
-  public static createSoldierAnimations(): SpriteAnimationSet {
-    return {
-      idle: { start: 0, end: 5, frameRate: 8 },
-      walk: { start: 9, end: 16, frameRate: 12 },
-      attack1: { start: 18, end: 23, frameRate: 20 },
-      attack2: { start: 27, end: 32, frameRate: 20 },
-      attack3: { start: 36, end: 45, frameRate: 20 },
-      hurt: { start: 45, end: 49, frameRate: 15 },
-    };
-  }
-
-  public static createOrcAnimations(): SpriteAnimationSet {
-    return {
-      idle: { start: 0, end: 5, frameRate: 8 },
-      walk: { start: 9, end: 16, frameRate: 10 },
-      damaged: { start: 32, end: 36, frameRate: 15 },
-    };
-  }
 }
 
 /**
@@ -328,23 +269,6 @@ export class AnimationManager {
     return true;
   }
 
-  /**
-   * Play animation by full key
-   */
-  public playByKey(animationKey: string, ignoreIfPlaying: boolean = true): boolean {
-    if (!this.factory.hasAnimation(animationKey)) {
-      console.warn(`Animation '${animationKey}' not found`);
-      return false;
-    }
-
-    if (ignoreIfPlaying && this.currentAnimation === animationKey && this.sprite.anims.isPlaying) {
-      return false;
-    }
-
-    this.sprite.play(animationKey);
-    this.currentAnimation = animationKey;
-    return true;
-  }
 
   /**
    * Stop current animation

@@ -63,7 +63,7 @@ export class MovementStateTracker {
     }
   }
 
-  // Movement disability (for hurt state, knockback, etc.)
+  // Movement disability (for damaged state, knockback, etc.)
   public isMovementDisabled(): boolean {
     return this.movementDisabled;
   }

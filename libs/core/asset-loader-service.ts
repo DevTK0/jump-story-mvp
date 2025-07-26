@@ -75,7 +75,7 @@ export class AssetLoaderService {
         animFactory.createSpriteAnimations(spriteKey);
       } else if ('play' in animations) {
         // Emote animations - create manually
-        const emoteAnim = animations as { play: AnimationFrameConfig & { frameRate: number } };
+        const emoteAnim = animations as { play: AnimationFrameConfig };
         this.scene.anims.create({
           key: `${spriteKey}_anim`,
           frames: this.scene.anims.generateFrameNumbers(spriteKey, {

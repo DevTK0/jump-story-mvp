@@ -45,6 +45,7 @@ SystemName: {
 - Always used layout="elk"
 - Do not include other diagrams unless specified in the content section
 - `[]` is considered a special character in d2. If you want to represent an array, make sure to encase them in "" (e.g. "string[]")
+- If you have to create a component that has `.` (e.g files with extensions), encase them in "" (e.g. "config.json")
 
 ### Content Guidelines
 

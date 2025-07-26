@@ -12,13 +12,8 @@ export {
   type AnimationConfig,
   type AnimationFrameConfig,
   type SpriteAnimationSet,
-  type AnimationType,
 } from './animation-factory';
 
-export {
-  ANIMATION_TIMINGS,
-  ANIMATION_BEHAVIORS,
-  shouldAnimationLoop,
-  canAnimationBeInterrupted,
-  getAnimationPriority,
-} from './animation-definitions';
+// Player-specific animation components have been moved to libs/player/animations/
+// getAnimationKey is now a static method on AnimationFactory
+// Animation timings and behaviors have been moved to entity-specific configs

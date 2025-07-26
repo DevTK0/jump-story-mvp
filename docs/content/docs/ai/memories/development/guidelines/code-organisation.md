@@ -8,7 +8,6 @@ permalink: development/guidelines/code-organisation
 
 - Follow a feature first structure (i.e. player/ enemy/)
   - All corelated code should live as close as possible.
-- Shared code is stored under /shared
 
 ## File Naming
 

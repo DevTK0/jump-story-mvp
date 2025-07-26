@@ -257,7 +257,7 @@ export class ClimbingSystem extends BaseDebugRenderer implements System, IDebugg
 
   // State
   private isSnappingToCenter = false;
-  private climbingDisabled = false; // For hurt state
+  private climbingDisabled = false; // For damaged state
 
   constructor(
     player: Player,
@@ -319,7 +319,7 @@ export class ClimbingSystem extends BaseDebugRenderer implements System, IDebugg
   }
 
   private checkClimbingStart(): void {
-    // Don't start climbing if disabled (e.g., during hurt state) or if dead
+    // Don't start climbing if disabled (e.g., during damaged state) or if dead
     if (this.climbingDisabled || !this.player.isAlive) {
       return;
     }

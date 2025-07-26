@@ -143,13 +143,6 @@ export class DebugSystem implements System {
     }
   }
 
-  private enableDebugMode(): void {
-    // Create graphics object for rendering
-    this.graphics = this.scene.add.graphics();
-
-    // Show debug window
-    this.debugWindow.show();
-  }
 
   private disableDebugMode(): void {
     // Clean up graphics

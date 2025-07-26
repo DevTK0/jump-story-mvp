@@ -244,11 +244,12 @@ export class SceneInitializer {
     this.systems.managers = this.managers;
     
     // Initialize all managers
+    const identity = this.connectionHelper.getIdentity();
     await this.managers.initialize({
       mapData: this.systems.mapData!,
       player: this.systems.player!,
       connection: this.connectionHelper.getConnection(),
-      identity: this.connectionHelper.getIdentity(),
+      identity: identity || undefined,
     });
     
     // Store managers in scene data for access by other systems

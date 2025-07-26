@@ -1,19 +1,20 @@
 import Phaser from 'phaser';
-import type { System } from '../core/types';
-import { onSceneEvent } from '../core/scene-events';
-import { Player } from './player';
-import { InputSystem } from './input';
-import { AnimationFactory, AnimationManager, ANIMATION_TIMINGS } from '../animations';
+import type { System } from '../../core/types';
+import { onSceneEvent } from '../../core/scene-events';
+import { Player } from '../player';
+import { InputSystem } from '../input';
+import { AnimationFactory } from '@/animations';
 import { createLogger, type ModuleLogger } from '@/core/logger';
+import { PlayerAnimationManager } from './player-animation-manager';
+import { PLAYER_ANIMATION_TIMINGS, PLAYER_ANIMATION_KEYS } from './config';
 
 export class AnimationSystem implements System {
   private player: Player;
   private scene: Phaser.Scene;
   private logger: ModuleLogger = createLogger('AnimationSystem');
 
-  // Animation factory and manager
-  private animationFactory: AnimationFactory;
-  private animationManager: AnimationManager;
+  // Animation manager
+  private animationManager: PlayerAnimationManager;
 
   // State tracking
   private isPlayingAttackAnimation = false;
@@ -25,17 +26,16 @@ export class AnimationSystem implements System {
     this.player = player;
     this.scene = scene;
 
-    // Initialize animation factory and manager
-    this.animationFactory = new AnimationFactory(scene);
-    this.animationManager = new AnimationManager(this.animationFactory, player);
+    // Initialize animation manager
+    this.animationManager = new PlayerAnimationManager(scene, player);
 
-    this.setupAnimations();
+    this.verifyAnimations();
     this.bindEvents();
   }
 
-  private setupAnimations(): void {
-    // Animations are now created at scene level, so we just verify they exist
-    if (!this.animationFactory.hasAnimation('soldier-idle-anim')) {
+  private verifyAnimations(): void {
+    // Verify that player animations exist (created at scene level)
+    if (!this.scene.anims.exists(PLAYER_ANIMATION_KEYS.IDLE)) {
       this.logger.warn('Player animations not found! They should be created at scene level.');
     }
   }
@@ -53,9 +53,9 @@ export class AnimationSystem implements System {
       try {
         // Use timing from centralized definitions
         const attackDuration =
-          ANIMATION_TIMINGS.ATTACK_DURATIONS[
-            animationType as keyof typeof ANIMATION_TIMINGS.ATTACK_DURATIONS
-          ] || ANIMATION_TIMINGS.DEFAULT_ATTACK_DURATION;
+          PLAYER_ANIMATION_TIMINGS.ATTACK_DURATIONS[
+            animationType as keyof typeof PLAYER_ANIMATION_TIMINGS.ATTACK_DURATIONS
+          ] || PLAYER_ANIMATION_TIMINGS.DEFAULT_ATTACK_DURATION;
         await this.delay(attackDuration);
         this.isPlayingAttackAnimation = false;
       } catch (error) {
@@ -75,17 +75,16 @@ export class AnimationSystem implements System {
     if (stateMachine.isInState('Dead')) {
       // Play death animation once and stop on last frame
       const currentKey = this.animationManager.getCurrentAnimation();
-      const deathKey = this.animationFactory.getAnimationKey('soldier', 'death');
-      if (currentKey !== deathKey) {
+      if (currentKey !== PLAYER_ANIMATION_KEYS.DEATH) {
         // Play death animation once
         this.animationManager.play('death', false);
         // Stop on the last frame when animation completes
         this.player.once('animationcomplete', (animation: any) => {
-          if (animation.key === deathKey) {
+          if (animation.key === PLAYER_ANIMATION_KEYS.DEATH) {
             this.player.anims.stop();
             // Set to last frame of death animation
             // The death animation frames are defined in sprite-config.json
-            this.player.setFrame(ANIMATION_TIMINGS.SPRITE_FRAMES.SOLDIER_DEATH_LAST_FRAME);
+            this.player.setFrame(PLAYER_ANIMATION_TIMINGS.SPRITE_FRAMES.SOLDIER_DEATH_LAST_FRAME);
           }
         });
       }
@@ -102,7 +101,7 @@ export class AnimationSystem implements System {
 
     // Only change if different from current
     const currentKey = this.animationManager.getCurrentAnimation();
-    const targetKey = this.animationFactory.getAnimationKey('soldier', targetAnimationType);
+    const targetKey = AnimationFactory.getAnimationKey('soldier', targetAnimationType);
     if (targetKey !== currentKey) {
       this.animationManager.play(targetAnimationType);
     }
@@ -125,26 +124,7 @@ export class AnimationSystem implements System {
     }
   }
 
-  // Public API
-  public createCustomAnimation(
-    spriteKey: string,
-    animationType: string,
-    frames: { start: number; end: number },
-    frameRate: number,
-    repeat: number = -1
-  ): void {
-    this.animationFactory.createCustomAnimation(
-      spriteKey,
-      animationType,
-      frames,
-      frameRate,
-      repeat
-    );
-  }
-
-  public forcePlayAnimation(animationKey: string): void {
-    this.animationManager.playByKey(animationKey, false);
-  }
+  // Public API removed createCustomAnimation - animations should be created at scene level
 
   public stopAnimation(): void {
     this.animationManager.stop();
@@ -170,7 +150,7 @@ export class AnimationSystem implements System {
   }
 
   public hasAnimation(key: string): boolean {
-    return this.animationFactory.hasAnimation(key);
+    return this.scene.anims.exists(key);
   }
 
   public playDamagedAnimation(knockbackDirection?: { x: number; y: number }): boolean {
@@ -207,16 +187,16 @@ export class AnimationSystem implements System {
     // Apply knockback if direction provided
     if (knockbackDirection && this.player.body) {
       const body = this.player.body as Phaser.Physics.Arcade.Body;
-      const knockbackForce = ANIMATION_TIMINGS.KNOCKBACK.FORCE;
+      const knockbackForce = PLAYER_ANIMATION_TIMINGS.KNOCKBACK.FORCE;
 
       // For ground-based knockback, prioritize horizontal movement with small upward boost
-      const isGroundKnockback = Math.abs(knockbackDirection.y) < ANIMATION_TIMINGS.KNOCKBACK.GROUND_THRESHOLD;
+      const isGroundKnockback = Math.abs(knockbackDirection.y) < PLAYER_ANIMATION_TIMINGS.KNOCKBACK.GROUND_THRESHOLD;
 
       if (isGroundKnockback) {
         // Ground knockback: moderate horizontal push + small upward boost
         body.setVelocity(
           knockbackDirection.x * knockbackForce,
-          -ANIMATION_TIMINGS.KNOCKBACK.UPWARD_VELOCITY
+          -PLAYER_ANIMATION_TIMINGS.KNOCKBACK.UPWARD_VELOCITY
         );
       } else {
         // Air knockback: use full direction
@@ -243,7 +223,7 @@ export class AnimationSystem implements System {
 
   private startInvulnerabilityFlash(): void {
     let flashCount = 0;
-    const maxFlashes = ANIMATION_TIMINGS.MAX_FLASHES;
+    const maxFlashes = PLAYER_ANIMATION_TIMINGS.MAX_FLASHES;
 
     const flashInterval = setInterval(() => {
       if (flashCount >= maxFlashes || !this.isInvulnerable) {
@@ -261,7 +241,7 @@ export class AnimationSystem implements System {
       }
 
       flashCount++;
-    }, ANIMATION_TIMINGS.FLASH_INTERVAL);
+    }, PLAYER_ANIMATION_TIMINGS.FLASH_INTERVAL);
   }
 
   public isPlayerInvulnerable(): boolean {
@@ -285,7 +265,7 @@ export class AnimationSystem implements System {
     climbingSystem: any
   ): Promise<void> {
     try {
-      await this.delay(ANIMATION_TIMINGS.DAMAGED_DURATION);
+      await this.delay(PLAYER_ANIMATION_TIMINGS.DAMAGED_DURATION);
 
       this.isPlayingDamagedAnimation = false;
       // Re-enable movement after damaged animation
@@ -311,7 +291,7 @@ export class AnimationSystem implements System {
     }
 
     try {
-      await this.delay(ANIMATION_TIMINGS.INVULNERABILITY_DURATION);
+      await this.delay(PLAYER_ANIMATION_TIMINGS.INVULNERABILITY_DURATION);
       this.isInvulnerable = false;
       this.player.clearTint(); // Remove flashing effect
     } catch (error) {
@@ -328,6 +308,6 @@ export class AnimationSystem implements System {
     }
 
     // Scene events are automatically cleaned up when scene is destroyed
-    this.animationFactory.clear();
+    // Animations remain in scene and are cleaned up when scene is destroyed
   }
 }
