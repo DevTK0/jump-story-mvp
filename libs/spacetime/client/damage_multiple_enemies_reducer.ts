@@ -35,7 +35,7 @@ import {
 
 import { AttackType as __AttackType } from "./attack_type_type";
 
-export type DamageEnemy = {
+export type DamageMultipleEnemies = {
   enemyIds: number[],
   attackType: __AttackType,
 };
@@ -43,7 +43,7 @@ export type DamageEnemy = {
 /**
  * A namespace for generated helper functions.
  */
-export namespace DamageEnemy {
+export namespace DamageMultipleEnemies {
   /**
   * A function which returns this type represented as an AlgebraicType.
   * This function is derived from the AlgebraicType used to generate this type.
@@ -55,12 +55,12 @@ export namespace DamageEnemy {
     ]);
   }
 
-  export function serialize(writer: BinaryWriter, value: DamageEnemy): void {
-    DamageEnemy.getTypeScriptAlgebraicType().serialize(writer, value);
+  export function serialize(writer: BinaryWriter, value: DamageMultipleEnemies): void {
+    DamageMultipleEnemies.getTypeScriptAlgebraicType().serialize(writer, value);
   }
 
-  export function deserialize(reader: BinaryReader): DamageEnemy {
-    return DamageEnemy.getTypeScriptAlgebraicType().deserialize(reader);
+  export function deserialize(reader: BinaryReader): DamageMultipleEnemies {
+    return DamageMultipleEnemies.getTypeScriptAlgebraicType().deserialize(reader);
   }
 
 }

@@ -2,6 +2,9 @@
  * Type-safe attack configuration system using discriminated unions
  */
 
+// Valid attack modifiers
+export type AttackModifier = 'fire' | 'ice' | 'sword' | 'axe' | 'bow' | 'spear' | 'holy';
+
 // Base attack properties shared by all attack types
 interface BaseAttack {
   name: string;
@@ -11,6 +14,10 @@ interface BaseAttack {
   knockback: number;
   hits: number;
   range: number;
+  targets: number;
+  modifiers: AttackModifier[];
+  manaCost: number;
+  ammoCost: number;
 }
 
 // Melee-specific properties
@@ -36,6 +43,11 @@ export interface AreaAttack extends BaseAttack {
 // Discriminated union - TypeScript will enforce correct fields based on attackType
 export type Attack = StandardAttack | ProjectileAttack | AreaAttack;
 
+// Passive ability interface
+export interface Passive {
+  name: string;
+}
+
 // Type guards for runtime checking
 export function isStandardAttack(attack: Attack): attack is StandardAttack {
   return attack.attackType === 'standard';
@@ -49,8 +61,8 @@ export function isAreaAttack(attack: Attack): attack is AreaAttack {
   return attack.attackType === 'area';
 }
 
-// Example class configuration with type safety
-export interface ClassConfig {
+// Example job configuration with type safety
+export interface JobConfig {
   displayName: string;
   spriteKey: string;
   baseStats: {
@@ -63,10 +75,13 @@ export interface ClassConfig {
     attack2: Attack;
     attack3: Attack;
   };
+  passives: {
+    passive1: Passive;
+  };
 }
 
 // Example usage showing TypeScript enforcement
-export const EXAMPLE_WARRIOR_CONFIG: ClassConfig = {
+export const EXAMPLE_WARRIOR_CONFIG: JobConfig = {
   displayName: 'Warrior',
   spriteKey: 'warrior',
   baseStats: {
@@ -83,6 +98,10 @@ export const EXAMPLE_WARRIOR_CONFIG: ClassConfig = {
       knockback: 5,
       range: 10,
       hits: 1,
+      targets: 1,
+      modifiers: ['sword'],
+      manaCost: 0,
+      ammoCost: 0,
     },
     attack2: {
       attackType: 'standard',
@@ -93,6 +112,10 @@ export const EXAMPLE_WARRIOR_CONFIG: ClassConfig = {
       knockback: 15,
       range: 10,
       hits: 1,
+      targets: 1,
+      modifiers: ['sword'],
+      manaCost: 5,
+      ammoCost: 0,
     },
     attack3: {
       attackType: 'area',
@@ -103,8 +126,17 @@ export const EXAMPLE_WARRIOR_CONFIG: ClassConfig = {
       range: 10,
       hits: 1,
       knockback: 15,
+      targets: 3,
+      modifiers: ['holy'],
+      manaCost: 10,
+      ammoCost: 0,
       radius: 1000,
       effectSprite: 'groundSlam',
+    },
+  },
+  passives: {
+    passive1: {
+      name: 'Warrior\'s Resolve',
     },
   },
 };

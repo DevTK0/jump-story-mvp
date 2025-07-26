@@ -9,6 +9,7 @@ import { SyncSystem } from './sync/sync-system';
 import { TeleportEffect } from '../effects';
 import { DebugSystem } from '@/debug/debug-system';
 import { DeathMonitor } from './combat/death-monitor';
+import jobAttributesConfig from '../../apps/playground/config/job-attributes';
 
 /**
  * Builder pattern implementation for creating fully configured Player instances.
@@ -163,12 +164,19 @@ export class PlayerBuilder {
 
     if (this.enabledSystems.has('combat')) {
       // Use enhanced combat system for auto hitbox generation
-      const playerClass = this.config.texture || 'soldier';
+      const playerJob = this.config.texture || 'soldier';
+      const jobConfig = jobAttributesConfig.jobs[playerJob] || jobAttributesConfig.jobs.soldier;
+      
+      if (!jobAttributesConfig.jobs[playerJob]) {
+        console.warn(`Job ${playerJob} not found, defaulting to soldier`);
+      }
+      
       const combatSystem = new CombatSystemEnhanced(
         player,
         inputSystem,
         this.config.scene,
-        playerClass
+        playerJob,
+        jobConfig
       );
       systems.set('combat', combatSystem);
     }

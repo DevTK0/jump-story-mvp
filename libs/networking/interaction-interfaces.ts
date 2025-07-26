@@ -41,7 +41,7 @@ export interface EnemySprite extends GameSprite {
  */
 export interface DatabaseConnection {
   reducers: {
-    damageEnemy: (enemyId: number, attackType: any) => void;
+    damageEnemy: (enemyIds: number[], attackType: any) => void;
     playerTakeDamage: (enemyId: number) => void;
     // Add other reducers as needed
   };

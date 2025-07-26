@@ -30,6 +30,7 @@ export class InteractionHandler {
 
   // Track enemies damaged in current attack to prevent duplicates
   private damagedInCurrentAttack = new Set<number>();
+  private enemiesHitInCurrentAttack: number[] = [];
 
   constructor(
     scene: Phaser.Scene,
@@ -44,9 +45,17 @@ export class InteractionHandler {
 
     // Listen for player attack events to track current attack type
     onSceneEvent(this.scene, 'player:attacked', (data) => {
+      this.logger.debug('Attack started - type:', data.attackType);
+      
+      // Send any previously collected hits before starting new attack
+      if (this.enemiesHitInCurrentAttack.length > 0) {
+        this.sendCollectedHits();
+      }
+      
       this.currentAttackType = data.attackType || 1;
       // Clear damage tracking for new attack
       this.damagedInCurrentAttack.clear();
+      this.enemiesHitInCurrentAttack = [];
     });
   }
 
@@ -83,24 +92,21 @@ export class InteractionHandler {
 
       // Mark enemy as damaged in this attack
       this.damagedInCurrentAttack.add(enemyId);
+      
+      // Collect this enemy for batch processing
+      this.enemiesHitInCurrentAttack.push(enemyId);
+      this.logger.debug(`Collected enemy ${enemyId} - total: ${this.enemiesHitInCurrentAttack.length}`);
+
+      // Send the hits immediately (they'll be batched by the server)
+      // Schedule for next frame to collect all hits in this physics step
+      this.scene.time.delayedCall(0, () => {
+        if (this.enemiesHitInCurrentAttack.length > 0) {
+          this.sendCollectedHits();
+        }
+      });
 
       // Visual feedback for successful hit
-      // Screen shake disabled
-      // this.scene.cameras.main.shake(
-      //     this.config.cameraShakeDuration,
-      //     this.config.cameraShakeIntensity
-      // );
-
-      // Damage enemy (hit animation will be handled by DamageEvent subscription)
       this.logger.info('Enemy hit!', enemyId);
-
-      // Call server reducer to damage enemy
-      if (this.dbConnection && this.dbConnection.reducers) {
-        const attackType = this.mapAttackTypeToEnum(this.currentAttackType);
-        this.dbConnection.reducers.damageEnemy(enemyId, attackType);
-      } else {
-        this.logger.warn('Database connection not available - cannot damage enemy');
-      }
     };
   }
 
@@ -205,6 +211,31 @@ export class InteractionHandler {
       x: distance > 0 ? deltaX / distance : 1, // Default right if same position
       y: distance > 0 ? deltaY / distance : 0,
     };
+  }
+
+  /**
+   * Send all collected hits to the server
+   */
+  private sendCollectedHits(): void {
+    this.logger.debug(`sendCollectedHits called - enemies: ${this.enemiesHitInCurrentAttack.length}`);
+    
+    if (this.enemiesHitInCurrentAttack.length === 0) {
+      this.logger.debug('No enemies to damage');
+      return;
+    }
+
+    // Call server reducer to damage all collected enemies
+    if (this.dbConnection && this.dbConnection.reducers) {
+      const attackType = this.mapAttackTypeToEnum(this.currentAttackType);
+      this.logger.info(`Sending attack with ${this.enemiesHitInCurrentAttack.length} enemies`);
+      this.logger.debug('Enemy IDs:', this.enemiesHitInCurrentAttack);
+      this.dbConnection.reducers.damageEnemy(this.enemiesHitInCurrentAttack, attackType);
+    } else {
+      this.logger.warn('Database connection not available - cannot damage enemies');
+    }
+
+    // Clear the collection for next attack
+    this.enemiesHitInCurrentAttack = [];
   }
 
   /**

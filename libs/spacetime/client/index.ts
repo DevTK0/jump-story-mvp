@@ -458,19 +458,19 @@ export class RemoteReducers {
     this.connection.offReducer("Connect", callback);
   }
 
-  damageEnemy(enemyId: number, attackType: AttackType) {
-    const __args = { enemyId, attackType };
+  damageEnemy(enemyIds: number[], attackType: AttackType) {
+    const __args = { enemyIds, attackType };
     let __writer = new BinaryWriter(1024);
     DamageEnemy.getTypeScriptAlgebraicType().serialize(__writer, __args);
     let __argsBuffer = __writer.getBuffer();
     this.connection.callReducer("DamageEnemy", __argsBuffer, this.setCallReducerFlags.damageEnemyFlags);
   }
 
-  onDamageEnemy(callback: (ctx: ReducerEventContext, enemyId: number, attackType: AttackType) => void) {
+  onDamageEnemy(callback: (ctx: ReducerEventContext, enemyIds: number[], attackType: AttackType) => void) {
     this.connection.onReducer("DamageEnemy", callback);
   }
 
-  removeOnDamageEnemy(callback: (ctx: ReducerEventContext, enemyId: number, attackType: AttackType) => void) {
+  removeOnDamageEnemy(callback: (ctx: ReducerEventContext, enemyIds: number[], attackType: AttackType) => void) {
     this.connection.offReducer("DamageEnemy", callback);
   }
 

@@ -6,7 +6,7 @@ import { InputSystem } from '../input';
 import type { IDebuggable } from '@/debug/debug-interfaces';
 import { DEBUG_CONFIG } from '@/debug/config';
 import { BaseDebugRenderer } from '@/debug/debug-renderer';
-import classAttributes from '../../../apps/playground/config/class-attributes';
+import type { JobConfig } from './attack-types';
 
 export interface AttackConfig {
   name: string;
@@ -27,9 +27,9 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
   private inputSystem: InputSystem;
   private scene: Phaser.Scene;
 
-  // Class configuration
-  private playerClass: string;
-  private classConfig: any;
+  // Job configuration
+  private playerJob: string;
+  private jobConfig: JobConfig;
 
   // Attack state
   private attackCooldowns: Map<number, boolean> = new Map();
@@ -41,20 +41,15 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     player: Player,
     inputSystem: InputSystem,
     scene: Phaser.Scene,
-    playerClass: string = 'soldier'
+    playerJob: string,
+    jobConfig: JobConfig
   ) {
     super();
     this.player = player;
     this.inputSystem = inputSystem;
     this.scene = scene;
-    this.playerClass = playerClass;
-
-    // Load class configuration
-    this.classConfig = classAttributes.classes[playerClass];
-    if (!this.classConfig) {
-      console.warn(`Class ${playerClass} not found, defaulting to soldier`);
-      this.classConfig = classAttributes.classes.soldier;
-    }
+    this.playerJob = playerJob;
+    this.jobConfig = jobConfig;
 
     // Initialize hitboxes for each attack
     this.initializeHitboxes();
@@ -98,7 +93,7 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
   private initializeHitboxes(): void {
     // Create hitbox sprites for each standard attack
     for (let i = 1; i <= 3; i++) {
-      const attackConfig = this.classConfig.attacks[`attack${i}`];
+      const attackConfig = this.jobConfig.attacks[`attack${i}` as keyof typeof this.jobConfig.attacks];
       if (attackConfig && attackConfig.attackType === 'standard') {
         const hitbox = this.scene.physics.add.sprite(-200, -200, '');
         // Will be sized dynamically during attack
@@ -140,7 +135,7 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
       return false;
     }
 
-    const attackConfig = this.classConfig.attacks[`attack${attackNum}`];
+    const attackConfig = this.jobConfig.attacks[`attack${attackNum}` as keyof typeof this.jobConfig.attacks];
     if (!attackConfig) {
       return false;
     }
@@ -165,18 +160,27 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     // Get actual player body
     const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
 
-    // For now, make hitbox exactly match player's physics body
-    // Position the hitbox sprite at the center of the player's physics body
-    const hitboxX = playerBody.x + playerBody.halfWidth;
-    const hitboxY = playerBody.y + playerBody.halfHeight;
+    // Calculate hitbox dimensions
+    // Width = player width + attack range (extended forward)
+    // Height = player height (unchanged)
+    const hitboxWidth = playerBody.width + config.range;
+    const hitboxHeight = playerBody.height;
 
+    // Calculate hitbox position
+    // The hitbox extends forward from the player in the facing direction
+    const playerCenterX = playerBody.x + playerBody.halfWidth;
+    const playerCenterY = playerBody.y + playerBody.halfHeight;
+    
+    // Offset the hitbox center by half the range in the facing direction
+    const hitboxCenterX = playerCenterX + (facing * config.range / 2);
+    
     // Update hitbox sprite position
-    hitboxSprite.setPosition(hitboxX, hitboxY);
+    hitboxSprite.setPosition(hitboxCenterX, playerCenterY);
 
-    // Update physics body to match player body exactly
+    // Update physics body size and offset
     if (hitboxSprite.body) {
       const body = hitboxSprite.body as Phaser.Physics.Arcade.Body;
-      body.setSize(playerBody.width, playerBody.height);
+      body.setSize(hitboxWidth, hitboxHeight);
     }
 
     // Update player state
@@ -221,13 +225,18 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
       if (hitboxSprite.body) {
         // Update hitbox position to current player position before enabling
         const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
-        const hitboxX = playerBody.x + playerBody.halfWidth;
-        const hitboxY = playerBody.y + playerBody.halfHeight;
-        hitboxSprite.setPosition(hitboxX, hitboxY);
+        const facing = this.player.facingDirection;
+        
+        // Recalculate position with forward extension
+        const playerCenterX = playerBody.x + playerBody.halfWidth;
+        const playerCenterY = playerBody.y + playerBody.halfHeight;
+        const hitboxCenterX = playerCenterX + (facing * config.range / 2);
+        
+        hitboxSprite.setPosition(hitboxCenterX, playerCenterY);
         
         hitboxSprite.body.enable = true;
         const body = hitboxSprite.body as Phaser.Physics.Arcade.Body;
-        body.reset(hitboxX, hitboxY);
+        body.reset(hitboxCenterX, playerCenterY);
         // Ensure physics properties are maintained after reset
         body.setGravityY(0);
         body.immovable = true;
@@ -309,18 +318,18 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     return !this.attackCooldowns.get(attackNum) && !this.player.isAttacking;
   }
 
-  public getClassConfig(): any {
-    return this.classConfig;
+  public getJobConfig(): JobConfig {
+    return this.jobConfig;
   }
 
-  public getPlayerClass(): string {
-    return this.playerClass;
+  public getPlayerJob(): string {
+    return this.playerJob;
   }
 
-  public setPlayerClass(className: string): void {
-    this.playerClass = className;
-    this.classConfig = classAttributes.classes[className] || classAttributes.classes.soldier;
-    // Reinitialize hitboxes with new class config
+  public setPlayerJob(jobName: string, jobConfig: JobConfig): void {
+    this.playerJob = jobName;
+    this.jobConfig = jobConfig;
+    // Reinitialize hitboxes with new job config
     this.destroyHitboxes();
     this.initializeHitboxes();
   }
@@ -338,16 +347,23 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
         graphics.fillRect(body.x, body.y, body.width, body.height);
         graphics.strokeRect(body.x, body.y, body.width, body.height);
 
-        // Draw attack info
-        const attack = this.classConfig.attacks[`attack${attackNum}`];
-        if (attack) {
-          graphics.fillStyle(0xffffff, 1);
-          this.scene.add
-            .text(body.x + body.halfWidth, body.y - 10, attack.name, {
-              fontSize: '12px',
-              color: '#ffffff',
-            })
-            .setOrigin(0.5);
+        // Draw center point
+        graphics.fillStyle(0xff0000, 1.0);
+        graphics.fillCircle(body.x + body.halfWidth, body.y + body.halfHeight, 3);
+
+        // Draw range indicator line showing the extended range
+        const attack = this.jobConfig.attacks[`attack${attackNum}` as keyof typeof this.jobConfig.attacks];
+        if (attack && attack.range > 0) {
+          const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
+          const playerCenterX = playerBody.x + playerBody.halfWidth;
+          
+          graphics.lineStyle(2, 0x00ff00, 0.8);
+          graphics.beginPath();
+          graphics.moveTo(playerCenterX, body.y);
+          graphics.lineTo(playerCenterX, body.y + body.height);
+          graphics.strokePath();
+          
+          // Draw range text (we would need a text object for this, skipping for now)
         }
       }
     });
@@ -360,10 +376,10 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     });
 
     return {
-      playerClass: this.playerClass,
+      playerJob: this.playerJob,
       isAttacking: this.player.isAttacking,
-      health: this.classConfig.baseStats.health,
-      moveSpeed: this.classConfig.baseStats.moveSpeed,
+      health: this.jobConfig.baseStats.health,
+      moveSpeed: this.jobConfig.baseStats.moveSpeed,
       cooldowns,
     };
   }
