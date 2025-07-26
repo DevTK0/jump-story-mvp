@@ -5,7 +5,7 @@ import { SpacetimeConnector } from './spacetime-connector';
 import { DbConnection } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { PlayerQueryService } from '@/player';
-import { ErrorBoundary, NetworkError } from '@/core/error-boundary';
+import { ErrorBoundary, NetworkError } from '@/core/error';
 import { Player } from '@/player';
 
 export interface ConnectionConfig {
