@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { System } from '../../core/types';
-import { emitSceneEvent } from '../../core/scene-events';
+import { emitSceneEvent } from '../../core/scene';
 import { Player } from '../player';
 import { InputSystem } from '../input';
 import type { IDebuggable } from '@/debug/debug-interfaces';

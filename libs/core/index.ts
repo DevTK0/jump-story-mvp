@@ -1,5 +1,4 @@
 export * from './types';
-export * from './scene-events';
 
 // Error boundary system
 export * from './error';
@@ -11,8 +10,7 @@ export * from './asset';
 export * from './animations';
 
 // Scene management
-export * from './scene-initializer';
-export * from './manager-registry';
+export * from './scene';
 
 // Configuration
 export * from './display-config';

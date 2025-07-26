@@ -1,24 +1,24 @@
 import Phaser from 'phaser';
-import { createLogger, type ModuleLogger } from './logger';
+import { createLogger, type ModuleLogger } from '../logger';
 import { EnemyManager } from '@/enemy';
 import { PeerManager } from '@/peer';
-import { PhysicsSetupCoordinator } from '@/physics/physics-setup-coordinator';
-import { MapPhysicsFactory } from '@/physics/map-physics-factory';
+import { PhysicsSetupCoordinator } from '@/core/physics/physics-setup-coordinator';
+import { MapPhysicsFactory } from '@/core/physics/map-physics-factory';
 import { InteractionHandler } from '@/networking';
 import { EnemyDamageRenderer, PlayerDamageRenderer } from '@/player';
 import { LevelUpAnimationManager, ChatManager } from '@/ui';
 import { Player } from '@/player';
-import type { MapData } from './asset/map-loader';
+import type { MapData } from '../asset/map-loader';
 import { DbConnection } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { PROXIMITY_CONFIG } from '@/networking/proximity-config';
-import { CAMERA_CONFIG } from './camera-config';
+import { CAMERA_CONFIG } from '../camera-config';
 
 export interface ManagerInitConfig {
   mapData: MapData;
   player: Player;
-  connection?: DbConnection | null;
-  identity?: Identity;
+  connection: DbConnection;
+  identity: Identity;
 }
 
 /**
@@ -31,10 +31,10 @@ export class ManagerRegistry {
   // Managers
   private enemyManager!: EnemyManager;
   private peerManager?: PeerManager;
-  private physicsCoordinator!: PhysicsSetupCoordinator;
-  private interactionHandler!: InteractionHandler;
-  private enemyDamageRenderer!: EnemyDamageRenderer;
-  private playerDamageRenderer!: PlayerDamageRenderer;
+  private physicsManager!: PhysicsSetupCoordinator;
+  private interactionManager!: InteractionHandler;
+  private enemyDamageManager!: EnemyDamageRenderer;
+  private playerDamageManager!: PlayerDamageRenderer;
   private levelUpAnimationManager!: LevelUpAnimationManager;
   private chatManager!: ChatManager;
   
@@ -58,10 +58,8 @@ export class ManagerRegistry {
     // Create UI managers
     this.createUIManagers();
     
-    // Setup connections if available
-    if (config.connection) {
-      this.setupDatabaseConnections(config.connection, config.identity);
-    }
+    // Setup database connections
+    this.setupDatabaseConnections(config.connection, config.identity);
     
     // Setup manager relationships
     this.setupManagerRelationships();
@@ -79,20 +77,20 @@ export class ManagerRegistry {
     const collisionGroups = MapPhysicsFactory.createAllCollisionGroups(this.scene, mapData);
     
     // Register collision groups with the coordinator
-    this.physicsCoordinator.registerCollisionGroups(collisionGroups);
+    this.physicsManager.registerCollisionGroups(collisionGroups);
     
     // Register entities that implement PhysicsEntity
-    this.physicsCoordinator.registerEntity(player);
-    this.physicsCoordinator.registerEntity(this.enemyManager);
+    this.physicsManager.registerEntity(player);
+    this.physicsManager.registerEntity(this.enemyManager);
     
     // Set up physics for all registered entities
-    this.physicsCoordinator.setupAllPhysics();
+    this.physicsManager.setupAllPhysics();
     
     // Get combat system and register hitboxes if enhanced combat is used
     const combatSystem = player.getSystem('combat');
     if (combatSystem && 'registerHitboxPhysics' in combatSystem) {
-      const registry = this.physicsCoordinator.getRegistry();
-      const interactionCallbacks = this.interactionHandler.createInteractionCallbacks(
+      const registry = this.physicsManager.getRegistry();
+      const interactionCallbacks = this.interactionManager.createInteractionCallbacks(
         player,
         this.enemyManager
       );
@@ -105,8 +103,8 @@ export class ManagerRegistry {
     }
     
     // Set up player-enemy interaction overlaps
-    const registry = this.physicsCoordinator.getRegistry();
-    const interactionCallbacks = this.interactionHandler.createInteractionCallbacks(
+    const registry = this.physicsManager.getRegistry();
+    const interactionCallbacks = this.interactionManager.createInteractionCallbacks(
       player,
       this.enemyManager
     );
@@ -141,8 +139,8 @@ export class ManagerRegistry {
     // Cleanup in reverse order of creation
     this.chatManager?.destroy();
     this.levelUpAnimationManager?.destroy();
-    this.playerDamageRenderer?.destroy();
-    this.enemyDamageRenderer?.destroy();
+    this.playerDamageManager?.destroy();
+    this.enemyDamageManager?.destroy();
     this.peerManager?.destroy();
     this.enemyManager?.destroy();
   }
@@ -157,10 +155,10 @@ export class ManagerRegistry {
     });
     
     // Physics coordinator
-    this.physicsCoordinator = new PhysicsSetupCoordinator(this.scene);
+    this.physicsManager = new PhysicsSetupCoordinator(this.scene);
     
     // Interaction handler
-    this.interactionHandler = new InteractionHandler(this.scene, config.connection || null, {
+    this.interactionManager = new InteractionHandler(this.scene, config.connection || null, {
       cameraShakeDuration: CAMERA_CONFIG.shake.defaultDuration,
       cameraShakeIntensity: CAMERA_CONFIG.shake.defaultIntensity,
     });
@@ -168,12 +166,12 @@ export class ManagerRegistry {
   
   private createRenderingManagers(config: ManagerInitConfig): void {
     // Enemy damage renderer
-    this.enemyDamageRenderer = new EnemyDamageRenderer(this.scene);
-    this.enemyDamageRenderer.setEnemyManager(this.enemyManager);
+    this.enemyDamageManager = new EnemyDamageRenderer(this.scene);
+    this.enemyDamageManager.setEnemyManager(this.enemyManager);
     
     // Player damage renderer
-    this.playerDamageRenderer = new PlayerDamageRenderer(this.scene);
-    this.playerDamageRenderer.setPlayer(config.player);
+    this.playerDamageManager = new PlayerDamageRenderer(this.scene);
+    this.playerDamageManager.setPlayer(config.player);
   }
   
   private createUIManagers(): void {
@@ -184,26 +182,24 @@ export class ManagerRegistry {
     this.chatManager = new ChatManager(this.scene);
   }
   
-  private setupDatabaseConnections(connection: DbConnection, identity?: Identity): void {
+  private setupDatabaseConnections(connection: DbConnection, identity: Identity): void {
     // Set connections on managers that need them
     this.enemyManager.setDbConnection(connection);
-    this.interactionHandler.setDbConnection(connection);
+    this.interactionManager.setDbConnection(connection);
     this.chatManager.setDbConnection(connection);
-    this.playerDamageRenderer.setDbConnection(connection);
+    this.playerDamageManager.setDbConnection(connection);
     
-    // Initialize peer manager if we have identity
-    if (identity) {
-      this.peerManager = new PeerManager(this.scene, {
-        useProximitySubscription: true,
-        proximityRadius: PROXIMITY_CONFIG.peer.defaultRadius,
-        proximityUpdateInterval: PROXIMITY_CONFIG.peer.defaultUpdateInterval,
-      });
-      this.peerManager.setLocalPlayerIdentity(identity);
-      this.peerManager.setDbConnection(connection);
-      
-      // Initialize level up manager with identity
-      this.levelUpAnimationManager.initialize(connection, identity);
-    }
+    // Initialize peer manager with identity
+    this.peerManager = new PeerManager(this.scene, {
+      useProximitySubscription: true,
+      proximityRadius: PROXIMITY_CONFIG.peer.defaultRadius,
+      proximityUpdateInterval: PROXIMITY_CONFIG.peer.defaultUpdateInterval,
+    });
+    this.peerManager.setLocalPlayerIdentity(identity);
+    this.peerManager.setDbConnection(connection);
+    
+    // Initialize level up manager with identity
+    this.levelUpAnimationManager.initialize(connection, identity);
     
     // Setup damage event subscriptions
     this.setupDamageEventSubscription(connection);
@@ -211,7 +207,7 @@ export class ManagerRegistry {
   
   private setupManagerRelationships(): void {
     // Connect enemy manager to interaction handler
-    this.interactionHandler.setEnemyManager(this.enemyManager);
+    this.interactionManager.setEnemyManager(this.enemyManager);
     
     // Connect peer manager with other UI managers
     if (this.peerManager) {
@@ -224,7 +220,7 @@ export class ManagerRegistry {
     // Subscribe to enemy damage events
     connection.db.enemyDamageEvent.onInsert((_ctx, damageEvent) => {
       // Handle damage numbers
-      this.enemyDamageRenderer.handleDamageEvent(damageEvent);
+      this.enemyDamageManager.handleDamageEvent(damageEvent);
       
       // Handle hit animation
       this.enemyManager.playHitAnimation(damageEvent.enemyId);
@@ -249,7 +245,19 @@ export class ManagerRegistry {
     return this.chatManager;
   }
   
-  getEnemyDamageRenderer(): EnemyDamageRenderer {
-    return this.enemyDamageRenderer;
+  getEnemyDamageManager(): EnemyDamageRenderer {
+    return this.enemyDamageManager;
+  }
+  
+  getPlayerDamageManager(): PlayerDamageRenderer {
+    return this.playerDamageManager;
+  }
+  
+  getPhysicsManager(): PhysicsSetupCoordinator {
+    return this.physicsManager;
+  }
+  
+  getInteractionManager(): InteractionHandler {
+    return this.interactionManager;
   }
 }

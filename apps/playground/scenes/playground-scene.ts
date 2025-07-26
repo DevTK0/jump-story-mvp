@@ -72,7 +72,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
       const systems = this.initializer.getSystems();
 
       // Get enemy damage renderer debug info if available
-      const damageRenderer = systems.managers?.getEnemyDamageRenderer();
+      const damageRenderer = systems.managers?.getEnemyDamageManager();
       const damageNumbers = damageRenderer ? damageRenderer.getDebugInfo() : {};
 
       return {

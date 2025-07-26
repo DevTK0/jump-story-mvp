@@ -8,8 +8,8 @@ import {
   type EnemySubscriptionConfig,
 } from './managers/enemy-subscription-manager';
 import { createLogger } from '@/core/logger';
-import type { PhysicsEntity } from '@/physics/physics-entity';
-import type { PhysicsRegistry } from '@/physics/physics-registry';
+import type { PhysicsEntity } from '@/core/physics/physics-entity';
+import type { PhysicsRegistry } from '@/core/physics/physics-registry';
 
 /**
  * Refactored EnemyManager - orchestrates enemy subsystems

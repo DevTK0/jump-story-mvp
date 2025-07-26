@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { Player } from '@/player';
-import { onSceneEvent } from '@/core/scene-events';
+import { onSceneEvent } from '@/core/scene';
 import { AnimationSystem } from '@/player/animations';
 import { AttackType } from '@/spacetime/client';
 import { PlayerQueryService } from '@/player';

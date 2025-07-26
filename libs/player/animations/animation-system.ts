@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { System } from '../../core/types';
-import { onSceneEvent } from '../../core/scene-events';
+import { onSceneEvent } from '../../core/scene';
 import { Player } from '../player';
 import { InputSystem } from '../input';
 import { AnimationFactory } from '@/core/animations';

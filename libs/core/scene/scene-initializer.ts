@@ -1,13 +1,13 @@
 import Phaser from 'phaser';
-import { createLogger, type ModuleLogger } from './logger';
-import { AssetLoaderService } from './asset/asset-loader-service';
+import { createLogger, type ModuleLogger } from '../logger';
+import { AssetLoaderService } from '../asset/asset-loader-service';
 import { ManagerRegistry } from './manager-registry';
 import { UIFactory } from '@/ui/ui-factory';
 import { SceneConnectionHelper } from '@/networking/scene-connection-helper';
 import { DebugSceneExtension } from '@/debug/debug-scene-extension';
 import { Player } from '@/player';
-import type { MapData } from './asset/map-loader';
-import type { SpriteConfig } from './asset/sprite-config-loader';
+import type { MapData } from '../asset/map-loader';
+import type { SpriteConfig } from '../asset/sprite-config-loader';
 
 export interface SceneConfig {
   key: string;
@@ -173,7 +173,7 @@ export class SceneInitializer {
     this.logger.debug('Initializing map...');
     
     // Setup background color
-    const { DISPLAY_CONFIG } = await import('./display-config');
+    const { DISPLAY_CONFIG } = await import('../display-config');
     this.scene.cameras.main.setBackgroundColor(DISPLAY_CONFIG.backgroundColor);
     
     const mapData = this.assetLoader.createMap();
@@ -249,12 +249,18 @@ export class SceneInitializer {
     this.systems.managers = this.managers;
     
     // Initialize all managers
+    const connection = this.connectionHelper.getConnection();
     const identity = this.connectionHelper.getIdentity();
+    
+    if (!connection || !identity) {
+      throw new Error('Database connection and identity are required for manager initialization');
+    }
+    
     await this.managers.initialize({
       mapData: this.systems.mapData!,
       player: this.systems.player!,
-      connection: this.connectionHelper.getConnection(),
-      identity: identity || undefined,
+      connection,
+      identity,
     });
     
     // Store managers in scene data for access by other systems

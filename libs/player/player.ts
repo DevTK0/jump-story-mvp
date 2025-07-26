@@ -1,11 +1,11 @@
 import Phaser from 'phaser';
 import type { System } from '../core/types';
-import { emitSceneEvent } from '../core/scene-events';
+import { emitSceneEvent } from '../core/scene';
 import type { PlayerState } from './player-types';
 import { PLAYER_CONFIG } from './config';
 import { PlayerStateMachine } from './state/state-machine';
-import type { PhysicsEntity } from '@/physics/physics-entity';
-import type { PhysicsRegistry } from '@/physics/physics-registry';
+import type { PhysicsEntity } from '@/core/physics/physics-entity';
+import type { PhysicsRegistry } from '@/core/physics/physics-registry';
 
 export interface PlayerConfig {
   scene: Phaser.Scene;
