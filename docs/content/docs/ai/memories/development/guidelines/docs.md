@@ -44,6 +44,7 @@ SystemName: {
 - Components in the diagram should reference actual file/class names or sections when possible (don't use different naming or reword them)
 - Always used layout="elk"
 - Do not include other diagrams unless specified in the content section
+- `[]` is considered a special character in d2. If you want to represent an array, make sure to encase them in "" (e.g. "string[]")
 
 ### Content Guidelines
 
