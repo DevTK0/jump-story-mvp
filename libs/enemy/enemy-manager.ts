@@ -136,10 +136,20 @@ export class EnemyManager {
   private updateServerEnemy(serverEnemy: ServerEnemy): void {
     const sprite = this.spawnManager.getEnemy(serverEnemy.enemyId);
     const healthBar = this.spawnManager.getHealthBar(serverEnemy.enemyId);
+    
+    // Check proximity if using proximity subscription
+    const isInProximity = this.subscriptionManager.isEnemyInProximity(serverEnemy);
+    
+    if (!sprite && isInProximity) {
+      // Enemy doesn't exist locally but is within proximity - spawn it
+      this.logger.debug(`Enemy ${serverEnemy.enemyId} entered proximity - spawning`);
+      this.spawnServerEnemy(serverEnemy);
+      return;
+    }
+    
     if (!sprite) return;
 
-    // Check proximity if using proximity subscription
-    if (!this.subscriptionManager.isEnemyInProximity(serverEnemy)) {
+    if (!isInProximity) {
       this.despawnServerEnemy(serverEnemy.enemyId);
       return;
     }
