@@ -1,5 +1,5 @@
 export * from './types';
-export * from './events';
+export * from './scene-events';
 
 // Error boundary system
 export * from './error-boundary';

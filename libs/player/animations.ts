@@ -1,14 +1,14 @@
 import Phaser from 'phaser';
 import type { System } from '../core/types';
+import { onSceneEvent } from '../core/scene-events';
 import { Player } from './player';
 import { InputSystem } from './input';
-import { gameEvents } from '../core/events';
-import { PlayerEvent } from './player-events';
 import { AnimationFactory, AnimationManager, ANIMATION_TIMINGS } from '../animations';
 import { createLogger, type ModuleLogger } from '@/core/logger';
 
 export class AnimationSystem implements System {
   private player: Player;
+  private scene: Phaser.Scene;
   private logger: ModuleLogger = createLogger('AnimationSystem');
 
   // Animation factory and manager
@@ -23,6 +23,7 @@ export class AnimationSystem implements System {
 
   constructor(player: Player, _inputSystem: InputSystem, scene: Phaser.Scene) {
     this.player = player;
+    this.scene = scene;
 
     // Initialize animation factory and manager
     this.animationFactory = new AnimationFactory(scene);
@@ -41,7 +42,7 @@ export class AnimationSystem implements System {
 
   private bindEvents(): void {
     // Listen for combat events to handle attack animations
-    gameEvents.on(PlayerEvent.PLAYER_ATTACKED, async (data: any) => {
+    onSceneEvent(this.scene, 'player:attacked', async (data) => {
       this.isPlayingAttackAnimation = true;
 
       // Play the appropriate attack animation based on attack type
@@ -326,8 +327,7 @@ export class AnimationSystem implements System {
       clearTimeout(this.invulnerabilityTimer);
     }
 
-    // Clean up event listeners
-    gameEvents.off(PlayerEvent.PLAYER_ATTACKED);
+    // Scene events are automatically cleaned up when scene is destroyed
     this.animationFactory.clear();
   }
 }

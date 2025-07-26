@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import type { System } from '../../core/types';
-import { gameEvents } from '../../core/events';
-import { PlayerEvent } from '../player-events';
+import { onSceneEvent } from '../../core/scene-events';
 import { Player } from '../player';
 import { InputSystem } from '../input';
 import { MovementSystem } from './movement';
@@ -276,8 +275,8 @@ export class ClimbingSystem extends BaseDebugRenderer implements System, IDebugg
     this.physics = new ClimbingPhysics(player, scene);
     this.collision = new ClimbingCollision(player, scene);
 
-    // Listen for player death to exit climbing
-    gameEvents.on(PlayerEvent.PLAYER_DIED, () => {
+    // Listen for player death event
+    onSceneEvent(scene, 'player:died', () => {
       if (this.player.isClimbing) {
         this.exitClimbing();
       }
@@ -428,9 +427,6 @@ export class ClimbingSystem extends BaseDebugRenderer implements System, IDebugg
     this.player.setPlayerState({ isClimbing: true });
     this.physics.enableClimbingPhysics();
 
-    gameEvents.emit(PlayerEvent.PLAYER_CLIMB_START, {
-      climbableObject: this.player,
-    });
   }
 
   private exitClimbing(): void {
@@ -439,7 +435,6 @@ export class ClimbingSystem extends BaseDebugRenderer implements System, IDebugg
     this.player.setPlayerState({ isClimbing: false });
     this.physics.disableClimbingPhysics();
 
-    gameEvents.emit(PlayerEvent.PLAYER_CLIMB_END);
   }
 
   // Public API

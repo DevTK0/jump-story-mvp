@@ -1,6 +1,4 @@
 import type { System } from '../../core/types';
-import { gameEvents } from '../../core/events';
-import { PlayerEvent } from '../player-events';
 import { Player } from '../player';
 import { InputSystem } from '../input';
 import type { IDebuggable } from '@/debug/debug-interfaces';
@@ -109,9 +107,6 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
 
   private jump(): void {
     this.player.body.setVelocityY(-this.player.getJumpSpeed());
-    gameEvents.emit(PlayerEvent.PLAYER_JUMP, {
-      velocity: this.player.getJumpSpeed(),
-    });
   }
 
   private handleDoubleJump(): void {
@@ -126,9 +121,6 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
     ) {
       this.player.body.setVelocityY(-this.player.getJumpSpeed());
       this.stateTracker.setHasUsedDoubleJump(true);
-      gameEvents.emit(PlayerEvent.PLAYER_JUMP, {
-        velocity: this.player.getJumpSpeed(),
-      });
     }
 
     // Reset double jump when landing
@@ -140,9 +132,6 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
   // Public methods for other systems to use
   public forceJump(velocityMultiplier: number = 1): void {
     this.player.body.setVelocityY(-this.player.getJumpSpeed() * velocityMultiplier);
-    gameEvents.emit(PlayerEvent.PLAYER_JUMP, {
-      velocity: this.player.getJumpSpeed() * velocityMultiplier,
-    });
   }
 
   public setVelocity(x?: number, y?: number): void {

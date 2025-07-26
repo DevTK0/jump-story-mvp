@@ -1,0 +1,82 @@
+/**
+ * Type-safe scene event system
+ * 
+ * Provides compile-time type safety for Phaser scene events
+ */
+
+// Define all scene event types
+export interface SceneEventMap {
+  'player:attacked': {
+    type: 'melee' | 'ranged' | 'standard';
+    direction: number;
+    attackType: number;
+    damage?: number;
+    critChance?: number;
+  };
+  'player:died': {
+    position: { x: number; y: number };
+  };
+  // Add more events here as the game grows
+}
+
+/**
+ * Type-safe event emission
+ * @param scene - The Phaser scene
+ * @param event - The event name (must be a key of SceneEventMap)
+ * @param data - The event data (type-checked based on event name)
+ */
+export function emitSceneEvent<K extends keyof SceneEventMap>(
+  scene: Phaser.Scene,
+  event: K,
+  data: SceneEventMap[K]
+): void {
+  scene.events.emit(event, data);
+}
+
+/**
+ * Type-safe event listener
+ * @param scene - The Phaser scene
+ * @param event - The event name (must be a key of SceneEventMap)
+ * @param fn - Callback function with typed data parameter
+ * @param context - Optional context for the callback
+ */
+export function onSceneEvent<K extends keyof SceneEventMap>(
+  scene: Phaser.Scene,
+  event: K,
+  fn: (data: SceneEventMap[K]) => void,
+  context?: any
+): void {
+  scene.events.on(event, fn, context);
+}
+
+/**
+ * Type-safe one-time event listener
+ * @param scene - The Phaser scene
+ * @param event - The event name (must be a key of SceneEventMap)
+ * @param fn - Callback function with typed data parameter
+ * @param context - Optional context for the callback
+ */
+export function onceSceneEvent<K extends keyof SceneEventMap>(
+  scene: Phaser.Scene,
+  event: K,
+  fn: (data: SceneEventMap[K]) => void,
+  context?: any
+): void {
+  scene.events.once(event, fn, context);
+}
+
+/**
+ * Type-safe event removal
+ * @param scene - The Phaser scene
+ * @param event - The event name (must be a key of SceneEventMap)
+ * @param fn - Optional callback function to remove
+ * @param context - Optional context
+ */
+export function offSceneEvent<K extends keyof SceneEventMap>(
+  scene: Phaser.Scene,
+  event: K,
+  fn?: (data: SceneEventMap[K]) => void,
+  context?: any
+): void {
+  scene.events.off(event, fn, context);
+}

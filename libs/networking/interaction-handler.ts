@@ -1,14 +1,12 @@
 import Phaser from 'phaser';
 import { Player } from '@/player';
+import { onSceneEvent } from '@/core/scene-events';
 import { AnimationSystem } from '@/player/animations';
 import { AttackType } from '@/spacetime/client';
-import { gameEvents } from '@/core/events';
-import { PlayerEvent } from '@/player/player-events';
 import { PlayerQueryService } from '@/player';
 import { createLogger } from '@/core/logger';
 import type {
   DatabaseConnection,
-  PlayerAttackEventData,
   AttackHitbox,
   EnemySprite,
   PlayerSprite,
@@ -23,6 +21,7 @@ export interface InteractionConfig {
 }
 
 export class InteractionHandler {
+  private scene: Phaser.Scene;
   private dbConnection: DatabaseConnection | null;
   private currentAttackType: number = 1; // Default to attack1
   private enemyManager: InteractionEnemyManager | null = null;
@@ -33,17 +32,18 @@ export class InteractionHandler {
   private damagedInCurrentAttack = new Set<number>();
 
   constructor(
-    _scene: Phaser.Scene,
+    scene: Phaser.Scene,
     dbConnection: DatabaseConnection | null,
     _config?: InteractionConfig
   ) {
+    this.scene = scene;
     this.dbConnection = dbConnection;
 
     // Get PlayerQueryService singleton if available
     this.playerQueryService = PlayerQueryService.getInstance();
 
     // Listen for player attack events to track current attack type
-    gameEvents.on(PlayerEvent.PLAYER_ATTACKED, (data: PlayerAttackEventData) => {
+    onSceneEvent(this.scene, 'player:attacked', (data) => {
       this.currentAttackType = data.attackType || 1;
       // Clear damage tracking for new attack
       this.damagedInCurrentAttack.clear();
@@ -275,6 +275,6 @@ export class InteractionHandler {
    * Clean up event listeners
    */
   public destroy(): void {
-    gameEvents.off(PlayerEvent.PLAYER_ATTACKED);
+    // Scene events are automatically cleaned up when scene is destroyed
   }
 }

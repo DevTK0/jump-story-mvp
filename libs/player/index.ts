@@ -52,7 +52,6 @@ export { PlayerBuilder } from './player-builder';
 // Type exports
 export type { System } from '../core/types';
 export * from './player-types';
-export * from './player-events';
 
 // Export player constants
 export { PLAYER_CONFIG } from './config';

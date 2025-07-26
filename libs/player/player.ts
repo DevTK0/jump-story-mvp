@@ -1,8 +1,7 @@
 import Phaser from 'phaser';
 import type { System } from '../core/types';
+import { emitSceneEvent } from '../core/scene-events';
 import type { PlayerState } from './player-types';
-import { gameEvents } from '../core/events';
-import { PlayerEvent } from './player-events';
 import { PLAYER_CONFIG } from './config';
 import { PlayerStateMachine } from './state/state-machine';
 
@@ -138,21 +137,15 @@ export class Player extends Phaser.GameObjects.Sprite {
   }
 
   public setPlayerState(updates: Partial<PlayerState>): void {
-    const oldHealth = this.playerState.health;
     this.playerState = { ...this.playerState, ...updates };
 
-    // Emit events for state changes
-    if (updates.health !== undefined && updates.health < oldHealth) {
-      gameEvents.emit(PlayerEvent.PLAYER_DAMAGED, {
-        damage: oldHealth - updates.health,
-        health: updates.health,
-      });
-    }
+    // Health change is handled by game systems directly
 
     if (updates.health !== undefined && updates.health <= 0 && this.playerState.isAlive) {
       this.playerState.isAlive = false;
-      gameEvents.emit(PlayerEvent.PLAYER_DIED, {
-        position: { x: this.x, y: this.y },
+      // Emit death event using type-safe scene events
+      emitSceneEvent(this.scene, 'player:died', {
+        position: { x: this.x, y: this.y }
       });
     }
   }
@@ -226,6 +219,7 @@ export class Player extends Phaser.GameObjects.Sprite {
   public getJumpSpeed(): number {
     return PLAYER_CONFIG.movement.jumpSpeed;
   }
+
 
   public destroy(): void {
     // Destroy all systems

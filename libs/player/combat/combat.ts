@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import type { System } from '../../core/types';
-import { gameEvents, CoreGameEvent } from '../../core/events';
-import { PlayerEvent } from '../player-events';
+import { emitSceneEvent } from '../../core/scene-events';
 import { Player } from '../player';
 import { InputSystem } from '../input';
 import { PLAYER_CONFIG } from '../config';
@@ -174,8 +173,8 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
       this.player.transitionToState(attackStateName);
     }
 
-    // Emit attack event with attack type information
-    gameEvents.emit(PlayerEvent.PLAYER_ATTACKED, {
+    // Emit attack event with attack type information using type-safe helper
+    emitSceneEvent(this.scene, 'player:attacked', {
       type: 'melee',
       direction: facing,
       attackType: attackType,
@@ -197,12 +196,7 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
         body.reset(this.hitboxSprite.x, this.hitboxSprite.y);
       }
 
-      // Emit damage event for any overlapping enemies
-      gameEvents.emit(CoreGameEvent.DAMAGE_DEALT, {
-        source: 'player',
-        target: 'enemy',
-        damage: attackConfig.damage,
-      });
+      // Damage is handled directly by collision detection
 
       // Active phase duration
       await this.delay(attackConfig.activeMs);
