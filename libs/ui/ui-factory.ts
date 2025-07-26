@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { createLogger, type ModuleLogger } from '@/core/logger';
 import { PlayerStatsUI } from './stats/player-stats-ui';
+import { BottomUIBar } from './bottom-bar/bottom-ui-bar';
 import { FPSCounter } from './performance/fps-counter';
 import { PerformanceMetrics } from './performance/performance-metrics';
 import { DbMetricsTracker } from './performance/db-metrics-tracker';
@@ -24,6 +25,7 @@ export class UIFactory {
   
   // UI Components
   private playerStatsUI?: PlayerStatsUI;
+  private bottomUIBar?: BottomUIBar;
   private fpsCounter?: FPSCounter;
   private performanceMetrics?: PerformanceMetrics;
   
@@ -86,6 +88,7 @@ export class UIFactory {
     
     // Destroy UI components
     this.playerStatsUI?.destroy();
+    this.bottomUIBar?.destroy();
     this.fpsCounter?.destroy();
     this.performanceMetrics?.destroy();
   }
@@ -93,8 +96,14 @@ export class UIFactory {
   // Private creation methods
   
   private createPlayerStatsUI(config: UICreateConfig): void {
+    // Create the new bottom UI bar instead of top-left stats
+    this.bottomUIBar = new BottomUIBar(this.scene, config.identity);
+    this.bottomUIBar.setDbConnection(config.connection);
+    
+    // Keep the old stats UI but hide it (for backward compatibility)
     this.playerStatsUI = new PlayerStatsUI(this.scene, config.identity);
     this.playerStatsUI.setDbConnection(config.connection);
+    this.playerStatsUI.setVisible(false);
   }
   
   private createPerformanceUI(): void {
@@ -165,6 +174,10 @@ export class UIFactory {
   
   getPlayerStatsUI(): PlayerStatsUI | undefined {
     return this.playerStatsUI;
+  }
+  
+  getBottomUIBar(): BottomUIBar | undefined {
+    return this.bottomUIBar;
   }
   
   getFPSCounter(): FPSCounter | undefined {
