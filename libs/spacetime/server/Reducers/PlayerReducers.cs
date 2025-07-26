@@ -43,8 +43,26 @@ public static partial class Module
 
         // Create player with initial position and stats
         var startingLevel = PlayerConstants.STARTING_LEVEL;
-        var maxHp = PlayerConstants.CalculateMaxHp(startingLevel);
-        var maxMana = PlayerConstants.CalculateMaxMana(startingLevel);
+        var defaultJob = "soldier"; // Default job for new players
+        
+        // Look up job to get base stats
+        var job = ctx.Db.Job.job_key.Find(defaultJob);
+        float maxHp, maxMana;
+        
+        if (job != null)
+        {
+            // Use job-specific base values with exponential scaling
+            maxHp = PlayerConstants.CalculateMaxHpWithJob(startingLevel, job.Value.health);
+            maxMana = PlayerConstants.CalculateMaxManaWithJob(startingLevel, job.Value.mana);
+            Log.Info($"Created player with job {defaultJob}: Base HP={job.Value.health}, Scaled HP={maxHp}");
+        }
+        else
+        {
+            // Fallback to old calculation if job not found
+            Log.Warn($"Job {defaultJob} not found, using default calculations");
+            maxHp = PlayerConstants.CalculateMaxHp(startingLevel);
+            maxMana = PlayerConstants.CalculateMaxMana(startingLevel);
+        }
         
         var newPlayer = new Player
         {
@@ -62,7 +80,7 @@ public static partial class Module
             level = startingLevel,
             experience = PlayerConstants.STARTING_EXPERIENCE,
             is_typing = false,
-            job = "soldier" // Default job for new players
+            job = defaultJob
         };
         ctx.Db.Player.Insert(newPlayer);
         
@@ -300,8 +318,22 @@ public static partial class Module
         }
 
         // Restore player to full health and set to idle state at spawn position
-        var maxHp = PlayerConstants.CalculateMaxHp(player.Value.level);
-        var maxMana = PlayerConstants.CalculateMaxMana(player.Value.level);
+        float maxHp, maxMana;
+        
+        // Look up job to get base stats for scaling
+        var job = ctx.Db.Job.job_key.Find(player.Value.job);
+        if (job != null)
+        {
+            maxHp = PlayerConstants.CalculateMaxHpWithJob(player.Value.level, job.Value.health);
+            maxMana = PlayerConstants.CalculateMaxManaWithJob(player.Value.level, job.Value.mana);
+        }
+        else
+        {
+            // Fallback to old calculation if job not found
+            Log.Warn($"Job {player.Value.job} not found, using default calculations");
+            maxHp = PlayerConstants.CalculateMaxHp(player.Value.level);
+            maxMana = PlayerConstants.CalculateMaxMana(player.Value.level);
+        }
         
         // First update HP and position
         var respawnedPlayer = player.Value with

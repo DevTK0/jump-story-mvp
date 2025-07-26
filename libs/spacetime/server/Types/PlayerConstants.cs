@@ -32,6 +32,10 @@ public static class PlayerConstants
     public const float SPAWN_POSITION_X = 1000.0f;  // Default spawn X coordinate
     public const float SPAWN_POSITION_Y = 100.0f;   // Default spawn Y coordinate
     
+    // Scaling exponents for exponential growth
+    public const double HP_SCALING_EXPONENT = 1.1;      // HP scales by 1.1^level
+    public const double DAMAGE_SCALING_EXPONENT = 1.15; // Damage scales by 1.15^level
+    
     // Helper methods for stat calculations
     public static float CalculateMaxHp(uint level)
     {
@@ -41,6 +45,25 @@ public static class PlayerConstants
     public static float CalculateMaxMana(uint level)
     {
         return BASE_MANA + (MANA_PER_LEVEL * (level - 1));
+    }
+    
+    // New exponential scaling methods using job-specific base values
+    public static float CalculateMaxHpWithJob(uint level, uint baseHp)
+    {
+        // HP = Base HP × (1.1^level)
+        return (float)(baseHp * Math.Pow(HP_SCALING_EXPONENT, level));
+    }
+    
+    public static float CalculateMaxManaWithJob(uint level, uint baseMana)
+    {
+        // For now, mana uses the same scaling as HP
+        return (float)(baseMana * Math.Pow(HP_SCALING_EXPONENT, level));
+    }
+    
+    public static float CalculateScaledDamage(uint level, uint baseDamage)
+    {
+        // Damage = Base Damage × (1.15^level)
+        return (float)(baseDamage * Math.Pow(DAMAGE_SCALING_EXPONENT, level));
     }
     
     public static float CalculatePlayerDamage(uint level)

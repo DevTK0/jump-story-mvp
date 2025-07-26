@@ -163,13 +163,16 @@ public static partial class Module
                 // Use job attack damage as base damage
                 var baseDamage = jobAttack.Value.damage;
                 
+                // Apply level scaling to damage
+                var scaledDamage = PlayerConstants.CalculateScaledDamage(player.Value.level, baseDamage);
+                
                 // Apply critical hit based on attack's crit chance
                 var random = new Random();
                 var isCritical = jobAttack.Value.crit_chance > 0 && random.NextDouble() < jobAttack.Value.crit_chance;
                 var damageType = isCritical ? DamageType.Crit : DamageType.Normal;
                 
                 // Apply damage multiplier (1.5x for crit, 1.0x for normal)
-                var finalDamage = (uint)(baseDamage * DamageCalculator.GetDamageMultiplier(damageType));
+                var finalDamage = (uint)(scaledDamage * DamageCalculator.GetDamageMultiplier(damageType));
 
                     var oldHp = currentHp;
                     var newHp = Math.Max(0, currentHp - finalDamage);
@@ -220,7 +223,7 @@ public static partial class Module
                     break; // Don't continue hitting a dead enemy
                 }
 
-                Log.Info($"Player {ctx.Sender} used {jobAttack.Value.name} (hit {hit+1}/{jobAttack.Value.hits}) dealing {finalDamage} {damageType} damage to enemy {enemy.enemy_id}. HP: {oldHp} -> {newHp}" + (wasKilled ? " [KILLED]" : ""));
+                Log.Info($"Player {ctx.Sender} (Lv{player.Value.level}) used {jobAttack.Value.name} (hit {hit+1}/{jobAttack.Value.hits}) dealing {finalDamage} {damageType} damage (base: {baseDamage}, scaled: {scaledDamage:F0}) to enemy {enemy.enemy_id}. HP: {oldHp} -> {newHp}" + (wasKilled ? " [KILLED]" : ""));
                 
                 // Update current HP for next hit
                 currentHp = newHp;
