@@ -3,7 +3,7 @@
  */
 
 // Valid attack modifiers
-export type AttackModifier = 'fire' | 'ice' | 'sword' | 'axe' | 'bow' | 'spear' | 'holy';
+export type AttackModifier = 'sword' | 'axe' | 'bow' | 'spear' | 'dark' | 'spike' | 'claw' | 'greatsword' | 'holy';
 
 // Base attack properties shared by all attack types
 interface BaseAttack {
@@ -61,6 +61,18 @@ export function isAreaAttack(attack: Attack): attack is AreaAttack {
   return attack.attackType === 'area';
 }
 
+// Resistance values for different damage types
+export interface Resistances {
+  sword: number;
+  axe: number;
+  bow: number;
+  spear: number;
+  dark: number;
+  spike: number;
+  claw: number;
+  greatsword: number;
+}
+
 // Example job configuration with type safety
 export interface JobConfig {
   displayName: string;
@@ -68,7 +80,10 @@ export interface JobConfig {
   baseStats: {
     health: number;
     moveSpeed: number;
-    mana?: number;
+    mana: number;
+    hpRecovery: number;
+    manaRecovery: number;
+    resistances: Resistances;
   };
   attacks: {
     attack1: Attack;
@@ -87,6 +102,19 @@ export const EXAMPLE_WARRIOR_CONFIG: JobConfig = {
   baseStats: {
     health: 120,
     moveSpeed: 160,
+    mana: 50,
+    hpRecovery: 1,
+    manaRecovery: 0.5,
+    resistances: {
+      sword: 10,
+      axe: 5,
+      bow: -10,
+      spear: 0,
+      dark: -5,
+      spike: 0,
+      claw: -5,
+      greatsword: 15,
+    },
   },
   attacks: {
     attack1: {

@@ -33,34 +33,36 @@ import {
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
 
-import { AttackType as __AttackType } from "./attack_type_type";
-
-export type DamageMultipleEnemies = {
-  enemyIds: number[],
-  attackType: __AttackType,
+export type InitializeJobPassive = {
+  adminApiKey: string,
+  jobKey: string,
+  passiveSlot: number,
+  name: string,
 };
 
 /**
  * A namespace for generated helper functions.
  */
-export namespace DamageMultipleEnemies {
+export namespace InitializeJobPassive {
   /**
   * A function which returns this type represented as an AlgebraicType.
   * This function is derived from the AlgebraicType used to generate this type.
   */
   export function getTypeScriptAlgebraicType(): AlgebraicType {
     return AlgebraicType.createProductType([
-      new ProductTypeElement("enemyIds", AlgebraicType.createArrayType(AlgebraicType.createU32Type())),
-      new ProductTypeElement("attackType", __AttackType.getTypeScriptAlgebraicType()),
+      new ProductTypeElement("adminApiKey", AlgebraicType.createStringType()),
+      new ProductTypeElement("jobKey", AlgebraicType.createStringType()),
+      new ProductTypeElement("passiveSlot", AlgebraicType.createU8Type()),
+      new ProductTypeElement("name", AlgebraicType.createStringType()),
     ]);
   }
 
-  export function serialize(writer: BinaryWriter, value: DamageMultipleEnemies): void {
-    DamageMultipleEnemies.getTypeScriptAlgebraicType().serialize(writer, value);
+  export function serialize(writer: BinaryWriter, value: InitializeJobPassive): void {
+    InitializeJobPassive.getTypeScriptAlgebraicType().serialize(writer, value);
   }
 
-  export function deserialize(reader: BinaryReader): DamageMultipleEnemies {
-    return DamageMultipleEnemies.getTypeScriptAlgebraicType().deserialize(reader);
+  export function deserialize(reader: BinaryReader): InitializeJobPassive {
+    return InitializeJobPassive.getTypeScriptAlgebraicType().deserialize(reader);
   }
 
 }

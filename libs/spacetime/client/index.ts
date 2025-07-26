@@ -40,6 +40,8 @@ import { CleanupInactivePlayers } from "./cleanup_inactive_players_reducer.ts";
 export { CleanupInactivePlayers };
 import { CleanupOldMessages } from "./cleanup_old_messages_reducer.ts";
 export { CleanupOldMessages };
+import { ClearAllJobData } from "./clear_all_job_data_reducer.ts";
+export { ClearAllJobData };
 import { Connect } from "./connect_reducer.ts";
 export { Connect };
 import { DamageEnemy } from "./damage_enemy_reducer.ts";
@@ -50,6 +52,12 @@ import { Disconnect } from "./disconnect_reducer.ts";
 export { Disconnect };
 import { InitializeEnemyRoutes } from "./initialize_enemy_routes_reducer.ts";
 export { InitializeEnemyRoutes };
+import { InitializeJob } from "./initialize_job_reducer.ts";
+export { InitializeJob };
+import { InitializeJobAttack } from "./initialize_job_attack_reducer.ts";
+export { InitializeJobAttack };
+import { InitializeJobPassive } from "./initialize_job_passive_reducer.ts";
+export { InitializeJobPassive };
 import { InstakillPlayer } from "./instakill_player_reducer.ts";
 export { InstakillPlayer };
 import { PlayerTakeDamage } from "./player_take_damage_reducer.ts";
@@ -88,8 +96,16 @@ import { EnemyDamageEventTableHandle } from "./enemy_damage_event_table.ts";
 export { EnemyDamageEventTableHandle };
 import { EnemyRouteTableHandle } from "./enemy_route_table.ts";
 export { EnemyRouteTableHandle };
+import { JobTableHandle } from "./job_table.ts";
+export { JobTableHandle };
+import { JobAttackTableHandle } from "./job_attack_table.ts";
+export { JobAttackTableHandle };
+import { JobPassiveTableHandle } from "./job_passive_table.ts";
+export { JobPassiveTableHandle };
 import { PlayerTableHandle } from "./player_table.ts";
 export { PlayerTableHandle };
+import { PlayerCooldownTableHandle } from "./player_cooldown_table.ts";
+export { PlayerCooldownTableHandle };
 import { PlayerDamageEventTableHandle } from "./player_damage_event_table.ts";
 export { PlayerDamageEventTableHandle };
 import { PlayerLevelingConfigTableHandle } from "./player_leveling_config_table.ts";
@@ -128,12 +144,20 @@ import { EnemyRoute } from "./enemy_route_type.ts";
 export { EnemyRoute };
 import { FacingDirection } from "./facing_direction_type.ts";
 export { FacingDirection };
+import { Job } from "./job_type.ts";
+export { Job };
+import { JobAttack } from "./job_attack_type.ts";
+export { JobAttack };
+import { JobPassive } from "./job_passive_type.ts";
+export { JobPassive };
 import { MessageCleanupTimer } from "./message_cleanup_timer_type.ts";
 export { MessageCleanupTimer };
 import { MessageType } from "./message_type_type.ts";
 export { MessageType };
 import { Player } from "./player_type.ts";
 export { Player };
+import { PlayerCooldown } from "./player_cooldown_type.ts";
+export { PlayerCooldown };
 import { PlayerDamageEvent } from "./player_damage_event_type.ts";
 export { PlayerDamageEvent };
 import { PlayerLevelingConfig } from "./player_leveling_config_type.ts";
@@ -183,6 +207,33 @@ const REMOTE_MODULE = {
         colType: EnemyRoute.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
+    Job: {
+      tableName: "Job",
+      rowType: Job.getTypeScriptAlgebraicType(),
+      primaryKey: "jobId",
+      primaryKeyInfo: {
+        colName: "jobId",
+        colType: Job.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    JobAttack: {
+      tableName: "JobAttack",
+      rowType: JobAttack.getTypeScriptAlgebraicType(),
+      primaryKey: "attackId",
+      primaryKeyInfo: {
+        colName: "attackId",
+        colType: JobAttack.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    JobPassive: {
+      tableName: "JobPassive",
+      rowType: JobPassive.getTypeScriptAlgebraicType(),
+      primaryKey: "passiveId",
+      primaryKeyInfo: {
+        colName: "passiveId",
+        colType: JobPassive.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
     Player: {
       tableName: "Player",
       rowType: Player.getTypeScriptAlgebraicType(),
@@ -190,6 +241,15 @@ const REMOTE_MODULE = {
       primaryKeyInfo: {
         colName: "identity",
         colType: Player.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    PlayerCooldown: {
+      tableName: "PlayerCooldown",
+      rowType: PlayerCooldown.getTypeScriptAlgebraicType(),
+      primaryKey: "playerIdentity",
+      primaryKeyInfo: {
+        colName: "playerIdentity",
+        colType: PlayerCooldown.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     PlayerDamageEvent: {
@@ -269,6 +329,10 @@ const REMOTE_MODULE = {
       reducerName: "CleanupOldMessages",
       argsType: CleanupOldMessages.getTypeScriptAlgebraicType(),
     },
+    ClearAllJobData: {
+      reducerName: "ClearAllJobData",
+      argsType: ClearAllJobData.getTypeScriptAlgebraicType(),
+    },
     Connect: {
       reducerName: "Connect",
       argsType: Connect.getTypeScriptAlgebraicType(),
@@ -288,6 +352,18 @@ const REMOTE_MODULE = {
     InitializeEnemyRoutes: {
       reducerName: "InitializeEnemyRoutes",
       argsType: InitializeEnemyRoutes.getTypeScriptAlgebraicType(),
+    },
+    InitializeJob: {
+      reducerName: "InitializeJob",
+      argsType: InitializeJob.getTypeScriptAlgebraicType(),
+    },
+    InitializeJobAttack: {
+      reducerName: "InitializeJobAttack",
+      argsType: InitializeJobAttack.getTypeScriptAlgebraicType(),
+    },
+    InitializeJobPassive: {
+      reducerName: "InitializeJobPassive",
+      argsType: InitializeJobPassive.getTypeScriptAlgebraicType(),
     },
     InstakillPlayer: {
       reducerName: "InstakillPlayer",
@@ -378,11 +454,15 @@ export type Reducer = never
 | { name: "CleanupDeadBodies", args: CleanupDeadBodies }
 | { name: "CleanupInactivePlayers", args: CleanupInactivePlayers }
 | { name: "CleanupOldMessages", args: CleanupOldMessages }
+| { name: "ClearAllJobData", args: ClearAllJobData }
 | { name: "Connect", args: Connect }
 | { name: "DamageEnemy", args: DamageEnemy }
 | { name: "Debug", args: Debug }
 | { name: "Disconnect", args: Disconnect }
 | { name: "InitializeEnemyRoutes", args: InitializeEnemyRoutes }
+| { name: "InitializeJob", args: InitializeJob }
+| { name: "InitializeJobAttack", args: InitializeJobAttack }
+| { name: "InitializeJobPassive", args: InitializeJobPassive }
 | { name: "InstakillPlayer", args: InstakillPlayer }
 | { name: "PlayerTakeDamage", args: PlayerTakeDamage }
 | { name: "PopulateEnemyConfig", args: PopulateEnemyConfig }
@@ -450,6 +530,22 @@ export class RemoteReducers {
     this.connection.offReducer("CleanupOldMessages", callback);
   }
 
+  clearAllJobData(adminApiKey: string) {
+    const __args = { adminApiKey };
+    let __writer = new BinaryWriter(1024);
+    ClearAllJobData.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("ClearAllJobData", __argsBuffer, this.setCallReducerFlags.clearAllJobDataFlags);
+  }
+
+  onClearAllJobData(callback: (ctx: ReducerEventContext, adminApiKey: string) => void) {
+    this.connection.onReducer("ClearAllJobData", callback);
+  }
+
+  removeOnClearAllJobData(callback: (ctx: ReducerEventContext, adminApiKey: string) => void) {
+    this.connection.offReducer("ClearAllJobData", callback);
+  }
+
   onConnect(callback: (ctx: ReducerEventContext) => void) {
     this.connection.onReducer("Connect", callback);
   }
@@ -512,6 +608,54 @@ export class RemoteReducers {
 
   removeOnInitializeEnemyRoutes(callback: (ctx: ReducerEventContext, adminApiKey: string, tilemapJson: string) => void) {
     this.connection.offReducer("InitializeEnemyRoutes", callback);
+  }
+
+  initializeJob(adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, resSword: number, resAxe: number, resBow: number, resSpear: number, resDark: number, resSpike: number, resClaw: number, resGreatsword: number) {
+    const __args = { adminApiKey, jobKey, displayName, health, moveSpeed, mana, hpRecovery, manaRecovery, resSword, resAxe, resBow, resSpear, resDark, resSpike, resClaw, resGreatsword };
+    let __writer = new BinaryWriter(1024);
+    InitializeJob.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("InitializeJob", __argsBuffer, this.setCallReducerFlags.initializeJobFlags);
+  }
+
+  onInitializeJob(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, resSword: number, resAxe: number, resBow: number, resSpear: number, resDark: number, resSpike: number, resClaw: number, resGreatsword: number) => void) {
+    this.connection.onReducer("InitializeJob", callback);
+  }
+
+  removeOnInitializeJob(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, resSword: number, resAxe: number, resBow: number, resSpear: number, resDark: number, resSpike: number, resClaw: number, resGreatsword: number) => void) {
+    this.connection.offReducer("InitializeJob", callback);
+  }
+
+  initializeJobAttack(adminApiKey: string, jobKey: string, attackSlot: number, attackType: string, name: string, damage: number, cooldown: number, critChance: number, knockback: number, range: number, hits: number, targets: number, manaCost: number, ammoCost: number, modifiers: string, projectileSpeed: number | undefined, projectileSize: number | undefined, areaRadius: number | undefined) {
+    const __args = { adminApiKey, jobKey, attackSlot, attackType, name, damage, cooldown, critChance, knockback, range, hits, targets, manaCost, ammoCost, modifiers, projectileSpeed, projectileSize, areaRadius };
+    let __writer = new BinaryWriter(1024);
+    InitializeJobAttack.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("InitializeJobAttack", __argsBuffer, this.setCallReducerFlags.initializeJobAttackFlags);
+  }
+
+  onInitializeJobAttack(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, attackSlot: number, attackType: string, name: string, damage: number, cooldown: number, critChance: number, knockback: number, range: number, hits: number, targets: number, manaCost: number, ammoCost: number, modifiers: string, projectileSpeed: number | undefined, projectileSize: number | undefined, areaRadius: number | undefined) => void) {
+    this.connection.onReducer("InitializeJobAttack", callback);
+  }
+
+  removeOnInitializeJobAttack(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, attackSlot: number, attackType: string, name: string, damage: number, cooldown: number, critChance: number, knockback: number, range: number, hits: number, targets: number, manaCost: number, ammoCost: number, modifiers: string, projectileSpeed: number | undefined, projectileSize: number | undefined, areaRadius: number | undefined) => void) {
+    this.connection.offReducer("InitializeJobAttack", callback);
+  }
+
+  initializeJobPassive(adminApiKey: string, jobKey: string, passiveSlot: number, name: string) {
+    const __args = { adminApiKey, jobKey, passiveSlot, name };
+    let __writer = new BinaryWriter(1024);
+    InitializeJobPassive.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("InitializeJobPassive", __argsBuffer, this.setCallReducerFlags.initializeJobPassiveFlags);
+  }
+
+  onInitializeJobPassive(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, passiveSlot: number, name: string) => void) {
+    this.connection.onReducer("InitializeJobPassive", callback);
+  }
+
+  removeOnInitializeJobPassive(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, passiveSlot: number, name: string) => void) {
+    this.connection.offReducer("InitializeJobPassive", callback);
   }
 
   instakillPlayer(adminApiKey: string) {
@@ -752,6 +896,11 @@ export class SetReducerFlags {
     this.cleanupOldMessagesFlags = flags;
   }
 
+  clearAllJobDataFlags: CallReducerFlags = 'FullUpdate';
+  clearAllJobData(flags: CallReducerFlags) {
+    this.clearAllJobDataFlags = flags;
+  }
+
   damageEnemyFlags: CallReducerFlags = 'FullUpdate';
   damageEnemy(flags: CallReducerFlags) {
     this.damageEnemyFlags = flags;
@@ -765,6 +914,21 @@ export class SetReducerFlags {
   initializeEnemyRoutesFlags: CallReducerFlags = 'FullUpdate';
   initializeEnemyRoutes(flags: CallReducerFlags) {
     this.initializeEnemyRoutesFlags = flags;
+  }
+
+  initializeJobFlags: CallReducerFlags = 'FullUpdate';
+  initializeJob(flags: CallReducerFlags) {
+    this.initializeJobFlags = flags;
+  }
+
+  initializeJobAttackFlags: CallReducerFlags = 'FullUpdate';
+  initializeJobAttack(flags: CallReducerFlags) {
+    this.initializeJobAttackFlags = flags;
+  }
+
+  initializeJobPassiveFlags: CallReducerFlags = 'FullUpdate';
+  initializeJobPassive(flags: CallReducerFlags) {
+    this.initializeJobPassiveFlags = flags;
   }
 
   instakillPlayerFlags: CallReducerFlags = 'FullUpdate';
@@ -858,8 +1022,24 @@ export class RemoteTables {
     return new EnemyRouteTableHandle(this.connection.clientCache.getOrCreateTable<EnemyRoute>(REMOTE_MODULE.tables.EnemyRoute));
   }
 
+  get job(): JobTableHandle {
+    return new JobTableHandle(this.connection.clientCache.getOrCreateTable<Job>(REMOTE_MODULE.tables.Job));
+  }
+
+  get jobAttack(): JobAttackTableHandle {
+    return new JobAttackTableHandle(this.connection.clientCache.getOrCreateTable<JobAttack>(REMOTE_MODULE.tables.JobAttack));
+  }
+
+  get jobPassive(): JobPassiveTableHandle {
+    return new JobPassiveTableHandle(this.connection.clientCache.getOrCreateTable<JobPassive>(REMOTE_MODULE.tables.JobPassive));
+  }
+
   get player(): PlayerTableHandle {
     return new PlayerTableHandle(this.connection.clientCache.getOrCreateTable<Player>(REMOTE_MODULE.tables.Player));
+  }
+
+  get playerCooldown(): PlayerCooldownTableHandle {
+    return new PlayerCooldownTableHandle(this.connection.clientCache.getOrCreateTable<PlayerCooldown>(REMOTE_MODULE.tables.PlayerCooldown));
   }
 
   get playerDamageEvent(): PlayerDamageEventTableHandle {

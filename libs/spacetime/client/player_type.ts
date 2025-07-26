@@ -51,6 +51,7 @@ export type Player = {
   level: number,
   experience: number,
   isTyping: boolean,
+  job: string,
 };
 
 /**
@@ -78,6 +79,7 @@ export namespace Player {
       new ProductTypeElement("level", AlgebraicType.createU32Type()),
       new ProductTypeElement("experience", AlgebraicType.createU32Type()),
       new ProductTypeElement("isTyping", AlgebraicType.createBoolType()),
+      new ProductTypeElement("job", AlgebraicType.createStringType()),
     ]);
   }
 

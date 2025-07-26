@@ -61,9 +61,22 @@ public static partial class Module
             max_mana = maxMana,
             level = startingLevel,
             experience = PlayerConstants.STARTING_EXPERIENCE,
-            is_typing = false
+            is_typing = false,
+            job = "soldier" // Default job for new players
         };
         ctx.Db.Player.Insert(newPlayer);
+        
+        // Initialize player cooldowns with very old timestamp (attacks available immediately)
+        var veryOldTime = ctx.Timestamp - TimeSpan.FromDays(1); // 1 day ago
+        var playerCooldown = new PlayerCooldown
+        {
+            player_identity = ctx.Sender,
+            job = "soldier", // Default job
+            attack1_last_used = veryOldTime, // All attacks available immediately
+            attack2_last_used = veryOldTime,
+            attack3_last_used = veryOldTime
+        };
+        ctx.Db.PlayerCooldown.Insert(playerCooldown);
     }
 
     [Reducer(ReducerKind.ClientDisconnected)]
@@ -77,6 +90,14 @@ public static partial class Module
         {
             ctx.Db.Player.identity.Delete(ctx.Sender);
             Log.Info($"Removed player {ctx.Sender} from database");
+        }
+        
+        // Remove player cooldowns
+        var playerCooldown = ctx.Db.PlayerCooldown.player_identity.Find(ctx.Sender);
+        if (playerCooldown is not null)
+        {
+            ctx.Db.PlayerCooldown.player_identity.Delete(ctx.Sender);
+            Log.Info($"Removed player cooldowns for {ctx.Sender}");
         }
     }
 

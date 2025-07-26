@@ -248,4 +248,22 @@ export class PlayerQueryService {
     const player = this.findCurrentPlayer();
     return player ? { x: player.x, y: player.y } : null;
   }
+
+  /**
+   * Get current player's mana from server
+   * @returns Current mana or null if player not found
+   */
+  public getCurrentPlayerMana(): number | null {
+    const player = this.findCurrentPlayer();
+    return player ? player.currentMana : null;
+  }
+
+  /**
+   * Get current player's max mana from server
+   * @returns Max mana or null if player not found
+   */
+  public getCurrentPlayerMaxMana(): number | null {
+    const player = this.findCurrentPlayer();
+    return player ? player.maxMana : null;
+  }
 }

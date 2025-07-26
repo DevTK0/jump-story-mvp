@@ -40,6 +40,7 @@ export {
 
 // Player services
 export { PlayerQueryService } from './services/player-query-service';
+export { CombatValidationService } from './services/combat-validation-service';
 export {
   PositionReconciliationService,
   type PositionReconciliationConfig,

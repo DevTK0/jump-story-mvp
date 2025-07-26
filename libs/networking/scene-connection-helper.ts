@@ -4,9 +4,8 @@ import { SpacetimeConnectionBuilder } from './spacetime-connection-builder';
 import { SpacetimeConnector } from './spacetime-connector';
 import { DbConnection } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
-import { PlayerQueryService } from '@/player';
+import { Player, PlayerQueryService, CombatValidationService } from '@/player';
 import { ErrorBoundary, NetworkError } from '@/core/error';
-import { Player } from '@/player';
 
 export interface ConnectionConfig {
   target: 'local' | 'cloud';
@@ -111,10 +110,15 @@ export class SceneConnectionHelper {
     }
     
     const combatSystem = player.getSystem('combat') as any;
-    if (combatSystem && combatSystem.setSyncManager && syncSystem) {
-      // Get the sync manager from sync system
-      const syncManager = syncSystem.getSyncManager();
-      combatSystem.setSyncManager(syncManager);
+    if (combatSystem) {
+      if (combatSystem.setSyncManager && syncSystem) {
+        // Get the sync manager from sync system
+        const syncManager = syncSystem.getSyncManager();
+        combatSystem.setSyncManager(syncManager);
+      }
+      if (combatSystem.setDbConnection) {
+        combatSystem.setDbConnection(connection);
+      }
     }
     
     const respawnSystem = player.getSystem('respawn') as any;
@@ -140,6 +144,10 @@ export class SceneConnectionHelper {
     // Initialize the PlayerQueryService singleton immediately
     PlayerQueryService.getInstance(conn);
     this.logger.info('PlayerQueryService singleton initialized');
+    
+    // Initialize the CombatValidationService singleton
+    CombatValidationService.getInstance(conn);
+    this.logger.info('CombatValidationService singleton initialized');
     
     // Emit event for other systems to react
     this.scene.events.emit('database-connected', { connection: conn, identity });

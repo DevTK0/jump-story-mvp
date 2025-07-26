@@ -6,7 +6,10 @@ import { InputSystem } from '../input';
 import type { IDebuggable } from '@/debug/debug-interfaces';
 import { DEBUG_CONFIG } from '@/debug/config';
 import { BaseDebugRenderer } from '@/debug/debug-renderer';
-import type { JobConfig } from './attack-types';
+import type { JobConfig, Attack } from './attack-types';
+import { PlayerQueryService } from '../services/player-query-service';
+import { CombatValidationService } from '../services/combat-validation-service';
+import { CombatMessageDisplay } from './combat-message-display';
 
 export interface AttackConfig {
   name: string;
@@ -36,6 +39,11 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
 
   // Combat components
   private hitboxSprites: Map<number, Phaser.Physics.Arcade.Sprite> = new Map();
+  
+  // Services
+  private playerQueryService: PlayerQueryService | null = null;
+  private combatValidationService: CombatValidationService | null = null;
+  private messageDisplay: CombatMessageDisplay;
 
   constructor(
     player: Player,
@@ -50,6 +58,13 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     this.scene = scene;
     this.playerJob = playerJob;
     this.jobConfig = jobConfig;
+
+    // Initialize services
+    this.playerQueryService = PlayerQueryService.getInstance();
+    this.combatValidationService = CombatValidationService.getInstance();
+    
+    // Initialize message display
+    this.messageDisplay = new CombatMessageDisplay(scene);
 
     // Initialize hitboxes for each attack
     this.initializeHitboxes();
@@ -114,6 +129,12 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     // State machine handles synchronization
   }
 
+  public setDbConnection(dbConnection: any): void {
+    // Update services with the connection
+    this.playerQueryService = PlayerQueryService.getInstance(dbConnection);
+    this.combatValidationService = CombatValidationService.getInstance(dbConnection);
+  }
+
   update(_time: number, _delta: number): void {
     // Check for attack inputs
     if (this.inputSystem.isJustPressed('attack1')) {
@@ -140,6 +161,25 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
       return false;
     }
 
+    // Client-side validation
+    if (this.playerQueryService && this.combatValidationService) {
+      // Check mana
+      const currentMana = this.playerQueryService.getCurrentPlayerMana() ?? 0;
+      const manaResult = this.combatValidationService.canUseAttack(attackNum, this.jobConfig, currentMana);
+      
+      if (!manaResult.canAttack) {
+        this.messageDisplay.showMessage(manaResult.reason || 'Cannot use attack');
+        return false;
+      }
+
+      // Check cooldown
+      const cooldownResult = this.combatValidationService.checkCooldownWithConfig(attackNum, attackConfig);
+      if (!cooldownResult.canAttack) {
+        this.messageDisplay.showMessage(cooldownResult.reason || 'Attack on cooldown');
+        return false;
+      }
+    }
+
     // Handle standard attacks
     if (attackConfig.attackType === 'standard') {
       this.performStandardAttack(attackNum, attackConfig);
@@ -150,7 +190,7 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     return true;
   }
 
-  private performStandardAttack(attackNum: number, config: AttackConfig): void {
+  private performStandardAttack(attackNum: number, config: Attack): void {
     const facing = this.player.facingDirection;
 
     // Get or create hitbox sprite
@@ -391,5 +431,6 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
 
   destroy(): void {
     this.destroyHitboxes();
+    this.messageDisplay.destroy();
   }
 }

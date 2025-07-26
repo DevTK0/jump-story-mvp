@@ -43,25 +43,21 @@ public static partial class Module
         
         if (levelDiff >= 5)
         {
-            // Player much higher level - more likely to resist
-            if (roll < 0.4) return DamageType.Weak;      // 40% weak damage
-            else if (roll < 0.1) return DamageType.Crit; // 10% crit (enemy gets lucky)
-            else return DamageType.Normal;               // 50% normal
+            // Player much higher level - enemy less likely to crit
+            if (roll < 0.05) return DamageType.Crit; // 5% crit (enemy gets lucky)
+            else return DamageType.Normal;           // 95% normal
         }
         else if (levelDiff <= -5)
         {
             // Enemy much higher level - more likely to crit
-            if (roll < 0.3) return DamageType.Crit;      // 30% crit
-            else if (roll < 0.5) return DamageType.Strong; // 20% strong
-            else return DamageType.Normal;                // 50% normal
+            if (roll < 0.3) return DamageType.Crit;  // 30% crit
+            else return DamageType.Normal;           // 70% normal
         }
         else
         {
             // Similar levels - balanced chances
-            if (roll < 0.15) return DamageType.Crit;     // 15% crit
-            else if (roll < 0.25) return DamageType.Weak; // 10% weak
-            else if (roll < 0.35) return DamageType.Strong; // 10% strong
-            else return DamageType.Normal;                // 65% normal
+            if (roll < 0.15) return DamageType.Crit; // 15% crit
+            else return DamageType.Normal;           // 85% normal
         }
     }
     
@@ -101,15 +97,9 @@ public static partial class Module
     
     private static DamageType DetermineDamageType(AttackType attackType, string enemyType)
     {
-        // Simple implementation - can be expanded for rock-paper-scissors style interactions
-        var random = new Random();
-        var roll = random.NextDouble();
-        
-        // Base chances for damage types
-        if (roll < 0.15) return DamageType.Crit;      // 15% crit chance
-        else if (roll < 0.25) return DamageType.Weak;  // 10% weak hit
-        else if (roll < 0.35) return DamageType.Strong; // 10% strong hit
-        else return DamageType.Normal;                 // 65% normal damage
+        // Simple implementation - always returns Normal for now
+        // Will be expanded later with modifier system
+        return DamageType.Normal;
     }
     
     private static float ApplyDamageMultiplier(float baseDamage, DamageType damageType)

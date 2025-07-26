@@ -20,6 +20,7 @@ import { join } from 'path';
 import { DbConnection, type ErrorContext } from '../libs/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import * as dotenv from 'dotenv';
+import { jobAttributes } from '../apps/playground/config/job-attributes';
 
 // Load environment variables
 dotenv.config();
@@ -149,10 +150,123 @@ async function initializeSpacetime() {
     // Give extra time for all operations to complete
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
+    console.log('🎮 Initializing job configurations...');
+
+    // Clear existing job data for clean initialization
+    console.log('  Clearing existing job data...');
+    await connection.reducers.clearAllJobData(adminApiKey);
+
+    // Initialize each job
+    let jobCount = 0;
+    for (const [jobKey, jobConfig] of Object.entries(jobAttributes)) {
+      console.log(`  Initializing job: ${jobKey} (${jobConfig.displayName})`);
+      jobCount++;
+      
+      try {
+        // Initialize the job with base stats and resistances
+        console.log(`    Sending jobKey: "${jobKey}", adminKey: "${adminApiKey}"`);
+        await connection.reducers.initializeJob(
+          adminApiKey,
+          jobKey,
+          jobConfig.displayName,
+          jobConfig.baseStats.health,
+          jobConfig.baseStats.moveSpeed,
+          jobConfig.baseStats.mana,
+          jobConfig.baseStats.hpRecovery,
+          jobConfig.baseStats.manaRecovery,
+          jobConfig.baseStats.resistances.sword,
+          jobConfig.baseStats.resistances.axe,
+          jobConfig.baseStats.resistances.bow,
+          jobConfig.baseStats.resistances.spear,
+          jobConfig.baseStats.resistances.dark,
+          jobConfig.baseStats.resistances.spike,
+          jobConfig.baseStats.resistances.claw,
+          jobConfig.baseStats.resistances.greatsword
+        );
+        console.log(`    ✅ Job ${jobKey} initialized`);
+      } catch (error) {
+        console.error(`    ❌ Failed to initialize job ${jobKey}:`, (error as Error).message);
+      }
+
+      // Initialize attacks for this job
+      let attackSlot = 1;
+      const attacks = jobConfig.attacks as Record<string, any>;
+      for (const [_attackKey, attack] of Object.entries(attacks)) {
+        console.log(`    Adding attack: ${attack.name} (slot: ${attackSlot}, type: ${attack.attackType})`);
+        
+        // Prepare optional fields based on attack type
+        let projectileSpeed: number | null = null;
+        let projectileSize: number | null = null;
+        let areaRadius: number | null = null;
+
+        if (attack.attackType === 'projectile') {
+          projectileSpeed = attack.projectileSpeed || null;
+          projectileSize = attack.projectileSize || null;
+        } else if (attack.attackType === 'area') {
+          areaRadius = attack.radius || null;
+        }
+
+        try {
+          await connection.reducers.initializeJobAttack(
+            adminApiKey,
+            jobKey,
+            attackSlot,
+            attack.attackType,
+            attack.name,
+            attack.damage,
+            attack.cooldown,
+            attack.critChance,
+            attack.knockback,
+            attack.range,
+            attack.hits,
+            attack.targets,
+            attack.manaCost,
+            attack.ammoCost,
+            attack.modifiers.join(','), // Convert array to comma-separated string
+            projectileSpeed,
+            projectileSize,
+            areaRadius
+          );
+          console.log(`    ✅ Attack ${attack.name} added`);
+        } catch (error) {
+          console.error(`    ❌ Failed to add attack ${attack.name}:`, (error as Error).message);
+        }
+        
+        attackSlot++;
+      }
+
+      // Initialize passives for this job
+      let passiveSlot = 1;
+      const passives = jobConfig.passives as Record<string, any>;
+      for (const [_passiveKey, passive] of Object.entries(passives)) {
+        console.log(`    Adding passive: ${passive.name}`);
+        
+        try {
+          await connection.reducers.initializeJobPassive(
+            adminApiKey,
+            jobKey,
+            passiveSlot,
+            passive.name
+          );
+          console.log(`    ✅ Passive ${passive.name} added`);
+        } catch (error) {
+          console.error(`    ❌ Failed to add passive ${passive.name}:`, (error as Error).message);
+        }
+        
+        passiveSlot++;
+      }
+    }
+
+    console.log(`✅ Job configurations initialized successfully! (${jobCount} jobs)`);
+
+    // Give extra time for all operations to complete
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     console.log('✅ SpaceTime database initialized successfully!');
     console.log('✅ Enemy routes with per-route spawn intervals configured!');
     console.log(`✅ ${routeCount} spawn areas ready with individual timing!`);
     console.log('🐺 Initial enemy population spawned!');
+    console.log(`🎮 Job configurations populated! (${jobCount} jobs)`);
   } catch (error) {
     console.error('❌ Failed to initialize SpaceTime database:', (error as Error).message);
     process.exit(1);
