@@ -22,6 +22,7 @@ export interface SceneConfig {
   debug?: {
     enabled: boolean;
     shadow?: boolean;  // Enable shadow effect in debug mode
+    invulnerable?: boolean;  // Prevent player from taking damage (useful for testing)
   };
 }
 
@@ -74,6 +75,9 @@ export class SceneInitializer {
     this.logger.info('Starting scene initialization...');
     
     try {
+      // Store scene config in scene data for access by systems
+      this.scene.data.set('sceneConfig', this.config);
+      
       // Stage 0: Set debug and shadow states based on config (before player creation)
       if (this.config.debug) {
         const { DebugState, ShadowState } = await import('@/debug/debug-state');

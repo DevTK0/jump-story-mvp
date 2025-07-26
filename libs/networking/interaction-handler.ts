@@ -117,6 +117,13 @@ export class InteractionHandler {
         return;
       }
 
+      // Check for invulnerability from scene config
+      const sceneConfig = player.scene.data.get('sceneConfig') as any;
+      if (sceneConfig?.debug?.invulnerable) {
+        this.logger.debug('Prevented damage - player is invulnerable (debug mode)');
+        return;
+      }
+
       // Debug: Log enemy physics body state
       this.logger.debug(
         'Enemy collision - body exists:',
