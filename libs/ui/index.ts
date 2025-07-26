@@ -16,3 +16,5 @@ export { ChatManager, ChatInput, SpeechBubble } from './chat';
 export type { SpeechBubbleConfig } from './chat';
 export { UIFactory } from './ui-factory';
 export type { UICreateConfig } from './ui-factory';
+export { PlayerContextMenu } from './context-menu';
+export type { MenuAction, ContextMenuConfig } from './context-menu';

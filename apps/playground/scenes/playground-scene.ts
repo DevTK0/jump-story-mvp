@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { SceneInitializer, type SceneConfig } from '@/core';
 import type { IDebuggable } from '@/debug/debug-interfaces';
 import { DebugState } from '@/debug/debug-state';
+import { ContextMenuExtension } from '@/core/scene/extensions/context-menu-extension';
 import spriteConfig from '../config/sprite-config';
 
 // Scene configuration
@@ -30,6 +31,7 @@ const sceneConfig: SceneConfig = {
  */
 export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
   private initializer: SceneInitializer;
+  private contextMenuExtension?: ContextMenuExtension;
   public player?: any; // For backward compatibility with systems expecting scene.player
 
   constructor() {
@@ -47,6 +49,12 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
     // Set player reference for backward compatibility
     const systems = this.initializer.getSystems();
     this.player = systems.player;
+
+    // Initialize context menu extension
+    this.contextMenuExtension = new ContextMenuExtension(this, {
+      enabled: true,
+      isAdmin: false, // TODO: Get from user permissions
+    });
   }
 
   update(time: number, delta: number): void {
@@ -54,6 +62,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
   }
 
   shutdown(): void {
+    this.contextMenuExtension?.destroy();
     this.initializer.shutdown();
   }
 

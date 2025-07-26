@@ -49,7 +49,6 @@ export {
 // Builder pattern for flexible player creation
 export { PlayerBuilder } from './player-builder';
 
-
 // Type exports
 export type { System } from '../core/types';
 export * from './player-types';

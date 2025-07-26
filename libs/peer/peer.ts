@@ -5,6 +5,7 @@ import { PEER_CONFIG } from './peer-config';
 import { PeerHealthBar } from './ui/peer-health-bar';
 import { PeerStateMachine } from './state/peer-state-machine';
 import { createLogger, type ModuleLogger } from '@/core/logger';
+import { emitSceneEvent } from '@/core/scene';
 
 export interface PeerConfig {
   scene: Phaser.Scene;
@@ -43,6 +44,15 @@ export class Peer extends Phaser.GameObjects.Sprite {
     // Set visual properties to distinguish from main player
     this.setAlpha(PEER_CONFIG.display.alpha);
     this.setTint(PEER_CONFIG.display.tint);
+
+    // Make interactive for click events
+    // The sprite frame is 100x100 but the actual character is smaller
+    // Set a hit area around the character body
+    this.setInteractive(
+      new Phaser.Geom.Rectangle(35, 25, 30, 50),
+      Phaser.Geom.Rectangle.Contains
+    );
+    this.setupContextMenu();
 
     // Initialize target position
     this.targetPosition = {
@@ -136,6 +146,33 @@ export class Peer extends Phaser.GameObjects.Sprite {
 
   public resetDeathAnimation(): void {
     this.isDeathAnimationComplete = false;
+  }
+
+  private setupContextMenu(): void {
+    // Left-click handling
+    this.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (pointer.leftButtonDown()) {
+        // Emit type-safe event for scene to handle - use world coordinates
+        emitSceneEvent(this.scene, 'peer:clicked', {
+          peer: this,
+          identity: this.playerData.identity,
+          name: this.playerData.name,
+          x: pointer.worldX,
+          y: pointer.worldY,
+        });
+      }
+    });
+
+    // Hover effect
+    this.on('pointerover', () => {
+      this.setTint(0xaaaaff); // Lighter tint on hover
+      this.scene.input.setDefaultCursor('pointer');
+    });
+
+    this.on('pointerout', () => {
+      this.setTint(PEER_CONFIG.display.tint); // Reset to normal tint
+      this.scene.input.setDefaultCursor('default');
+    });
   }
 
   public updateFromData(playerData: PlayerData): void {

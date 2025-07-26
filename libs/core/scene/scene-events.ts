@@ -4,6 +4,8 @@
  * Provides compile-time type safety for Phaser scene events
  */
 
+import type { Identity } from '@clockworklabs/spacetimedb-sdk';
+
 // Define all scene event types
 export interface SceneEventMap {
   'player:attacked': {
@@ -15,6 +17,20 @@ export interface SceneEventMap {
   };
   'player:died': {
     position: { x: number; y: number };
+  };
+  'peer:clicked': {
+    peer: any; // The peer sprite instance
+    identity: Identity;
+    name: string;
+    x: number;
+    y: number;
+  };
+  'player:clicked': {
+    player: any; // The player sprite instance
+    identity: Identity;
+    name: string;
+    x: number;
+    y: number;
   };
   // Add more events here as the game grows
 }
