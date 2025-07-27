@@ -3,6 +3,7 @@ import { createLogger, type ModuleLogger } from '@/core/logger';
 import { DbConnection } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { jobAttributes } from '../../../apps/playground/config/job-attributes';
+import spriteConfig from '../../../apps/playground/config/sprite-config';
 
 export interface ClassOption {
   id: string;
@@ -65,8 +66,8 @@ export class ClassSelectionMenu {
     overlay.setInteractive(); // Block clicks from going through
     
     // Create menu background
-    const menuWidth = 450;
-    const menuHeight = 600;
+    const menuWidth = 500;
+    const menuHeight = 650;
     this.background = this.scene.add.rectangle(
       centerX,
       centerY,
@@ -112,21 +113,32 @@ export class ClassSelectionMenu {
     let index = 0;
     const cols = 3;
     
+    // Get first available sprite as fallback
+    const availableSprites = Object.keys(spriteConfig.sprites.jobs || {});
+    const fallbackSprite = availableSprites[0] || 'soldier';
+    
     // Convert job attributes to class options
     Object.entries(jobAttributes).forEach(([jobId, jobConfig]) => {
       const row = Math.floor(index / cols);
       const col = index % cols;
       
-      // Check if sprite exists, otherwise use soldier as fallback
-      const hasSprite = jobConfig.spriteKey && 
-        (jobConfig.spriteKey === 'soldier' || 
-         jobConfig.spriteKey === 'knight' || 
-         jobConfig.spriteKey === 'wizard');
+      // Use the sprite key from job config
+      let spriteKey = jobConfig.spriteKey;
+      
+      // Validate sprite exists in config and texture cache
+      const spriteExistsInConfig = spriteConfig.sprites.jobs && 
+        spriteConfig.sprites.jobs[spriteKey];
+      
+      // If sprite doesn't exist in config, use fallback
+      if (!spriteExistsInConfig) {
+        this.logger.warn(`Sprite '${spriteKey}' for job '${jobId}' not found in config. Using fallback '${fallbackSprite}'.`);
+        spriteKey = fallbackSprite;
+      }
       
       this.classes.push({
         id: jobId,
         name: jobConfig.displayName,
-        spriteKey: hasSprite ? jobConfig.spriteKey : 'soldier',
+        spriteKey: spriteKey,
         unlocked: true, // All jobs unlocked for now
         position: { row, col },
       });
@@ -136,8 +148,8 @@ export class ClassSelectionMenu {
   }
   
   private createClassOptions(centerX: number, centerY: number, _menuWidth: number, _menuHeight: number): void {
-    const gridSize = 100; // Larger cells for bigger sprites
-    const padding = 25;
+    const gridSize = 120; // Larger cells for bigger sprites
+    const padding = 30;
     const cols = 3;
     const rows = Math.ceil(this.classes.length / cols);
     
@@ -161,9 +173,15 @@ export class ClassSelectionMenu {
       );
       spriteBg.setStrokeStyle(2, classOption.unlocked ? 0x5a5a5a : 0x3a3a3a);
       
+      // Validate texture exists at runtime
+      if (!this.scene.textures.exists(classOption.spriteKey)) {
+        this.logger.error(`Texture '${classOption.spriteKey}' not loaded. Skipping sprite creation for job '${classOption.id}'.`);
+        return;
+      }
+      
       // Create sprite
       const sprite = this.scene.add.sprite(x, y, classOption.spriteKey);
-      sprite.setScale(2.5); // Much larger scale for bigger sprites
+      sprite.setScale(2.2); // Scaled to fit within grid
       
       // Apply grayscale tint if locked
       if (!classOption.unlocked) {
@@ -198,12 +216,12 @@ export class ClassSelectionMenu {
         // Hover effects
         spriteBg.on('pointerover', () => {
           spriteBg.setFillStyle(0x4a4a4a);
-          sprite.setScale(2.7);
+          sprite.setScale(2.4);
         });
         
         spriteBg.on('pointerout', () => {
           spriteBg.setFillStyle(0x3a3a3a);
-          sprite.setScale(2.5);
+          sprite.setScale(2.2);
         });
         
         // Click handler

@@ -25,10 +25,10 @@ function createEmoteDefinition(name: string, frameRate = 12): SpriteDefinition {
   };
 }
 
-// Character class sprites
-export const classSprites = {
+// Job sprites
+export const jobSprites = {
   soldier: {
-    path: 'assets/spritesheet/classes/Soldier.png',
+    path: 'assets/spritesheet/jobs/Soldier.png',
     frameWidth: SPRITE_SIZE,
     frameHeight: SPRITE_SIZE,
     animations: {
@@ -42,7 +42,7 @@ export const classSprites = {
     }
   },
   knight: {
-    path: 'assets/spritesheet/classes/Knight.png',
+    path: 'assets/spritesheet/jobs/Knight.png',
     frameWidth: SPRITE_SIZE,
     frameHeight: SPRITE_SIZE,
     animations: {
@@ -56,7 +56,7 @@ export const classSprites = {
     }
   },
   wizard: {
-    path: 'assets/spritesheet/classes/Wizard.png',
+    path: 'assets/spritesheet/jobs/Wizard.png',
     frameWidth: SPRITE_SIZE,
     frameHeight: SPRITE_SIZE,
     animations: {
@@ -66,6 +66,89 @@ export const classSprites = {
       attack2: { start: 27, end: 35, frameRate: 20 },
       damaged: { start: 36, end: 40, frameRate: 15 },
       death: { start: 45, end: 52, frameRate: 15 }
+    }
+  },
+  archer: {
+    path: 'assets/spritesheet/jobs/Archer.png',
+    frameWidth: SPRITE_SIZE,
+    frameHeight: SPRITE_SIZE,
+    animations: {
+      idle: { start: 0, end: 5, frameRate: 8 },
+      walk: { start: 9, end: 16, frameRate: 12 },
+      attack1: { start: 18, end: 23, frameRate: 20 },
+      attack2: { start: 27, end: 32, frameRate: 20 },
+      attack3: { start: 36, end: 44, frameRate: 20 },
+      damaged: { start: 45, end: 49, frameRate: 15 },
+      death: { start: 54, end: 57, frameRate: 15 }
+    }
+  },
+  'armored-axeman': {
+    path: 'assets/spritesheet/jobs/Armored%20Axeman.png',
+    frameWidth: SPRITE_SIZE,
+    frameHeight: SPRITE_SIZE,
+    animations: {
+      idle: { start: 0, end: 5, frameRate: 8 },
+      walk: { start: 9, end: 16, frameRate: 12 },
+      attack1: { start: 18, end: 23, frameRate: 20 },
+      attack2: { start: 27, end: 32, frameRate: 20 },
+      attack3: { start: 36, end: 44, frameRate: 20 },
+      damaged: { start: 45, end: 49, frameRate: 15 },
+      death: { start: 54, end: 57, frameRate: 15 }
+    }
+  },
+  'knight-templar': {
+    path: 'assets/spritesheet/jobs/Knight%20Templar.png',
+    frameWidth: SPRITE_SIZE,
+    frameHeight: SPRITE_SIZE,
+    animations: {
+      idle: { start: 0, end: 5, frameRate: 8 },
+      walk: { start: 9, end: 16, frameRate: 12 },
+      attack1: { start: 18, end: 23, frameRate: 20 },
+      attack2: { start: 27, end: 32, frameRate: 20 },
+      attack3: { start: 36, end: 44, frameRate: 20 },
+      damaged: { start: 45, end: 49, frameRate: 15 },
+      death: { start: 54, end: 57, frameRate: 15 }
+    }
+  },
+  lancer: {
+    path: 'assets/spritesheet/jobs/Lancer.png',
+    frameWidth: SPRITE_SIZE,
+    frameHeight: SPRITE_SIZE,
+    animations: {
+      idle: { start: 0, end: 5, frameRate: 8 },
+      walk: { start: 9, end: 16, frameRate: 12 },
+      attack1: { start: 18, end: 23, frameRate: 20 },
+      attack2: { start: 27, end: 32, frameRate: 20 },
+      attack3: { start: 36, end: 44, frameRate: 20 },
+      damaged: { start: 45, end: 49, frameRate: 15 },
+      death: { start: 54, end: 57, frameRate: 15 }
+    }
+  },
+  priest: {
+    path: 'assets/spritesheet/jobs/Priest.png',
+    frameWidth: SPRITE_SIZE,
+    frameHeight: SPRITE_SIZE,
+    animations: {
+      idle: { start: 0, end: 5, frameRate: 8 },
+      walk: { start: 9, end: 16, frameRate: 12 },
+      attack1: { start: 18, end: 23, frameRate: 20 },
+      attack2: { start: 27, end: 32, frameRate: 20 },
+      damaged: { start: 45, end: 49, frameRate: 15 },
+      death: { start: 54, end: 57, frameRate: 15 }
+    }
+  },
+  swordsman: {
+    path: 'assets/spritesheet/jobs/Swordsman.png',
+    frameWidth: SPRITE_SIZE,
+    frameHeight: SPRITE_SIZE,
+    animations: {
+      idle: { start: 0, end: 5, frameRate: 8 },
+      walk: { start: 9, end: 16, frameRate: 12 },
+      attack1: { start: 18, end: 23, frameRate: 20 },
+      attack2: { start: 27, end: 32, frameRate: 20 },
+      attack3: { start: 36, end: 44, frameRate: 20 },
+      damaged: { start: 45, end: 49, frameRate: 15 },
+      death: { start: 54, end: 57, frameRate: 15 }
     }
   }
 } as const;
@@ -132,7 +215,7 @@ export const emoteSprites = {
 // Complete sprite configuration
 const spriteConfig: SpriteConfig = {
   sprites: {
-    classes: classSprites,
+    jobs: jobSprites,
     enemies: enemySprites,
     emotes: emoteSprites
   }
@@ -142,6 +225,6 @@ const spriteConfig: SpriteConfig = {
 export default spriteConfig;
 
 // Type exports for better type inference
-export type ClassSpriteKey = keyof typeof classSprites;
+export type JobSpriteKey = keyof typeof jobSprites;
 export type EnemySpriteKey = keyof typeof enemySprites;
 export type EmoteSpriteKey = keyof typeof emoteSprites;

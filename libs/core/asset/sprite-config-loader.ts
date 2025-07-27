@@ -17,7 +17,7 @@ export interface SpriteDefinition {
 
 export interface SpriteConfig {
   sprites: {
-    classes?: Record<string, SpriteDefinition>;
+    jobs?: Record<string, SpriteDefinition>;
     enemies?: Record<string, SpriteDefinition>;
     emotes?: Record<string, SpriteDefinition>;
     [category: string]: Record<string, SpriteDefinition> | undefined;

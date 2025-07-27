@@ -116,8 +116,8 @@ export class AssetLoaderService {
     configLoader.setConfig(this.spriteConfig);
     
     // Load all character and enemy sprites from config
-    if (this.spriteConfig.sprites.classes) {
-      configLoader.loadSpritesForCategory(this.scene, 'classes');
+    if (this.spriteConfig.sprites.jobs) {
+      configLoader.loadSpritesForCategory(this.scene, 'jobs');
     }
     
     if (this.spriteConfig.sprites.enemies) {
