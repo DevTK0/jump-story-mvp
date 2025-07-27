@@ -3,7 +3,7 @@ import { BOTTOM_UI_CONFIG } from '../bottom-ui-config';
 
 export class PlayerLevelSquare {
   private scene: Phaser.Scene;
-  private levelText: Phaser.GameObjects.Text;
+  private levelText!: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;

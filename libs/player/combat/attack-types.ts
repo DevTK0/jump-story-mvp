@@ -100,6 +100,7 @@ export interface JobConfig {
 export const EXAMPLE_WARRIOR_CONFIG: JobConfig = {
   displayName: 'Warrior',
   spriteKey: 'warrior',
+  defaultUnlocked: true,
   baseStats: {
     health: 120,
     moveSpeed: 160,

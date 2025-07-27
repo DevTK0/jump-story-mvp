@@ -22,7 +22,6 @@ export enum UIEvents {
  */
 export class UIContextService {
   private static instance: UIContextService;
-  private scene: Phaser.Scene;
   private dbConnection: DbConnection | null = null;
   private playerIdentity: Identity | null = null;
   private jobData: Map<string, boolean> = new Map();
@@ -30,8 +29,7 @@ export class UIContextService {
   private eventEmitter: Phaser.Events.EventEmitter;
   private logger: ModuleLogger;
 
-  private constructor(scene: Phaser.Scene) {
-    this.scene = scene;
+  private constructor(_scene: Phaser.Scene) {
     this.eventEmitter = new Phaser.Events.EventEmitter();
     this.logger = createLogger('UIContextService');
   }

@@ -23,7 +23,6 @@ export class MenuDropdown {
   private classSelectionMenu: ClassSelectionMenu | null = null;
   private playerIdentity: Identity | null = null;
   private dbConnection: DbConnection | null = null;
-  private playerJobData: Map<string, boolean> = new Map();
   private jobTableData: any[] = [];
 
   private options: MenuOption[] = [
@@ -215,23 +214,21 @@ export class MenuDropdown {
   }
 
   private handleJobDataUpdate(data: { jobData: Map<string, boolean>; jobTableData: any[] }): void {
-    this.playerJobData = data.jobData;
     this.jobTableData = data.jobTableData;
     
     this.logger.info(`Job data updated via context: ${data.jobData.size} entries, ${data.jobTableData.length} jobs`);
   }
 
   // Keep these methods for backward compatibility but they won't be called anymore
-  public setPlayerIdentity(identity: Identity): void {
+  public setPlayerIdentity(_identity: Identity): void {
     // No longer needed - gets from context
   }
 
-  public setDbConnection(dbConnection: DbConnection): void {
+  public setDbConnection(_dbConnection: DbConnection): void {
     // No longer needed - gets from context
   }
 
   public setPlayerJobData(jobData: Map<string, boolean>, jobTableData?: any[]): void {
-    this.playerJobData = jobData;
     if (jobTableData) {
       this.jobTableData = jobTableData;
     }

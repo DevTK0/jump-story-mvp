@@ -40,7 +40,7 @@ export class PlayerStatsUI {
     
     // Initialize player query service if connection is available
     if (this.dbConnection) {
-      this.playerQueryService = new PlayerQueryService(this.dbConnection);
+      this.playerQueryService = PlayerQueryService.getInstance(this.dbConnection);
       this.setupDataListener();
     }
   }
@@ -194,7 +194,7 @@ export class PlayerStatsUI {
     }
   }
 
-  public setDbConnection(dbConnection: DbConnection): void {
+  public setDbConnection(_dbConnection: DbConnection): void {
     // No longer needed - gets from context in constructor
   }
 

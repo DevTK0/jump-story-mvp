@@ -6,7 +6,7 @@ import { InputSystem } from '../input';
 import { AnimationFactory } from '@/core/animations';
 import { createLogger, type ModuleLogger } from '@/core/logger';
 import { PlayerAnimationManager } from './player-animation-manager';
-import { PLAYER_ANIMATION_TIMINGS, PLAYER_ANIMATION_KEYS } from './config';
+import { PLAYER_ANIMATION_TIMINGS } from './config';
 
 export class AnimationSystem implements System {
   private player: Player;

@@ -8,11 +8,10 @@ import { UIContextService, UIEvents } from '../../services/ui-context-service';
 export class MenuButton {
   private scene: Phaser.Scene;
   private container: Phaser.GameObjects.Container;
-  private background: Phaser.GameObjects.Graphics;
-  private text: Phaser.GameObjects.Text;
+  private background!: Phaser.GameObjects.Graphics;
+  private text!: Phaser.GameObjects.Text;
   private dropdown: MenuDropdown;
   private onClick?: () => void;
-  private playerJobData: Map<string, boolean> = new Map();
 
   constructor(scene: Phaser.Scene, label: string = 'MENU') {
     this.scene = scene;
@@ -69,7 +68,9 @@ export class MenuButton {
       new Phaser.Geom.Rectangle(0, 0, config.width, config.height),
       Phaser.Geom.Rectangle.Contains
     );
-    this.container.input.cursor = 'pointer';
+    if (this.container.input) {
+      this.container.input.cursor = 'pointer';
+    }
 
     // Hover effects
     this.container.on('pointerover', () => {
@@ -105,22 +106,20 @@ export class MenuButton {
     return this.container;
   }
 
-  private handleJobDataUpdate(data: { jobData: Map<string, boolean>; jobTableData: any[] }): void {
-    this.playerJobData = data.jobData;
+  private handleJobDataUpdate(_data: { jobData: Map<string, boolean>; jobTableData: any[] }): void {
     // Dropdown will receive the update directly from context
   }
 
   // Keep these methods for backward compatibility but they won't be called from BottomUIBar anymore
-  public setPlayerIdentity(identity: Identity): void {
+  public setPlayerIdentity(_identity: Identity): void {
     // No longer needed - dropdown gets from context
   }
 
-  public setDbConnection(dbConnection: DbConnection): void {
+  public setDbConnection(_dbConnection: DbConnection): void {
     // No longer needed - dropdown gets from context
   }
 
   public setPlayerJobData(jobData: Map<string, boolean>, jobTableData?: any[]): void {
-    this.playerJobData = jobData;
     // Still pass through for now until dropdown is updated
     this.dropdown.setPlayerJobData(jobData, jobTableData);
   }

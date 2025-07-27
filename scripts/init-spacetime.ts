@@ -21,12 +21,14 @@ import { DbConnection, type ErrorContext } from '../libs/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import * as dotenv from 'dotenv';
 import { jobAttributes } from '../apps/playground/config/job-attributes';
+import { playerLevelingCurve } from '../apps/playground/config/player-level';
 
 // Load environment variables
 dotenv.config();
 
 async function initializeSpacetime() {
   let connection: DbConnection | null = null;
+  let isIntentionalDisconnect = false;
 
   try {
     // Get deployment target from command line argument
@@ -102,8 +104,11 @@ async function initializeSpacetime() {
       };
 
       const onConnectError = (_ctx: ErrorContext, err: Error) => {
-        console.error('Connection error:', err);
-        reject(err);
+        // Only log error if it's not an intentional disconnect
+        if (!isIntentionalDisconnect) {
+          console.error('Connection error:', err);
+          reject(err);
+        }
       };
 
       DbConnection.builder()
@@ -129,9 +134,8 @@ async function initializeSpacetime() {
 
     console.log('Populating player leveling curve...');
 
-    // Read and populate player leveling curve from JSON
-    const playerLevelingPath = join(process.cwd(), 'apps/playground/config/player_leveling_curve.json');
-    const levelingCurveContent = readFileSync(playerLevelingPath, 'utf8');
+    // Populate player leveling curve from TypeScript config
+    const levelingCurveContent = JSON.stringify(playerLevelingCurve);
     await connection.reducers.populatePlayerLevel(adminApiKey, levelingCurveContent);
 
     console.log('✅ Player leveling curve populated!');
@@ -273,7 +277,11 @@ async function initializeSpacetime() {
     process.exit(1);
   } finally {
     if (connection) {
+      isIntentionalDisconnect = true;
+      // Give a moment for pending operations to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
       connection.disconnect();
+      console.log('🔌 Disconnected from SpaceTimeDB');
     }
   }
 }

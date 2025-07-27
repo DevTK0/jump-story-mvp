@@ -6,9 +6,6 @@ import { FPSCounter } from './performance/fps-counter';
 import { PerformanceMetrics } from './performance/performance-metrics';
 import { DbMetricsTracker } from './performance/db-metrics-tracker';
 import { UI_CONFIG } from './ui-config';
-import { DbConnection } from '@/spacetime/client';
-import { Identity } from '@clockworklabs/spacetimedb-sdk';
-import { Player } from '@/player';
 import { UIContextService, type UICreateConfig } from './services/ui-context-service';
 
 // Re-export UICreateConfig from UIContextService to maintain compatibility
@@ -102,7 +99,7 @@ export class UIFactory {
   
   // Private creation methods
   
-  private createPlayerStatsUI(config: UICreateConfig): void {
+  private createPlayerStatsUI(_config: UICreateConfig): void {
     // Create the new bottom UI bar - no need to pass identity or connection
     this.bottomUIBar = new BottomUIBar(this.scene);
     

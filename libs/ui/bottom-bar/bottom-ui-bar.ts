@@ -4,24 +4,24 @@ import { PlayerLevelSquare } from './components/player-level-square';
 import { PlayerInfoDisplay } from './components/player-info-display';
 import { CompactStatBar } from './components/compact-stat-bar';
 import { MenuButton } from './components/menu-button';
-import { DbConnection, PlayerJob, Job } from '@/spacetime/client';
+import { DbConnection } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { createLogger, type ModuleLogger } from '@/core/logger';
 import { UIContextService, UIEvents } from '../services/ui-context-service';
 
 export class BottomUIBar {
   private scene: Phaser.Scene;
-  private container: Phaser.GameObjects.Container;
-  private background: Phaser.GameObjects.Graphics;
+  private container!: Phaser.GameObjects.Container;
+  private background!: Phaser.GameObjects.Graphics;
   private logger: ModuleLogger = createLogger('BottomUIBar');
 
   // UI Components
-  private levelDisplay: PlayerLevelSquare;
-  private playerInfo: PlayerInfoDisplay;
-  private hpBar: CompactStatBar;
-  private mpBar: CompactStatBar;
-  private expBar: CompactStatBar;
-  private menuButton: MenuButton;
+  private levelDisplay!: PlayerLevelSquare;
+  private playerInfo!: PlayerInfoDisplay;
+  private hpBar!: CompactStatBar;
+  private mpBar!: CompactStatBar;
+  private expBar!: CompactStatBar;
+  private menuButton!: MenuButton;
 
   // Data
   private playerIdentity: Identity;
@@ -31,8 +31,6 @@ export class BottomUIBar {
   private playerJobUnlockStatus: Map<string, boolean> = new Map();
   // Job table data
   private jobTableData: any[] = [];
-  // Flag to track if Job table is loaded
-  private isJobTableLoaded: boolean = false;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;

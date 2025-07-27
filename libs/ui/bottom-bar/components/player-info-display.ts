@@ -4,9 +4,9 @@ import { BOTTOM_UI_CONFIG } from '../bottom-ui-config';
 export class PlayerInfoDisplay {
   private scene: Phaser.Scene;
   private container: Phaser.GameObjects.Container;
-  private nameText: Phaser.GameObjects.Text;
-  private jobText: Phaser.GameObjects.Text;
-  private combatIndicator: Phaser.GameObjects.Text;
+  private nameText!: Phaser.GameObjects.Text;
+  private jobText!: Phaser.GameObjects.Text;
+  private combatIndicator!: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;

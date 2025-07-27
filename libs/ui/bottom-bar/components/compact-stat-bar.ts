@@ -4,13 +4,11 @@ import { BOTTOM_UI_CONFIG } from '../bottom-ui-config';
 export class CompactStatBar {
   private scene: Phaser.Scene;
   private container: Phaser.GameObjects.Container;
-  private background: Phaser.GameObjects.Graphics;
-  private fillBar: Phaser.GameObjects.Graphics;
-  private labelText: Phaser.GameObjects.Text;
-  private valueText: Phaser.GameObjects.Text;
+  private background!: Phaser.GameObjects.Graphics;
+  private fillBar!: Phaser.GameObjects.Graphics;
+  private labelText!: Phaser.GameObjects.Text;
+  private valueText!: Phaser.GameObjects.Text;
   
-  private currentValue: number = 0;
-  private maxValue: number = 100;
   private barType: 'hp' | 'mp' | 'exp';
 
   constructor(scene: Phaser.Scene, type: 'hp' | 'mp' | 'exp') {
@@ -78,8 +76,6 @@ export class CompactStatBar {
   }
 
   public updateValues(current: number, max: number): void {
-    this.currentValue = current;
-    this.maxValue = max;
     
     // Update fill bar
     const config = BOTTOM_UI_CONFIG.statBars;

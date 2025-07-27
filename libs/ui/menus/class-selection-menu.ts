@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import { createLogger, type ModuleLogger } from '@/core/logger';
 import { DbConnection } from '@/spacetime/client';
-import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { jobAttributes } from '../../../apps/playground/config/job-attributes';
 import spriteConfig from '../../../apps/playground/config/sprite-config';
 import { UIContextService, UIEvents } from '../services/ui-context-service';
@@ -22,7 +21,6 @@ export class ClassSelectionMenu {
 
   private isVisible: boolean = false;
   private _dbConnection: DbConnection | null = null;
-  private _playerIdentity: Identity;
 
   // Available jobs loaded from job-attributes
   private classes: ClassOption[] = [];
@@ -37,7 +35,6 @@ export class ClassSelectionMenu {
     
     // Get data from context service
     const context = UIContextService.getInstance();
-    this._playerIdentity = context.getPlayerIdentity()!;
     this._dbConnection = context.getDbConnection();
     
     // Get initial job data

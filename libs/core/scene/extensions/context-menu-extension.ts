@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import { PlayerContextMenu } from '@/ui';
-import { createLogger, type ModuleLogger } from '@/core/logger';
 import { onSceneEvent, offSceneEvent } from '../scene-events';
 
 export interface ContextMenuExtensionConfig {
@@ -16,7 +15,6 @@ export class ContextMenuExtension {
   private scene: Phaser.Scene;
   private contextMenu: PlayerContextMenu;
   private config: ContextMenuExtensionConfig;
-  private logger: ModuleLogger = createLogger('ContextMenuExtension');
 
   constructor(scene: Phaser.Scene, config: ContextMenuExtensionConfig) {
     this.scene = scene;
