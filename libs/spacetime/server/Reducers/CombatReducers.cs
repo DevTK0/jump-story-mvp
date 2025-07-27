@@ -175,11 +175,11 @@ public static partial class Module
                 var isCritical = jobAttack.Value.crit_chance > 0 && random.NextDouble() < jobAttack.Value.crit_chance;
                 var damageType = isCritical ? DamageType.Crit : DamageType.Normal;
                 
-                // Apply damage multiplier (1.5x for crit, 1.0x for normal)
-                var finalDamage = (uint)(scaledDamage * DamageCalculator.GetDamageMultiplier(damageType));
+                // Apply damage multiplier (1.5x for crit, 1.0x for normal) and floor to prevent decimals
+                var finalDamage = (uint)Math.Floor(scaledDamage * DamageCalculator.GetDamageMultiplier(damageType));
 
                     var oldHp = currentHp;
-                    var newHp = Math.Max(0, currentHp - finalDamage);
+                    var newHp = Math.Max(0, (float)Math.Floor(currentHp - finalDamage));
                     var newState = newHp <= 0 ? PlayerState.Dead : PlayerState.Damaged;
                     var wasKilled = newHp <= 0 && oldHp > 0;
 

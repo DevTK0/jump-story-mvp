@@ -39,36 +39,36 @@ public static class PlayerConstants
     // Helper methods for stat calculations
     public static float CalculateMaxHp(uint level)
     {
-        return BASE_HP + (HP_PER_LEVEL * (level - 1));
+        return (float)Math.Floor(BASE_HP + (HP_PER_LEVEL * (level - 1)));
     }
     
     public static float CalculateMaxMana(uint level)
     {
-        return BASE_MANA + (MANA_PER_LEVEL * (level - 1));
+        return (float)Math.Floor(BASE_MANA + (MANA_PER_LEVEL * (level - 1)));
     }
     
     // New exponential scaling methods using job-specific base values
     public static float CalculateMaxHpWithJob(uint level, uint baseHp)
     {
         // HP = Base HP × (1.1^level)
-        return (float)(baseHp * Math.Pow(HP_SCALING_EXPONENT, level));
+        return (float)Math.Floor(baseHp * Math.Pow(HP_SCALING_EXPONENT, level));
     }
     
     public static float CalculateMaxManaWithJob(uint level, uint baseMana)
     {
         // For now, mana uses the same scaling as HP
-        return (float)(baseMana * Math.Pow(HP_SCALING_EXPONENT, level));
+        return (float)Math.Floor(baseMana * Math.Pow(HP_SCALING_EXPONENT, level));
     }
     
     public static float CalculateScaledDamage(uint level, uint baseDamage)
     {
         // Damage = Base Damage × (1.15^level)
-        return (float)(baseDamage * Math.Pow(DAMAGE_SCALING_EXPONENT, level));
+        return (float)Math.Floor(baseDamage * Math.Pow(DAMAGE_SCALING_EXPONENT, level));
     }
     
     public static float CalculatePlayerDamage(uint level)
     {
-        return BASE_DAMAGE + (DAMAGE_PER_LEVEL * (level - 1));
+        return (float)Math.Floor(BASE_DAMAGE + (DAMAGE_PER_LEVEL * (level - 1)));
     }
     
     public static float CalculateEnemyDamage(uint enemyLevel, uint playerLevel)
@@ -79,7 +79,7 @@ public static class PlayerConstants
         
         // Reduce damage slightly if player is higher level (max 20% reduction)
         var damageReduction = Math.Max(0, Math.Min(0.2f, levelDifference * 0.05f));
-        return baseDamage * (1.0f - damageReduction);
+        return (float)Math.Floor(baseDamage * (1.0f - damageReduction));
     }
     
     public static uint CalculateExperienceToNextLevel(uint currentLevel)

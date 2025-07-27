@@ -310,11 +310,18 @@ export class BottomUIBar {
   private findNextLevelConfig(currentLevel: number) {
     if (!this.dbConnection) return null;
 
-    for (const config of this.dbConnection.db.playerLevelingConfig.iter()) {
+    // Debug: Check if we have any level data
+    const levelConfigs = Array.from(this.dbConnection.db.playerLevel.iter());
+    console.log('PlayerLevel configs available:', levelConfigs.length);
+    
+    for (const config of levelConfigs) {
+      console.log(`Level ${config.level}: ${config.expRequired} exp required`);
       if (config.level === currentLevel + 1) {
+        console.log(`Found next level config for level ${currentLevel + 1}: ${config.expRequired} exp`);
         return config;
       }
     }
+    console.log(`No config found for level ${currentLevel + 1}`);
     return null;
   }
 

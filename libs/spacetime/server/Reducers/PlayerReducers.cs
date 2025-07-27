@@ -303,11 +303,11 @@ public static partial class Module
         // Determine damage type based on player level vs enemy level
         var damageType = DamageCalculator.DeterminePlayerDamageType(player.Value.level, enemyLevel);
         
-        // Apply damage multiplier based on damage type
-        var finalDamage = damage * DamageCalculator.GetDamageMultiplier(damageType);
+        // Apply damage multiplier based on damage type and floor to prevent decimals
+        var finalDamage = (float)Math.Floor(damage * DamageCalculator.GetDamageMultiplier(damageType));
         
         // Apply damage
-        var newHp = Math.Max(0, player.Value.current_hp - finalDamage);
+        var newHp = Math.Max(0, (float)Math.Floor(player.Value.current_hp - finalDamage));
         var targetState = newHp <= 0 ? PlayerState.Dead : PlayerState.Damaged;
 
         Log.Info($"Player {ctx.Sender} damage calculation - Current HP: {player.Value.current_hp}, Damage: {finalDamage}, New HP: {newHp}, Target State: {targetState}");

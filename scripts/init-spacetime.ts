@@ -132,7 +132,7 @@ async function initializeSpacetime() {
     // Read and populate player leveling curve from JSON
     const playerLevelingPath = join(process.cwd(), 'apps/playground/config/player_leveling_curve.json');
     const levelingCurveContent = readFileSync(playerLevelingPath, 'utf8');
-    await connection.reducers.populatePlayerLevelingConfig(adminApiKey, levelingCurveContent);
+    await connection.reducers.populatePlayerLevel(adminApiKey, levelingCurveContent);
 
     console.log('✅ Player leveling curve populated!');
 

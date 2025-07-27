@@ -109,11 +109,44 @@ public static partial class Module
     {
         var levelUpResult = CalculateLevelUp(ctx, player, expGained);
 
-        // Update player with new level and experience
+        // Calculate new max stats if player leveled up
+        float newMaxHp = player.max_hp;
+        float newMaxMana = player.max_mana;
+        float newCurrentHp = player.current_hp;
+        float newCurrentMana = player.current_mana;
+        
+        if (levelUpResult.LevelsGained > 0)
+        {
+            // Look up job to get base stats for scaling
+            var job = ctx.Db.Job.job_key.Find(player.job);
+            if (job != null)
+            {
+                newMaxHp = PlayerConstants.CalculateMaxHpWithJob(levelUpResult.NewLevel, job.Value.health);
+                newMaxMana = PlayerConstants.CalculateMaxManaWithJob(levelUpResult.NewLevel, job.Value.mana);
+                // Restore to full health and mana on level up
+                newCurrentHp = newMaxHp;
+                newCurrentMana = newMaxMana;
+            }
+            else
+            {
+                // Fallback to old calculation if job not found
+                Log.Warn($"Job {player.job} not found for level up calculations");
+                newMaxHp = PlayerConstants.CalculateMaxHp(levelUpResult.NewLevel);
+                newMaxMana = PlayerConstants.CalculateMaxMana(levelUpResult.NewLevel);
+                newCurrentHp = newMaxHp;
+                newCurrentMana = newMaxMana;
+            }
+        }
+        
+        // Update player with new level, experience, and restored health
         var updatedPlayer = player with
         {
             experience = levelUpResult.RemainingExp,
-            level = levelUpResult.NewLevel
+            level = levelUpResult.NewLevel,
+            max_hp = newMaxHp,
+            current_hp = newCurrentHp,
+            max_mana = newMaxMana,
+            current_mana = newCurrentMana
         };
         ctx.Db.Player.identity.Update(updatedPlayer);
 
@@ -145,7 +178,7 @@ public static partial class Module
         // Check for level ups
         while (true)
         {
-            var nextLevelData = ctx.Db.PlayerLevelingConfig.level.Find(newLevel + 1);
+            var nextLevelData = ctx.Db.PlayerLevel.level.Find(newLevel + 1);
             if (nextLevelData == null)
             {
                 // No more levels defined

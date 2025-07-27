@@ -80,7 +80,7 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void PopulatePlayerLevelingConfig(ReducerContext ctx, string adminApiKey, string levelingCurveJson)
+    public static void PopulatePlayerLevel(ReducerContext ctx, string adminApiKey, string levelingCurveJson)
     {
         // Validate admin API key
         if (!AdminConstants.IsValidAdminKey(adminApiKey))
@@ -89,20 +89,20 @@ public static partial class Module
             return;
         }
 
-        Log.Info("Populating PlayerLevelingConfig table from JSON data...");
+        Log.Info("Populating PlayerLevel table from JSON data...");
         
         try
         {
             // Clear existing leveling data
             var existingLevels = new List<uint>();
-            foreach (var level in ctx.Db.PlayerLevelingConfig.Iter())
+            foreach (var level in ctx.Db.PlayerLevel.Iter())
             {
                 existingLevels.Add(level.level);
             }
             
             foreach (var level in existingLevels)
             {
-                ctx.Db.PlayerLevelingConfig.level.Delete(level);
+                ctx.Db.PlayerLevel.level.Delete(level);
             }
             
             Log.Info($"Cleared {existingLevels.Count} existing leveling entries");
@@ -118,7 +118,7 @@ public static partial class Module
                 var expRequired = levelEntry.GetProperty("exp_required").GetUInt32();
                 
                 // Insert the leveling data
-                ctx.Db.PlayerLevelingConfig.Insert(new PlayerLevelingConfig
+                ctx.Db.PlayerLevel.Insert(new PlayerLevel
                 {
                     level = level,
                     exp_required = expRequired

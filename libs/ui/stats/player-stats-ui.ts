@@ -303,11 +303,17 @@ export class PlayerStatsUI {
   private findNextLevelConfig(currentLevel: number) {
     if (!this.dbConnection) return null;
 
-    for (const config of this.dbConnection.db.playerLevelingConfig.iter()) {
+    // Debug: Check if we have any level data
+    const levelConfigs = Array.from(this.dbConnection.db.playerLevel.iter());
+    console.log('[PlayerStatsUI] PlayerLevel configs available:', levelConfigs.length);
+    
+    for (const config of levelConfigs) {
       if (config.level === currentLevel + 1) {
+        console.log(`[PlayerStatsUI] Found next level config for level ${currentLevel + 1}: ${config.expRequired} exp`);
         return config;
       }
     }
+    console.log(`[PlayerStatsUI] No config found for level ${currentLevel + 1}`);
     return null;
   }
 

@@ -32,23 +32,23 @@ import {
   type ReducerEventContextInterface,
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
-import { PlayerLevelingConfig } from "./player_leveling_config_type";
+import { PlayerLevel } from "./player_level_type";
 import { type EventContext, type Reducer, RemoteReducers, RemoteTables } from ".";
 
 /**
- * Table handle for the table `PlayerLevelingConfig`.
+ * Table handle for the table `PlayerLevel`.
  *
- * Obtain a handle from the [`playerLevelingConfig`] property on [`RemoteTables`],
- * like `ctx.db.playerLevelingConfig`.
+ * Obtain a handle from the [`playerLevel`] property on [`RemoteTables`],
+ * like `ctx.db.playerLevel`.
  *
  * Users are encouraged not to explicitly reference this type,
  * but to directly chain method calls,
- * like `ctx.db.playerLevelingConfig.on_insert(...)`.
+ * like `ctx.db.playerLevel.on_insert(...)`.
  */
-export class PlayerLevelingConfigTableHandle {
-  tableCache: TableCache<PlayerLevelingConfig>;
+export class PlayerLevelTableHandle {
+  tableCache: TableCache<PlayerLevel>;
 
-  constructor(tableCache: TableCache<PlayerLevelingConfig>) {
+  constructor(tableCache: TableCache<PlayerLevel>) {
     this.tableCache = tableCache;
   }
 
@@ -56,24 +56,24 @@ export class PlayerLevelingConfigTableHandle {
     return this.tableCache.count();
   }
 
-  iter(): Iterable<PlayerLevelingConfig> {
+  iter(): Iterable<PlayerLevel> {
     return this.tableCache.iter();
   }
   /**
-   * Access to the `level` unique index on the table `PlayerLevelingConfig`,
+   * Access to the `level` unique index on the table `PlayerLevel`,
    * which allows point queries on the field of the same name
-   * via the [`PlayerLevelingConfigLevelUnique.find`] method.
+   * via the [`PlayerLevelLevelUnique.find`] method.
    *
    * Users are encouraged not to explicitly reference this type,
    * but to directly chain method calls,
-   * like `ctx.db.playerLevelingConfig.level().find(...)`.
+   * like `ctx.db.playerLevel.level().find(...)`.
    *
-   * Get a handle on the `level` unique index on the table `PlayerLevelingConfig`.
+   * Get a handle on the `level` unique index on the table `PlayerLevel`.
    */
   level = {
     // Find the subscribed row whose `level` column value is equal to `col_val`,
     // if such a row is present in the client cache.
-    find: (col_val: number): PlayerLevelingConfig | undefined => {
+    find: (col_val: number): PlayerLevel | undefined => {
       for (let row of this.tableCache.iter()) {
         if (deepEqual(row.level, col_val)) {
           return row;
@@ -82,27 +82,27 @@ export class PlayerLevelingConfigTableHandle {
     },
   };
 
-  onInsert = (cb: (ctx: EventContext, row: PlayerLevelingConfig) => void) => {
+  onInsert = (cb: (ctx: EventContext, row: PlayerLevel) => void) => {
     return this.tableCache.onInsert(cb);
   }
 
-  removeOnInsert = (cb: (ctx: EventContext, row: PlayerLevelingConfig) => void) => {
+  removeOnInsert = (cb: (ctx: EventContext, row: PlayerLevel) => void) => {
     return this.tableCache.removeOnInsert(cb);
   }
 
-  onDelete = (cb: (ctx: EventContext, row: PlayerLevelingConfig) => void) => {
+  onDelete = (cb: (ctx: EventContext, row: PlayerLevel) => void) => {
     return this.tableCache.onDelete(cb);
   }
 
-  removeOnDelete = (cb: (ctx: EventContext, row: PlayerLevelingConfig) => void) => {
+  removeOnDelete = (cb: (ctx: EventContext, row: PlayerLevel) => void) => {
     return this.tableCache.removeOnDelete(cb);
   }
 
   // Updates are only defined for tables with primary keys.
-  onUpdate = (cb: (ctx: EventContext, oldRow: PlayerLevelingConfig, newRow: PlayerLevelingConfig) => void) => {
+  onUpdate = (cb: (ctx: EventContext, oldRow: PlayerLevel, newRow: PlayerLevel) => void) => {
     return this.tableCache.onUpdate(cb);
   }
 
-  removeOnUpdate = (cb: (ctx: EventContext, onRow: PlayerLevelingConfig, newRow: PlayerLevelingConfig) => void) => {
+  removeOnUpdate = (cb: (ctx: EventContext, onRow: PlayerLevel, newRow: PlayerLevel) => void) => {
     return this.tableCache.removeOnUpdate(cb);
   }}

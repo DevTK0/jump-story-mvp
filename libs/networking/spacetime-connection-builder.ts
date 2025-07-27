@@ -152,7 +152,7 @@ export class SpacetimeConnectionBuilder {
 
   /**
    * Subscribe to core tables required by multiple systems
-   * This includes Player, Job, PlayerJob, JobAttack, Spawn, Enemy, and damage event tables
+   * This includes Player, Job, PlayerJob, JobAttack, Spawn, Enemy, PlayerLevel, and damage event tables
    */
   public subscribeToCoreTables(): SpacetimeConnectionBuilder {
     this.subscriptionConfig.skipAutoSubscribe = false;
@@ -164,7 +164,9 @@ export class SpacetimeConnectionBuilder {
       'Spawn',
       'Enemy',
       'PlayerDamageEvent',
-      'EnemyDamageEvent'
+      'EnemyDamageEvent',
+      'PlayerLevel',  // Configuration table for level requirements
+      'EnemyConfig'   // Configuration table for enemy stats
     ];
     return this;
   }

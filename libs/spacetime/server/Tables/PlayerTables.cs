@@ -106,8 +106,8 @@ public static partial class Module
         public uint aggro_range;
     }
 
-    [Table(Name = "PlayerLevelingConfig", Public = true)]
-    public partial struct PlayerLevelingConfig
+    [Table(Name = "PlayerLevel", Public = true)]
+    public partial struct PlayerLevel
     {
         [PrimaryKey]
         public uint level;
@@ -145,5 +145,4 @@ public static partial class Module
         public string job_key;
         public bool is_unlocked;
     }
-
 }

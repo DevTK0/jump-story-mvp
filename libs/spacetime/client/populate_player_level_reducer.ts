@@ -32,34 +32,34 @@ import {
   type ReducerEventContextInterface,
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
-export type PlayerLevelingConfig = {
-  level: number,
-  expRequired: number,
+
+export type PopulatePlayerLevel = {
+  adminApiKey: string,
+  levelingCurveJson: string,
 };
 
 /**
  * A namespace for generated helper functions.
  */
-export namespace PlayerLevelingConfig {
+export namespace PopulatePlayerLevel {
   /**
   * A function which returns this type represented as an AlgebraicType.
   * This function is derived from the AlgebraicType used to generate this type.
   */
   export function getTypeScriptAlgebraicType(): AlgebraicType {
     return AlgebraicType.createProductType([
-      new ProductTypeElement("level", AlgebraicType.createU32Type()),
-      new ProductTypeElement("expRequired", AlgebraicType.createU32Type()),
+      new ProductTypeElement("adminApiKey", AlgebraicType.createStringType()),
+      new ProductTypeElement("levelingCurveJson", AlgebraicType.createStringType()),
     ]);
   }
 
-  export function serialize(writer: BinaryWriter, value: PlayerLevelingConfig): void {
-    PlayerLevelingConfig.getTypeScriptAlgebraicType().serialize(writer, value);
+  export function serialize(writer: BinaryWriter, value: PopulatePlayerLevel): void {
+    PopulatePlayerLevel.getTypeScriptAlgebraicType().serialize(writer, value);
   }
 
-  export function deserialize(reader: BinaryReader): PlayerLevelingConfig {
-    return PlayerLevelingConfig.getTypeScriptAlgebraicType().deserialize(reader);
+  export function deserialize(reader: BinaryReader): PopulatePlayerLevel {
+    return PopulatePlayerLevel.getTypeScriptAlgebraicType().deserialize(reader);
   }
 
 }
-
 

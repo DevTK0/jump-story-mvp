@@ -68,8 +68,8 @@ import { PlayerTakeDamage } from "./player_take_damage_reducer.ts";
 export { PlayerTakeDamage };
 import { PopulateEnemyConfig } from "./populate_enemy_config_reducer.ts";
 export { PopulateEnemyConfig };
-import { PopulatePlayerLevelingConfig } from "./populate_player_leveling_config_reducer.ts";
-export { PopulatePlayerLevelingConfig };
+import { PopulatePlayerLevel } from "./populate_player_level_reducer.ts";
+export { PopulatePlayerLevel };
 import { RecoverFromDamage } from "./recover_from_damage_reducer.ts";
 export { RecoverFromDamage };
 import { RespawnPlayer } from "./respawn_player_reducer.ts";
@@ -112,8 +112,8 @@ import { PlayerDamageEventTableHandle } from "./player_damage_event_table.ts";
 export { PlayerDamageEventTableHandle };
 import { PlayerJobTableHandle } from "./player_job_table.ts";
 export { PlayerJobTableHandle };
-import { PlayerLevelingConfigTableHandle } from "./player_leveling_config_table.ts";
-export { PlayerLevelingConfigTableHandle };
+import { PlayerLevelTableHandle } from "./player_level_table.ts";
+export { PlayerLevelTableHandle };
 import { PlayerMessageTableHandle } from "./player_message_table.ts";
 export { PlayerMessageTableHandle };
 import { SpawnTableHandle } from "./spawn_table.ts";
@@ -174,8 +174,8 @@ import { PlayerDamageEvent } from "./player_damage_event_type.ts";
 export { PlayerDamageEvent };
 import { PlayerJob } from "./player_job_type.ts";
 export { PlayerJob };
-import { PlayerLevelingConfig } from "./player_leveling_config_type.ts";
-export { PlayerLevelingConfig };
+import { PlayerLevel } from "./player_level_type.ts";
+export { PlayerLevel };
 import { PlayerMessage } from "./player_message_type.ts";
 export { PlayerMessage };
 import { PlayerState } from "./player_state_type.ts";
@@ -279,13 +279,13 @@ const REMOTE_MODULE = {
         colType: PlayerJob.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
-    PlayerLevelingConfig: {
-      tableName: "PlayerLevelingConfig",
-      rowType: PlayerLevelingConfig.getTypeScriptAlgebraicType(),
+    PlayerLevel: {
+      tableName: "PlayerLevel",
+      rowType: PlayerLevel.getTypeScriptAlgebraicType(),
       primaryKey: "level",
       primaryKeyInfo: {
         colName: "level",
-        colType: PlayerLevelingConfig.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+        colType: PlayerLevel.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     PlayerMessage: {
@@ -430,9 +430,9 @@ const REMOTE_MODULE = {
       reducerName: "PopulateEnemyConfig",
       argsType: PopulateEnemyConfig.getTypeScriptAlgebraicType(),
     },
-    PopulatePlayerLevelingConfig: {
-      reducerName: "PopulatePlayerLevelingConfig",
-      argsType: PopulatePlayerLevelingConfig.getTypeScriptAlgebraicType(),
+    PopulatePlayerLevel: {
+      reducerName: "PopulatePlayerLevel",
+      argsType: PopulatePlayerLevel.getTypeScriptAlgebraicType(),
     },
     RecoverFromDamage: {
       reducerName: "RecoverFromDamage",
@@ -521,7 +521,7 @@ export type Reducer = never
 | { name: "InstakillPlayer", args: InstakillPlayer }
 | { name: "PlayerTakeDamage", args: PlayerTakeDamage }
 | { name: "PopulateEnemyConfig", args: PopulateEnemyConfig }
-| { name: "PopulatePlayerLevelingConfig", args: PopulatePlayerLevelingConfig }
+| { name: "PopulatePlayerLevel", args: PopulatePlayerLevel }
 | { name: "RecoverFromDamage", args: RecoverFromDamage }
 | { name: "RespawnPlayer", args: RespawnPlayer }
 | { name: "SendPlayerMessage", args: SendPlayerMessage }
@@ -793,20 +793,20 @@ export class RemoteReducers {
     this.connection.offReducer("PopulateEnemyConfig", callback);
   }
 
-  populatePlayerLevelingConfig(adminApiKey: string, levelingCurveJson: string) {
+  populatePlayerLevel(adminApiKey: string, levelingCurveJson: string) {
     const __args = { adminApiKey, levelingCurveJson };
     let __writer = new BinaryWriter(1024);
-    PopulatePlayerLevelingConfig.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    PopulatePlayerLevel.getTypeScriptAlgebraicType().serialize(__writer, __args);
     let __argsBuffer = __writer.getBuffer();
-    this.connection.callReducer("PopulatePlayerLevelingConfig", __argsBuffer, this.setCallReducerFlags.populatePlayerLevelingConfigFlags);
+    this.connection.callReducer("PopulatePlayerLevel", __argsBuffer, this.setCallReducerFlags.populatePlayerLevelFlags);
   }
 
-  onPopulatePlayerLevelingConfig(callback: (ctx: ReducerEventContext, adminApiKey: string, levelingCurveJson: string) => void) {
-    this.connection.onReducer("PopulatePlayerLevelingConfig", callback);
+  onPopulatePlayerLevel(callback: (ctx: ReducerEventContext, adminApiKey: string, levelingCurveJson: string) => void) {
+    this.connection.onReducer("PopulatePlayerLevel", callback);
   }
 
-  removeOnPopulatePlayerLevelingConfig(callback: (ctx: ReducerEventContext, adminApiKey: string, levelingCurveJson: string) => void) {
-    this.connection.offReducer("PopulatePlayerLevelingConfig", callback);
+  removeOnPopulatePlayerLevel(callback: (ctx: ReducerEventContext, adminApiKey: string, levelingCurveJson: string) => void) {
+    this.connection.offReducer("PopulatePlayerLevel", callback);
   }
 
   recoverFromDamage(spawnId: number) {
@@ -1043,9 +1043,9 @@ export class SetReducerFlags {
     this.populateEnemyConfigFlags = flags;
   }
 
-  populatePlayerLevelingConfigFlags: CallReducerFlags = 'FullUpdate';
-  populatePlayerLevelingConfig(flags: CallReducerFlags) {
-    this.populatePlayerLevelingConfigFlags = flags;
+  populatePlayerLevelFlags: CallReducerFlags = 'FullUpdate';
+  populatePlayerLevel(flags: CallReducerFlags) {
+    this.populatePlayerLevelFlags = flags;
   }
 
   recoverFromDamageFlags: CallReducerFlags = 'FullUpdate';
@@ -1143,8 +1143,8 @@ export class RemoteTables {
     return new PlayerJobTableHandle(this.connection.clientCache.getOrCreateTable<PlayerJob>(REMOTE_MODULE.tables.PlayerJob));
   }
 
-  get playerLevelingConfig(): PlayerLevelingConfigTableHandle {
-    return new PlayerLevelingConfigTableHandle(this.connection.clientCache.getOrCreateTable<PlayerLevelingConfig>(REMOTE_MODULE.tables.PlayerLevelingConfig));
+  get playerLevel(): PlayerLevelTableHandle {
+    return new PlayerLevelTableHandle(this.connection.clientCache.getOrCreateTable<PlayerLevel>(REMOTE_MODULE.tables.PlayerLevel));
   }
 
   get playerMessage(): PlayerMessageTableHandle {
