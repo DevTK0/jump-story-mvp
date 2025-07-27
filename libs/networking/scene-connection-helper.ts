@@ -21,27 +21,26 @@ export class SceneConnectionHelper {
   private connectionManager?: SpacetimeConnector;
   private errorBoundary: ErrorBoundary;
   private config: ConnectionConfig;
-  
+
   private connection?: DbConnection;
   private identity?: Identity;
-  
+
   constructor(scene: Phaser.Scene, config: ConnectionConfig) {
     this.scene = scene;
     this.config = config;
     this.logger = createLogger('SceneConnectionHelper');
     this.errorBoundary = ErrorBoundary.getInstance();
   }
-  
+
   /**
    * Connect to the database
    */
   async connect(): Promise<void> {
-    const dbUri = this.config.target === 'cloud' 
-      ? 'wss://maincloud.spacetimedb.com' 
-      : 'ws://localhost:3000';
-    
+    const dbUri =
+      this.config.target === 'cloud' ? 'wss://maincloud.spacetimedb.com' : 'ws://localhost:3000';
+
     this.logger.info(`Connecting to SpaceTimeDB (${this.config.target}): ${dbUri}`);
-    
+
     // Build connection
     this.connectionManager = new SpacetimeConnectionBuilder()
       .setUri(dbUri)
@@ -60,7 +59,7 @@ export class SceneConnectionHelper {
       })
       .onSubscriptionApplied((_ctx) => this.logger.info('Subscription applied!'))
       .build();
-    
+
     // Start connection
     try {
       await this.connectionManager.connect();
@@ -76,7 +75,7 @@ export class SceneConnectionHelper {
       throw err;
     }
   }
-  
+
   /**
    * Disconnect from the database
    */
@@ -85,21 +84,21 @@ export class SceneConnectionHelper {
       this.connectionManager.disconnect();
     }
   }
-  
+
   /**
    * Get the current connection
    */
   getConnection(): DbConnection | null {
     return this.connection || null;
   }
-  
+
   /**
    * Get the current identity
    */
   getIdentity(): Identity | null {
     return this.identity || null;
   }
-  
+
   /**
    * Setup player systems with database connection
    */
@@ -108,7 +107,7 @@ export class SceneConnectionHelper {
     if (syncSystem && syncSystem.setDbConnection) {
       syncSystem.setDbConnection(connection);
     }
-    
+
     const combatSystem = player.getSystem('combat') as any;
     if (combatSystem) {
       if (combatSystem.setSyncManager && syncSystem) {
@@ -120,35 +119,35 @@ export class SceneConnectionHelper {
         combatSystem.setDbConnection(connection);
       }
     }
-    
+
     const respawnSystem = player.getSystem('respawn') as any;
     if (respawnSystem && respawnSystem.setDbConnection) {
       respawnSystem.setDbConnection(connection);
     }
-    
+
     const deathMonitor = player.getSystem('deathMonitor') as any;
     if (deathMonitor && deathMonitor.setDbConnection) {
       deathMonitor.setDbConnection(connection);
     }
-    
+
     const teleportSystem = player.getSystem('teleport') as any;
     if (teleportSystem && teleportSystem.setDbConnection) {
       teleportSystem.setDbConnection(connection);
     }
   }
-  
+
   private handleDatabaseConnect(conn: DbConnection, identity: Identity, _token: string): void {
     this.connection = conn;
     this.identity = identity;
-    
+
     // Initialize the PlayerQueryService singleton immediately
     PlayerQueryService.getInstance(conn);
     this.logger.info('PlayerQueryService singleton initialized');
-    
+
     // Initialize the CombatValidationService singleton
     CombatValidationService.getInstance(conn);
     this.logger.info('CombatValidationService singleton initialized');
-    
+
     // Emit event for other systems to react
     this.scene.events.emit('database-connected', { connection: conn, identity });
   }

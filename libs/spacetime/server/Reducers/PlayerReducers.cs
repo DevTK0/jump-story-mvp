@@ -36,6 +36,38 @@ public static partial class Module
         Log.Info("Initialized dead body cleanup, enemy spawning, enemy patrol, and message cleanup schedulers");
     }
 
+    // Helper function to populate PlayerJob entries for a new player
+    private static void PopulatePlayerJobs(ReducerContext ctx, Identity playerIdentity)
+    {
+        // Get all jobs from the Job table
+        var allJobs = ctx.Db.Job.Iter();
+        
+        foreach (var job in allJobs)
+        {
+            // Check if this player-job combination already exists
+            var existingEntries = ctx.Db.PlayerJob
+                .Iter()
+                .Where(pj => pj.player_identity == playerIdentity && pj.job_id == job.job_id)
+                .ToList();
+                
+            if (existingEntries.Count > 0)
+            {
+                Log.Info($"PlayerJob entry already exists for player {playerIdentity} - job: {job.job_key}");
+                continue;
+            }
+            
+            var playerJob = new PlayerJob
+            {
+                player_identity = playerIdentity,
+                job_id = job.job_id,
+                is_unlocked = job.default_unlocked
+            };
+            
+            ctx.Db.PlayerJob.Insert(playerJob);
+            Log.Info($"Created PlayerJob entry for player {playerIdentity} - job: {job.job_key}, unlocked: {job.default_unlocked}");
+        }
+    }
+
     [Reducer(ReducerKind.ClientConnected)]
     public static void Connect(ReducerContext ctx)
     {
@@ -83,6 +115,9 @@ public static partial class Module
             job = defaultJob
         };
         ctx.Db.Player.Insert(newPlayer);
+        
+        // Populate PlayerJob entries for all jobs
+        PopulatePlayerJobs(ctx, ctx.Sender);
         
         // Initialize player cooldowns with very old timestamp (attacks available immediately)
         var veryOldTime = ctx.Timestamp - TimeSpan.FromDays(1); // 1 day ago

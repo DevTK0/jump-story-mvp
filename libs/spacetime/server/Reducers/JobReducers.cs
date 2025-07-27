@@ -22,7 +22,8 @@ public static partial class Module
         int resDark,
         int resSpike,
         int resClaw,
-        int resGreatsword)
+        int resGreatsword,
+        bool defaultUnlocked)
     {
         // Validate admin API key
         if (!AdminConstants.IsValidAdminKey(adminApiKey))
@@ -55,7 +56,8 @@ public static partial class Module
             res_dark = resDark,
             res_spike = resSpike,
             res_claw = resClaw,
-            res_greatsword = resGreatsword
+            res_greatsword = resGreatsword,
+            default_unlocked = defaultUnlocked
         };
 
         ctx.Db.Job.Insert(job);

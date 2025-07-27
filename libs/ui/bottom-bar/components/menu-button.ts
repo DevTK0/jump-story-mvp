@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { BOTTOM_UI_CONFIG } from '../bottom-ui-config';
 import { MenuDropdown } from './menu-dropdown';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
+import { DbConnection } from '@/spacetime/client';
 
 export class MenuButton {
   private scene: Phaser.Scene;
@@ -10,6 +11,7 @@ export class MenuButton {
   private text: Phaser.GameObjects.Text;
   private dropdown: MenuDropdown;
   private onClick?: () => void;
+  private playerJobData: Map<number, boolean> = new Map();
 
   constructor(scene: Phaser.Scene, label: string = 'MENU') {
     this.scene = scene;
@@ -100,6 +102,16 @@ export class MenuButton {
 
   public setPlayerIdentity(identity: Identity): void {
     this.dropdown.setPlayerIdentity(identity);
+  }
+
+  public setDbConnection(dbConnection: DbConnection): void {
+    this.dropdown.setDbConnection(dbConnection);
+  }
+
+  public setPlayerJobData(jobData: Map<number, boolean>, jobTableData?: any[]): void {
+    console.log(jobData, jobTableData);
+    this.playerJobData = jobData;
+    this.dropdown.setPlayerJobData(jobData, jobTableData);
   }
 
   public destroy(): void {

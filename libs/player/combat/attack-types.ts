@@ -77,6 +77,7 @@ export interface Resistances {
 export interface JobConfig {
   displayName: string;
   spriteKey: string;
+  defaultUnlocked: boolean;
   baseStats: {
     health: number;
     moveSpeed: number;

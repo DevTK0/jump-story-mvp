@@ -4,6 +4,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   soldier: {
     displayName: 'Soldier',
     spriteKey: 'soldier',
+    defaultUnlocked: true,
     baseStats: {
       health: 100,
       moveSpeed: 160,
@@ -74,6 +75,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   knight: {
     displayName: 'Knight',
     spriteKey: 'knight',
+    defaultUnlocked: false,
     baseStats: {
       health: 150,
       moveSpeed: 140,
@@ -144,6 +146,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   wizard: {
     displayName: 'Wizard',
     spriteKey: 'wizard',
+    defaultUnlocked: false,
     baseStats: {
       health: 80,
       moveSpeed: 150,
@@ -221,6 +224,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   archer: {
     displayName: 'Archer',
     spriteKey: 'archer',
+    defaultUnlocked: false,
     baseStats: {
       health: 90,
       moveSpeed: 170,
@@ -300,6 +304,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   armoredAxeman: {
     displayName: 'Armored Axeman',
     spriteKey: 'armored-axeman',
+    defaultUnlocked: false,
     baseStats: {
       health: 140,
       moveSpeed: 130,
@@ -372,6 +377,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   knightTemplar: {
     displayName: 'Knight Templar',
     spriteKey: 'knight-templar',
+    defaultUnlocked: false,
     baseStats: {
       health: 160,
       moveSpeed: 135,
@@ -444,6 +450,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   lancer: {
     displayName: 'Lancer',
     spriteKey: 'lancer',
+    defaultUnlocked: false,
     baseStats: {
       health: 110,
       moveSpeed: 165,
@@ -514,6 +521,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   priest: {
     displayName: 'Priest',
     spriteKey: 'priest',
+    defaultUnlocked: false,
     baseStats: {
       health: 85,
       moveSpeed: 145,
@@ -591,6 +599,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   swordsman: {
     displayName: 'Swordsman',
     spriteKey: 'swordsman',
+    defaultUnlocked: false,
     baseStats: {
       health: 105,
       moveSpeed: 155,

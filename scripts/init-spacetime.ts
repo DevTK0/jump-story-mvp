@@ -181,7 +181,8 @@ async function initializeSpacetime() {
           jobConfig.baseStats.resistances.dark,
           jobConfig.baseStats.resistances.spike,
           jobConfig.baseStats.resistances.claw,
-          jobConfig.baseStats.resistances.greatsword
+          jobConfig.baseStats.resistances.greatsword,
+          jobConfig.defaultUnlocked
         );
         console.log(`    ✅ Job ${jobKey} initialized`);
       } catch (error) {

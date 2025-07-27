@@ -159,3 +159,25 @@ For damage events, chat messages, etc.:
 ## Example Implementation
 
 See the PlayerQueryService and EnemyManager implementations in the jump-story-mvp project for production examples of these patterns.
+
+## Building SpacetimeDB
+
+```bash
+cd libs/spacetime/server
+spacetime publish -s local jump-story -c -y
+
+# build module bindings
+spacetime generate --lang typescript --out-dir ../client
+
+cd ../../..
+```
+
+Make sure you are in the right directory when building and cd back to root when you are done.
+
+### Running init scripts
+
+These scripts will reinitialise the game configs in the database. They need to be ran everytime you do a re-publish.
+
+```bash
+pnpm run init:local
+```

@@ -4,7 +4,7 @@ import { PlayerLevelSquare } from './components/player-level-square';
 import { PlayerInfoDisplay } from './components/player-info-display';
 import { CompactStatBar } from './components/compact-stat-bar';
 import { MenuButton } from './components/menu-button';
-import { DbConnection } from '@/spacetime/client';
+import { DbConnection, PlayerJob, Job } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { createLogger, type ModuleLogger } from '@/core/logger';
 
@@ -13,7 +13,7 @@ export class BottomUIBar {
   private container: Phaser.GameObjects.Container;
   private background: Phaser.GameObjects.Graphics;
   private logger: ModuleLogger = createLogger('BottomUIBar');
-  
+
   // UI Components
   private levelDisplay: PlayerLevelSquare;
   private playerInfo: PlayerInfoDisplay;
@@ -21,20 +21,27 @@ export class BottomUIBar {
   private mpBar: CompactStatBar;
   private expBar: CompactStatBar;
   private menuButton: MenuButton;
-  
+
   // Data
   private playerIdentity: Identity;
   private dbConnection: DbConnection | null = null;
 
+  // Job unlock data: Map<jobId, isUnlocked>
+  private playerJobUnlockStatus: Map<number, boolean> = new Map();
+  // Job table data
+  private jobTableData: any[] = [];
+  // Flag to track if Job table is loaded
+  private isJobTableLoaded: boolean = false;
+
   constructor(scene: Phaser.Scene, playerIdentity: Identity) {
     this.scene = scene;
     this.playerIdentity = playerIdentity;
-    
+
     this.createContainer();
     this.createBackground();
     this.createComponents();
     this.positionComponents();
-    
+
     // Listen for resize events
     this.scene.scale.on('resize', this.onResize, this);
   }
@@ -42,7 +49,7 @@ export class BottomUIBar {
   private createContainer(): void {
     const camera = this.scene.cameras.main;
     const y = camera.height - BOTTOM_UI_CONFIG.container.height;
-    
+
     this.container = this.scene.add.container(0, y);
     this.container.setScrollFactor(0); // Fix to camera
     this.container.setDepth(BOTTOM_UI_CONFIG.depth.background);
@@ -51,36 +58,36 @@ export class BottomUIBar {
   private createBackground(): void {
     const camera = this.scene.cameras.main;
     const config = BOTTOM_UI_CONFIG.container;
-    
+
     this.background = this.scene.add.graphics();
-    
+
     // Draw background
     this.background.fillStyle(config.backgroundColor, 0.9);
     this.background.fillRect(0, 0, camera.width, config.height);
-    
+
     // Draw top border
     this.background.lineStyle(config.borderWidth, config.borderColor);
     this.background.lineBetween(0, 0, camera.width, 0);
-    
+
     this.container.add(this.background);
   }
 
   private createComponents(): void {
     // Create level display
     this.levelDisplay = new PlayerLevelSquare(this.scene);
-    
+
     // Create player info
     this.playerInfo = new PlayerInfoDisplay(this.scene);
-    
+
     // Create stat bars
     this.hpBar = new CompactStatBar(this.scene, 'hp');
     this.mpBar = new CompactStatBar(this.scene, 'mp');
     this.expBar = new CompactStatBar(this.scene, 'exp');
-    
+
     // Create menu button
     this.menuButton = new MenuButton(this.scene, 'MENU');
     this.menuButton.setPlayerIdentity(this.playerIdentity);
-    
+
     // Add all components to container
     this.container.add([
       this.levelDisplay.getContainer(),
@@ -97,34 +104,31 @@ export class BottomUIBar {
     const containerHeight = BOTTOM_UI_CONFIG.container.height;
     const centerY = containerHeight / 2;
     const camera = this.scene.cameras.main;
-    
+
     // Position level display (start from left edge, centered vertically)
-    this.levelDisplay.setPosition(
-      0,
-      0
-    );
-    
+    this.levelDisplay.setPosition(0, 0);
+
     // Position player info (after level display)
     const infoX = 80 + layout.playerInfoMarginLeft;
     this.playerInfo.setPosition(infoX, centerY - 10);
-    
+
     // Position menu button
     const menuX = camera.width - BOTTOM_UI_CONFIG.menuButton.width - layout.menuButtonMarginRight;
     this.menuButton.setPosition(menuX, centerY - 15);
-    
+
     // Calculate available space for centering stat bars
     const leftBoundary = infoX + this.playerInfo.getWidth() + layout.statBarsMarginLeft;
     const rightBoundary = menuX - layout.statBarsMarginLeft;
     const availableWidth = rightBoundary - leftBoundary;
-    
+
     // Calculate total width needed for all bars
     const barWidth = BOTTOM_UI_CONFIG.statBars.width;
     const barSpacing = 30; // Horizontal spacing between bars
-    const totalBarsWidth = (barWidth * 3) + (barSpacing * 2);
-    
+    const totalBarsWidth = barWidth * 3 + barSpacing * 2;
+
     // Center the bars in the available space
     const barsStartX = leftBoundary + (availableWidth - totalBarsWidth) / 2;
-    
+
     this.hpBar.setPosition(barsStartX, centerY);
     this.mpBar.setPosition(barsStartX + barWidth + barSpacing, centerY);
     this.expBar.setPosition(barsStartX + (barWidth + barSpacing) * 2, centerY);
@@ -132,19 +136,113 @@ export class BottomUIBar {
 
   public setDbConnection(dbConnection: DbConnection): void {
     this.dbConnection = dbConnection;
+    // Pass db connection to menu button first so it's ready
+    this.menuButton.setDbConnection(dbConnection);
+
+    console.log(dbConnection);
+
+    // Add a small delay to ensure tables are loaded
+    // this.scene.time.delayedCall(500, () => {
     this.setupDataSubscriptions();
+    // });
   }
 
   private setupDataSubscriptions(): void {
     if (!this.dbConnection) return;
-    
+
+    // Store reference to avoid closure issues
+    const dbConn = this.dbConnection;
+
+    // Subscribe to PlayerJob and Job tables for the current player
+    const playerIdentityHex = this.playerIdentity.toHexString();
+    this.logger.info(`Setting up PlayerJob subscription for identity: ${playerIdentityHex}`);
+
+    // First subscribe to Job table (global data)
+    dbConn
+      .subscriptionBuilder()
+      .onApplied(() => {
+        console.log('test');
+        this.logger.info('Job table subscription applied');
+        // Load any existing job table data
+        this.jobTableData = [];
+        for (const job of dbConn.db.job.iter()) {
+          this.jobTableData.push(job);
+        }
+        this.logger.info(`Job table loaded with ${this.jobTableData.length} entries`);
+      })
+      .subscribe([`SELECT * FROM job`]);
+
+    // Listen to Job table inserts to keep jobTableData updated
+    dbConn.db.job.onInsert((_ctx, newJob) => {
+      this.jobTableData.push(newJob);
+      this.logger.info(`Job inserted: ${newJob.jobKey} (ID: ${newJob.jobId})`);
+      // Update menu button with new job data
+      this.menuButton.setPlayerJobData(this.playerJobUnlockStatus, this.jobTableData);
+    });
+
+    // Listen to Job table updates
+    dbConn.db.job.onUpdate((_ctx, oldJob, newJob) => {
+      const index = this.jobTableData.findIndex((j) => j.jobId === oldJob.jobId);
+      if (index !== -1) {
+        this.jobTableData[index] = newJob;
+        this.logger.info(`Job updated: ${newJob.jobKey} (ID: ${newJob.jobId})`);
+        // Update menu button with updated job data
+        this.menuButton.setPlayerJobData(this.playerJobUnlockStatus, this.jobTableData);
+      }
+    });
+
+    dbConn
+      .subscriptionBuilder()
+      .onApplied(() => {
+        console.log('hi');
+        console.log(Array.from(dbConn.db.jobAttack.iter()).length);
+      })
+      .subscribeToAllTables();
+
+    // Then subscribe to PlayerJob data
+    dbConn
+      .subscriptionBuilder()
+      .onApplied(() => {
+        console.log('test2');
+        this.logger.info('PlayerJob subscription applied');
+        const pjCount = Array.from(dbConn.db.playerJob.iter()).length;
+        this.logger.info(`PlayerJob table now has ${pjCount} entries`);
+        this.updatePlayerJobData();
+      })
+      .subscribe([`SELECT * FROM player_job WHERE player_identity = x'${playerIdentityHex}'`]);
+
     // Listen to player updates
     this.dbConnection.db.player.onUpdate((_ctx, _oldPlayer, newPlayer) => {
+      console.log('hi');
       if (newPlayer.identity.toHexString() === this.playerIdentity.toHexString()) {
         this.updateFromPlayerData(newPlayer);
       }
     });
-    
+
+    // Listen to PlayerJob updates
+    this.dbConnection.db.playerJob.onUpdate((_ctx, _oldPj, newPj) => {
+      if (newPj.playerIdentity.toHexString() === this.playerIdentity.toHexString()) {
+        this.playerJobUnlockStatus.set(newPj.jobId, newPj.isUnlocked);
+        this.logger.info(`PlayerJob updated: jobId=${newPj.jobId}, isUnlocked=${newPj.isUnlocked}`);
+        // Pass updated data to menu button
+        this.menuButton.setPlayerJobData(this.playerJobUnlockStatus, this.jobTableData);
+      }
+    });
+
+    // Listen to PlayerJob inserts
+    this.dbConnection.db.playerJob.onInsert((_ctx, newPj) => {
+      if (newPj.playerIdentity.toHexString() === this.playerIdentity.toHexString()) {
+        this.playerJobUnlockStatus.set(newPj.jobId, newPj.isUnlocked);
+        this.logger.info(
+          `PlayerJob inserted: jobId=${newPj.jobId}, isUnlocked=${newPj.isUnlocked}`
+        );
+        console.log('BottomUIBar jobTableData:', this.jobTableData);
+        console.log('BottomUIBar jobTableData length:', this.jobTableData.length);
+        // Pass updated data to menu button
+        this.menuButton.setPlayerJobData(this.playerJobUnlockStatus, this.jobTableData);
+      }
+    });
+
     // Get initial data
     for (const player of this.dbConnection.db.player.iter()) {
       if (player.identity.toHexString() === this.playerIdentity.toHexString()) {
@@ -157,23 +255,53 @@ export class BottomUIBar {
   private updateFromPlayerData(player: any): void {
     // Update level
     this.levelDisplay.updateLevel(player.level);
-    
+
     // Update player info
     this.playerInfo.updateInfo(player.name, 'Soldier'); // TODO: Get actual class/job
-    
+
     // Update stat bars
     this.hpBar.updateValues(player.currentHp, player.maxHp);
     this.mpBar.updateValues(player.currentMana || 50, player.maxMana || 100); // TODO: Implement mana
-    
+
     // Update EXP bar
     const nextLevelConfig = this.findNextLevelConfig(player.level);
     const expRequired = nextLevelConfig?.expRequired || 100;
     this.expBar.updateValues(player.experience, expRequired);
   }
 
+  private updatePlayerJobData(): void {
+    if (!this.dbConnection || !this.dbConnection.db.playerJob || !this.dbConnection.db.job) {
+      this.logger.warn('Tables not yet loaded for PlayerJob data update');
+      return;
+    }
+
+    // Get current PlayerJob data using iter() instead of value
+    const playerJobs: any[] = [];
+    for (const pj of this.dbConnection.db.playerJob.iter()) {
+      if (pj.playerIdentity.isEqual(this.playerIdentity)) {
+        playerJobs.push(pj);
+      }
+    }
+
+    this.logger.info(`Found ${playerJobs.length} PlayerJob entries for current player`);
+
+    // Job table data should already be loaded from subscription
+    this.logger.info(`Using ${this.jobTableData.length} jobs from Job table`);
+
+    // Clear and rebuild the unlock status map
+    this.playerJobUnlockStatus.clear();
+    playerJobs.forEach((pj) => {
+      this.playerJobUnlockStatus.set(pj.jobId, pj.isUnlocked);
+      this.logger.debug(`PlayerJob: jobId=${pj.jobId}, isUnlocked=${pj.isUnlocked}`);
+    });
+
+    // Pass both job table data and unlock status to menu button
+    this.menuButton.setPlayerJobData(this.playerJobUnlockStatus, this.jobTableData);
+  }
+
   private findNextLevelConfig(currentLevel: number) {
     if (!this.dbConnection) return null;
-    
+
     for (const config of this.dbConnection.db.playerLevelingConfig.iter()) {
       if (config.level === currentLevel + 1) {
         return config;
@@ -192,11 +320,11 @@ export class BottomUIBar {
 
   private onResize(_gameSize: Phaser.Structs.Size): void {
     const camera = this.scene.cameras.main;
-    
+
     // Update container position
     const y = camera.height - BOTTOM_UI_CONFIG.container.height;
     this.container.setY(y);
-    
+
     // Redraw background to match new width
     const config = BOTTOM_UI_CONFIG.container;
     this.background.clear();
@@ -204,7 +332,7 @@ export class BottomUIBar {
     this.background.fillRect(0, 0, camera.width, config.height);
     this.background.lineStyle(config.borderWidth, config.borderColor);
     this.background.lineBetween(0, 0, camera.width, 0);
-    
+
     // Reposition all components to handle new width
     this.positionComponents();
   }
@@ -212,7 +340,7 @@ export class BottomUIBar {
   public destroy(): void {
     // Remove resize listener
     this.scene.scale.off('resize', this.onResize, this);
-    
+
     this.levelDisplay.destroy();
     this.playerInfo.destroy();
     this.hpBar.destroy();

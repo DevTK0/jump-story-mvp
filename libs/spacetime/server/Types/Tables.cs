@@ -157,4 +157,14 @@ public static partial class Module
         public Timestamp attack3_last_used; // When attack3 was last used
     }
 
+    [Table(Name = "PlayerJob", Public = true)]
+    public partial struct PlayerJob
+    {
+        [PrimaryKey, AutoInc]
+        public uint player_job_id;
+        public Identity player_identity;
+        public uint job_id;
+        public bool is_unlocked;
+    }
+
 }

@@ -3,6 +3,7 @@ import { BOTTOM_UI_CONFIG } from '../bottom-ui-config';
 import { createLogger, type ModuleLogger } from '@/core/logger';
 import { ClassSelectionMenu } from '@/ui/menus/class-selection-menu';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
+import { DbConnection } from '@/spacetime/client';
 
 export interface MenuOption {
   label: string;
@@ -20,6 +21,9 @@ export class MenuDropdown {
   private parentButton: Phaser.GameObjects.Container;
   private classSelectionMenu: ClassSelectionMenu | null = null;
   private playerIdentity: Identity | null = null;
+  private dbConnection: DbConnection | null = null;
+  private playerJobData: Map<number, boolean> = new Map();
+  private jobTableData: any[] = [];
 
   private options: MenuOption[] = [
     {
@@ -176,12 +180,47 @@ export class MenuDropdown {
   private showClassSelectionMenu(): void {
     if (!this.classSelectionMenu && this.playerIdentity) {
       this.classSelectionMenu = new ClassSelectionMenu(this.scene, this.playerIdentity);
+      // Set the database connection if available
+      if (this.dbConnection) {
+        this.classSelectionMenu.setDbConnection(this.dbConnection);
+      }
+      // Pass the pre-loaded job data - this is crucial!
+      this.logger.info(
+        `Passing job data to new ClassSelectionMenu: ${this.playerJobData.size} entries, ${this.jobTableData.length} jobs`
+      );
+      this.classSelectionMenu.setPlayerJobData(this.playerJobData, this.jobTableData);
     }
     this.classSelectionMenu?.show();
   }
 
   public setPlayerIdentity(identity: Identity): void {
     this.playerIdentity = identity;
+  }
+
+  public setDbConnection(dbConnection: DbConnection): void {
+    this.dbConnection = dbConnection;
+    // Update existing class selection menu if it exists
+    if (this.classSelectionMenu) {
+      this.classSelectionMenu.setDbConnection(dbConnection);
+    }
+  }
+
+  public setPlayerJobData(jobData: Map<number, boolean>, jobTableData?: any[]): void {
+    this.playerJobData = jobData;
+    if (jobTableData) {
+      this.jobTableData = jobTableData;
+    }
+    console.log('1');
+    this.logger.info(`MenuDropdown received job data with ${jobData.size} entries, ${this.jobTableData.length} jobs`);
+    // Update existing class selection menu if it exists
+    if (this.classSelectionMenu) {
+      console.log('2');
+      this.logger.info('ClassSelectionMenu exists, updating it with job data');
+      this.classSelectionMenu.setPlayerJobData(jobData, this.jobTableData);
+    } else {
+      console.log('3');
+      this.logger.info('ClassSelectionMenu not created yet, storing data for later use');
+    }
   }
 
   public destroy(): void {

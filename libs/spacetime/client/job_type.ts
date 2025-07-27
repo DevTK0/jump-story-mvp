@@ -49,6 +49,7 @@ export type Job = {
   resSpike: number,
   resClaw: number,
   resGreatsword: number,
+  defaultUnlocked: boolean,
 };
 
 /**
@@ -77,6 +78,7 @@ export namespace Job {
       new ProductTypeElement("resSpike", AlgebraicType.createI32Type()),
       new ProductTypeElement("resClaw", AlgebraicType.createI32Type()),
       new ProductTypeElement("resGreatsword", AlgebraicType.createI32Type()),
+      new ProductTypeElement("defaultUnlocked", AlgebraicType.createBoolType()),
     ]);
   }
 

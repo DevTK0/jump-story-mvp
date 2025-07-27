@@ -108,6 +108,8 @@ import { PlayerCooldownTableHandle } from "./player_cooldown_table.ts";
 export { PlayerCooldownTableHandle };
 import { PlayerDamageEventTableHandle } from "./player_damage_event_table.ts";
 export { PlayerDamageEventTableHandle };
+import { PlayerJobTableHandle } from "./player_job_table.ts";
+export { PlayerJobTableHandle };
 import { PlayerLevelingConfigTableHandle } from "./player_leveling_config_table.ts";
 export { PlayerLevelingConfigTableHandle };
 import { PlayerMessageTableHandle } from "./player_message_table.ts";
@@ -160,6 +162,8 @@ import { PlayerCooldown } from "./player_cooldown_type.ts";
 export { PlayerCooldown };
 import { PlayerDamageEvent } from "./player_damage_event_type.ts";
 export { PlayerDamageEvent };
+import { PlayerJob } from "./player_job_type.ts";
+export { PlayerJob };
 import { PlayerLevelingConfig } from "./player_leveling_config_type.ts";
 export { PlayerLevelingConfig };
 import { PlayerMessage } from "./player_message_type.ts";
@@ -259,6 +263,15 @@ const REMOTE_MODULE = {
       primaryKeyInfo: {
         colName: "damageEventId",
         colType: PlayerDamageEvent.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    PlayerJob: {
+      tableName: "PlayerJob",
+      rowType: PlayerJob.getTypeScriptAlgebraicType(),
+      primaryKey: "playerJobId",
+      primaryKeyInfo: {
+        colName: "playerJobId",
+        colType: PlayerJob.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     PlayerLevelingConfig: {
@@ -610,19 +623,19 @@ export class RemoteReducers {
     this.connection.offReducer("InitializeEnemyRoutes", callback);
   }
 
-  initializeJob(adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, resSword: number, resAxe: number, resBow: number, resSpear: number, resDark: number, resSpike: number, resClaw: number, resGreatsword: number) {
-    const __args = { adminApiKey, jobKey, displayName, health, moveSpeed, mana, hpRecovery, manaRecovery, resSword, resAxe, resBow, resSpear, resDark, resSpike, resClaw, resGreatsword };
+  initializeJob(adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, resSword: number, resAxe: number, resBow: number, resSpear: number, resDark: number, resSpike: number, resClaw: number, resGreatsword: number, defaultUnlocked: boolean) {
+    const __args = { adminApiKey, jobKey, displayName, health, moveSpeed, mana, hpRecovery, manaRecovery, resSword, resAxe, resBow, resSpear, resDark, resSpike, resClaw, resGreatsword, defaultUnlocked };
     let __writer = new BinaryWriter(1024);
     InitializeJob.getTypeScriptAlgebraicType().serialize(__writer, __args);
     let __argsBuffer = __writer.getBuffer();
     this.connection.callReducer("InitializeJob", __argsBuffer, this.setCallReducerFlags.initializeJobFlags);
   }
 
-  onInitializeJob(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, resSword: number, resAxe: number, resBow: number, resSpear: number, resDark: number, resSpike: number, resClaw: number, resGreatsword: number) => void) {
+  onInitializeJob(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, resSword: number, resAxe: number, resBow: number, resSpear: number, resDark: number, resSpike: number, resClaw: number, resGreatsword: number, defaultUnlocked: boolean) => void) {
     this.connection.onReducer("InitializeJob", callback);
   }
 
-  removeOnInitializeJob(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, resSword: number, resAxe: number, resBow: number, resSpear: number, resDark: number, resSpike: number, resClaw: number, resGreatsword: number) => void) {
+  removeOnInitializeJob(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, resSword: number, resAxe: number, resBow: number, resSpear: number, resDark: number, resSpike: number, resClaw: number, resGreatsword: number, defaultUnlocked: boolean) => void) {
     this.connection.offReducer("InitializeJob", callback);
   }
 
@@ -1044,6 +1057,10 @@ export class RemoteTables {
 
   get playerDamageEvent(): PlayerDamageEventTableHandle {
     return new PlayerDamageEventTableHandle(this.connection.clientCache.getOrCreateTable<PlayerDamageEvent>(REMOTE_MODULE.tables.PlayerDamageEvent));
+  }
+
+  get playerJob(): PlayerJobTableHandle {
+    return new PlayerJobTableHandle(this.connection.clientCache.getOrCreateTable<PlayerJob>(REMOTE_MODULE.tables.PlayerJob));
   }
 
   get playerLevelingConfig(): PlayerLevelingConfigTableHandle {
