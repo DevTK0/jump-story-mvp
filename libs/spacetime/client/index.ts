@@ -66,8 +66,8 @@ import { InstakillPlayer } from "./instakill_player_reducer.ts";
 export { InstakillPlayer };
 import { PlayerTakeDamage } from "./player_take_damage_reducer.ts";
 export { PlayerTakeDamage };
-import { PopulateEnemyConfig } from "./populate_enemy_config_reducer.ts";
-export { PopulateEnemyConfig };
+import { PopulateEnemy } from "./populate_enemy_reducer.ts";
+export { PopulateEnemy };
 import { PopulatePlayerLevel } from "./populate_player_level_reducer.ts";
 export { PopulatePlayerLevel };
 import { RecoverFromDamage } from "./recover_from_damage_reducer.ts";
@@ -94,8 +94,6 @@ export { UpdatePlayerTyping };
 // Import and reexport all table handle types
 import { EnemyTableHandle } from "./enemy_table.ts";
 export { EnemyTableHandle };
-import { EnemyConfigTableHandle } from "./enemy_config_table.ts";
-export { EnemyConfigTableHandle };
 import { EnemyDamageEventTableHandle } from "./enemy_damage_event_table.ts";
 export { EnemyDamageEventTableHandle };
 import { JobTableHandle } from "./job_table.ts";
@@ -148,8 +146,6 @@ import { DbVector2 } from "./db_vector_2_type.ts";
 export { DbVector2 };
 import { Enemy } from "./enemy_type.ts";
 export { Enemy };
-import { EnemyConfig } from "./enemy_config_type.ts";
-export { EnemyConfig };
 import { EnemyDamageEvent } from "./enemy_damage_event_type.ts";
 export { EnemyDamageEvent };
 import { EnemyPatrolTimer } from "./enemy_patrol_timer_type.ts";
@@ -196,15 +192,6 @@ const REMOTE_MODULE = {
       primaryKeyInfo: {
         colName: "name",
         colType: Enemy.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
-      },
-    },
-    EnemyConfig: {
-      tableName: "EnemyConfig",
-      rowType: EnemyConfig.getTypeScriptAlgebraicType(),
-      primaryKey: "enemyType",
-      primaryKeyInfo: {
-        colName: "enemyType",
-        colType: EnemyConfig.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     EnemyDamageEvent: {
@@ -426,9 +413,9 @@ const REMOTE_MODULE = {
       reducerName: "PlayerTakeDamage",
       argsType: PlayerTakeDamage.getTypeScriptAlgebraicType(),
     },
-    PopulateEnemyConfig: {
-      reducerName: "PopulateEnemyConfig",
-      argsType: PopulateEnemyConfig.getTypeScriptAlgebraicType(),
+    PopulateEnemy: {
+      reducerName: "PopulateEnemy",
+      argsType: PopulateEnemy.getTypeScriptAlgebraicType(),
     },
     PopulatePlayerLevel: {
       reducerName: "PopulatePlayerLevel",
@@ -520,7 +507,7 @@ export type Reducer = never
 | { name: "InitializeJobPassive", args: InitializeJobPassive }
 | { name: "InstakillPlayer", args: InstakillPlayer }
 | { name: "PlayerTakeDamage", args: PlayerTakeDamage }
-| { name: "PopulateEnemyConfig", args: PopulateEnemyConfig }
+| { name: "PopulateEnemy", args: PopulateEnemy }
 | { name: "PopulatePlayerLevel", args: PopulatePlayerLevel }
 | { name: "RecoverFromDamage", args: RecoverFromDamage }
 | { name: "RespawnPlayer", args: RespawnPlayer }
@@ -777,20 +764,20 @@ export class RemoteReducers {
     this.connection.offReducer("PlayerTakeDamage", callback);
   }
 
-  populateEnemyConfig(adminApiKey: string, enemyConfigJson: string) {
+  populateEnemy(adminApiKey: string, enemyConfigJson: string) {
     const __args = { adminApiKey, enemyConfigJson };
     let __writer = new BinaryWriter(1024);
-    PopulateEnemyConfig.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    PopulateEnemy.getTypeScriptAlgebraicType().serialize(__writer, __args);
     let __argsBuffer = __writer.getBuffer();
-    this.connection.callReducer("PopulateEnemyConfig", __argsBuffer, this.setCallReducerFlags.populateEnemyConfigFlags);
+    this.connection.callReducer("PopulateEnemy", __argsBuffer, this.setCallReducerFlags.populateEnemyFlags);
   }
 
-  onPopulateEnemyConfig(callback: (ctx: ReducerEventContext, adminApiKey: string, enemyConfigJson: string) => void) {
-    this.connection.onReducer("PopulateEnemyConfig", callback);
+  onPopulateEnemy(callback: (ctx: ReducerEventContext, adminApiKey: string, enemyConfigJson: string) => void) {
+    this.connection.onReducer("PopulateEnemy", callback);
   }
 
-  removeOnPopulateEnemyConfig(callback: (ctx: ReducerEventContext, adminApiKey: string, enemyConfigJson: string) => void) {
-    this.connection.offReducer("PopulateEnemyConfig", callback);
+  removeOnPopulateEnemy(callback: (ctx: ReducerEventContext, adminApiKey: string, enemyConfigJson: string) => void) {
+    this.connection.offReducer("PopulateEnemy", callback);
   }
 
   populatePlayerLevel(adminApiKey: string, levelingCurveJson: string) {
@@ -1038,9 +1025,9 @@ export class SetReducerFlags {
     this.playerTakeDamageFlags = flags;
   }
 
-  populateEnemyConfigFlags: CallReducerFlags = 'FullUpdate';
-  populateEnemyConfig(flags: CallReducerFlags) {
-    this.populateEnemyConfigFlags = flags;
+  populateEnemyFlags: CallReducerFlags = 'FullUpdate';
+  populateEnemy(flags: CallReducerFlags) {
+    this.populateEnemyFlags = flags;
   }
 
   populatePlayerLevelFlags: CallReducerFlags = 'FullUpdate';
@@ -1105,10 +1092,6 @@ export class RemoteTables {
 
   get enemy(): EnemyTableHandle {
     return new EnemyTableHandle(this.connection.clientCache.getOrCreateTable<Enemy>(REMOTE_MODULE.tables.Enemy));
-  }
-
-  get enemyConfig(): EnemyConfigTableHandle {
-    return new EnemyConfigTableHandle(this.connection.clientCache.getOrCreateTable<EnemyConfig>(REMOTE_MODULE.tables.EnemyConfig));
   }
 
   get enemyDamageEvent(): EnemyDamageEventTableHandle {

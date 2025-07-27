@@ -36,7 +36,7 @@ public static partial class Module
 
     // Helper method to process aggro detection and validation
     private static (bool hasAggro, bool shouldChase, float targetX, float targetY, Identity? aggroTarget) ProcessAggroDetection(
-        ReducerContext ctx, Spawn enemy, EnemyConfig enemyConfig, float leftBound, float rightBound)
+        ReducerContext ctx, Spawn enemy, Enemy enemyData, float leftBound, float rightBound)
     {
 
         var hasAggro = enemy.aggro_target.HasValue;
@@ -72,7 +72,7 @@ public static partial class Module
                 newAggroTarget = null;
             }
         }
-        else if (enemyConfig.behavior == "aggressive")
+        else if (enemyData.ai_behavior == AiBehavior.Aggressive)
         {
             // Check for nearby players within aggro range
             foreach (var player in ctx.Db.Player.Iter())
@@ -88,7 +88,7 @@ public static partial class Module
                 );
 
                 // Check if player is within aggro range
-                if (distance <= enemyConfig.aggro_range)
+                if (distance <= enemyData.aggro_range)
                 {
                     hasAggro = true;
                     shouldChase = true;
@@ -352,11 +352,11 @@ public static partial class Module
             
             if (route.last_spawn_time < intervalAgo)
             {
-                // Get enemy config from database
-                var enemyConfig = ctx.Db.EnemyConfig.enemy_type.Find(route.enemy);
-                if (enemyConfig == null)
+                // Get enemy data from database
+                var enemyData = ctx.Db.Enemy.name.Find(route.enemy);
+                if (enemyData == null)
                 {
-                    Log.Warn($"No config found for enemy type: {route.enemy}, skipping spawn");
+                    Log.Warn($"No enemy found for type: {route.enemy}, skipping spawn");
                     continue;
                 }
 
@@ -380,8 +380,8 @@ public static partial class Module
                     {
                         route_id = route.route_id,
                         enemy = route.enemy,
-                        current_hp = enemyConfig.Value.max_hp,
-                        level = enemyConfig.Value.level,
+                        current_hp = enemyData.Value.health,
+                        level = enemyData.Value.level,
                         aggro_start_time = ctx.Timestamp
                     };
                     
@@ -435,11 +435,11 @@ public static partial class Module
                 continue;
             }
 
-            // Get enemy config for behavior and movement speed
-            var enemyConfig = ctx.Db.EnemyConfig.enemy_type.Find(enemy.enemy);
-            if (enemyConfig == null)
+            // Get enemy data for behavior and movement speed
+            var enemyData = ctx.Db.Enemy.name.Find(enemy.enemy);
+            if (enemyData == null)
             {
-                Log.Warn($"No config found for enemy type: {enemy.enemy}");
+                Log.Warn($"No enemy found for type: {enemy.enemy}");
                 continue;
             }
 
@@ -447,10 +447,10 @@ public static partial class Module
             var (leftBound, rightBound) = CalculateRouteBounds(route.Value);
 
             // Process aggro detection and validation
-            var (hasAggro, shouldChase, targetX, targetY, newAggroTarget) = ProcessAggroDetection(ctx, enemy, enemyConfig.Value, leftBound, rightBound);
+            var (hasAggro, shouldChase, targetX, targetY, newAggroTarget) = ProcessAggroDetection(ctx, enemy, enemyData.Value, leftBound, rightBound);
             
             // Calculate new position based on behavior
-            var movement = enemyConfig.Value.movement_speed * deltaTime;
+            var movement = enemyData.Value.move_speed * deltaTime;
             float newX;
             bool newMovingRight;
 
@@ -458,7 +458,7 @@ public static partial class Module
             {
                 (newX, newMovingRight) = CalculateChaseMovement(enemy, targetX, targetY, movement, leftBound, rightBound);
             }
-            else if (enemyConfig.Value.behavior == "patrol" && !hasAggro)
+            else if (enemyData.Value.ai_behavior == AiBehavior.Patrol && !hasAggro)
             {
                 (newX, newMovingRight) = CalculatePatrolMovement(enemy, movement, leftBound, rightBound);
             }

@@ -91,20 +91,6 @@ public static partial class Module
         public ScheduleAt scheduled_at;
     }
 
-    [Table(Name = "EnemyConfig", Public = true)]
-    public partial struct EnemyConfig
-    {
-        [PrimaryKey]
-        public string enemy_type;
-        public float max_hp;
-        public uint level;
-        public string behavior; // patrol, aggressive
-        public uint base_exp_reward;
-        public uint movement_speed;
-        public uint damage;
-        public uint attack_range;
-        public uint aggro_range;
-    }
 
     [Table(Name = "PlayerLevel", Public = true)]
     public partial struct PlayerLevel

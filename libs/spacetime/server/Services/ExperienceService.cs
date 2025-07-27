@@ -15,11 +15,11 @@ public static partial class Module
     /// </summary>
     public static void AwardExperienceForKill(ReducerContext ctx, Spawn deadEnemy)
     {
-        // Get enemy config for base EXP reward
-        var enemyConfig = ctx.Db.EnemyConfig.enemy_type.Find(deadEnemy.enemy);
-        if (enemyConfig == null)
+        // Get enemy data for base EXP reward
+        var enemy = ctx.Db.Enemy.name.Find(deadEnemy.enemy);
+        if (enemy == null)
         {
-            Log.Warn($"Cannot award EXP - no config found for enemy type: {deadEnemy.enemy}");
+            Log.Warn($"Cannot award EXP - no enemy found for type: {deadEnemy.enemy}");
             return;
         }
 
@@ -39,7 +39,7 @@ public static partial class Module
 
             // Calculate EXP gain based on contribution
             var expGained = CalculateExpGain(
-                enemyConfig.Value.base_exp_reward,
+                enemy.Value.exp_reward,
                 contribution.ContributionPercentage
             );
 

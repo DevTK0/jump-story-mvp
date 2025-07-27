@@ -149,11 +149,11 @@ public static partial class Module
         // Spawn enemies for all routes
         foreach (var route in ctx.Db.SpawnRoute.Iter())
         {
-            // Get enemy config from database
-            var enemyConfig = ctx.Db.EnemyConfig.enemy_type.Find(route.enemy);
-            if (enemyConfig == null)
+            // Get enemy data from database
+            var enemyData = ctx.Db.Enemy.name.Find(route.enemy);
+            if (enemyData == null)
             {
-                Log.Warn($"No config found for enemy type: {route.enemy}, skipping route");
+                Log.Warn($"No enemy found for type: {route.enemy}, skipping route");
                 continue;
             }
 
@@ -165,15 +165,15 @@ public static partial class Module
                 {
                     route_id = route.route_id,
                     enemy = route.enemy,
-                    current_hp = enemyConfig.Value.max_hp,
-                    level = enemyConfig.Value.level,
+                    current_hp = enemyData.Value.health,
+                    level = enemyData.Value.level,
                     aggro_start_time = ctx.Timestamp
                 };
                 
                 var newEnemy = CreateEnemyUpdate(baseEnemy, spawnPosition.x, spawnPosition.y, true, null, false, ctx.Timestamp, PlayerState.Idle);
 
                 ctx.Db.Spawn.Insert(newEnemy);
-                Log.Info($"Spawned {route.enemy} (Level {enemyConfig.Value.level}) at ({spawnPosition.x}, {spawnPosition.y}) for route {route.route_id}");
+                Log.Info($"Spawned {route.enemy} (Level {enemyData.Value.level}) at ({spawnPosition.x}, {spawnPosition.y}) for route {route.route_id}");
                 totalSpawned++;
             }
         }

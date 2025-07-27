@@ -123,7 +123,7 @@ async function initializeSpacetime() {
     // Read and populate enemy config from JSON
     const enemyAttributesPath = join(process.cwd(), 'apps/playground/config/enemy_attributes.json');
     const enemyConfigContent = readFileSync(enemyAttributesPath, 'utf8');
-    await connection.reducers.populateEnemyConfig(adminApiKey, enemyConfigContent);
+    await connection.reducers.populateEnemy(adminApiKey, enemyConfigContent);
 
     console.log('✅ Enemy configurations populated!');
 

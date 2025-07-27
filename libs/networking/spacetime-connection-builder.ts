@@ -165,8 +165,7 @@ export class SpacetimeConnectionBuilder {
       'Enemy',
       'PlayerDamageEvent',
       'EnemyDamageEvent',
-      'PlayerLevel',  // Configuration table for level requirements
-      'EnemyConfig'   // Configuration table for enemy stats
+      'PlayerLevel'  // Configuration table for level requirements
     ];
     return this;
   }

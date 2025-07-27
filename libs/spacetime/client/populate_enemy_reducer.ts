@@ -33,7 +33,7 @@ import {
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
 
-export type PopulateEnemyConfig = {
+export type PopulateEnemy = {
   adminApiKey: string,
   enemyConfigJson: string,
 };
@@ -41,7 +41,7 @@ export type PopulateEnemyConfig = {
 /**
  * A namespace for generated helper functions.
  */
-export namespace PopulateEnemyConfig {
+export namespace PopulateEnemy {
   /**
   * A function which returns this type represented as an AlgebraicType.
   * This function is derived from the AlgebraicType used to generate this type.
@@ -53,12 +53,12 @@ export namespace PopulateEnemyConfig {
     ]);
   }
 
-  export function serialize(writer: BinaryWriter, value: PopulateEnemyConfig): void {
-    PopulateEnemyConfig.getTypeScriptAlgebraicType().serialize(writer, value);
+  export function serialize(writer: BinaryWriter, value: PopulateEnemy): void {
+    PopulateEnemy.getTypeScriptAlgebraicType().serialize(writer, value);
   }
 
-  export function deserialize(reader: BinaryReader): PopulateEnemyConfig {
-    return PopulateEnemyConfig.getTypeScriptAlgebraicType().deserialize(reader);
+  export function deserialize(reader: BinaryReader): PopulateEnemy {
+    return PopulateEnemy.getTypeScriptAlgebraicType().deserialize(reader);
   }
 
 }
