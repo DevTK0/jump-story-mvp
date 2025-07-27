@@ -51,8 +51,8 @@ export const jobSprites = {
       attack1: { start: 22, end: 28, frameRate: 20 },
       attack2: { start: 33, end: 42, frameRate: 20 },
       attack3: { start: 44, end: 54, frameRate: 20 },
-      damaged: { start: 55, end: 58, frameRate: 15 },
-      death: { start: 66, end: 69, frameRate: 8 },
+      damaged: { start: 66, end: 69, frameRate: 15 },
+      death: { start: 77, end: 80, frameRate: 8 },
     },
   },
   wizard: {

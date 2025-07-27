@@ -35,8 +35,10 @@ export class AnimationSystem implements System {
 
   private verifyAnimations(): void {
     // Verify that player animations exist (created at scene level)
-    if (!this.scene.anims.exists(PLAYER_ANIMATION_KEYS.IDLE)) {
-      this.logger.warn('Player animations not found! They should be created at scene level.');
+    const spriteKey = this.player.texture.key;
+    const idleAnimKey = AnimationFactory.getAnimationKey(spriteKey, 'idle');
+    if (!this.scene.anims.exists(idleAnimKey)) {
+      this.logger.warn(`Player animations not found for sprite '${spriteKey}'! They should be created at scene level.`);
     }
   }
 
@@ -75,16 +77,22 @@ export class AnimationSystem implements System {
     if (stateMachine.isInState('Dead')) {
       // Play death animation once and stop on last frame
       const currentKey = this.animationManager.getCurrentAnimation();
-      if (currentKey !== PLAYER_ANIMATION_KEYS.DEATH) {
+      const spriteKey = this.player.texture.key;
+      const deathAnimKey = AnimationFactory.getAnimationKey(spriteKey, 'death');
+      
+      if (currentKey !== deathAnimKey) {
         // Play death animation once
         this.animationManager.play('death', false);
         // Stop on the last frame when animation completes
         this.player.once('animationcomplete', (animation: any) => {
-          if (animation.key === PLAYER_ANIMATION_KEYS.DEATH) {
+          if (animation.key === deathAnimKey) {
             this.player.anims.stop();
-            // Set to last frame of death animation
-            // The death animation frames are defined in sprite-config.json
-            this.player.setFrame(PLAYER_ANIMATION_TIMINGS.SPRITE_FRAMES.SOLDIER_DEATH_LAST_FRAME);
+            // Get the last frame from the animation itself
+            const anim = this.scene.anims.get(deathAnimKey);
+            if (anim && anim.frames.length > 0) {
+              const lastFrame = anim.frames[anim.frames.length - 1].frame;
+              this.player.setFrame(lastFrame);
+            }
           }
         });
       }

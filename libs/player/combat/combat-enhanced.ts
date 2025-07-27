@@ -44,6 +44,11 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
   private playerQueryService: PlayerQueryService | null = null;
   private combatValidationService: CombatValidationService | null = null;
   private messageDisplay: CombatMessageDisplay;
+  
+  // Physics registration
+  private physicsRegistry: any = null;
+  private hitCallback: Function | null = null;
+  private hitContext: any = null;
 
   constructor(
     player: Player,
@@ -93,6 +98,11 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     onHitCallback: Function,
     context: any
   ): void {
+    // Store references for re-registration after job changes
+    this.physicsRegistry = registry;
+    this.hitCallback = onHitCallback;
+    this.hitContext = context;
+    
     // Register each hitbox sprite to overlap with enemies
     this.hitboxSprites.forEach((hitboxSprite) => {
       registry.addOverlap(
@@ -372,6 +382,19 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     // Reinitialize hitboxes with new job config
     this.destroyHitboxes();
     this.initializeHitboxes();
+    
+    // Re-register new hitboxes with physics if we have a registry
+    if (this.physicsRegistry && this.hitCallback && this.hitContext) {
+      this.hitboxSprites.forEach((hitboxSprite) => {
+        this.physicsRegistry.addOverlap(
+          hitboxSprite,
+          'enemies',
+          this.hitCallback,
+          undefined,
+          this.hitContext
+        );
+      });
+    }
   }
 
   // Debug rendering
