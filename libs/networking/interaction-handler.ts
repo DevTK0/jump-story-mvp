@@ -56,6 +56,15 @@ export class InteractionHandler {
       // Clear damage tracking for new attack
       this.damagedInCurrentAttack.clear();
       this.enemiesHitInCurrentAttack = [];
+      
+      // Always send attack to server immediately to trigger combat state
+      // This ensures combat triggers even if no enemies are hit
+      this.scene.time.delayedCall(100, () => {
+        // If no enemies were hit by now, still send the attack
+        if (this.enemiesHitInCurrentAttack.length === 0) {
+          this.sendCollectedHits();
+        }
+      });
     });
   }
 
@@ -220,8 +229,7 @@ export class InteractionHandler {
     this.logger.debug(`sendCollectedHits called - enemies: ${this.enemiesHitInCurrentAttack.length}`);
     
     if (this.enemiesHitInCurrentAttack.length === 0) {
-      this.logger.debug('No enemies to damage');
-      return;
+      this.logger.debug('No enemies hit, but sending attack to trigger combat state');
     }
 
     // Call server reducer to damage all collected enemies

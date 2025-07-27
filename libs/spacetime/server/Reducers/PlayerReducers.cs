@@ -321,10 +321,19 @@ public static partial class Module
         ctx.Db.Player.identity.Update(updatedPlayer);
         
         // Enter combat state
+        Log.Info($"[COMBAT DEBUG] Calling EnterCombat for player {ctx.Sender} after taking damage");
         CombatService.EnterCombat(ctx, updatedPlayer);
         
-        // Then apply state transition using StateMachine
-        var stateResult = PlayerStateMachine.ApplyStateTransition(ctx, updatedPlayer, targetState);
+        // Get the latest player data after combat state update
+        var playerAfterCombat = ctx.Db.Player.identity.Find(ctx.Sender);
+        if (playerAfterCombat == null)
+        {
+            Log.Error($"Could not find player after combat update");
+            return;
+        }
+        
+        // Then apply state transition using StateMachine with the latest player data
+        var stateResult = PlayerStateMachine.ApplyStateTransition(ctx, playerAfterCombat.Value, targetState);
         var newState = stateResult.Success ? stateResult.NewState : player.Value.state;
 
         // Create player damage event for visual display

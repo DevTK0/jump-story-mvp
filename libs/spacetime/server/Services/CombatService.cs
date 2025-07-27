@@ -13,16 +13,21 @@ public static partial class Module
         /// </summary>
         public static void EnterCombat(ReducerContext ctx, Player player)
         {
+            Log.Info($"[COMBAT DEBUG] EnterCombat called for player {player.identity}, current in_combat: {player.in_combat}");
+            
             if (!player.in_combat)
             {
                 Log.Info($"Player {player.identity} entering combat");
             }
 
-            ctx.Db.Player.identity.Update(player with
+            var updatedPlayer = player with
             {
                 in_combat = true,
                 last_combat_time = ctx.Timestamp
-            });
+            };
+            
+            ctx.Db.Player.identity.Update(updatedPlayer);
+            Log.Info($"[COMBAT DEBUG] Player {player.identity} combat state updated to: {updatedPlayer.in_combat}");
         }
 
         /// <summary>
