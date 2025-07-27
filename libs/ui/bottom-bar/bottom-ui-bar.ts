@@ -79,10 +79,7 @@ export class BottomUIBar {
     
     // Create menu button
     this.menuButton = new MenuButton(this.scene, 'MENU');
-    this.menuButton.setOnClick(() => {
-      this.logger.info('Menu button clicked');
-      // TODO: Open game menu
-    });
+    this.menuButton.setPlayerIdentity(this.playerIdentity);
     
     // Add all components to container
     this.container.add([
@@ -193,7 +190,7 @@ export class BottomUIBar {
     this.container.setVisible(visible);
   }
 
-  private onResize(gameSize: Phaser.Structs.Size): void {
+  private onResize(_gameSize: Phaser.Structs.Size): void {
     const camera = this.scene.cameras.main;
     
     // Update container position

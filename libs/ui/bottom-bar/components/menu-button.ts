@@ -1,49 +1,51 @@
 import Phaser from 'phaser';
 import { BOTTOM_UI_CONFIG } from '../bottom-ui-config';
+import { MenuDropdown } from './menu-dropdown';
+import { Identity } from '@clockworklabs/spacetimedb-sdk';
 
 export class MenuButton {
   private scene: Phaser.Scene;
   private container: Phaser.GameObjects.Container;
   private background: Phaser.GameObjects.Graphics;
   private text: Phaser.GameObjects.Text;
+  private dropdown: MenuDropdown;
   private onClick?: () => void;
 
   constructor(scene: Phaser.Scene, label: string = 'MENU') {
     this.scene = scene;
     this.container = this.scene.add.container(0, 0);
-    
+
     this.createButton(label);
     this.setupInteraction();
-    
+
     this.container.setDepth(BOTTOM_UI_CONFIG.depth.buttons);
+
+    // Create dropdown menu
+    this.dropdown = new MenuDropdown(this.scene, this.container);
   }
 
   private createButton(label: string): void {
     const config = BOTTOM_UI_CONFIG.menuButton;
-    
-    // Create background
+
+    // Create background - ensure it starts at 0,0 within container
     this.background = this.scene.add.graphics();
+    this.background.setPosition(0, 0);
     this.drawBackground(config.backgroundColor);
-    
-    // Create text
-    this.text = this.scene.add.text(
-      config.width / 2,
-      config.height / 2,
-      label,
-      {
-        fontSize: config.fontSize,
-        color: config.fontColor,
-        fontStyle: 'bold',
-      }
-    );
+
+    // Create text - position relative to container origin
+    this.text = this.scene.add.text(config.width / 2, config.height / 2, label, {
+      fontSize: config.fontSize,
+      color: config.fontColor,
+      fontStyle: 'bold',
+    });
     this.text.setOrigin(0.5, 0.5);
-    
+
     this.container.add([this.background, this.text]);
   }
 
   private drawBackground(color: number): void {
     const config = BOTTOM_UI_CONFIG.menuButton;
-    
+
     this.background.clear();
     this.background.fillStyle(color, 1);
     this.background.fillRect(0, 0, config.width, config.height);
@@ -53,22 +55,30 @@ export class MenuButton {
 
   private setupInteraction(): void {
     const config = BOTTOM_UI_CONFIG.menuButton;
-    
-    // Make container interactive
-    this.container.setSize(config.width, config.height);
-    this.container.setInteractive({ useHandCursor: true });
-    
+
+    // Make container interactive with proper hit area
+    // this.container.setSize(config.width, config.height);
+    this.container.setInteractive(
+      new Phaser.Geom.Rectangle(0, 0, config.width, config.height),
+      Phaser.Geom.Rectangle.Contains
+    );
+    this.container.input.cursor = 'pointer';
+
     // Hover effects
     this.container.on('pointerover', () => {
       this.drawBackground(config.hoverColor);
     });
-    
+
     this.container.on('pointerout', () => {
       this.drawBackground(config.backgroundColor);
     });
-    
+
     // Click handler
     this.container.on('pointerdown', () => {
+      // Toggle dropdown menu
+      this.dropdown.toggle();
+
+      // Call custom onClick if provided
       if (this.onClick) {
         this.onClick();
       }
@@ -80,14 +90,20 @@ export class MenuButton {
   }
 
   public setPosition(x: number, y: number): void {
-    this.container.setPosition(x, y);
+    // Round to prevent sub-pixel positioning issues
+    this.container.setPosition(Math.round(x), Math.round(y));
   }
 
   public getContainer(): Phaser.GameObjects.Container {
     return this.container;
   }
 
+  public setPlayerIdentity(identity: Identity): void {
+    this.dropdown.setPlayerIdentity(identity);
+  }
+
   public destroy(): void {
+    this.dropdown.destroy();
     this.container.destroy();
   }
 }

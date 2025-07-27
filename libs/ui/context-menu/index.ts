@@ -1,1 +1,1 @@
-export { PlayerContextMenu, type MenuAction, type ContextMenuConfig } from './player-context-menu';
+export { PlayerContextMenu, type MenuAction } from './player-context-menu';
