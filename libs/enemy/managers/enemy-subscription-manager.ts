@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import type { DbConnection, Enemy as ServerEnemy } from '@/spacetime/client';
+import type { DbConnection, Spawn as ServerEnemy } from '@/spacetime/client';
 import { buildProximityQuery, DEFAULT_PROXIMITY_CONFIGS } from '@/networking/subscription-utils';
 
 export interface EnemySubscriptionConfig {
@@ -14,7 +14,7 @@ export interface EnemySubscriptionConfig {
 export interface EnemySubscriptionCallbacks {
   onEnemyInsert: (enemy: ServerEnemy) => void;
   onEnemyUpdate: (enemy: ServerEnemy) => void;
-  onEnemyDelete: (enemyId: number) => void;
+  onEnemyDelete: (spawnId: number) => void;
   onProximityLoad: (enemies: ServerEnemy[]) => void;
 }
 
@@ -97,28 +97,28 @@ export class EnemySubscriptionManager {
       this.callbacks.onEnemyInsert(enemy);
     };
     const onDelete = (_ctx: any, enemy: ServerEnemy) => {
-      this.callbacks.onEnemyDelete(enemy.enemyId);
+      this.callbacks.onEnemyDelete(enemy.spawnId);
     };
     const onUpdate = (_ctx: any, _oldEnemy: ServerEnemy, newEnemy: ServerEnemy) => {
       this.callbacks.onEnemyUpdate(newEnemy);
     };
 
-    this.dbConnection.db.enemy.onInsert(onInsert);
-    this.dbConnection.db.enemy.onDelete(onDelete);
-    this.dbConnection.db.enemy.onUpdate(onUpdate);
+    this.dbConnection.db.spawn.onInsert(onInsert);
+    this.dbConnection.db.spawn.onDelete(onDelete);
+    this.dbConnection.db.spawn.onUpdate(onUpdate);
 
     // Store cleanup functions
     this.cleanupFunctions.push(() => {
-      if (this.dbConnection?.db?.enemy) {
+      if (this.dbConnection?.db?.spawn) {
         // Note: SpaceTimeDB SDK doesn't provide removeListener methods yet
         // This is a placeholder for when they add proper cleanup support
         // For now, we can only track that cleanup is needed
-        console.log('EnemySubscriptionManager: Cleanup would remove enemy table listeners here');
+        console.log('EnemySubscriptionManager: Cleanup would remove spawn table listeners here');
       }
     });
 
     // Spawn existing enemies that are already in the database
-    for (const enemy of this.dbConnection.db.enemy.iter()) {
+    for (const enemy of this.dbConnection.db.spawn.iter()) {
       this.callbacks.onEnemyInsert(enemy);
     }
   }
@@ -134,19 +134,19 @@ export class EnemySubscriptionManager {
       this.callbacks.onEnemyInsert(enemy);
     };
     const onDelete = (_ctx: any, enemy: ServerEnemy) => {
-      this.callbacks.onEnemyDelete(enemy.enemyId);
+      this.callbacks.onEnemyDelete(enemy.spawnId);
     };
     const onUpdate = (_ctx: any, _oldEnemy: ServerEnemy, newEnemy: ServerEnemy) => {
       this.callbacks.onEnemyUpdate(newEnemy);
     };
 
-    this.dbConnection.db.enemy.onInsert(onInsert);
-    this.dbConnection.db.enemy.onDelete(onDelete);
-    this.dbConnection.db.enemy.onUpdate(onUpdate);
+    this.dbConnection.db.spawn.onInsert(onInsert);
+    this.dbConnection.db.spawn.onDelete(onDelete);
+    this.dbConnection.db.spawn.onUpdate(onUpdate);
 
     // Store cleanup functions
     this.cleanupFunctions.push(() => {
-      if (this.dbConnection?.db?.enemy) {
+      if (this.dbConnection?.db?.spawn) {
         // Note: SpaceTimeDB SDK doesn't provide removeListener methods yet
         console.log('EnemySubscriptionManager: Cleanup would remove targeted enemy listeners here');
       }
@@ -214,7 +214,7 @@ export class EnemySubscriptionManager {
 
     try {
       // Build safe proximity query
-      const query = buildProximityQuery('Enemy', playerPosition.x, playerPosition.y, radius);
+      const query = buildProximityQuery('Spawn', playerPosition.x, playerPosition.y, radius);
 
       // Subscribe to enemies within proximity using safe SQL query
       this.dbConnection
@@ -241,7 +241,7 @@ export class EnemySubscriptionManager {
     const nearbyEnemies: ServerEnemy[] = [];
 
     // Load enemies that are within proximity
-    for (const enemy of this.dbConnection.db.enemy.iter()) {
+    for (const enemy of this.dbConnection.db.spawn.iter()) {
       const distance = Math.sqrt(
         Math.pow(enemy.x - playerPosition.x, 2) + Math.pow(enemy.y - playerPosition.y, 2)
       );
@@ -251,6 +251,8 @@ export class EnemySubscriptionManager {
       }
     }
 
+    console.log(`[EnemySubscriptionManager] Loading ${nearbyEnemies.length} enemies within proximity`);
+    
     // Notify about all enemies that should be loaded
     this.callbacks.onProximityLoad(nearbyEnemies);
   }
@@ -297,7 +299,16 @@ export class EnemySubscriptionManager {
       Math.pow(enemy.x - playerPosition.x, 2) + Math.pow(enemy.y - playerPosition.y, 2)
     );
 
-    return distance <= this.config.proximityRadius;
+    const inProximity = distance <= this.config.proximityRadius;
+    
+    // Add a buffer zone to prevent flickering (10% extra radius for enemies already loaded)
+    const bufferRadius = this.config.proximityRadius * 1.1;
+    const inBufferZone = distance <= bufferRadius;
+    
+    // If enemy is already spawned, use buffer zone to prevent flickering
+    const isSpawned = this.scene.registry.get(`enemy_spawned_${enemy.spawnId}`) === true;
+    
+    return isSpawned ? inBufferZone : inProximity;
   }
 
   public destroy(): void {

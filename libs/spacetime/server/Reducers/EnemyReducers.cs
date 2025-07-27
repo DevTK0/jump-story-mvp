@@ -21,13 +21,13 @@ public static partial class Module
 
         // Clear existing routes first
         var routesToRemove = new List<uint>();
-        foreach (var route in ctx.Db.EnemyRoute.Iter())
+        foreach (var route in ctx.Db.SpawnRoute.Iter())
         {
             routesToRemove.Add(route.route_id);
         }
         foreach (var id in routesToRemove)
         {
-            ctx.Db.EnemyRoute.route_id.Delete(id);
+            ctx.Db.SpawnRoute.route_id.Delete(id);
         }
 
         try
@@ -35,7 +35,7 @@ public static partial class Module
             using var doc = JsonDocument.Parse(tilemapJson);
 
             var layers = doc.RootElement.GetProperty("layers");
-            var routesList = new List<EnemyRoute>();
+            var routesList = new List<SpawnRoute>();
 
             foreach (var layer in layers.EnumerateArray())
             {
@@ -68,9 +68,9 @@ public static partial class Module
                             var width = obj.GetProperty("width").GetSingle();
                             var height = obj.GetProperty("height").GetSingle();
 
-                            var route = new EnemyRoute
+                            var route = new SpawnRoute
                             {
-                                enemy_type = enemyType,
+                                enemy = enemyType,
                                 spawn_area = new DbRect(
                                     new DbVector2(x, y),
                                     new DbVector2(width, height)
@@ -90,7 +90,7 @@ public static partial class Module
             // Insert all routes into the database
             foreach (var route in routesList)
             {
-                ctx.Db.EnemyRoute.Insert(route);
+                ctx.Db.SpawnRoute.Insert(route);
             }
 
             Log.Info($"Initialized {routesList.Count} enemy routes from tilemap");
@@ -113,14 +113,14 @@ public static partial class Module
 
         // Clear existing enemies first
         var enemiesToRemove = new List<uint>();
-        foreach (var enemy in ctx.Db.Enemy.Iter())
+        foreach (var enemy in ctx.Db.Spawn.Iter())
         {
-            enemiesToRemove.Add(enemy.enemy_id);
+            enemiesToRemove.Add(enemy.spawn_id);
         }
 
-        foreach (var enemyId in enemiesToRemove)
+        foreach (var spawnId in enemiesToRemove)
         {
-            ctx.Db.Enemy.enemy_id.Delete(enemyId);
+            ctx.Db.Spawn.spawn_id.Delete(spawnId);
         }
 
         Log.Info($"Cleared {enemiesToRemove.Count} existing enemies");
@@ -147,13 +147,13 @@ public static partial class Module
         var totalSpawned = 0;
 
         // Spawn enemies for all routes
-        foreach (var route in ctx.Db.EnemyRoute.Iter())
+        foreach (var route in ctx.Db.SpawnRoute.Iter())
         {
             // Get enemy config from database
-            var enemyConfig = ctx.Db.EnemyConfig.enemy_type.Find(route.enemy_type);
+            var enemyConfig = ctx.Db.EnemyConfig.enemy_type.Find(route.enemy);
             if (enemyConfig == null)
             {
-                Log.Warn($"No config found for enemy type: {route.enemy_type}, skipping route");
+                Log.Warn($"No config found for enemy type: {route.enemy}, skipping route");
                 continue;
             }
 
@@ -161,10 +161,10 @@ public static partial class Module
             {
                 var spawnPosition = route.spawn_area.GetRandomPoint(random);
 
-                var baseEnemy = new Enemy
+                var baseEnemy = new Spawn
                 {
                     route_id = route.route_id,
-                    enemy_type = route.enemy_type,
+                    enemy = route.enemy,
                     current_hp = enemyConfig.Value.max_hp,
                     level = enemyConfig.Value.level,
                     aggro_start_time = ctx.Timestamp
@@ -172,8 +172,8 @@ public static partial class Module
                 
                 var newEnemy = CreateEnemyUpdate(baseEnemy, spawnPosition.x, spawnPosition.y, true, null, false, ctx.Timestamp, PlayerState.Idle);
 
-                ctx.Db.Enemy.Insert(newEnemy);
-                Log.Info($"Spawned {route.enemy_type} (Level {enemyConfig.Value.level}) at ({spawnPosition.x}, {spawnPosition.y}) for route {route.route_id}");
+                ctx.Db.Spawn.Insert(newEnemy);
+                Log.Info($"Spawned {route.enemy} (Level {enemyConfig.Value.level}) at ({spawnPosition.x}, {spawnPosition.y}) for route {route.route_id}");
                 totalSpawned++;
             }
         }

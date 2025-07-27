@@ -5,10 +5,10 @@ import { PlayerState } from '@/spacetime/client';
  * Eliminates duplicate dead enemy checking logic across components
  */
 export interface EnemyStateService {
-  isEnemyDead(enemyId: number): boolean;
+  isEnemyDead(spawnId: number): boolean;
   isEnemySpriteValid(sprite: Phaser.Physics.Arcade.Sprite): boolean;
-  canEnemyTakeDamage(enemyId: number): boolean;
-  canEnemyDamagePlayer(enemyId: number): boolean;
+  canEnemyTakeDamage(spawnId: number): boolean;
+  canEnemyDamagePlayer(spawnId: number): boolean;
 }
 
 export class EnemyStateManager implements EnemyStateService {
@@ -20,8 +20,8 @@ export class EnemyStateManager implements EnemyStateService {
   /**
    * Check if an enemy is dead based on its state
    */
-  isEnemyDead(enemyId: number): boolean {
-    const state = this.enemyStates.get(enemyId);
+  isEnemyDead(spawnId: number): boolean {
+    const state = this.enemyStates.get(spawnId);
     return state?.tag === 'Dead';
   }
 
@@ -35,29 +35,29 @@ export class EnemyStateManager implements EnemyStateService {
   /**
    * Check if an enemy can take damage (alive and interactive)
    */
-  canEnemyTakeDamage(enemyId: number): boolean {
-    const sprite = this.enemies.get(enemyId);
-    return !this.isEnemyDead(enemyId) && sprite !== undefined && this.isEnemySpriteValid(sprite);
+  canEnemyTakeDamage(spawnId: number): boolean {
+    const sprite = this.enemies.get(spawnId);
+    return !this.isEnemyDead(spawnId) && sprite !== undefined && this.isEnemySpriteValid(sprite);
   }
 
   /**
    * Check if an enemy can damage the player (same logic but explicit semantic meaning)
    */
-  canEnemyDamagePlayer(enemyId: number): boolean {
-    return this.canEnemyTakeDamage(enemyId);
+  canEnemyDamagePlayer(spawnId: number): boolean {
+    return this.canEnemyTakeDamage(spawnId);
   }
 
   /**
    * Get enemy sprite by ID (helper method)
    */
-  getEnemySprite(enemyId: number): Phaser.Physics.Arcade.Sprite | undefined {
-    return this.enemies.get(enemyId);
+  getEnemySprite(spawnId: number): Phaser.Physics.Arcade.Sprite | undefined {
+    return this.enemies.get(spawnId);
   }
 
   /**
    * Check if enemy exists in the system
    */
-  hasEnemy(enemyId: number): boolean {
-    return this.enemies.has(enemyId);
+  hasEnemy(spawnId: number): boolean {
+    return this.enemies.has(spawnId);
   }
 }

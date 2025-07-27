@@ -36,7 +36,7 @@ import {
 import { AttackType as __AttackType } from "./attack_type_type";
 
 export type DamageEnemy = {
-  enemyIds: number[],
+  spawnIds: number[],
   attackType: __AttackType,
 };
 
@@ -50,7 +50,7 @@ export namespace DamageEnemy {
   */
   export function getTypeScriptAlgebraicType(): AlgebraicType {
     return AlgebraicType.createProductType([
-      new ProductTypeElement("enemyIds", AlgebraicType.createArrayType(AlgebraicType.createU32Type())),
+      new ProductTypeElement("spawnIds", AlgebraicType.createArrayType(AlgebraicType.createU32Type())),
       new ProductTypeElement("attackType", __AttackType.getTypeScriptAlgebraicType()),
     ]);
   }

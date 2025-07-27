@@ -82,29 +82,29 @@ export class InteractionHandler {
       }
 
       // Get enemy ID first to use centralized validation
-      const enemyId = enemyManager.getEnemyIdFromSprite(enemy);
-      if (enemyId === null) {
+      const spawnId = enemyManager.getEnemyIdFromSprite(enemy);
+      if (spawnId === null) {
         this.logger.debug('Prevented attack - enemy ID not found');
         return;
       }
 
       // Use centralized state service validation
-      if (!enemyManager.canEnemyTakeDamage(enemyId)) {
+      if (!enemyManager.canEnemyTakeDamage(spawnId)) {
         return;
       }
 
       // Prevent multiple damage to same enemy in single attack
-      if (this.damagedInCurrentAttack.has(enemyId)) {
-        this.logger.debug('Prevented duplicate damage to enemy', enemyId);
+      if (this.damagedInCurrentAttack.has(spawnId)) {
+        this.logger.debug('Prevented duplicate damage to enemy', spawnId);
         return;
       }
 
       // Mark enemy as damaged in this attack
-      this.damagedInCurrentAttack.add(enemyId);
+      this.damagedInCurrentAttack.add(spawnId);
       
       // Collect this enemy for batch processing
-      this.enemiesHitInCurrentAttack.push(enemyId);
-      this.logger.debug(`Collected enemy ${enemyId} - total: ${this.enemiesHitInCurrentAttack.length}`);
+      this.enemiesHitInCurrentAttack.push(spawnId);
+      this.logger.debug(`Collected enemy ${spawnId} - total: ${this.enemiesHitInCurrentAttack.length}`);
 
       // Send the hits immediately (they'll be batched by the server)
       // Schedule for next frame to collect all hits in this physics step
@@ -115,7 +115,7 @@ export class InteractionHandler {
       });
 
       // Visual feedback for successful hit
-      this.logger.info('Enemy hit!', enemyId);
+      this.logger.info('Enemy hit!', spawnId);
     };
   }
 
@@ -149,8 +149,8 @@ export class InteractionHandler {
 
       // Use centralized validation if enemy manager is available
       if (this.enemyManager) {
-        const enemyId = this.enemyManager.getEnemyIdFromSprite(enemy);
-        if (enemyId !== null && !this.enemyManager.canEnemyDamagePlayer(enemyId)) {
+        const spawnId = this.enemyManager.getEnemyIdFromSprite(enemy);
+        if (spawnId !== null && !this.enemyManager.canEnemyDamagePlayer(spawnId)) {
           this.logger.debug('Prevented damage from invalid/dead enemy');
           return;
         }
@@ -183,10 +183,10 @@ export class InteractionHandler {
 
           // Call server reducer to damage player
           if (this.dbConnection && this.dbConnection.reducers && this.enemyManager) {
-            const enemyId = this.enemyManager.getEnemyIdFromSprite(enemy);
-            if (enemyId !== null) {
-              this.logger.debug('📡 Sending damage to server for enemy:', enemyId);
-              this.dbConnection.reducers.playerTakeDamage(enemyId);
+            const spawnId = this.enemyManager.getEnemyIdFromSprite(enemy);
+            if (spawnId !== null) {
+              this.logger.debug('📡 Sending damage to server for enemy:', spawnId);
+              this.dbConnection.reducers.playerTakeDamage(spawnId);
             }
           } else {
             this.logger.warn('Database connection not available - cannot damage player');

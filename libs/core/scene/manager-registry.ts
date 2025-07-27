@@ -223,7 +223,7 @@ export class ManagerRegistry {
       this.enemyDamageManager.handleDamageEvent(damageEvent);
       
       // Handle hit animation
-      this.enemyManager.playHitAnimation(damageEvent.enemyId);
+      this.enemyManager.playHitAnimation(damageEvent.spawnId);
     });
   }
   

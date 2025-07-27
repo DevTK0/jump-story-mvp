@@ -13,13 +13,13 @@ public static partial class Module
     /// <summary>
     /// Award experience to all contributors when an enemy is killed
     /// </summary>
-    public static void AwardExperienceForKill(ReducerContext ctx, Enemy deadEnemy)
+    public static void AwardExperienceForKill(ReducerContext ctx, Spawn deadEnemy)
     {
         // Get enemy config for base EXP reward
-        var enemyConfig = ctx.Db.EnemyConfig.enemy_type.Find(deadEnemy.enemy_type);
+        var enemyConfig = ctx.Db.EnemyConfig.enemy_type.Find(deadEnemy.enemy);
         if (enemyConfig == null)
         {
-            Log.Warn($"Cannot award EXP - no config found for enemy type: {deadEnemy.enemy_type}");
+            Log.Warn($"Cannot award EXP - no config found for enemy type: {deadEnemy.enemy}");
             return;
         }
 
@@ -27,7 +27,7 @@ public static partial class Module
         var contributionData = CalculateDamageContributions(ctx, deadEnemy);
         if (contributionData.TotalDamage == 0 || contributionData.PlayerContributions.Count == 0)
         {
-            Log.Warn($"No damage contributors found for killed enemy {deadEnemy.enemy_id}");
+            Log.Warn($"No damage contributors found for killed enemy {deadEnemy.spawn_id}");
             return;
         }
 
@@ -51,7 +51,7 @@ public static partial class Module
     /// <summary>
     /// Calculate damage contributions for each player
     /// </summary>
-    private static DamageContributionData CalculateDamageContributions(ReducerContext ctx, Enemy deadEnemy)
+    private static DamageContributionData CalculateDamageContributions(ReducerContext ctx, Spawn deadEnemy)
     {
         var playerDamageMap = new Dictionary<Identity, float>();
         float totalDamage = 0;
@@ -59,7 +59,7 @@ public static partial class Module
         // Aggregate damage by player
         foreach (var damageEvent in ctx.Db.EnemyDamageEvent.Iter())
         {
-            if (damageEvent.enemy_id == deadEnemy.enemy_id && damageEvent.damage_amount > 0)
+            if (damageEvent.spawn_id == deadEnemy.spawn_id && damageEvent.damage_amount > 0)
             {
                 if (playerDamageMap.ContainsKey(damageEvent.player_identity))
                 {
@@ -104,7 +104,7 @@ public static partial class Module
         ReducerContext ctx,
         Player player,
         uint expGained,
-        Enemy killedEnemy,
+        Spawn killedEnemy,
         float contributionPercentage)
     {
         var levelUpResult = CalculateLevelUp(ctx, player, expGained);
@@ -127,7 +127,7 @@ public static partial class Module
             }
         }
 
-        Log.Info($"Player {player.identity} gained {expGained} EXP from {killedEnemy.enemy_type} (Level {killedEnemy.level}). " +
+        Log.Info($"Player {player.identity} gained {expGained} EXP from {killedEnemy.enemy} (Level {killedEnemy.level}). " +
                 $"Contribution: {contributionPercentage:P1}, Total EXP: {player.experience} -> {player.experience + expGained}, Current: {levelUpResult.RemainingExp}");
     }
 

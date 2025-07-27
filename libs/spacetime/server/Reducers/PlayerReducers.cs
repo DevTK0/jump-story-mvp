@@ -266,7 +266,7 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void PlayerTakeDamage(ReducerContext ctx, uint enemyId)
+    public static void PlayerTakeDamage(ReducerContext ctx, uint spawnId)
     {
         var player = ctx.Db.Player.identity.Find(ctx.Sender);
         if (player == null)
@@ -282,17 +282,17 @@ public static partial class Module
             return;
         }
 
-        var enemy = ctx.Db.Enemy.enemy_id.Find(enemyId);
+        var enemy = ctx.Db.Spawn.spawn_id.Find(spawnId);
         if (enemy == null)
         {
-            Log.Info($"Enemy {enemyId} not found for damage calculation");
+            Log.Info($"Enemy {spawnId} not found for damage calculation");
             return;
         }
 
         // Don't take damage from dead enemies
         if (enemy.Value.current_hp <= 0)
         {
-            Log.Info($"Enemy {enemyId} is dead, cannot deal damage");
+            Log.Info($"Enemy {spawnId} is dead, cannot deal damage");
             return;
         }
 
@@ -340,13 +340,13 @@ public static partial class Module
         ctx.Db.PlayerDamageEvent.Insert(new PlayerDamageEvent
         {
             player_identity = ctx.Sender,
-            enemy_id = enemyId,
+            spawn_id = spawnId,
             damage_amount = finalDamage,
             damage_type = damageType,
             timestamp = ctx.Timestamp
         });
 
-        Log.Info($"Player {ctx.Sender} took {finalDamage} damage from enemy {enemyId}. HP: {player.Value.current_hp} -> {newHp}");
+        Log.Info($"Player {ctx.Sender} took {finalDamage} damage from enemy {spawnId}. HP: {player.Value.current_hp} -> {newHp}");
 
         // If player died, log it
         if (newState == PlayerState.Dead)

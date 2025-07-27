@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import type { Enemy as ServerEnemy } from '@/spacetime/client';
+import type { Spawn as ServerEnemy } from '@/spacetime/client';
 import { ENEMY_CONFIG } from '../config/enemy-config';
 import { EnemyHealthBar } from '../ui/enemy-health-bar';
 import { EnemyStateMachine } from '../state/enemy-state-machine';
@@ -27,7 +27,7 @@ export class EnemySpawnManager {
     const isDead = serverEnemy.state.tag === 'Dead';
 
     this.configureEnemySprite(sprite);
-    this.initializeEnemyAnimation(sprite, serverEnemy.enemyType, isDead);
+    this.initializeEnemyAnimation(sprite, serverEnemy.enemy, isDead);
     this.configureEnemyPhysics(sprite, isDead);
     this.createHealthBar(serverEnemy, sprite);
     this.registerEnemy(sprite, serverEnemy);
@@ -38,9 +38,9 @@ export class EnemySpawnManager {
   /**
    * Despawn an enemy with fade out effect
    */
-  public despawnEnemy(enemyId: number): void {
-    const sprite = this.enemies.get(enemyId);
-    const healthBar = this.enemyHealthBars.get(enemyId);
+  public despawnEnemy(spawnId: number): void {
+    const sprite = this.enemies.get(spawnId);
+    const healthBar = this.enemyHealthBars.get(spawnId);
 
     if (sprite) {
       // Remove from physics group immediately to prevent further interactions
@@ -63,20 +63,20 @@ export class EnemySpawnManager {
       });
 
       // Clean up references immediately (sprite still fading but no longer interactive)
-      this.enemies.delete(enemyId);
+      this.enemies.delete(spawnId);
 
       // Clean up state machine
-      const stateMachine = this.enemyStateMachines.get(enemyId);
+      const stateMachine = this.enemyStateMachines.get(spawnId);
       if (stateMachine) {
         stateMachine.destroy();
-        this.enemyStateMachines.delete(enemyId);
+        this.enemyStateMachines.delete(spawnId);
       }
     }
 
     // Clean up health bar
     if (healthBar) {
       healthBar.destroy();
-      this.enemyHealthBars.delete(enemyId);
+      this.enemyHealthBars.delete(spawnId);
     }
   }
 
@@ -84,7 +84,7 @@ export class EnemySpawnManager {
    * Create the basic enemy sprite with position and texture
    */
   private createEnemySprite(serverEnemy: ServerEnemy): Phaser.Physics.Arcade.Sprite {
-    const spriteKey = serverEnemy.enemyType;
+    const spriteKey = serverEnemy.enemy;
     return this.scene.physics.add.sprite(serverEnemy.x, serverEnemy.y, spriteKey);
   }
 
@@ -154,7 +154,7 @@ export class EnemySpawnManager {
     // Update health bar with current HP
     healthBar.updateHealth(serverEnemy.currentHp);
 
-    this.enemyHealthBars.set(serverEnemy.enemyId, healthBar);
+    this.enemyHealthBars.set(serverEnemy.spawnId, healthBar);
   }
 
   /**
@@ -162,34 +162,34 @@ export class EnemySpawnManager {
    */
   private registerEnemy(sprite: Phaser.Physics.Arcade.Sprite, serverEnemy: ServerEnemy): void {
     this.enemyGroup.add(sprite);
-    this.enemies.set(serverEnemy.enemyId, sprite);
+    this.enemies.set(serverEnemy.spawnId, sprite);
 
     // Create state machine for this enemy
     const stateMachine = new EnemyStateMachine(
-      serverEnemy.enemyId,
+      serverEnemy.spawnId,
       sprite,
-      serverEnemy.enemyType,
+      serverEnemy.enemy,
       this.scene,
       serverEnemy.state
     );
-    this.enemyStateMachines.set(serverEnemy.enemyId, stateMachine);
+    this.enemyStateMachines.set(serverEnemy.spawnId, stateMachine);
   }
 
   // Getters for other managers to access
-  public getEnemy(enemyId: number): Phaser.Physics.Arcade.Sprite | undefined {
-    return this.enemies.get(enemyId);
+  public getEnemy(spawnId: number): Phaser.Physics.Arcade.Sprite | undefined {
+    return this.enemies.get(spawnId);
   }
 
   public getEnemies(): Map<number, Phaser.Physics.Arcade.Sprite> {
     return this.enemies;
   }
 
-  public getHealthBar(enemyId: number): EnemyHealthBar | undefined {
-    return this.enemyHealthBars.get(enemyId);
+  public getHealthBar(spawnId: number): EnemyHealthBar | undefined {
+    return this.enemyHealthBars.get(spawnId);
   }
 
-  public getStateMachine(enemyId: number): EnemyStateMachine | undefined {
-    return this.enemyStateMachines.get(enemyId);
+  public getStateMachine(spawnId: number): EnemyStateMachine | undefined {
+    return this.enemyStateMachines.get(spawnId);
   }
 
   public getEnemyGroup(): Phaser.Physics.Arcade.Group {

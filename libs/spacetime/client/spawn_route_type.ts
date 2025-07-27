@@ -34,9 +34,9 @@ import {
 } from "@clockworklabs/spacetimedb-sdk";
 import { DbRect as __DbRect } from "./db_rect_type";
 
-export type EnemyRoute = {
+export type SpawnRoute = {
   routeId: number,
-  enemyType: string,
+  enemy: string,
   spawnArea: __DbRect,
   maxEnemies: number,
   spawnInterval: number,
@@ -46,7 +46,7 @@ export type EnemyRoute = {
 /**
  * A namespace for generated helper functions.
  */
-export namespace EnemyRoute {
+export namespace SpawnRoute {
   /**
   * A function which returns this type represented as an AlgebraicType.
   * This function is derived from the AlgebraicType used to generate this type.
@@ -54,7 +54,7 @@ export namespace EnemyRoute {
   export function getTypeScriptAlgebraicType(): AlgebraicType {
     return AlgebraicType.createProductType([
       new ProductTypeElement("routeId", AlgebraicType.createU32Type()),
-      new ProductTypeElement("enemyType", AlgebraicType.createStringType()),
+      new ProductTypeElement("enemy", AlgebraicType.createStringType()),
       new ProductTypeElement("spawnArea", __DbRect.getTypeScriptAlgebraicType()),
       new ProductTypeElement("maxEnemies", AlgebraicType.createU8Type()),
       new ProductTypeElement("spawnInterval", AlgebraicType.createU32Type()),
@@ -62,12 +62,12 @@ export namespace EnemyRoute {
     ]);
   }
 
-  export function serialize(writer: BinaryWriter, value: EnemyRoute): void {
-    EnemyRoute.getTypeScriptAlgebraicType().serialize(writer, value);
+  export function serialize(writer: BinaryWriter, value: SpawnRoute): void {
+    SpawnRoute.getTypeScriptAlgebraicType().serialize(writer, value);
   }
 
-  export function deserialize(reader: BinaryReader): EnemyRoute {
-    return EnemyRoute.getTypeScriptAlgebraicType().deserialize(reader);
+  export function deserialize(reader: BinaryReader): SpawnRoute {
+    return SpawnRoute.getTypeScriptAlgebraicType().deserialize(reader);
   }
 
 }

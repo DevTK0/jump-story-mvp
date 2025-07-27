@@ -16,7 +16,7 @@ public static partial class Module
     }
 
     // Helper method to process damaged enemy recovery
-    private static bool ProcessDamagedEnemyRecovery(ReducerContext ctx, Enemy enemy)
+    private static bool ProcessDamagedEnemyRecovery(ReducerContext ctx, Spawn enemy)
     {
         if (enemy.state != PlayerState.Damaged)
         {
@@ -29,14 +29,14 @@ public static partial class Module
             // Return enemy to idle state
             var idleEnemy = CreateEnemyUpdate(enemy, enemy.x, enemy.y, enemy.moving_right, 
                 enemy.aggro_target, enemy.aggro_target.HasValue, ctx.Timestamp, PlayerState.Idle);
-            ctx.Db.Enemy.enemy_id.Update(idleEnemy);
+            ctx.Db.Spawn.spawn_id.Update(idleEnemy);
         }
         return true; // Processed as damaged enemy
     }
 
     // Helper method to process aggro detection and validation
     private static (bool hasAggro, bool shouldChase, float targetX, float targetY, Identity? aggroTarget) ProcessAggroDetection(
-        ReducerContext ctx, Enemy enemy, EnemyConfig enemyConfig, float leftBound, float rightBound)
+        ReducerContext ctx, Spawn enemy, EnemyConfig enemyConfig, float leftBound, float rightBound)
     {
 
         var hasAggro = enemy.aggro_target.HasValue;
@@ -105,7 +105,7 @@ public static partial class Module
 
     // Helper method to calculate chase movement
     private static (float newX, bool newMovingRight) CalculateChaseMovement(
-        Enemy enemy, float targetX, float targetY, float movement, float leftBound, float rightBound)
+        Spawn enemy, float targetX, float targetY, float movement, float leftBound, float rightBound)
     {
         // Chase behavior - try to move towards target
         var proposedX = enemy.x;
@@ -142,7 +142,7 @@ public static partial class Module
 
     // Helper method to calculate patrol movement
     private static (float newX, bool newMovingRight) CalculatePatrolMovement(
-        Enemy enemy, float movement, float leftBound, float rightBound)
+        Spawn enemy, float movement, float leftBound, float rightBound)
     {
         float newX = enemy.x;
         bool newMovingRight = enemy.moving_right;
@@ -173,16 +173,16 @@ public static partial class Module
     }
 
     // Helper method to create enemy update struct
-    private static Enemy CreateEnemyUpdate(Enemy originalEnemy, float newX, float newY, bool newMovingRight, 
+    private static Spawn CreateEnemyUpdate(Spawn originalEnemy, float newX, float newY, bool newMovingRight, 
         Identity? newAggroTarget, bool hasAggro, Timestamp currentTimestamp, PlayerState? newState = null)
     {
         var newFacing = newMovingRight ? FacingDirection.Right : FacingDirection.Left;
         
-        return new Enemy
+        return new Spawn
         {
-            enemy_id = originalEnemy.enemy_id,
+            spawn_id = originalEnemy.spawn_id,
             route_id = originalEnemy.route_id,
-            enemy_type = originalEnemy.enemy_type,
+            enemy = originalEnemy.enemy,
             x = newX,
             y = newY,
             state = newState ?? originalEnemy.state,
@@ -197,7 +197,7 @@ public static partial class Module
     }
 
     // Helper method to calculate route boundaries
-    private static (float leftBound, float rightBound) CalculateRouteBounds(EnemyRoute route)
+    private static (float leftBound, float rightBound) CalculateRouteBounds(SpawnRoute route)
     {
         var leftBound = route.spawn_area.position.x;
         var rightBound = route.spawn_area.position.x + route.spawn_area.size.x;
@@ -216,7 +216,7 @@ public static partial class Module
     }
 
     // Helper method to update enemy if any values changed
-    private static void UpdateEnemyIfChanged(ReducerContext ctx, Enemy enemy, float newX, bool newMovingRight, 
+    private static void UpdateEnemyIfChanged(ReducerContext ctx, Spawn enemy, float newX, bool newMovingRight, 
         Identity? newAggroTarget, bool hasAggro)
     {
         // Update enemy position and direction if changed
@@ -227,7 +227,7 @@ public static partial class Module
         if (positionChanged || directionChanged || aggroChanged)
         {
             var updatedEnemy = CreateEnemyUpdate(enemy, newX, enemy.y, newMovingRight, newAggroTarget, hasAggro, ctx.Timestamp);
-            ctx.Db.Enemy.enemy_id.Update(updatedEnemy);
+            ctx.Db.Spawn.spawn_id.Update(updatedEnemy);
         }
     }
 
@@ -243,24 +243,24 @@ public static partial class Module
         var fiveSecondsAgo = ctx.Timestamp - EnemyConstants.GetCleanupTimeSpan();
         var enemiesToRemove = new List<uint>();
         
-        foreach (var enemy in ctx.Db.Enemy.Iter())
+        foreach (var enemy in ctx.Db.Spawn.Iter())
         {
             // Check if enemy is dead AND has been dead for > 5 seconds
             if (enemy.state == PlayerState.Dead && 
                 enemy.last_updated < fiveSecondsAgo)
             {
-                enemiesToRemove.Add(enemy.enemy_id);
+                enemiesToRemove.Add(enemy.spawn_id);
             }
         }
         
         // Delete all expired dead bodies and their associated damage events
-        foreach (var enemyId in enemiesToRemove)
+        foreach (var spawnId in enemiesToRemove)
         {
             // First, delete all damage events for this enemy
             var damageEventsToRemove = new List<uint>();
             foreach (var damageEvent in ctx.Db.EnemyDamageEvent.Iter())
             {
-                if (damageEvent.enemy_id == enemyId)
+                if (damageEvent.spawn_id == spawnId)
                 {
                     damageEventsToRemove.Add(damageEvent.damage_event_id);
                 }
@@ -272,7 +272,7 @@ public static partial class Module
             }
             
             // Then delete the enemy
-            ctx.Db.Enemy.enemy_id.Delete(enemyId);
+            ctx.Db.Spawn.spawn_id.Delete(spawnId);
         }
         
         if (enemiesToRemove.Count > 0)
@@ -318,13 +318,13 @@ public static partial class Module
         }
         
         var enemyCount = 0;
-        foreach (var _ in ctx.Db.Enemy.Iter())
+        foreach (var _ in ctx.Db.Spawn.Iter())
         {
             enemyCount++;
         }
         
         var routeCount = 0;
-        foreach (var _ in ctx.Db.EnemyRoute.Iter())
+        foreach (var _ in ctx.Db.SpawnRoute.Iter())
         {
             routeCount++;
         }
@@ -345,7 +345,7 @@ public static partial class Module
         var totalSpawned = 0;
 
         // Check each route and spawn missing enemies if interval has passed
-        foreach (var route in ctx.Db.EnemyRoute.Iter())
+        foreach (var route in ctx.Db.SpawnRoute.Iter())
         {
             // Check if this route is due for spawning
             var intervalAgo = ctx.Timestamp - TimeSpan.FromSeconds(route.spawn_interval);
@@ -353,16 +353,16 @@ public static partial class Module
             if (route.last_spawn_time < intervalAgo)
             {
                 // Get enemy config from database
-                var enemyConfig = ctx.Db.EnemyConfig.enemy_type.Find(route.enemy_type);
+                var enemyConfig = ctx.Db.EnemyConfig.enemy_type.Find(route.enemy);
                 if (enemyConfig == null)
                 {
-                    Log.Warn($"No config found for enemy type: {route.enemy_type}, skipping spawn");
+                    Log.Warn($"No config found for enemy type: {route.enemy}, skipping spawn");
                     continue;
                 }
 
                 // Count current alive enemies for this route
                 var currentEnemyCount = 0;
-                foreach (var enemy in ctx.Db.Enemy.Iter())
+                foreach (var enemy in ctx.Db.Spawn.Iter())
                 {
                     if (enemy.route_id == route.route_id && enemy.state != PlayerState.Dead)
                     {
@@ -376,10 +376,10 @@ public static partial class Module
                 {
                     var spawnPosition = route.spawn_area.GetRandomPoint(random);
 
-                    var baseEnemy = new Enemy
+                    var baseEnemy = new Spawn
                     {
                         route_id = route.route_id,
-                        enemy_type = route.enemy_type,
+                        enemy = route.enemy,
                         current_hp = enemyConfig.Value.max_hp,
                         level = enemyConfig.Value.level,
                         aggro_start_time = ctx.Timestamp
@@ -387,13 +387,13 @@ public static partial class Module
                     
                     var newEnemy = CreateEnemyUpdate(baseEnemy, spawnPosition.x, spawnPosition.y, true, null, false, ctx.Timestamp, PlayerState.Idle);
 
-                    ctx.Db.Enemy.Insert(newEnemy);
+                    ctx.Db.Spawn.Insert(newEnemy);
                     totalSpawned++;
                 }
 
                 // Always update last spawn time when route is due (regardless of whether enemies spawned)
                 var updatedRoute = route with { last_spawn_time = ctx.Timestamp };
-                ctx.Db.EnemyRoute.route_id.Update(updatedRoute);
+                ctx.Db.SpawnRoute.route_id.Update(updatedRoute);
             }
         }
 
@@ -414,7 +414,7 @@ public static partial class Module
 
         const float deltaTime = EnemyConstants.DELTA_TIME;
 
-        foreach (var enemy in ctx.Db.Enemy.Iter())
+        foreach (var enemy in ctx.Db.Spawn.Iter())
         {
             // Handle damaged enemies - recover them after 500ms
             if (ProcessDamagedEnemyRecovery(ctx, enemy))
@@ -429,17 +429,17 @@ public static partial class Module
             }
 
             // Get the route for this enemy
-            var route = ctx.Db.EnemyRoute.route_id.Find(enemy.route_id);
+            var route = ctx.Db.SpawnRoute.route_id.Find(enemy.route_id);
             if (route == null)
             {
                 continue;
             }
 
             // Get enemy config for behavior and movement speed
-            var enemyConfig = ctx.Db.EnemyConfig.enemy_type.Find(enemy.enemy_type);
+            var enemyConfig = ctx.Db.EnemyConfig.enemy_type.Find(enemy.enemy);
             if (enemyConfig == null)
             {
-                Log.Warn($"No config found for enemy type: {enemy.enemy_type}");
+                Log.Warn($"No config found for enemy type: {enemy.enemy}");
                 continue;
             }
 

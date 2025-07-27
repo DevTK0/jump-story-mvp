@@ -36,7 +36,7 @@ import { DamageType as __DamageType } from "./damage_type_type";
 
 export type EnemyDamageEvent = {
   damageEventId: number,
-  enemyId: number,
+  spawnId: number,
   playerIdentity: Identity,
   damageAmount: number,
   damageType: __DamageType,
@@ -54,7 +54,7 @@ export namespace EnemyDamageEvent {
   export function getTypeScriptAlgebraicType(): AlgebraicType {
     return AlgebraicType.createProductType([
       new ProductTypeElement("damageEventId", AlgebraicType.createU32Type()),
-      new ProductTypeElement("enemyId", AlgebraicType.createU32Type()),
+      new ProductTypeElement("spawnId", AlgebraicType.createU32Type()),
       new ProductTypeElement("playerIdentity", AlgebraicType.createIdentityType()),
       new ProductTypeElement("damageAmount", AlgebraicType.createF32Type()),
       new ProductTypeElement("damageType", __DamageType.getTypeScriptAlgebraicType()),

@@ -6,7 +6,8 @@ using System.Text.Json;
 
 // This is the main module entry point. All types, tables, and reducers are now organized in separate files:
 // - Types/Enums.cs: PlayerState, DamageType, AttackType, FacingDirection
-// - Types/Tables.cs: Player, Enemy, EnemyRoute, DamageEvent, CleanupDeadBodiesTimer
+// - Types/Tables.cs: Player, DamageEvent, CleanupDeadBodiesTimer
+// - Tables/EnemyTables.cs: Spawn, SpawnRoute
 // - Types/DataTypes.cs: DbVector2, DbRect helper types (DbVector2 still used by DbRect)
 // - Reducers/PlayerReducers.cs: Connect, Disconnect, UpdatePlayerPosition, UpdatePlayerState, CleanupInactivePlayers, Init
 // - Reducers/CombatReducers.cs: DamageEnemy

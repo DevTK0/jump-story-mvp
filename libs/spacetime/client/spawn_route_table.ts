@@ -32,25 +32,25 @@ import {
   type ReducerEventContextInterface,
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
-import { Enemy } from "./enemy_type";
-import { AiBehavior as __AiBehavior } from "./ai_behavior_type";
+import { SpawnRoute } from "./spawn_route_type";
+import { DbRect as __DbRect } from "./db_rect_type";
 
 import { type EventContext, type Reducer, RemoteReducers, RemoteTables } from ".";
 
 /**
- * Table handle for the table `Enemy`.
+ * Table handle for the table `SpawnRoute`.
  *
- * Obtain a handle from the [`enemy`] property on [`RemoteTables`],
- * like `ctx.db.enemy`.
+ * Obtain a handle from the [`spawnRoute`] property on [`RemoteTables`],
+ * like `ctx.db.spawnRoute`.
  *
  * Users are encouraged not to explicitly reference this type,
  * but to directly chain method calls,
- * like `ctx.db.enemy.on_insert(...)`.
+ * like `ctx.db.spawnRoute.on_insert(...)`.
  */
-export class EnemyTableHandle {
-  tableCache: TableCache<Enemy>;
+export class SpawnRouteTableHandle {
+  tableCache: TableCache<SpawnRoute>;
 
-  constructor(tableCache: TableCache<Enemy>) {
+  constructor(tableCache: TableCache<SpawnRoute>) {
     this.tableCache = tableCache;
   }
 
@@ -58,53 +58,53 @@ export class EnemyTableHandle {
     return this.tableCache.count();
   }
 
-  iter(): Iterable<Enemy> {
+  iter(): Iterable<SpawnRoute> {
     return this.tableCache.iter();
   }
   /**
-   * Access to the `name` unique index on the table `Enemy`,
+   * Access to the `routeId` unique index on the table `SpawnRoute`,
    * which allows point queries on the field of the same name
-   * via the [`EnemyNameUnique.find`] method.
+   * via the [`SpawnRouteRouteIdUnique.find`] method.
    *
    * Users are encouraged not to explicitly reference this type,
    * but to directly chain method calls,
-   * like `ctx.db.enemy.name().find(...)`.
+   * like `ctx.db.spawnRoute.routeId().find(...)`.
    *
-   * Get a handle on the `name` unique index on the table `Enemy`.
+   * Get a handle on the `routeId` unique index on the table `SpawnRoute`.
    */
-  name = {
-    // Find the subscribed row whose `name` column value is equal to `col_val`,
+  routeId = {
+    // Find the subscribed row whose `routeId` column value is equal to `col_val`,
     // if such a row is present in the client cache.
-    find: (col_val: string): Enemy | undefined => {
+    find: (col_val: number): SpawnRoute | undefined => {
       for (let row of this.tableCache.iter()) {
-        if (deepEqual(row.name, col_val)) {
+        if (deepEqual(row.routeId, col_val)) {
           return row;
         }
       }
     },
   };
 
-  onInsert = (cb: (ctx: EventContext, row: Enemy) => void) => {
+  onInsert = (cb: (ctx: EventContext, row: SpawnRoute) => void) => {
     return this.tableCache.onInsert(cb);
   }
 
-  removeOnInsert = (cb: (ctx: EventContext, row: Enemy) => void) => {
+  removeOnInsert = (cb: (ctx: EventContext, row: SpawnRoute) => void) => {
     return this.tableCache.removeOnInsert(cb);
   }
 
-  onDelete = (cb: (ctx: EventContext, row: Enemy) => void) => {
+  onDelete = (cb: (ctx: EventContext, row: SpawnRoute) => void) => {
     return this.tableCache.onDelete(cb);
   }
 
-  removeOnDelete = (cb: (ctx: EventContext, row: Enemy) => void) => {
+  removeOnDelete = (cb: (ctx: EventContext, row: SpawnRoute) => void) => {
     return this.tableCache.removeOnDelete(cb);
   }
 
   // Updates are only defined for tables with primary keys.
-  onUpdate = (cb: (ctx: EventContext, oldRow: Enemy, newRow: Enemy) => void) => {
+  onUpdate = (cb: (ctx: EventContext, oldRow: SpawnRoute, newRow: SpawnRoute) => void) => {
     return this.tableCache.onUpdate(cb);
   }
 
-  removeOnUpdate = (cb: (ctx: EventContext, onRow: Enemy, newRow: Enemy) => void) => {
+  removeOnUpdate = (cb: (ctx: EventContext, onRow: SpawnRoute, newRow: SpawnRoute) => void) => {
     return this.tableCache.removeOnUpdate(cb);
   }}

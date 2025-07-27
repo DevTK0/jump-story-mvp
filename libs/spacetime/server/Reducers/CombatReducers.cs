@@ -7,9 +7,9 @@ public static partial class Module
 {
 
     [Reducer]
-    public static void RecoverFromDamage(ReducerContext ctx, uint enemyId)
+    public static void RecoverFromDamage(ReducerContext ctx, uint spawnId)
     {
-        var enemy = ctx.Db.Enemy.enemy_id.Find(enemyId);
+        var enemy = ctx.Db.Spawn.spawn_id.Find(spawnId);
         if (enemy is null || enemy.Value.state != PlayerState.Damaged)
         {
             return;
@@ -18,13 +18,13 @@ public static partial class Module
         // Return enemy to idle state so they can resume patrol/chase
         var recoveredEnemy = CreateEnemyUpdate(enemy.Value, enemy.Value.x, enemy.Value.y, enemy.Value.moving_right, 
             enemy.Value.aggro_target, enemy.Value.aggro_target.HasValue, ctx.Timestamp, PlayerState.Idle);
-        ctx.Db.Enemy.enemy_id.Update(recoveredEnemy);
+        ctx.Db.Spawn.spawn_id.Update(recoveredEnemy);
 
-        Log.Info($"Enemy {enemyId} recovered from damage and returned to idle state");
+        Log.Info($"Enemy {spawnId} recovered from damage and returned to idle state");
     }
 
     [Reducer]
-    public static void DamageEnemy(ReducerContext ctx, List<uint> enemyIds, AttackType attackType)
+    public static void DamageEnemy(ReducerContext ctx, List<uint> spawnIds, AttackType attackType)
     {
         // Check if the attacking player is dead
         var player = ctx.Db.Player.identity.Find(ctx.Sender);
@@ -128,10 +128,10 @@ public static partial class Module
         var maxTargets = jobAttack.Value.targets; // Use attack's target count
 
         // Fetch all enemies in the provided list and filter out dead/invalid ones
-        var allEnemies = new List<Enemy>();
-        foreach (var enemy in ctx.Db.Enemy.Iter())
+        var allEnemies = new List<Spawn>();
+        foreach (var enemy in ctx.Db.Spawn.Iter())
         {
-            if (enemyIds.Contains(enemy.enemy_id) && enemy.current_hp > 0)
+            if (spawnIds.Contains(enemy.spawn_id) && enemy.current_hp > 0)
             {
                 // Check if enemy is within attack range (X-axis only)
                 var xDistance = Math.Abs(enemy.x - player.Value.x);
@@ -151,7 +151,7 @@ public static partial class Module
             .ToList();
 
         Log.Info($"Attack {jobAttack.Value.name}: range={jobAttack.Value.range}, targets={maxTargets}");
-        Log.Info($"Found {validEnemies.Count} valid enemies within range out of {enemyIds.Count} provided");
+        Log.Info($"Found {validEnemies.Count} valid enemies within range out of {spawnIds.Count} provided");
 
         // Process damage for each valid enemy
         foreach (var enemy in validEnemies)
@@ -190,7 +190,7 @@ public static partial class Module
                 var newX = enemy.x + (knockbackDistance * knockbackDirection);
                 
                 // Get route boundaries to clamp knockback
-                var route = ctx.Db.EnemyRoute.route_id.Find(enemy.route_id);
+                var route = ctx.Db.SpawnRoute.route_id.Find(enemy.route_id);
                 if (route != null)
                 {
                     var (leftBound, rightBound) = CalculateRouteBounds(route.Value);
@@ -205,12 +205,12 @@ public static partial class Module
                     var damagedEnemy = CreateEnemyUpdate(enemy, knockbackX, knockbackY, enemy.moving_right, 
                         ctx.Sender, true, ctx.Timestamp, newState);
                     damagedEnemy = damagedEnemy with { current_hp = newHp };
-                    ctx.Db.Enemy.enemy_id.Update(damagedEnemy);
+                    ctx.Db.Spawn.spawn_id.Update(damagedEnemy);
 
                 // Record damage event
                 ctx.Db.EnemyDamageEvent.Insert(new EnemyDamageEvent
                 {
-                    enemy_id = enemy.enemy_id,
+                    spawn_id = enemy.spawn_id,
                     player_identity = ctx.Sender,
                     damage_amount = finalDamage,
                     damage_type = damageType,
@@ -227,7 +227,7 @@ public static partial class Module
                     break; // Don't continue hitting a dead enemy
                 }
 
-                Log.Info($"Player {ctx.Sender} (Lv{player.Value.level}) used {jobAttack.Value.name} (hit {hit+1}/{jobAttack.Value.hits}) dealing {finalDamage} {damageType} damage (base: {baseDamage}, scaled: {scaledDamage:F0}) to enemy {enemy.enemy_id}. HP: {oldHp} -> {newHp}" + (wasKilled ? " [KILLED]" : ""));
+                Log.Info($"Player {ctx.Sender} (Lv{player.Value.level}) used {jobAttack.Value.name} (hit {hit+1}/{jobAttack.Value.hits}) dealing {finalDamage} {damageType} damage (base: {baseDamage}, scaled: {scaledDamage:F0}) to enemy {enemy.spawn_id}. HP: {oldHp} -> {newHp}" + (wasKilled ? " [KILLED]" : ""));
                 
                 // Update current HP for next hit
                 currentHp = newHp;

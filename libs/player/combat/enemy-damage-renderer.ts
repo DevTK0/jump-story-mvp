@@ -16,7 +16,7 @@ import {
 interface DamageNumberState {
   text: Phaser.GameObjects.Text;
   startTime: number;
-  enemyId: number;
+  spawnId: number;
   initialX: number;
   initialY: number;
   damageEvent: EnemyDamageEvent;
@@ -116,10 +116,10 @@ export class EnemyDamageRenderer {
     }
 
     // Get enemy position
-    const position = this.getEnemyPosition(damageEvent.enemyId);
+    const position = this.getEnemyPosition(damageEvent.spawnId);
     if (!position) {
       console.warn(
-        `[EnemyDamageRenderer] No position found for enemy ${damageEvent.enemyId} - enemy sprite may be missing or invisible`
+        `[EnemyDamageRenderer] No position found for enemy ${damageEvent.spawnId} - enemy sprite may be missing or invisible`
       );
       return;
     }
@@ -145,11 +145,11 @@ export class EnemyDamageRenderer {
   /**
    * Get enemy sprite position for damage number placement
    */
-  private getEnemyPosition(enemyId: number): { x: number; y: number } | null {
+  private getEnemyPosition(spawnId: number): { x: number; y: number } | null {
     if (!this.enemyManager) return null;
 
     // Get enemy sprite from enemy manager
-    const enemySprite = this.enemyManager.getEnemySprite(enemyId);
+    const enemySprite = this.enemyManager.getEnemySprite(spawnId);
 
     // Allow damage numbers on dead enemies that are still visible (playing death animation)
     if (!enemySprite || !enemySprite.visible) {
@@ -173,7 +173,7 @@ export class EnemyDamageRenderer {
     }
 
     // Calculate stacked position
-    const position = this.calculateStackedPosition(damageEvent.enemyId, baseX, baseY, damageEvent);
+    const position = this.calculateStackedPosition(damageEvent.spawnId, baseX, baseY, damageEvent);
 
     // Configure text appearance
     this.configureTextAppearance(text, damageEvent);
@@ -188,7 +188,7 @@ export class EnemyDamageRenderer {
     const damageNumberState: DamageNumberState = {
       text,
       startTime: this.scene.time.now,
-      enemyId: damageEvent.enemyId,
+      spawnId: damageEvent.spawnId,
       initialX: position.x,
       initialY: position.y,
       damageEvent: damageEvent,
@@ -205,12 +205,12 @@ export class EnemyDamageRenderer {
    * Calculate position for stacked damage numbers
    */
   private calculateStackedPosition(
-    enemyId: number,
+    spawnId: number,
     baseX: number,
     baseY: number,
     damageEvent: EnemyDamageEvent
   ): { x: number; y: number } {
-    const activeForEnemy = this.activeNumbers.get(enemyId) || [];
+    const activeForEnemy = this.activeNumbers.get(spawnId) || [];
     const stackIndex = activeForEnemy.length;
 
     const { verticalOffset, horizontalJitter } = DAMAGE_RENDERER_CONFIG.stacking;
@@ -286,10 +286,10 @@ export class EnemyDamageRenderer {
    */
   private addToActiveNumbers(damageNumberState: DamageNumberState): void {
     // Add to per-enemy tracking
-    if (!this.activeNumbers.has(damageNumberState.enemyId)) {
-      this.activeNumbers.set(damageNumberState.enemyId, []);
+    if (!this.activeNumbers.has(damageNumberState.spawnId)) {
+      this.activeNumbers.set(damageNumberState.spawnId, []);
     }
-    this.activeNumbers.get(damageNumberState.enemyId)!.push(damageNumberState);
+    this.activeNumbers.get(damageNumberState.spawnId)!.push(damageNumberState);
 
     // Add to global tracking
     this.allActiveNumbers.push(damageNumberState);
@@ -342,17 +342,17 @@ export class EnemyDamageRenderer {
    * Clean up completed damage number
    */
   private cleanupDamageNumber(damageNumberState: DamageNumberState): void {
-    const { text, enemyId } = damageNumberState;
+    const { text, spawnId } = damageNumberState;
 
     // Remove from per-enemy tracking
-    const enemyNumbers = this.activeNumbers.get(enemyId);
+    const enemyNumbers = this.activeNumbers.get(spawnId);
     if (enemyNumbers) {
       const index = enemyNumbers.indexOf(damageNumberState);
       if (index !== -1) {
         enemyNumbers.splice(index, 1);
       }
       if (enemyNumbers.length === 0) {
-        this.activeNumbers.delete(enemyId);
+        this.activeNumbers.delete(spawnId);
       }
     }
 
@@ -373,14 +373,14 @@ export class EnemyDamageRenderer {
     // Use damage event properties to create a deterministic seed
     // This ensures all clients generate the same "random" positions
     const timestamp = damageEvent.timestamp.toDate().getTime();
-    const enemyId = damageEvent.enemyId;
+    const spawnId = damageEvent.spawnId;
     const damage = Math.round(damageEvent.damageAmount * 100); // Convert to integer
 
     // Convert damage type tag to number
     const damageTypeNum = this.damageTypeToNumber(damageEvent.damageType);
 
     // Combine values to create a unique but deterministic seed
-    return (timestamp % 10000) + enemyId * 1000 + damage + damageTypeNum * 10000;
+    return (timestamp % 10000) + spawnId * 1000 + damage + damageTypeNum * 10000;
   }
 
   /**

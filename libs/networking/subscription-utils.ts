@@ -96,7 +96,7 @@ export interface ProximitySubscriptionConfig {
  */
 export const DEFAULT_PROXIMITY_CONFIGS = {
   enemies: {
-    tableName: 'Enemy',
+    tableName: 'Spawn',
     radius: 2000,
     updateInterval: 5000,
     moveThreshold: 500,

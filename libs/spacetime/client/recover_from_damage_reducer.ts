@@ -34,7 +34,7 @@ import {
 } from "@clockworklabs/spacetimedb-sdk";
 
 export type RecoverFromDamage = {
-  enemyId: number,
+  spawnId: number,
 };
 
 /**
@@ -47,7 +47,7 @@ export namespace RecoverFromDamage {
   */
   export function getTypeScriptAlgebraicType(): AlgebraicType {
     return AlgebraicType.createProductType([
-      new ProductTypeElement("enemyId", AlgebraicType.createU32Type()),
+      new ProductTypeElement("spawnId", AlgebraicType.createU32Type()),
     ]);
   }
 

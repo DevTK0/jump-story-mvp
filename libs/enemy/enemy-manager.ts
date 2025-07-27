@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { DbConnection, Enemy as ServerEnemy, PlayerState } from '@/spacetime/client';
+import { DbConnection, Spawn as ServerEnemy, PlayerState } from '@/spacetime/client';
 import { EnemyStateManager } from './state/enemy-state-service';
 import { EnemySpawnManager } from './managers/enemy-spawn-manager';
 import { EnemyMovementManager } from './managers/enemy-movement-manager';
@@ -80,8 +80,8 @@ export class EnemyManager implements PhysicsEntity {
   /**
    * Handle enemy deletion from server
    */
-  private handleEnemyDelete(enemyId: number): void {
-    this.despawnServerEnemy(enemyId);
+  private handleEnemyDelete(spawnId: number): void {
+    this.despawnServerEnemy(spawnId);
   }
 
   /**
@@ -92,59 +92,72 @@ export class EnemyManager implements PhysicsEntity {
 
     // Spawn enemies that are within proximity
     for (const enemy of enemies) {
-      currentEnemyIds.add(enemy.enemyId);
-      if (!this.spawnManager.getEnemy(enemy.enemyId)) {
+      currentEnemyIds.add(enemy.spawnId);
+      if (!this.spawnManager.getEnemy(enemy.spawnId)) {
         this.spawnServerEnemy(enemy);
       }
     }
 
     // Remove enemies that are no longer in proximity
-    for (const [enemyId] of this.spawnManager.getEnemies()) {
-      if (!currentEnemyIds.has(enemyId)) {
-        this.despawnServerEnemy(enemyId);
+    for (const [spawnId] of this.spawnManager.getEnemies()) {
+      if (!currentEnemyIds.has(spawnId)) {
+        this.despawnServerEnemy(spawnId);
       }
     }
   }
 
   private spawnServerEnemy(serverEnemy: ServerEnemy): void {
+    console.log(`[EnemyManager] Spawning enemy:`, {
+      id: serverEnemy.spawnId,
+      type: serverEnemy.enemy,
+      position: { x: serverEnemy.x, y: serverEnemy.y },
+      state: serverEnemy.state.tag
+    });
+    
     const sprite = this.spawnManager.spawnEnemy(serverEnemy);
 
     // Track enemy state and type
-    this.enemyStates.set(serverEnemy.enemyId, serverEnemy.state);
-    this.enemyTypes.set(serverEnemy.enemyId, serverEnemy.enemyType);
+    this.enemyStates.set(serverEnemy.spawnId, serverEnemy.state);
+    this.enemyTypes.set(serverEnemy.spawnId, serverEnemy.enemy);
+    
+    // Mark enemy as spawned in registry for proximity buffer zone
+    this.scene.registry.set(`enemy_spawned_${serverEnemy.spawnId}`, true);
 
     // Register movement interpolation callback
-    this.movementManager.registerInterpolationCallback(serverEnemy.enemyId, (x: number) => {
+    this.movementManager.registerInterpolationCallback(serverEnemy.spawnId, (x: number) => {
       sprite.setX(x);
-      const healthBar = this.spawnManager.getHealthBar(serverEnemy.enemyId);
+      const healthBar = this.spawnManager.getHealthBar(serverEnemy.spawnId);
       if (healthBar) {
         healthBar.updatePosition(x, sprite.y);
       }
     });
   }
 
-  private despawnServerEnemy(enemyId: number): void {
+  private despawnServerEnemy(spawnId: number): void {
     // Clean up movement interpolation
-    this.movementManager.unregisterInterpolationCallback(enemyId);
+    this.movementManager.unregisterInterpolationCallback(spawnId);
 
     // Clean up state tracking
-    this.enemyStates.delete(enemyId);
-    this.enemyTypes.delete(enemyId);
+    this.enemyStates.delete(spawnId);
+    this.enemyTypes.delete(spawnId);
+    
+    // Clear spawned flag from registry
+    this.scene.registry.remove(`enemy_spawned_${spawnId}`);
 
     // Despawn the enemy
-    this.spawnManager.despawnEnemy(enemyId);
+    this.spawnManager.despawnEnemy(spawnId);
   }
 
   private updateServerEnemy(serverEnemy: ServerEnemy): void {
-    const sprite = this.spawnManager.getEnemy(serverEnemy.enemyId);
-    const healthBar = this.spawnManager.getHealthBar(serverEnemy.enemyId);
+    const sprite = this.spawnManager.getEnemy(serverEnemy.spawnId);
+    const healthBar = this.spawnManager.getHealthBar(serverEnemy.spawnId);
     
     // Check proximity if using proximity subscription
     const isInProximity = this.subscriptionManager.isEnemyInProximity(serverEnemy);
     
     if (!sprite && isInProximity) {
       // Enemy doesn't exist locally but is within proximity - spawn it
-      this.logger.debug(`Enemy ${serverEnemy.enemyId} entered proximity - spawning`);
+      this.logger.debug(`Enemy ${serverEnemy.spawnId} entered proximity - spawning`);
       this.spawnServerEnemy(serverEnemy);
       return;
     }
@@ -152,7 +165,8 @@ export class EnemyManager implements PhysicsEntity {
     if (!sprite) return;
 
     if (!isInProximity) {
-      this.despawnServerEnemy(serverEnemy.enemyId);
+      console.log(`[EnemyManager] Enemy ${serverEnemy.spawnId} out of proximity - despawning`);
+      this.despawnServerEnemy(serverEnemy.spawnId);
       return;
     }
 
@@ -160,12 +174,12 @@ export class EnemyManager implements PhysicsEntity {
     const previousX = this.movementManager.updateEnemyPosition(serverEnemy, sprite, healthBar);
 
     // Check for state changes
-    const previousState = this.enemyStates.get(serverEnemy.enemyId);
+    const previousState = this.enemyStates.get(serverEnemy.spawnId);
     const currentState = serverEnemy.state;
 
     if (previousState?.tag !== currentState.tag) {
-      this.handleStateChange(serverEnemy.enemyId, currentState, serverEnemy.enemyType);
-      this.enemyStates.set(serverEnemy.enemyId, currentState);
+      this.handleStateChange(serverEnemy.spawnId, currentState, serverEnemy.enemy);
+      this.enemyStates.set(serverEnemy.spawnId, currentState);
 
       // Hide health bar when enemy dies
       if (currentState.tag === 'Dead' && healthBar) {
@@ -176,7 +190,7 @@ export class EnemyManager implements PhysicsEntity {
     // Handle movement animation for idle enemies (patrol movement)
     if (currentState.tag === 'Idle') {
       const isMoving = this.movementManager.isEnemyMoving(
-        serverEnemy.enemyId,
+        serverEnemy.spawnId,
         previousX,
         serverEnemy.x
       );
@@ -185,17 +199,17 @@ export class EnemyManager implements PhysicsEntity {
         // Enemy is moving - play walk animation
         if (
           !sprite.anims.isPlaying ||
-          sprite.anims.currentAnim?.key !== `${serverEnemy.enemyType}-walk-anim`
+          sprite.anims.currentAnim?.key !== `${serverEnemy.enemy}-walk-anim`
         ) {
-          sprite.play(`${serverEnemy.enemyType}-walk-anim`);
+          sprite.play(`${serverEnemy.enemy}-walk-anim`);
         }
       } else {
         // Enemy is not moving - play idle animation
         if (
           !sprite.anims.isPlaying ||
-          sprite.anims.currentAnim?.key !== `${serverEnemy.enemyType}-idle-anim`
+          sprite.anims.currentAnim?.key !== `${serverEnemy.enemy}-idle-anim`
         ) {
-          sprite.play(`${serverEnemy.enemyType}-idle-anim`);
+          sprite.play(`${serverEnemy.enemy}-idle-anim`);
         }
       }
     }
@@ -204,47 +218,47 @@ export class EnemyManager implements PhysicsEntity {
     sprite.clearTint();
   }
 
-  private handleStateChange(enemyId: number, newState: PlayerState, _enemyType: string): void {
+  private handleStateChange(spawnId: number, newState: PlayerState, _enemyType: string): void {
     // Use state machine to handle state changes
-    const stateMachine = this.spawnManager.getStateMachine(enemyId);
+    const stateMachine = this.spawnManager.getStateMachine(spawnId);
     if (stateMachine) {
       stateMachine.handleServerStateChange(newState);
     }
   }
 
   // Public API methods
-  public playHitAnimation(enemyId: number): void {
-    const stateMachine = this.spawnManager.getStateMachine(enemyId);
+  public playHitAnimation(spawnId: number): void {
+    const stateMachine = this.spawnManager.getStateMachine(spawnId);
     if (stateMachine) {
       stateMachine.playHitAnimation();
     }
   }
 
   public getEnemyIdFromSprite(sprite: Phaser.Physics.Arcade.Sprite): number | null {
-    for (const [enemyId, enemySprite] of this.spawnManager.getEnemies()) {
+    for (const [spawnId, enemySprite] of this.spawnManager.getEnemies()) {
       if (enemySprite === sprite) {
-        return enemyId;
+        return spawnId;
       }
     }
     return null;
   }
 
-  public getEnemySprite(enemyId: number): Phaser.Physics.Arcade.Sprite | null {
-    return this.spawnManager.getEnemy(enemyId) || null;
+  public getEnemySprite(spawnId: number): Phaser.Physics.Arcade.Sprite | null {
+    return this.spawnManager.getEnemy(spawnId) || null;
   }
 
   public isEnemyDead(enemySprite: Phaser.Physics.Arcade.Sprite): boolean {
-    const enemyId = this.getEnemyIdFromSprite(enemySprite);
-    if (enemyId === null) return false;
-    return this.stateService.isEnemyDead(enemyId);
+    const spawnId = this.getEnemyIdFromSprite(enemySprite);
+    if (spawnId === null) return false;
+    return this.stateService.isEnemyDead(spawnId);
   }
 
-  public canEnemyTakeDamage(enemyId: number): boolean {
-    return this.stateService.canEnemyTakeDamage(enemyId);
+  public canEnemyTakeDamage(spawnId: number): boolean {
+    return this.stateService.canEnemyTakeDamage(spawnId);
   }
 
-  public canEnemyDamagePlayer(enemyId: number): boolean {
-    return this.stateService.canEnemyDamagePlayer(enemyId);
+  public canEnemyDamagePlayer(spawnId: number): boolean {
+    return this.stateService.canEnemyDamagePlayer(spawnId);
   }
 
   public getEnemyGroup(): Phaser.Physics.Arcade.Group {

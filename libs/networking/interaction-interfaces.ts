@@ -41,8 +41,8 @@ export interface EnemySprite extends GameSprite {
  */
 export interface DatabaseConnection {
   reducers: {
-    damageEnemy: (enemyIds: number[], attackType: any) => void;
-    playerTakeDamage: (enemyId: number) => void;
+    damageEnemy: (spawnIds: number[], attackType: any) => void;
+    playerTakeDamage: (spawnId: number) => void;
     // Add other reducers as needed
   };
   db?: {
@@ -84,7 +84,7 @@ export interface InteractionCallbacks {
  */
 export interface InteractionEnemyManager extends EnemyManager {
   getEnemyIdFromSprite(sprite: EnemySprite): number | null;
-  canEnemyTakeDamage(enemyId: number): boolean;
-  canEnemyDamagePlayer(enemyId: number): boolean;
-  playHitAnimation(enemyId: number): void;
+  canEnemyTakeDamage(spawnId: number): boolean;
+  canEnemyDamagePlayer(spawnId: number): boolean;
+  playHitAnimation(spawnId: number): void;
 }

@@ -5,20 +5,20 @@ import { PlayerState as DbPlayerState } from '@/spacetime/client';
  * Manages state-specific behavior and transitions for enemies
  */
 export abstract class EnemyState {
-  protected enemyId: number;
+  protected spawnId: number;
   protected sprite: Phaser.Physics.Arcade.Sprite;
-  protected enemyType: string;
+  protected enemy: string;
   protected stateMachine: EnemyStateMachine;
 
   constructor(
-    enemyId: number,
+    spawnId: number,
     sprite: Phaser.Physics.Arcade.Sprite,
-    enemyType: string,
+    enemy: string,
     stateMachine: EnemyStateMachine
   ) {
-    this.enemyId = enemyId;
+    this.spawnId = spawnId;
     this.sprite = sprite;
-    this.enemyType = enemyType;
+    this.enemy = enemy;
     this.stateMachine = stateMachine;
   }
 
@@ -77,7 +77,7 @@ export abstract class EnemyState {
  */
 export class EnemyIdleState extends EnemyState {
   onEnter(_previousState?: EnemyState): void {
-    this.sprite.play(`${this.enemyType}-idle-anim`);
+    this.sprite.play(`${this.enemy}-idle-anim`);
   }
 
   onExit(_nextState?: EnemyState): void {
@@ -108,7 +108,7 @@ export class EnemyWalkState extends EnemyState {
   onEnter(_previousState?: EnemyState): void {
     // Currently using idle animation as fallback
     // TODO: Add walk animation when available
-    this.sprite.play(`${this.enemyType}-idle-anim`);
+    this.sprite.play(`${this.enemy}-idle-anim`);
   }
 
   onExit(_nextState?: EnemyState): void {
@@ -140,11 +140,11 @@ export class EnemyDamagedState extends EnemyState {
 
   onEnter(_previousState?: EnemyState): void {
     // Play damaged animation
-    this.sprite.play(`${this.enemyType}-damaged-anim`);
+    this.sprite.play(`${this.enemy}-damaged-anim`);
 
     // Set up animation complete listener
     this.animationCompleteListener = (animation: Phaser.Animations.Animation) => {
-      if (animation.key === `${this.enemyType}-damaged-anim`) {
+      if (animation.key === `${this.enemy}-damaged-anim`) {
         // Only transition back to idle if we're still in damaged state
         if (this.stateMachine.getCurrentStateName() === 'Damaged') {
           this.stateMachine.transitionTo('Idle');
@@ -191,7 +191,7 @@ export class EnemyDeadState extends EnemyState {
     this.sprite.anims.stop();
 
     // Play death animation
-    this.sprite.play(`${this.enemyType}-death-anim`);
+    this.sprite.play(`${this.enemy}-death-anim`);
 
     // Set up animation complete listener
     this.animationCompleteListener = () => {
@@ -237,7 +237,7 @@ export class EnemyDeadState extends EnemyState {
 
     // Set to last frame of death animation
     // This is enemy-type specific, but we'll use a sensible default
-    const deathFrame = this.enemyType === 'orc' ? 43 : 0;
+    const deathFrame = this.enemy === 'orc' ? 43 : 0;
     this.sprite.setFrame(deathFrame);
 
     // Apply death tint
@@ -265,21 +265,21 @@ export class EnemyDeadState extends EnemyState {
 export class EnemyStateMachine {
   private states: Map<string, EnemyState> = new Map();
   private currentState: EnemyState | null = null;
-  private enemyId: number;
+  private spawnId: number;
   private sprite: Phaser.Physics.Arcade.Sprite;
-  private enemyType: string;
+  private enemy: string;
   public readonly scene: Phaser.Scene;
 
   constructor(
-    enemyId: number,
+    spawnId: number,
     sprite: Phaser.Physics.Arcade.Sprite,
-    enemyType: string,
+    enemy: string,
     scene: Phaser.Scene,
     initialState: DbPlayerState
   ) {
-    this.enemyId = enemyId;
+    this.spawnId = spawnId;
     this.sprite = sprite;
-    this.enemyType = enemyType;
+    this.enemy = enemy;
     this.scene = scene;
 
     // Initialize all states
@@ -296,13 +296,13 @@ export class EnemyStateMachine {
 
   private initializeStates(): void {
     // Create all possible states
-    this.states.set('Idle', new EnemyIdleState(this.enemyId, this.sprite, this.enemyType, this));
-    this.states.set('Walk', new EnemyWalkState(this.enemyId, this.sprite, this.enemyType, this));
+    this.states.set('Idle', new EnemyIdleState(this.spawnId, this.sprite, this.enemy, this));
+    this.states.set('Walk', new EnemyWalkState(this.spawnId, this.sprite, this.enemy, this));
     this.states.set(
       'Damaged',
-      new EnemyDamagedState(this.enemyId, this.sprite, this.enemyType, this)
+      new EnemyDamagedState(this.spawnId, this.sprite, this.enemy, this)
     );
-    this.states.set('Dead', new EnemyDeadState(this.enemyId, this.sprite, this.enemyType, this));
+    this.states.set('Dead', new EnemyDeadState(this.spawnId, this.sprite, this.enemy, this));
   }
 
   /**
@@ -362,7 +362,7 @@ export class EnemyStateMachine {
     if (this.currentState && this.currentState.getName() !== 'Dead') {
       // If we're already in damaged state, just replay the animation
       if (this.currentState.getName() === 'Damaged') {
-        this.sprite.play(`${this.enemyType}-damaged-anim`);
+        this.sprite.play(`${this.enemy}-damaged-anim`);
       }
       // Otherwise, we'll wait for the state change to handle it
     }

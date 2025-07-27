@@ -98,8 +98,6 @@ import { EnemyConfigTableHandle } from "./enemy_config_table.ts";
 export { EnemyConfigTableHandle };
 import { EnemyDamageEventTableHandle } from "./enemy_damage_event_table.ts";
 export { EnemyDamageEventTableHandle };
-import { EnemyRouteTableHandle } from "./enemy_route_table.ts";
-export { EnemyRouteTableHandle };
 import { JobTableHandle } from "./job_table.ts";
 export { JobTableHandle };
 import { JobAttackTableHandle } from "./job_attack_table.ts";
@@ -118,6 +116,10 @@ import { PlayerLevelingConfigTableHandle } from "./player_leveling_config_table.
 export { PlayerLevelingConfigTableHandle };
 import { PlayerMessageTableHandle } from "./player_message_table.ts";
 export { PlayerMessageTableHandle };
+import { SpawnTableHandle } from "./spawn_table.ts";
+export { SpawnTableHandle };
+import { SpawnRouteTableHandle } from "./spawn_route_table.ts";
+export { SpawnRouteTableHandle };
 import { CleanupDeadBodiesTimerTableHandle } from "./cleanup_dead_bodies_timer_table.ts";
 export { CleanupDeadBodiesTimerTableHandle };
 import { CombatTimeoutTimerTableHandle } from "./combat_timeout_timer_table.ts";
@@ -130,6 +132,8 @@ import { SpawnEnemiesTimerTableHandle } from "./spawn_enemies_timer_table.ts";
 export { SpawnEnemiesTimerTableHandle };
 
 // Import and reexport all types
+import { AiBehavior } from "./ai_behavior_type.ts";
+export { AiBehavior };
 import { AttackType } from "./attack_type_type.ts";
 export { AttackType };
 import { CleanupDeadBodiesTimer } from "./cleanup_dead_bodies_timer_type.ts";
@@ -150,8 +154,6 @@ import { EnemyDamageEvent } from "./enemy_damage_event_type.ts";
 export { EnemyDamageEvent };
 import { EnemyPatrolTimer } from "./enemy_patrol_timer_type.ts";
 export { EnemyPatrolTimer };
-import { EnemyRoute } from "./enemy_route_type.ts";
-export { EnemyRoute };
 import { FacingDirection } from "./facing_direction_type.ts";
 export { FacingDirection };
 import { Job } from "./job_type.ts";
@@ -178,17 +180,21 @@ import { PlayerMessage } from "./player_message_type.ts";
 export { PlayerMessage };
 import { PlayerState } from "./player_state_type.ts";
 export { PlayerState };
+import { Spawn } from "./spawn_type.ts";
+export { Spawn };
 import { SpawnEnemiesTimer } from "./spawn_enemies_timer_type.ts";
 export { SpawnEnemiesTimer };
+import { SpawnRoute } from "./spawn_route_type.ts";
+export { SpawnRoute };
 
 const REMOTE_MODULE = {
   tables: {
     Enemy: {
       tableName: "Enemy",
       rowType: Enemy.getTypeScriptAlgebraicType(),
-      primaryKey: "enemyId",
+      primaryKey: "name",
       primaryKeyInfo: {
-        colName: "enemyId",
+        colName: "name",
         colType: Enemy.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
@@ -208,15 +214,6 @@ const REMOTE_MODULE = {
       primaryKeyInfo: {
         colName: "damageEventId",
         colType: EnemyDamageEvent.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
-      },
-    },
-    EnemyRoute: {
-      tableName: "EnemyRoute",
-      rowType: EnemyRoute.getTypeScriptAlgebraicType(),
-      primaryKey: "routeId",
-      primaryKeyInfo: {
-        colName: "routeId",
-        colType: EnemyRoute.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     Job: {
@@ -298,6 +295,24 @@ const REMOTE_MODULE = {
       primaryKeyInfo: {
         colName: "messageId",
         colType: PlayerMessage.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    Spawn: {
+      tableName: "Spawn",
+      rowType: Spawn.getTypeScriptAlgebraicType(),
+      primaryKey: "spawnId",
+      primaryKeyInfo: {
+        colName: "spawnId",
+        colType: Spawn.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    SpawnRoute: {
+      tableName: "SpawnRoute",
+      rowType: SpawnRoute.getTypeScriptAlgebraicType(),
+      primaryKey: "routeId",
+      primaryKeyInfo: {
+        colName: "routeId",
+        colType: SpawnRoute.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     cleanup_dead_bodies_timer: {
@@ -626,19 +641,19 @@ export class RemoteReducers {
     this.connection.offReducer("Connect", callback);
   }
 
-  damageEnemy(enemyIds: number[], attackType: AttackType) {
-    const __args = { enemyIds, attackType };
+  damageEnemy(spawnIds: number[], attackType: AttackType) {
+    const __args = { spawnIds, attackType };
     let __writer = new BinaryWriter(1024);
     DamageEnemy.getTypeScriptAlgebraicType().serialize(__writer, __args);
     let __argsBuffer = __writer.getBuffer();
     this.connection.callReducer("DamageEnemy", __argsBuffer, this.setCallReducerFlags.damageEnemyFlags);
   }
 
-  onDamageEnemy(callback: (ctx: ReducerEventContext, enemyIds: number[], attackType: AttackType) => void) {
+  onDamageEnemy(callback: (ctx: ReducerEventContext, spawnIds: number[], attackType: AttackType) => void) {
     this.connection.onReducer("DamageEnemy", callback);
   }
 
-  removeOnDamageEnemy(callback: (ctx: ReducerEventContext, enemyIds: number[], attackType: AttackType) => void) {
+  removeOnDamageEnemy(callback: (ctx: ReducerEventContext, spawnIds: number[], attackType: AttackType) => void) {
     this.connection.offReducer("DamageEnemy", callback);
   }
 
@@ -746,19 +761,19 @@ export class RemoteReducers {
     this.connection.offReducer("InstakillPlayer", callback);
   }
 
-  playerTakeDamage(enemyId: number) {
-    const __args = { enemyId };
+  playerTakeDamage(spawnId: number) {
+    const __args = { spawnId };
     let __writer = new BinaryWriter(1024);
     PlayerTakeDamage.getTypeScriptAlgebraicType().serialize(__writer, __args);
     let __argsBuffer = __writer.getBuffer();
     this.connection.callReducer("PlayerTakeDamage", __argsBuffer, this.setCallReducerFlags.playerTakeDamageFlags);
   }
 
-  onPlayerTakeDamage(callback: (ctx: ReducerEventContext, enemyId: number) => void) {
+  onPlayerTakeDamage(callback: (ctx: ReducerEventContext, spawnId: number) => void) {
     this.connection.onReducer("PlayerTakeDamage", callback);
   }
 
-  removeOnPlayerTakeDamage(callback: (ctx: ReducerEventContext, enemyId: number) => void) {
+  removeOnPlayerTakeDamage(callback: (ctx: ReducerEventContext, spawnId: number) => void) {
     this.connection.offReducer("PlayerTakeDamage", callback);
   }
 
@@ -794,19 +809,19 @@ export class RemoteReducers {
     this.connection.offReducer("PopulatePlayerLevelingConfig", callback);
   }
 
-  recoverFromDamage(enemyId: number) {
-    const __args = { enemyId };
+  recoverFromDamage(spawnId: number) {
+    const __args = { spawnId };
     let __writer = new BinaryWriter(1024);
     RecoverFromDamage.getTypeScriptAlgebraicType().serialize(__writer, __args);
     let __argsBuffer = __writer.getBuffer();
     this.connection.callReducer("RecoverFromDamage", __argsBuffer, this.setCallReducerFlags.recoverFromDamageFlags);
   }
 
-  onRecoverFromDamage(callback: (ctx: ReducerEventContext, enemyId: number) => void) {
+  onRecoverFromDamage(callback: (ctx: ReducerEventContext, spawnId: number) => void) {
     this.connection.onReducer("RecoverFromDamage", callback);
   }
 
-  removeOnRecoverFromDamage(callback: (ctx: ReducerEventContext, enemyId: number) => void) {
+  removeOnRecoverFromDamage(callback: (ctx: ReducerEventContext, spawnId: number) => void) {
     this.connection.offReducer("RecoverFromDamage", callback);
   }
 
@@ -1100,10 +1115,6 @@ export class RemoteTables {
     return new EnemyDamageEventTableHandle(this.connection.clientCache.getOrCreateTable<EnemyDamageEvent>(REMOTE_MODULE.tables.EnemyDamageEvent));
   }
 
-  get enemyRoute(): EnemyRouteTableHandle {
-    return new EnemyRouteTableHandle(this.connection.clientCache.getOrCreateTable<EnemyRoute>(REMOTE_MODULE.tables.EnemyRoute));
-  }
-
   get job(): JobTableHandle {
     return new JobTableHandle(this.connection.clientCache.getOrCreateTable<Job>(REMOTE_MODULE.tables.Job));
   }
@@ -1138,6 +1149,14 @@ export class RemoteTables {
 
   get playerMessage(): PlayerMessageTableHandle {
     return new PlayerMessageTableHandle(this.connection.clientCache.getOrCreateTable<PlayerMessage>(REMOTE_MODULE.tables.PlayerMessage));
+  }
+
+  get spawn(): SpawnTableHandle {
+    return new SpawnTableHandle(this.connection.clientCache.getOrCreateTable<Spawn>(REMOTE_MODULE.tables.Spawn));
+  }
+
+  get spawnRoute(): SpawnRouteTableHandle {
+    return new SpawnRouteTableHandle(this.connection.clientCache.getOrCreateTable<SpawnRoute>(REMOTE_MODULE.tables.SpawnRoute));
   }
 
   get cleanupDeadBodiesTimer(): CleanupDeadBodiesTimerTableHandle {

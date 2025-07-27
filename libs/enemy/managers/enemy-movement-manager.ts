@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import type { Enemy as ServerEnemy } from '@/spacetime/client';
+import type { Spawn as ServerEnemy } from '@/spacetime/client';
 import { EnemyHealthBar } from '../ui/enemy-health-bar';
 
 interface InterpolationData {
@@ -24,9 +24,9 @@ export class EnemyMovementManager {
   /**
    * Start interpolation for enemy movement
    */
-  public startInterpolation(enemyId: number, currentX: number, targetX: number): void {
+  public startInterpolation(spawnId: number, currentX: number, targetX: number): void {
     if (Math.abs(targetX - currentX) > 0.1) {
-      this.enemyInterpolation.set(enemyId, {
+      this.enemyInterpolation.set(spawnId, {
         targetX: targetX,
         startX: currentX,
         startTime: this.scene.time.now,
@@ -46,7 +46,7 @@ export class EnemyMovementManager {
     const previousX = sprite.x;
 
     // Start interpolation to new X position
-    this.startInterpolation(serverEnemy.enemyId, sprite.x, serverEnemy.x);
+    this.startInterpolation(serverEnemy.spawnId, sprite.x, serverEnemy.x);
 
     // Update facing direction
     if (serverEnemy.facing.tag === 'Left') {
@@ -66,15 +66,15 @@ export class EnemyMovementManager {
   /**
    * Check if enemy is moving based on interpolation
    */
-  public isEnemyMoving(_enemyId: number, currentX: number, targetX: number): boolean {
+  public isEnemyMoving(_spawnId: number, currentX: number, targetX: number): boolean {
     return Math.abs(targetX - currentX) > 0.1;
   }
 
   /**
    * Clean up interpolation data for an enemy
    */
-  public clearInterpolation(enemyId: number): void {
-    this.enemyInterpolation.delete(enemyId);
+  public clearInterpolation(spawnId: number): void {
+    this.enemyInterpolation.delete(spawnId);
   }
 
   private setupInterpolationUpdate(): void {
@@ -87,9 +87,9 @@ export class EnemyMovementManager {
   private updateInterpolation(): void {
     const currentTime = this.scene.time.now;
 
-    for (const [enemyId, interpolationData] of this.enemyInterpolation.entries()) {
+    for (const [spawnId, interpolationData] of this.enemyInterpolation.entries()) {
       // Get sprite and health bar from parent manager (will be injected)
-      const updateCallback = this.interpolationCallbacks.get(enemyId);
+      const updateCallback = this.interpolationCallbacks.get(spawnId);
       if (!updateCallback) continue;
 
       const elapsed = currentTime - interpolationData.startTime;
@@ -106,7 +106,7 @@ export class EnemyMovementManager {
 
       // Clean up completed interpolations
       if (progress >= 1) {
-        this.enemyInterpolation.delete(enemyId);
+        this.enemyInterpolation.delete(spawnId);
       }
     }
   }
@@ -114,13 +114,13 @@ export class EnemyMovementManager {
   // Callback system to avoid circular dependencies
   private interpolationCallbacks = new Map<number, (x: number) => void>();
 
-  public registerInterpolationCallback(enemyId: number, callback: (x: number) => void): void {
-    this.interpolationCallbacks.set(enemyId, callback);
+  public registerInterpolationCallback(spawnId: number, callback: (x: number) => void): void {
+    this.interpolationCallbacks.set(spawnId, callback);
   }
 
-  public unregisterInterpolationCallback(enemyId: number): void {
-    this.interpolationCallbacks.delete(enemyId);
-    this.enemyInterpolation.delete(enemyId);
+  public unregisterInterpolationCallback(spawnId: number): void {
+    this.interpolationCallbacks.delete(spawnId);
+    this.enemyInterpolation.delete(spawnId);
   }
 
   public destroy(): void {

@@ -3,7 +3,7 @@
  * Initialize SpaceTime Database Script
  *
  * Reads the playground.tmj tilemap file and calls the InitializeEnemyRoutes reducer
- * to populate the EnemyRoute table with spawn zone definitions including spawn intervals.
+ * to populate the SpawnRoute table with spawn zone definitions including spawn intervals.
  *
  * Usage:
  *   pnpm run init:local          # Initialize local deployment

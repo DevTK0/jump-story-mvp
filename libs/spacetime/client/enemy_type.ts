@@ -32,23 +32,16 @@ import {
   type ReducerEventContextInterface,
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
-import { FacingDirection as __FacingDirection } from "./facing_direction_type";
-import { PlayerState as __PlayerState } from "./player_state_type";
+import { AiBehavior as __AiBehavior } from "./ai_behavior_type";
 
 export type Enemy = {
-  enemyId: number,
-  routeId: number,
-  enemyType: string,
-  x: number,
-  y: number,
-  state: __PlayerState,
-  facing: __FacingDirection,
-  currentHp: number,
+  name: string,
   level: number,
-  lastUpdated: Timestamp,
-  movingRight: boolean,
-  aggroTarget: Identity | undefined,
-  aggroStartTime: Timestamp,
+  expReward: number,
+  health: number,
+  moveSpeed: number,
+  damage: number,
+  aiBehavior: __AiBehavior,
 };
 
 /**
@@ -61,19 +54,13 @@ export namespace Enemy {
   */
   export function getTypeScriptAlgebraicType(): AlgebraicType {
     return AlgebraicType.createProductType([
-      new ProductTypeElement("enemyId", AlgebraicType.createU32Type()),
-      new ProductTypeElement("routeId", AlgebraicType.createU32Type()),
-      new ProductTypeElement("enemyType", AlgebraicType.createStringType()),
-      new ProductTypeElement("x", AlgebraicType.createF32Type()),
-      new ProductTypeElement("y", AlgebraicType.createF32Type()),
-      new ProductTypeElement("state", __PlayerState.getTypeScriptAlgebraicType()),
-      new ProductTypeElement("facing", __FacingDirection.getTypeScriptAlgebraicType()),
-      new ProductTypeElement("currentHp", AlgebraicType.createF32Type()),
+      new ProductTypeElement("name", AlgebraicType.createStringType()),
       new ProductTypeElement("level", AlgebraicType.createU32Type()),
-      new ProductTypeElement("lastUpdated", AlgebraicType.createTimestampType()),
-      new ProductTypeElement("movingRight", AlgebraicType.createBoolType()),
-      new ProductTypeElement("aggroTarget", AlgebraicType.createOptionType(AlgebraicType.createIdentityType())),
-      new ProductTypeElement("aggroStartTime", AlgebraicType.createTimestampType()),
+      new ProductTypeElement("expReward", AlgebraicType.createU32Type()),
+      new ProductTypeElement("health", AlgebraicType.createF32Type()),
+      new ProductTypeElement("moveSpeed", AlgebraicType.createF32Type()),
+      new ProductTypeElement("damage", AlgebraicType.createF32Type()),
+      new ProductTypeElement("aiBehavior", __AiBehavior.getTypeScriptAlgebraicType()),
     ]);
   }
 
