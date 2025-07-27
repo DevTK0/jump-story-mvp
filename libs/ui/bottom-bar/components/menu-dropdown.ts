@@ -178,6 +178,26 @@ export class MenuDropdown {
   }
 
   private showClassSelectionMenu(): void {
+    // Check if player is in combat
+    if (this.dbConnection && this.playerIdentity) {
+      let playerFound = false;
+      for (const player of this.dbConnection.db.player.iter()) {
+        if (player.identity.toHexString() === this.playerIdentity.toHexString()) {
+          playerFound = true;
+          this.logger.info(`Player combat state: inCombat=${player.inCombat}`);
+          if (player.inCombat === true) {
+            this.logger.warn('Cannot change jobs while in combat');
+            // Show combat warning (could add a visual notification here)
+            return;
+          }
+          break;
+        }
+      }
+      if (!playerFound) {
+        this.logger.warn('Player not found in database');
+      }
+    }
+    
     if (!this.classSelectionMenu && this.playerIdentity) {
       this.classSelectionMenu = new ClassSelectionMenu(this.scene, this.playerIdentity);
       // Set the database connection if available

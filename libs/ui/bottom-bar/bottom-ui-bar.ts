@@ -262,6 +262,9 @@ export class BottomUIBar {
 
     // Update player info with actual job
     this.playerInfo.updateInfo(player.name, jobDisplayName);
+    
+    // Update combat state
+    this.playerInfo.setCombatState(player.inCombat || false);
 
     // Update stat bars
     this.hpBar.updateValues(player.currentHp, player.maxHp);

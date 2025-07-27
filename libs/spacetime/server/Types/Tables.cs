@@ -23,6 +23,8 @@ public static partial class Module
         public uint experience;
         public bool is_typing;
         public string job; // Job key like "soldier", "knight", etc.
+        public bool in_combat; // Whether player is currently in combat
+        public Timestamp last_combat_time; // When player last entered combat or attacked/was attacked
     }
 
     [Table(Name = "EnemyRoute", Public = true)]
@@ -106,6 +108,14 @@ public static partial class Module
     
     [Table(Name = "message_cleanup_timer", Scheduled = nameof(CleanupOldMessages), ScheduledAt = nameof(scheduled_at))]
     public partial struct MessageCleanupTimer
+    {
+        [PrimaryKey, AutoInc]
+        public ulong scheduled_id;
+        public ScheduleAt scheduled_at;
+    }
+
+    [Table(Name = "combat_timeout_timer", Scheduled = nameof(CheckCombatTimeouts), ScheduledAt = nameof(scheduled_at))]
+    public partial struct CombatTimeoutTimer
     {
         [PrimaryKey, AutoInc]
         public ulong scheduled_id;

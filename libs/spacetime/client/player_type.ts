@@ -52,6 +52,8 @@ export type Player = {
   experience: number,
   isTyping: boolean,
   job: string,
+  inCombat: boolean,
+  lastCombatTime: Timestamp,
 };
 
 /**
@@ -80,6 +82,8 @@ export namespace Player {
       new ProductTypeElement("experience", AlgebraicType.createU32Type()),
       new ProductTypeElement("isTyping", AlgebraicType.createBoolType()),
       new ProductTypeElement("job", AlgebraicType.createStringType()),
+      new ProductTypeElement("inCombat", AlgebraicType.createBoolType()),
+      new ProductTypeElement("lastCombatTime", AlgebraicType.createTimestampType()),
     ]);
   }
 

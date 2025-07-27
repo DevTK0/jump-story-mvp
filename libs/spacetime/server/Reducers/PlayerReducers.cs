@@ -33,7 +33,13 @@ public static partial class Module
             scheduled_at = new ScheduleAt.Interval(TimeSpan.FromSeconds(30))
         });
         
-        Log.Info("Initialized dead body cleanup, enemy spawning, enemy patrol, and message cleanup schedulers");
+        // Schedule combat timeout checks every 1 second
+        ctx.Db.combat_timeout_timer.Insert(new CombatTimeoutTimer
+        {
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromSeconds(1))
+        });
+        
+        Log.Info("Initialized dead body cleanup, enemy spawning, enemy patrol, message cleanup, and combat timeout schedulers");
     }
 
     // Helper function to populate PlayerJob entries for a new player
@@ -112,7 +118,9 @@ public static partial class Module
             level = startingLevel,
             experience = PlayerConstants.STARTING_EXPERIENCE,
             is_typing = false,
-            job = defaultJob
+            job = defaultJob,
+            in_combat = false,
+            last_combat_time = ctx.Timestamp - TimeSpan.FromDays(1) // Initialize to old time
         };
         ctx.Db.Player.Insert(newPlayer);
         
@@ -304,13 +312,16 @@ public static partial class Module
 
         Log.Info($"Player {ctx.Sender} damage calculation - Current HP: {player.Value.current_hp}, Damage: {finalDamage}, New HP: {newHp}, Target State: {targetState}");
 
-        // Update player HP first
+        // Update player HP first and enter combat
         var updatedPlayer = player.Value with
         {
             current_hp = newHp,
             last_active = ctx.Timestamp
         };
         ctx.Db.Player.identity.Update(updatedPlayer);
+        
+        // Enter combat state
+        CombatService.EnterCombat(ctx, updatedPlayer);
         
         // Then apply state transition using StateMachine
         var stateResult = PlayerStateMachine.ApplyStateTransition(ctx, updatedPlayer, targetState);
@@ -492,6 +503,13 @@ public static partial class Module
         if (player.Value.current_hp <= 0 || player.Value.state == PlayerState.Dead)
         {
             Log.Info($"Player {ctx.Sender} cannot change jobs while dead");
+            return;
+        }
+
+        // Don't allow job change if player is in combat
+        if (player.Value.in_combat)
+        {
+            Log.Info($"Player {ctx.Sender} cannot change jobs while in combat");
             return;
         }
 

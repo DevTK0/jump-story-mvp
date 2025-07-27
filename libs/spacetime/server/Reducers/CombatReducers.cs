@@ -112,12 +112,16 @@ public static partial class Module
             return;
         }
 
-        // Deduct mana cost
+        // Deduct mana cost and enter combat
+        var currentPlayer = player.Value;
         if (jobAttack.Value.mana_cost > 0)
         {
-            var updatedPlayer = player.Value with { current_mana = player.Value.current_mana - jobAttack.Value.mana_cost };
-            ctx.Db.Player.identity.Update(updatedPlayer);
+            currentPlayer = currentPlayer with { current_mana = currentPlayer.current_mana - jobAttack.Value.mana_cost };
+            ctx.Db.Player.identity.Update(currentPlayer);
         }
+        
+        // Enter combat state when attacking (with current player data)
+        CombatService.EnterCombat(ctx, currentPlayer);
 
         var damageCount = 0;
         var killCount = 0;

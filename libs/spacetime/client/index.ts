@@ -36,6 +36,8 @@ import {
 // Import and reexport all reducer arg types
 import { ChangeJob } from "./change_job_reducer.ts";
 export { ChangeJob };
+import { CheckCombatTimeouts } from "./check_combat_timeouts_reducer.ts";
+export { CheckCombatTimeouts };
 import { CleanupDeadBodies } from "./cleanup_dead_bodies_reducer.ts";
 export { CleanupDeadBodies };
 import { CleanupInactivePlayers } from "./cleanup_inactive_players_reducer.ts";
@@ -118,6 +120,8 @@ import { PlayerMessageTableHandle } from "./player_message_table.ts";
 export { PlayerMessageTableHandle };
 import { CleanupDeadBodiesTimerTableHandle } from "./cleanup_dead_bodies_timer_table.ts";
 export { CleanupDeadBodiesTimerTableHandle };
+import { CombatTimeoutTimerTableHandle } from "./combat_timeout_timer_table.ts";
+export { CombatTimeoutTimerTableHandle };
 import { EnemyPatrolTimerTableHandle } from "./enemy_patrol_timer_table.ts";
 export { EnemyPatrolTimerTableHandle };
 import { MessageCleanupTimerTableHandle } from "./message_cleanup_timer_table.ts";
@@ -130,6 +134,8 @@ import { AttackType } from "./attack_type_type.ts";
 export { AttackType };
 import { CleanupDeadBodiesTimer } from "./cleanup_dead_bodies_timer_type.ts";
 export { CleanupDeadBodiesTimer };
+import { CombatTimeoutTimer } from "./combat_timeout_timer_type.ts";
+export { CombatTimeoutTimer };
 import { DamageType } from "./damage_type_type.ts";
 export { DamageType };
 import { DbRect } from "./db_rect_type.ts";
@@ -303,6 +309,15 @@ const REMOTE_MODULE = {
         colType: CleanupDeadBodiesTimer.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
+    combat_timeout_timer: {
+      tableName: "combat_timeout_timer",
+      rowType: CombatTimeoutTimer.getTypeScriptAlgebraicType(),
+      primaryKey: "scheduledId",
+      primaryKeyInfo: {
+        colName: "scheduledId",
+        colType: CombatTimeoutTimer.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
     enemy_patrol_timer: {
       tableName: "enemy_patrol_timer",
       rowType: EnemyPatrolTimer.getTypeScriptAlgebraicType(),
@@ -335,6 +350,10 @@ const REMOTE_MODULE = {
     ChangeJob: {
       reducerName: "ChangeJob",
       argsType: ChangeJob.getTypeScriptAlgebraicType(),
+    },
+    CheckCombatTimeouts: {
+      reducerName: "CheckCombatTimeouts",
+      argsType: CheckCombatTimeouts.getTypeScriptAlgebraicType(),
     },
     CleanupDeadBodies: {
       reducerName: "CleanupDeadBodies",
@@ -471,6 +490,7 @@ const REMOTE_MODULE = {
 // A type representing all the possible variants of a reducer.
 export type Reducer = never
 | { name: "ChangeJob", args: ChangeJob }
+| { name: "CheckCombatTimeouts", args: CheckCombatTimeouts }
 | { name: "CleanupDeadBodies", args: CleanupDeadBodies }
 | { name: "CleanupInactivePlayers", args: CleanupInactivePlayers }
 | { name: "CleanupOldMessages", args: CleanupOldMessages }
@@ -516,6 +536,22 @@ export class RemoteReducers {
 
   removeOnChangeJob(callback: (ctx: ReducerEventContext, newJobKey: string) => void) {
     this.connection.offReducer("ChangeJob", callback);
+  }
+
+  checkCombatTimeouts(timer: CombatTimeoutTimer) {
+    const __args = { timer };
+    let __writer = new BinaryWriter(1024);
+    CheckCombatTimeouts.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("CheckCombatTimeouts", __argsBuffer, this.setCallReducerFlags.checkCombatTimeoutsFlags);
+  }
+
+  onCheckCombatTimeouts(callback: (ctx: ReducerEventContext, timer: CombatTimeoutTimer) => void) {
+    this.connection.onReducer("CheckCombatTimeouts", callback);
+  }
+
+  removeOnCheckCombatTimeouts(callback: (ctx: ReducerEventContext, timer: CombatTimeoutTimer) => void) {
+    this.connection.offReducer("CheckCombatTimeouts", callback);
   }
 
   cleanupDeadBodies(timer: CleanupDeadBodiesTimer) {
@@ -922,6 +958,11 @@ export class SetReducerFlags {
     this.changeJobFlags = flags;
   }
 
+  checkCombatTimeoutsFlags: CallReducerFlags = 'FullUpdate';
+  checkCombatTimeouts(flags: CallReducerFlags) {
+    this.checkCombatTimeoutsFlags = flags;
+  }
+
   cleanupDeadBodiesFlags: CallReducerFlags = 'FullUpdate';
   cleanupDeadBodies(flags: CallReducerFlags) {
     this.cleanupDeadBodiesFlags = flags;
@@ -1101,6 +1142,10 @@ export class RemoteTables {
 
   get cleanupDeadBodiesTimer(): CleanupDeadBodiesTimerTableHandle {
     return new CleanupDeadBodiesTimerTableHandle(this.connection.clientCache.getOrCreateTable<CleanupDeadBodiesTimer>(REMOTE_MODULE.tables.cleanup_dead_bodies_timer));
+  }
+
+  get combatTimeoutTimer(): CombatTimeoutTimerTableHandle {
+    return new CombatTimeoutTimerTableHandle(this.connection.clientCache.getOrCreateTable<CombatTimeoutTimer>(REMOTE_MODULE.tables.combat_timeout_timer));
   }
 
   get enemyPatrolTimer(): EnemyPatrolTimerTableHandle {

@@ -6,6 +6,7 @@ export class PlayerInfoDisplay {
   private container: Phaser.GameObjects.Container;
   private nameText: Phaser.GameObjects.Text;
   private jobText: Phaser.GameObjects.Text;
+  private combatIndicator: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -46,12 +47,48 @@ export class PlayerInfoDisplay {
     );
     this.jobText.setOrigin(0, 0.5);
     
-    this.container.add([this.nameText, this.jobText]);
+    // Create combat indicator
+    this.combatIndicator = this.scene.add.text(
+      0,
+      -20,
+      'IN COMBAT',
+      {
+        fontSize: '12px',
+        fontFamily: config.fontFamily,
+        color: '#ff6666',
+        fontStyle: 'bold',
+        backgroundColor: '#440000',
+        padding: { x: 4, y: 2 },
+      }
+    );
+    this.combatIndicator.setOrigin(0, 0.5);
+    this.combatIndicator.setVisible(false); // Hidden by default
+    
+    this.container.add([this.nameText, this.jobText, this.combatIndicator]);
   }
 
   public updateInfo(name: string, job: string): void {
     this.nameText.setText(name);
     this.jobText.setText(job);
+  }
+
+  public setCombatState(inCombat: boolean): void {
+    this.combatIndicator.setVisible(inCombat);
+    
+    if (inCombat) {
+      // Add pulsing effect when in combat
+      this.scene.tweens.add({
+        targets: this.combatIndicator,
+        alpha: { from: 0.7, to: 1 },
+        duration: 500,
+        yoyo: true,
+        repeat: -1,
+      });
+    } else {
+      // Stop any active tweens
+      this.scene.tweens.killTweensOf(this.combatIndicator);
+      this.combatIndicator.setAlpha(1);
+    }
   }
 
   public setPosition(x: number, y: number): void {
