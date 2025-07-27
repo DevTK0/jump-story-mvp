@@ -4,6 +4,7 @@ import { DbConnection } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { jobAttributes } from '../../../apps/playground/config/job-attributes';
 import spriteConfig from '../../../apps/playground/config/sprite-config';
+import { UIContextService, UIEvents } from '../services/ui-context-service';
 
 export interface ClassOption {
   id: string;
@@ -31,9 +32,21 @@ export class ClassSelectionMenu {
   // Job table data
   private jobTableData: any[] = [];
 
-  constructor(scene: Phaser.Scene, playerIdentity: Identity) {
+  constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    this._playerIdentity = playerIdentity;
+    
+    // Get data from context service
+    const context = UIContextService.getInstance();
+    this._playerIdentity = context.getPlayerIdentity()!;
+    this._dbConnection = context.getDbConnection();
+    
+    // Get initial job data
+    const jobData = context.getJobData();
+    this.playerJobUnlockStatus = jobData.jobData;
+    this.jobTableData = jobData.jobTableData;
+    
+    // Subscribe to job data updates
+    context.on(UIEvents.PLAYER_JOB_DATA_UPDATED, this.handleJobDataUpdate, this);
 
     // Generate job options from job-attributes
     this.generateJobOptions();
@@ -283,13 +296,28 @@ export class ClassSelectionMenu {
     this.isVisible = false;
   }
 
+  private handleJobDataUpdate(data: { jobData: Map<string, boolean>; jobTableData: any[] }): void {
+    this.playerJobUnlockStatus = data.jobData;
+    this.jobTableData = data.jobTableData;
+    
+    this.logger.info(`Job data updated via context: ${data.jobData.size} entries, ${data.jobTableData.length} jobs`);
+    
+    // Update display if menu is visible
+    if (this.isVisible) {
+      this.updateJobUnlockStates();
+    }
+  }
+
   public destroy(): void {
+    // Unsubscribe from context events
+    const context = UIContextService.getInstance();
+    context.off(UIEvents.PLAYER_JOB_DATA_UPDATED, this.handleJobDataUpdate, this);
+    
     this.container.destroy();
   }
 
   public setPlayerJobData(jobData: Map<string, boolean>, jobTableData?: any[]): void {
     this.playerJobUnlockStatus = jobData;
-    console.log(jobData, jobTableData);
     if (jobTableData) {
       this.jobTableData = jobTableData;
     }
@@ -299,9 +327,6 @@ export class ClassSelectionMenu {
   }
 
   private updateJobUnlockStates(): void {
-    console.log(this.jobTableData);
-    console.log('hello', this.playerJobUnlockStatus);
-
     // Use pre-loaded job data instead of trying to access from dbConnection
     const jobs = this.jobTableData;
     this.logger.info(`Found ${jobs.length} jobs in pre-loaded data`);

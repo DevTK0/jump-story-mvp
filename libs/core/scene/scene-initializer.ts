@@ -24,6 +24,8 @@ export interface SceneConfig {
     enabled: boolean;
     shadow?: boolean;  // Enable shadow effect in debug mode
     invulnerable?: boolean;  // Prevent player from taking damage (useful for testing)
+    fps?: boolean;  // Show FPS counter
+    metrics?: boolean;  // Show performance metrics
   };
   sprites?: SpriteConfig;  // Optional sprite configuration
 }
@@ -178,6 +180,24 @@ export class SceneInitializer {
     
     const mapData = this.assetLoader.createMap();
     this.systems.mapData = mapData;
+    
+    // Update scene config with custom properties from map
+    if (mapData.customProperties) {
+      if (!this.config.debug) {
+        this.config.debug = { enabled: false };
+      }
+      
+      // Update debug properties from map
+      if (mapData.customProperties['debug.fps'] !== undefined) {
+        this.config.debug.fps = mapData.customProperties['debug.fps'];
+      }
+      if (mapData.customProperties['debug.metrics'] !== undefined) {
+        this.config.debug.metrics = mapData.customProperties['debug.metrics'];
+      }
+      
+      // Update scene data with modified config
+      this.scene.data.set('sceneConfig', this.config);
+    }
     
     // Setup world bounds
     const mapWidth = mapData.tilemap.widthInPixels;

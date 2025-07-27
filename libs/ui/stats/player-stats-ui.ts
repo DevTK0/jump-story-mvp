@@ -9,6 +9,7 @@ import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { PlayerQueryService } from '@/player';
 import { PLAYER_STATS_UI_CONFIG, getBarColors, createTextStyle } from './player-stats-ui-config';
 import { createLogger, type ModuleLogger } from '@/core/logger';
+import { UIContextService } from '../services/ui-context-service';
 
 export class PlayerStatsUI {
   private scene: Phaser.Scene;
@@ -27,10 +28,21 @@ export class PlayerStatsUI {
   // Performance optimization
   private lastUpdateTime: number = 0;
 
-  constructor(scene: Phaser.Scene, playerIdentity: Identity) {
+  constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    this.playerIdentity = playerIdentity;
+    
+    // Get data from context service
+    const context = UIContextService.getInstance();
+    this.playerIdentity = context.getPlayerIdentity()!;
+    this.dbConnection = context.getDbConnection();
+    
     this.createUI();
+    
+    // Initialize player query service if connection is available
+    if (this.dbConnection) {
+      this.playerQueryService = new PlayerQueryService(this.dbConnection);
+      this.setupDataListener();
+    }
   }
 
   private createUI(): void {
@@ -183,11 +195,10 @@ export class PlayerStatsUI {
   }
 
   public setDbConnection(dbConnection: DbConnection): void {
-    this.dbConnection = dbConnection;
-    this.setupOptimizedPlayerSubscription();
+    // No longer needed - gets from context in constructor
   }
 
-  private setupOptimizedPlayerSubscription(): void {
+  private setupDataListener(): void {
     if (!this.dbConnection) return;
 
     // Get the singleton PlayerQueryService

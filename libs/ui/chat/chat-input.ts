@@ -44,7 +44,7 @@ export class ChatInput {
     this.inputElement = document.createElement('input');
     this.inputElement.type = 'text';
     this.inputElement.style.position = 'absolute';
-    this.inputElement.style.bottom = '20px';
+    this.inputElement.style.bottom = '100px'; // Position above the bottom UI bar (80px height + 20px margin)
     this.inputElement.style.left = '50%';
     this.inputElement.style.transform = 'translateX(-50%)';
     this.inputElement.style.width = '400px';

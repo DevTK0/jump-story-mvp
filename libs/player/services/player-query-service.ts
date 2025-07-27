@@ -1,5 +1,6 @@
 import { DbConnection, Player } from '@/spacetime/client';
 import { createLogger, type ModuleLogger } from '@/core/logger';
+import { buildIdentityQuery } from '@/networking/subscription-utils';
 
 // Player query specific error types
 export class PlayerQueryError extends Error {
@@ -62,15 +63,17 @@ export class PlayerQueryService {
     try {
       const myIdentity = this.dbConnection.identity.toHexString();
 
-      // Subscribe only to the current player's row using SQL query
-      // This follows the pattern: SELECT * FROM Player WHERE identity = 'myIdentity'
+      // Build safe identity query
+      const query = buildIdentityQuery('Player', myIdentity);
+
+      // Subscribe only to the current player's row using safe SQL query
       this.dbConnection
         .subscriptionBuilder()
         .onApplied(() => {
           this.logger.info('Player-specific subscription applied');
           this.updateCurrentPlayerFromSubscription();
         })
-        .subscribe([`SELECT * FROM Player WHERE identity = x'${myIdentity}'`]);
+        .subscribe([query]);
 
       this.isTargetedSubscriptionActive = true;
       this.logger.info('Subscribed to targeted player data');

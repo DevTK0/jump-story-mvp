@@ -30,7 +30,7 @@ export const UI_CONFIG = {
     updateInterval: 500, // Update every 500ms
     position: {
       x: 10,
-      y: 100,
+      y: 50,
     },
     panel: {
       width: 200,
@@ -57,7 +57,7 @@ export const UI_CONFIG = {
   fpsCounter: {
     defaultPosition: {
       xOffset: -130, // From right edge
-      y: 10,
+      y: 50,
     },
     fontSize: '14px',
     alpha: 0.7,

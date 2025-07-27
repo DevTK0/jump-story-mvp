@@ -7,6 +7,7 @@ import { MenuButton } from './components/menu-button';
 import { DbConnection, PlayerJob, Job } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { createLogger, type ModuleLogger } from '@/core/logger';
+import { UIContextService, UIEvents } from '../services/ui-context-service';
 
 export class BottomUIBar {
   private scene: Phaser.Scene;
@@ -33,9 +34,13 @@ export class BottomUIBar {
   // Flag to track if Job table is loaded
   private isJobTableLoaded: boolean = false;
 
-  constructor(scene: Phaser.Scene, playerIdentity: Identity) {
+  constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    this.playerIdentity = playerIdentity;
+    
+    // Get data from context service
+    const context = UIContextService.getInstance();
+    this.playerIdentity = context.getPlayerIdentity()!;
+    this.dbConnection = context.getDbConnection();
 
     this.createContainer();
     this.createBackground();
@@ -44,6 +49,14 @@ export class BottomUIBar {
 
     // Listen for resize events
     this.scene.scale.on('resize', this.onResize, this);
+    
+    // Subscribe to job data updates
+    context.on(UIEvents.PLAYER_JOB_DATA_UPDATED, this.handleJobDataUpdate, this);
+    
+    // Set up data subscriptions immediately since connection is available
+    if (this.dbConnection) {
+      this.setupDataSubscriptions();
+    }
   }
 
   private createContainer(): void {
@@ -84,13 +97,12 @@ export class BottomUIBar {
     this.mpBar = new CompactStatBar(this.scene, 'mp');
     this.expBar = new CompactStatBar(this.scene, 'exp');
 
-    // Create menu button
+    // Create menu button - no need to set identity, it will get from context
     this.menuButton = new MenuButton(this.scene, 'MENU');
-    this.menuButton.setPlayerIdentity(this.playerIdentity);
 
     // Add all components to container
     this.container.add([
-      this.levelDisplay.getContainer(),
+      this.levelDisplay.getText(),
       this.playerInfo.getContainer(),
       this.hpBar.getContainer(),
       this.mpBar.getContainer(),
@@ -105,11 +117,11 @@ export class BottomUIBar {
     const centerY = containerHeight / 2;
     const camera = this.scene.cameras.main;
 
-    // Position level display (start from left edge, centered vertically)
-    this.levelDisplay.setPosition(0, 0);
+    // Position level display (left margin, centered vertically)
+    this.levelDisplay.setPosition(layout.levelMarginLeft, centerY);
 
-    // Position player info (after level display)
-    const infoX = 80 + layout.playerInfoMarginLeft;
+    // Position player info (after level display with some spacing)
+    const infoX = layout.levelMarginLeft + 60 + layout.playerInfoMarginLeft;
     this.playerInfo.setPosition(infoX, centerY - 10);
 
     // Position menu button
@@ -134,17 +146,16 @@ export class BottomUIBar {
     this.expBar.setPosition(barsStartX + (barWidth + barSpacing) * 2, centerY);
   }
 
-  public setDbConnection(dbConnection: DbConnection): void {
-    this.dbConnection = dbConnection;
-    // Pass db connection to menu button first so it's ready
-    this.menuButton.setDbConnection(dbConnection);
-
-    console.log(dbConnection);
-
-    // Add a small delay to ensure tables are loaded
-    // this.scene.time.delayedCall(500, () => {
-    this.setupDataSubscriptions();
-    // });
+  private handleJobDataUpdate(data: { jobData: Map<string, boolean>; jobTableData: any[] }): void {
+    this.playerJobUnlockStatus = data.jobData;
+    this.jobTableData = data.jobTableData;
+    
+    this.logger.info(`Job data updated via context: ${data.jobData.size} entries, ${data.jobTableData.length} jobs`);
+    
+    // Update menu button with new data (keep using setPlayerJobData for now)
+    if (this.menuButton) {
+      this.menuButton.setPlayerJobData(data.jobData, data.jobTableData);
+    }
   }
 
   private setupDataSubscriptions(): void {
@@ -161,7 +172,6 @@ export class BottomUIBar {
     dbConn
       .subscriptionBuilder()
       .onApplied(() => {
-        console.log('test');
         this.logger.info('Job table subscription applied');
         // Load any existing job table data
         this.jobTableData = [];
@@ -176,8 +186,8 @@ export class BottomUIBar {
     dbConn.db.job.onInsert((_ctx, newJob) => {
       this.jobTableData.push(newJob);
       this.logger.info(`Job inserted: ${newJob.jobKey} (ID: ${newJob.jobId})`);
-      // Update menu button with new job data
-      this.menuButton.setPlayerJobData(this.playerJobUnlockStatus, this.jobTableData);
+      // Update context service which will emit event to all listeners
+      UIContextService.getInstance().updateJobData(this.playerJobUnlockStatus, this.jobTableData);
     });
 
     // Listen to Job table updates
@@ -186,24 +196,18 @@ export class BottomUIBar {
       if (index !== -1) {
         this.jobTableData[index] = newJob;
         this.logger.info(`Job updated: ${newJob.jobKey} (ID: ${newJob.jobId})`);
-        // Update menu button with updated job data
-        this.menuButton.setPlayerJobData(this.playerJobUnlockStatus, this.jobTableData);
+        // Update context service which will emit event to all listeners
+        UIContextService.getInstance().updateJobData(this.playerJobUnlockStatus, this.jobTableData);
       }
     });
 
-    dbConn
-      .subscriptionBuilder()
-      .onApplied(() => {
-        console.log('hi');
-        console.log(Array.from(dbConn.db.jobAttack.iter()).length);
-      })
-      .subscribeToAllTables();
+    // Core tables are now subscribed at connection level in SceneConnectionHelper
+    // No need for subscribeToAllTables() workaround anymore
 
     // Then subscribe to PlayerJob data
     dbConn
       .subscriptionBuilder()
       .onApplied(() => {
-        console.log('test2');
         this.logger.info('PlayerJob subscription applied');
         const pjCount = Array.from(dbConn.db.playerJob.iter()).length;
         this.logger.info(`PlayerJob table now has ${pjCount} entries`);
@@ -213,7 +217,6 @@ export class BottomUIBar {
 
     // Listen to player updates
     this.dbConnection.db.player.onUpdate((_ctx, _oldPlayer, newPlayer) => {
-      console.log('hi');
       if (newPlayer.identity.toHexString() === this.playerIdentity.toHexString()) {
         this.updateFromPlayerData(newPlayer);
       }
@@ -224,8 +227,8 @@ export class BottomUIBar {
       if (newPj.playerIdentity.toHexString() === this.playerIdentity.toHexString()) {
         this.playerJobUnlockStatus.set(newPj.jobKey, newPj.isUnlocked);
         this.logger.info(`PlayerJob updated: jobKey=${newPj.jobKey}, isUnlocked=${newPj.isUnlocked}`);
-        // Pass updated data to menu button
-        this.menuButton.setPlayerJobData(this.playerJobUnlockStatus, this.jobTableData);
+        // Update context service which will emit event to all listeners
+        UIContextService.getInstance().updateJobData(this.playerJobUnlockStatus, this.jobTableData);
       }
     });
 
@@ -236,10 +239,8 @@ export class BottomUIBar {
         this.logger.info(
           `PlayerJob inserted: jobKey=${newPj.jobKey}, isUnlocked=${newPj.isUnlocked}`
         );
-        console.log('BottomUIBar jobTableData:', this.jobTableData);
-        console.log('BottomUIBar jobTableData length:', this.jobTableData.length);
-        // Pass updated data to menu button
-        this.menuButton.setPlayerJobData(this.playerJobUnlockStatus, this.jobTableData);
+        // Update context service which will emit event to all listeners
+        UIContextService.getInstance().updateJobData(this.playerJobUnlockStatus, this.jobTableData);
       }
     });
 
@@ -302,8 +303,8 @@ export class BottomUIBar {
       this.logger.debug(`PlayerJob: jobKey=${pj.jobKey}, isUnlocked=${pj.isUnlocked}`);
     });
 
-    // Pass both job table data and unlock status to menu button
-    this.menuButton.setPlayerJobData(this.playerJobUnlockStatus, this.jobTableData);
+    // Update context service which will emit event to all listeners
+    UIContextService.getInstance().updateJobData(this.playerJobUnlockStatus, this.jobTableData);
   }
 
   private findNextLevelConfig(currentLevel: number) {
@@ -347,6 +348,10 @@ export class BottomUIBar {
   public destroy(): void {
     // Remove resize listener
     this.scene.scale.off('resize', this.onResize, this);
+    
+    // Remove context event listener
+    const context = UIContextService.getInstance();
+    context.off(UIEvents.PLAYER_JOB_DATA_UPDATED, this.handleJobDataUpdate, this);
 
     this.levelDisplay.destroy();
     this.playerInfo.destroy();

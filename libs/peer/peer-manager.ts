@@ -8,6 +8,7 @@ import type {
 } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { createLogger } from '@/core/logger';
+import { buildProximityQuery, DEFAULT_PROXIMITY_CONFIGS } from '@/networking/subscription-utils';
 
 export interface PeerSubscriptionConfig {
   /** Use proximity-based subscriptions to limit peers loaded */
@@ -31,12 +32,13 @@ export class PeerManager {
   private subscriptionConfig: PeerSubscriptionConfig;
   private proximityUpdateTimer?: Phaser.Time.TimerEvent;
   private lastSubscriptionCenter: { x: number; y: number } | null = null;
+  private cleanupFunctions: Array<() => void> = [];
 
   // Default configuration
   private static readonly DEFAULT_SUBSCRIPTION_CONFIG: PeerSubscriptionConfig = {
     useProximitySubscription: true, // Enable by default for peers
-    proximityRadius: 1500, // 1500 pixels around player
-    proximityUpdateInterval: 5000, // Update subscription every 5 seconds
+    proximityRadius: DEFAULT_PROXIMITY_CONFIGS.peers.radius,
+    proximityUpdateInterval: DEFAULT_PROXIMITY_CONFIGS.peers.updateInterval,
   };
 
   constructor(scene: Phaser.Scene, subscriptionConfig?: Partial<PeerSubscriptionConfig>) {
@@ -129,6 +131,14 @@ export class PeerManager {
     // Subscribe to player messages
     this.dbConnection.db.playerMessage.onInsert(this.onPlayerMessageInsert);
 
+    // Store cleanup functions
+    this.cleanupFunctions.push(() => {
+      if (this.dbConnection?.db) {
+        // Note: SpaceTimeDB SDK doesn't provide removeListener methods yet
+        console.log('PeerManager: Cleanup would remove player and message listeners here');
+      }
+    });
+
     this.logger.info('✅ PeerManager: Global subscription active');
   }
 
@@ -145,6 +155,14 @@ export class PeerManager {
 
     // Subscribe to player messages (filtered by proximity subscription)
     this.dbConnection.db.playerMessage.onInsert(this.onPlayerMessageInsert);
+
+    // Store cleanup functions
+    this.cleanupFunctions.push(() => {
+      if (this.dbConnection?.db) {
+        // Note: SpaceTimeDB SDK doesn't provide removeListener methods yet
+        console.log('PeerManager: Cleanup would remove targeted peer listeners here');
+      }
+    });
   }
 
   /**
@@ -169,37 +187,45 @@ export class PeerManager {
     const myIdentity = this.localPlayerIdentity.toHexString();
 
     try {
-      // Subscribe to players within proximity using a self-join with our position
-      // This makes the subscription reactive to our own position changes!
+      // Build safe proximity query excluding self
+      const playerQuery = buildProximityQuery(
+        'Player',
+        playerPosition.x,
+        playerPosition.y,
+        radius,
+        myIdentity
+      );
+
+      // Subscribe to players within proximity using safe query
       this.dbConnection
         .subscriptionBuilder()
         .onApplied(() => {
           this.logger.info(
-            `🎯 PeerManager: Proximity subscription applied for area (${playerPosition.x - radius},${playerPosition.y - radius}) to (${playerPosition.x + radius},${playerPosition.y + radius})`
+            `🎯 PeerManager: Proximity subscription applied for area centered at (${playerPosition.x}, ${playerPosition.y}) with radius ${radius}px`
           );
           // Load existing peers within proximity
           this.loadProximityPeers();
         })
-        .subscribe([
-          `SELECT * FROM Player 
-                     WHERE identity != x'${myIdentity}'
-                     AND x >= ${playerPosition.x - radius} AND x <= ${playerPosition.x + radius}
-                     AND y >= ${playerPosition.y - radius} AND y <= ${playerPosition.y + radius}`,
-        ]);
+        .subscribe([playerQuery]);
 
       // Also update message subscription for the new area
       // Only subscribe to messages from the last 30 seconds (typical message display duration)
       const messageAgeLimit = 30000; // 30 seconds in milliseconds
       const cutoffTimeMicros = (Date.now() - messageAgeLimit) * 1000; // Convert to microseconds
 
-      this.dbConnection.subscriptionBuilder().subscribe([
-        `SELECT pm.* FROM PlayerMessage pm
-                     JOIN Player p ON pm.player_id = p.identity
-                     WHERE p.identity != x'${myIdentity}'
-                     AND p.x >= ${playerPosition.x - radius} AND p.x <= ${playerPosition.x + radius}
-                     AND p.y >= ${playerPosition.y - radius} AND p.y <= ${playerPosition.y + radius}
-                     AND pm.sent_dt >= ${cutoffTimeMicros}i64`,
-      ]);
+      // Build safe message proximity query
+      // Note: This is a more complex query that needs special handling
+      const messageQuery = buildProximityQuery(
+        'Player',
+        playerPosition.x,
+        playerPosition.y,
+        radius,
+        myIdentity
+      ).replace('SELECT * FROM Player', 
+        `SELECT pm.* FROM PlayerMessage pm JOIN Player p ON pm.player_id = p.identity`
+      ) + ` AND pm.sent_dt >= ${cutoffTimeMicros}i64`;
+
+      this.dbConnection.subscriptionBuilder().subscribe([messageQuery]);
     } catch (error) {
       this.logger.error('❌ PeerManager: Failed to update proximity subscription:', error);
     }
@@ -652,6 +678,25 @@ export class PeerManager {
       peer.destroy();
     }
     this.peers.clear();
+
+    // Run all cleanup functions
+    for (const cleanup of this.cleanupFunctions) {
+      try {
+        cleanup();
+      } catch (error) {
+        this.logger.error('Error during cleanup:', error);
+      }
+    }
+    this.cleanupFunctions = [];
+
+    // Clear references
+    this.dbConnection = null;
+    this.localPlayerIdentity = null;
+    this.levelUpAnimationManager = null;
+    this.chatManager = null;
+    this.lastSubscriptionCenter = null;
+
+    this.logger.info('PeerManager: Cleaned up all resources');
   }
 
   public destroy(): void {

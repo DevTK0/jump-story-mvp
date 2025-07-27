@@ -9,12 +9,10 @@ import { UI_CONFIG } from './ui-config';
 import { DbConnection } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { Player } from '@/player';
+import { UIContextService, type UICreateConfig } from './services/ui-context-service';
 
-export interface UICreateConfig {
-  connection: DbConnection;
-  identity: Identity;
-  player: Player;
-}
+// Re-export UICreateConfig from UIContextService to maintain compatibility
+export type { UICreateConfig };
 
 /**
  * Factory for creating and managing UI components
@@ -42,6 +40,10 @@ export class UIFactory {
    */
   createGameUI(config: UICreateConfig): void {
     this.logger.info('Creating game UI...');
+    
+    // Initialize UIContextService first
+    UIContextService.initialize(this.scene, config);
+    this.logger.debug('UIContextService initialized');
     
     // Initialize DbMetricsTracker singleton
     DbMetricsTracker.getInstance().initialize(config.connection);
@@ -91,52 +93,52 @@ export class UIFactory {
     this.bottomUIBar?.destroy();
     this.fpsCounter?.destroy();
     this.performanceMetrics?.destroy();
+    
+    // Destroy UIContextService if it was initialized
+    if (UIContextService.isInitialized()) {
+      UIContextService.getInstance().destroy();
+    }
   }
   
   // Private creation methods
   
   private createPlayerStatsUI(config: UICreateConfig): void {
-    // Create the new bottom UI bar instead of top-left stats
-    this.bottomUIBar = new BottomUIBar(this.scene, config.identity);
-    this.bottomUIBar.setDbConnection(config.connection);
+    // Create the new bottom UI bar - no need to pass identity or connection
+    this.bottomUIBar = new BottomUIBar(this.scene);
     
     // Keep the old stats UI but hide it (for backward compatibility)
-    this.playerStatsUI = new PlayerStatsUI(this.scene, config.identity);
-    this.playerStatsUI.setDbConnection(config.connection);
+    this.playerStatsUI = new PlayerStatsUI(this.scene);
     this.playerStatsUI.setVisible(false);
   }
   
   private createPerformanceUI(): void {
-    // Create FPS counter
-    const fpsConfig = UI_CONFIG.fpsCounter;
-    this.fpsCounter = new FPSCounter(this.scene, {
-      x: this.scene.scale.width + fpsConfig.defaultPosition.xOffset,
-      y: fpsConfig.defaultPosition.y,
-      fontSize: fpsConfig.fontSize,
-      alpha: fpsConfig.alpha,
-    });
+    // Get scene config to check if performance UI should be created
+    const sceneConfig = this.scene.data.get('sceneConfig');
     
-    // Create performance metrics panel
-    const perfConfig = UI_CONFIG.performanceMetrics;
-    this.performanceMetrics = new PerformanceMetrics(this.scene, {
-      x: perfConfig.position.x,
-      y: perfConfig.position.y,
-      fontSize: '14px',
-      alpha: 0.7,
-    });
+    // Create FPS counter if enabled in config
+    if (sceneConfig?.debug?.fps) {
+      const fpsConfig = UI_CONFIG.fpsCounter;
+      this.fpsCounter = new FPSCounter(this.scene, {
+        x: this.scene.scale.width + fpsConfig.defaultPosition.xOffset,
+        y: fpsConfig.defaultPosition.y,
+        fontSize: fpsConfig.fontSize,
+        alpha: fpsConfig.alpha,
+      });
+    }
+    
+    // Create performance metrics panel if enabled in config
+    if (sceneConfig?.debug?.metrics) {
+      const perfConfig = UI_CONFIG.performanceMetrics;
+      this.performanceMetrics = new PerformanceMetrics(this.scene, {
+        x: perfConfig.position.x,
+        y: perfConfig.position.y,
+        fontSize: '14px',
+        alpha: 0.7,
+      });
+    }
   }
   
   private setupKeyboardShortcuts(config: UICreateConfig): void {
-    // FPS counter toggle (F key)
-    this.registerKeyboardShortcut('F', () => {
-      this.fpsCounter?.toggle();
-    });
-    
-    // Performance metrics toggle (P key)
-    this.registerKeyboardShortcut('P', () => {
-      this.performanceMetrics?.toggle();
-    });
-    
     // Test level up animation (U key) - for development
     this.registerKeyboardShortcut('U', () => {
       this.testLevelUpAnimation(config);

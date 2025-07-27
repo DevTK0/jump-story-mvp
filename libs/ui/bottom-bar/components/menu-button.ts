@@ -3,6 +3,7 @@ import { BOTTOM_UI_CONFIG } from '../bottom-ui-config';
 import { MenuDropdown } from './menu-dropdown';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { DbConnection } from '@/spacetime/client';
+import { UIContextService, UIEvents } from '../../services/ui-context-service';
 
 export class MenuButton {
   private scene: Phaser.Scene;
@@ -22,8 +23,12 @@ export class MenuButton {
 
     this.container.setDepth(BOTTOM_UI_CONFIG.depth.buttons);
 
-    // Create dropdown menu
+    // Create dropdown menu - it will get context internally
     this.dropdown = new MenuDropdown(this.scene, this.container);
+    
+    // Subscribe to job data updates from context
+    const context = UIContextService.getInstance();
+    context.on(UIEvents.PLAYER_JOB_DATA_UPDATED, this.handleJobDataUpdate, this);
   }
 
   private createButton(label: string): void {
@@ -100,21 +105,31 @@ export class MenuButton {
     return this.container;
   }
 
+  private handleJobDataUpdate(data: { jobData: Map<string, boolean>; jobTableData: any[] }): void {
+    this.playerJobData = data.jobData;
+    // Dropdown will receive the update directly from context
+  }
+
+  // Keep these methods for backward compatibility but they won't be called from BottomUIBar anymore
   public setPlayerIdentity(identity: Identity): void {
-    this.dropdown.setPlayerIdentity(identity);
+    // No longer needed - dropdown gets from context
   }
 
   public setDbConnection(dbConnection: DbConnection): void {
-    this.dropdown.setDbConnection(dbConnection);
+    // No longer needed - dropdown gets from context
   }
 
   public setPlayerJobData(jobData: Map<string, boolean>, jobTableData?: any[]): void {
-    console.log(jobData, jobTableData);
     this.playerJobData = jobData;
+    // Still pass through for now until dropdown is updated
     this.dropdown.setPlayerJobData(jobData, jobTableData);
   }
 
   public destroy(): void {
+    // Unsubscribe from context events
+    const context = UIContextService.getInstance();
+    context.off(UIEvents.PLAYER_JOB_DATA_UPDATED, this.handleJobDataUpdate, this);
+    
     this.dropdown.destroy();
     this.container.destroy();
   }

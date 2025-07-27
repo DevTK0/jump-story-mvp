@@ -2,6 +2,7 @@ import {
   SpacetimeConnector,
   type SpacetimeConnectionConfig,
   type SpacetimeConnectionCallbacks,
+  type SubscriptionConfig,
 } from './spacetime-connector';
 import { DbConnection, type ErrorContext, type SubscriptionEventContext } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
@@ -23,6 +24,7 @@ import { Identity } from '@clockworklabs/spacetimedb-sdk';
 export class SpacetimeConnectionBuilder {
   private config: Partial<SpacetimeConnectionConfig> = {};
   private callbacks: SpacetimeConnectionCallbacks = {};
+  private subscriptionConfig: SubscriptionConfig = { skipAutoSubscribe: true };
 
   /**
    * Set the WebSocket URI for the database connection
@@ -124,6 +126,58 @@ export class SpacetimeConnectionBuilder {
   }
 
   /**
+   * Configure subscription settings
+   */
+  public setSubscriptionConfig(config: SubscriptionConfig): SpacetimeConnectionBuilder {
+    this.subscriptionConfig = { ...config };
+    return this;
+  }
+
+  /**
+   * Skip automatic subscriptions (recommended for manual subscription management)
+   */
+  public skipAutoSubscribe(): SpacetimeConnectionBuilder {
+    this.subscriptionConfig.skipAutoSubscribe = true;
+    return this;
+  }
+
+  /**
+   * Subscribe to specific tables only
+   */
+  public subscribeTo(...tables: string[]): SpacetimeConnectionBuilder {
+    this.subscriptionConfig.skipAutoSubscribe = false;
+    this.subscriptionConfig.tables = tables;
+    return this;
+  }
+
+  /**
+   * Subscribe to core tables required by multiple systems
+   * This includes Player, Job, PlayerJob, JobAttack, Enemy, and damage event tables
+   */
+  public subscribeToCoreTables(): SpacetimeConnectionBuilder {
+    this.subscriptionConfig.skipAutoSubscribe = false;
+    this.subscriptionConfig.tables = [
+      'Player', 
+      'Job', 
+      'PlayerJob', 
+      'JobAttack',
+      'Enemy',
+      'PlayerDamageEvent',
+      'EnemyDamageEvent'
+    ];
+    return this;
+  }
+
+  /**
+   * Subscribe with custom SQL queries
+   */
+  public subscribeWithQueries(...queries: string[]): SpacetimeConnectionBuilder {
+    this.subscriptionConfig.skipAutoSubscribe = false;
+    this.subscriptionConfig.queries = queries;
+    return this;
+  }
+
+  /**
    * Build and return the configured SpacetimeConnector instance
    */
   public build(): SpacetimeConnector {
@@ -140,7 +194,7 @@ export class SpacetimeConnectionBuilder {
       moduleName: this.config.moduleName,
     };
 
-    return new SpacetimeConnector(finalConfig, this.callbacks);
+    return new SpacetimeConnector(finalConfig, this.callbacks, this.subscriptionConfig);
   }
 
   /**
@@ -150,7 +204,8 @@ export class SpacetimeConnectionBuilder {
     return new SpacetimeConnectionBuilder()
       .setUri('ws://localhost:3000')
       .setModuleName(moduleName)
-      .withDefaultCallbacks();
+      .withDefaultCallbacks()
+      .skipAutoSubscribe(); // Let individual managers handle subscriptions
   }
 
   /**
@@ -160,7 +215,8 @@ export class SpacetimeConnectionBuilder {
     return new SpacetimeConnectionBuilder()
       .setUri(uri)
       .setModuleName(moduleName)
-      .withSilentCallbacks(); // Production typically uses silent mode
+      .withSilentCallbacks() // Production typically uses silent mode
+      .skipAutoSubscribe(); // Let individual managers handle subscriptions
   }
 
   /**
@@ -170,6 +226,7 @@ export class SpacetimeConnectionBuilder {
     return new SpacetimeConnectionBuilder()
       .setUri('ws://localhost:3001') // Different port for testing
       .setModuleName(moduleName)
-      .withSilentCallbacks();
+      .withSilentCallbacks()
+      .skipAutoSubscribe(); // No automatic subscriptions for tests
   }
 }

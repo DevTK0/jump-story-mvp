@@ -21,6 +21,8 @@ const sceneConfig: SceneConfig = {
     enabled: false, // Debug mode disabled
     shadow: false, // Shadow effect enabled independently
     invulnerable: false, // Set to true to prevent player from taking damage (useful for testing)
+    fps: true, // Show FPS counter
+    metrics: true, // Show performance metrics
   },
   sprites: spriteConfig, // Pass sprite configuration
 };

@@ -33,6 +33,15 @@ export interface SpacetimeConnectionConfig {
   moduleName: string;
 }
 
+export interface SubscriptionConfig {
+  /** Tables to subscribe to. If empty, no automatic subscriptions are made */
+  tables?: string[];
+  /** Custom SQL queries for subscriptions */
+  queries?: string[];
+  /** Whether to skip automatic subscriptions entirely */
+  skipAutoSubscribe?: boolean;
+}
+
 export interface SpacetimeConnectionCallbacks {
   onConnect?: (connection: DbConnection, identity: Identity, token: string) => void;
   onDisconnect?: () => void;
@@ -45,11 +54,17 @@ export class SpacetimeConnector {
   private identity: Identity | null = null;
   private config: SpacetimeConnectionConfig;
   private callbacks: SpacetimeConnectionCallbacks;
+  private subscriptionConfig: SubscriptionConfig;
   private connectionPromise: Promise<DbConnection> | null = null;
 
-  constructor(config: SpacetimeConnectionConfig, callbacks?: SpacetimeConnectionCallbacks) {
+  constructor(
+    config: SpacetimeConnectionConfig, 
+    callbacks?: SpacetimeConnectionCallbacks,
+    subscriptionConfig?: SubscriptionConfig
+  ) {
     this.config = config;
     this.callbacks = callbacks || {};
+    this.subscriptionConfig = subscriptionConfig || { skipAutoSubscribe: true };
   }
 
   public async connect(): Promise<DbConnection> {
@@ -86,11 +101,8 @@ export class SpacetimeConnector {
         localStorage.setItem('auth_token', token);
         console.log('Connected to SpacetimeDB with identity:', identity.toHexString());
 
-        // Subscribe to all tables
-        conn
-          .subscriptionBuilder()
-          .onApplied(this.handleSubscriptionApplied.bind(this))
-          .subscribeToAllTables();
+        // Set up subscriptions based on configuration
+        this.setupSubscriptions(conn);
 
         // Call user callback if provided
         this.callbacks.onConnect?.(conn, identity, token);
@@ -138,6 +150,39 @@ export class SpacetimeConnector {
     return this.connectionPromise;
   }
 
+  private setupSubscriptions(conn: DbConnection): void {
+    if (this.subscriptionConfig.skipAutoSubscribe) {
+      console.log('Skipping automatic subscriptions - manual subscription management enabled');
+      return;
+    }
+
+    const builder = conn.subscriptionBuilder()
+      .onApplied(this.handleSubscriptionApplied.bind(this));
+
+    // Subscribe to specific tables if configured
+    if (this.subscriptionConfig.tables && this.subscriptionConfig.tables.length > 0) {
+      console.log('Subscribing to specific tables:', this.subscriptionConfig.tables);
+      // SpaceTimeDB doesn't support selective table subscriptions directly,
+      // so we need to use queries
+      const queries = this.subscriptionConfig.tables.map(table => `SELECT * FROM ${table}`);
+      builder.subscribe(queries);
+    } 
+    // Subscribe to custom queries if configured
+    else if (this.subscriptionConfig.queries && this.subscriptionConfig.queries.length > 0) {
+      console.log('Subscribing with custom queries');
+      builder.subscribe(this.subscriptionConfig.queries);
+    }
+    // If no specific configuration, warn about using subscribeToAllTables
+    else {
+      console.warn(
+        'WARNING: No subscription configuration provided. ' +
+        'Consider using selective subscriptions for better performance. ' +
+        'Falling back to subscribeToAllTables().'
+      );
+      builder.subscribeToAllTables();
+    }
+  }
+
   private handleSubscriptionApplied(ctx: SubscriptionEventContext): void {
     console.log('Subscription applied!');
     this.callbacks.onSubscriptionApplied?.(ctx);
@@ -159,8 +204,21 @@ export class SpacetimeConnector {
     if (this.connection) {
       // Note: SpacetimeDB SDK doesn't provide a disconnect method
       // The connection will be closed when the page unloads
+      // We can at least clear our references and notify callbacks
+      const wasConnected = this.connection !== null;
+      
       this.connection = null;
       this.identity = null;
+      this.connectionPromise = null;
+      
+      // Clear auth token
+      localStorage.removeItem('auth_token');
+      
+      // Notify disconnect callback if we were connected
+      if (wasConnected) {
+        this.callbacks.onDisconnect?.();
+        console.log('SpacetimeConnector: Disconnected and cleared references');
+      }
     }
   }
 }

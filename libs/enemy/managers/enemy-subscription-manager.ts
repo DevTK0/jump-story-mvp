@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { DbConnection, Enemy as ServerEnemy } from '@/spacetime/client';
+import { buildProximityQuery, DEFAULT_PROXIMITY_CONFIGS } from '@/networking/subscription-utils';
 
 export interface EnemySubscriptionConfig {
   /** Use proximity-based subscriptions to limit enemies loaded */
@@ -26,12 +27,13 @@ export class EnemySubscriptionManager {
   private callbacks: EnemySubscriptionCallbacks;
   private config: EnemySubscriptionConfig;
   private lastSubscriptionCenter: { x: number; y: number } | null = null;
+  private cleanupFunctions: Array<() => void> = [];
 
   // Default configuration
   private static readonly DEFAULT_CONFIG: EnemySubscriptionConfig = {
     useProximitySubscription: false,
-    proximityRadius: 2000,
-    subscriptionDistanceThreshold: 100,
+    proximityRadius: DEFAULT_PROXIMITY_CONFIGS.enemies.radius,
+    subscriptionDistanceThreshold: DEFAULT_PROXIMITY_CONFIGS.enemies.moveThreshold,
   };
 
   constructor(
@@ -91,16 +93,28 @@ export class EnemySubscriptionManager {
     if (!this.dbConnection) return;
 
     // Subscribe to enemy table changes
-    this.dbConnection.db.enemy.onInsert((_ctx, enemy) => {
+    const onInsert = (_ctx: any, enemy: ServerEnemy) => {
       this.callbacks.onEnemyInsert(enemy);
-    });
-
-    this.dbConnection.db.enemy.onDelete((_ctx, enemy) => {
+    };
+    const onDelete = (_ctx: any, enemy: ServerEnemy) => {
       this.callbacks.onEnemyDelete(enemy.enemyId);
-    });
-
-    this.dbConnection.db.enemy.onUpdate((_ctx, _oldEnemy, newEnemy) => {
+    };
+    const onUpdate = (_ctx: any, _oldEnemy: ServerEnemy, newEnemy: ServerEnemy) => {
       this.callbacks.onEnemyUpdate(newEnemy);
+    };
+
+    this.dbConnection.db.enemy.onInsert(onInsert);
+    this.dbConnection.db.enemy.onDelete(onDelete);
+    this.dbConnection.db.enemy.onUpdate(onUpdate);
+
+    // Store cleanup functions
+    this.cleanupFunctions.push(() => {
+      if (this.dbConnection?.db?.enemy) {
+        // Note: SpaceTimeDB SDK doesn't provide removeListener methods yet
+        // This is a placeholder for when they add proper cleanup support
+        // For now, we can only track that cleanup is needed
+        console.log('EnemySubscriptionManager: Cleanup would remove enemy table listeners here');
+      }
     });
 
     // Spawn existing enemies that are already in the database
@@ -116,16 +130,26 @@ export class EnemySubscriptionManager {
     if (!this.dbConnection) return;
 
     // With proximity subscription, events will only fire for nearby enemies
-    this.dbConnection.db.enemy.onInsert((_ctx, enemy) => {
+    const onInsert = (_ctx: any, enemy: ServerEnemy) => {
       this.callbacks.onEnemyInsert(enemy);
-    });
-
-    this.dbConnection.db.enemy.onDelete((_ctx, enemy) => {
+    };
+    const onDelete = (_ctx: any, enemy: ServerEnemy) => {
       this.callbacks.onEnemyDelete(enemy.enemyId);
-    });
-
-    this.dbConnection.db.enemy.onUpdate((_ctx, _oldEnemy, newEnemy) => {
+    };
+    const onUpdate = (_ctx: any, _oldEnemy: ServerEnemy, newEnemy: ServerEnemy) => {
       this.callbacks.onEnemyUpdate(newEnemy);
+    };
+
+    this.dbConnection.db.enemy.onInsert(onInsert);
+    this.dbConnection.db.enemy.onDelete(onDelete);
+    this.dbConnection.db.enemy.onUpdate(onUpdate);
+
+    // Store cleanup functions
+    this.cleanupFunctions.push(() => {
+      if (this.dbConnection?.db?.enemy) {
+        // Note: SpaceTimeDB SDK doesn't provide removeListener methods yet
+        console.log('EnemySubscriptionManager: Cleanup would remove targeted enemy listeners here');
+      }
     });
   }
 
@@ -183,27 +207,22 @@ export class EnemySubscriptionManager {
     this.lastSubscriptionCenter = { x: playerPosition.x, y: playerPosition.y };
 
     const radius = this.config.proximityRadius;
-    const minX = playerPosition.x - radius;
-    const maxX = playerPosition.x + radius;
-    const minY = playerPosition.y - radius;
-    const maxY = playerPosition.y + radius;
 
     console.log(
       `🎯 EnemySubscriptionManager: Updating proximity subscription - Center: (${playerPosition.x}, ${playerPosition.y}), radius: ${radius}px`
     );
 
     try {
-      // Subscribe to enemies within proximity using SQL query
+      // Build safe proximity query
+      const query = buildProximityQuery('Enemy', playerPosition.x, playerPosition.y, radius);
+
+      // Subscribe to enemies within proximity using safe SQL query
       this.dbConnection
         .subscriptionBuilder()
         .onApplied(() => {
           this.loadProximityEnemies();
         })
-        .subscribe([
-          `SELECT * FROM Enemy 
-                     WHERE x >= ${minX} AND x <= ${maxX}
-                     AND y >= ${minY} AND y <= ${maxY}`,
-        ]);
+        .subscribe([query]);
     } catch (error) {
       console.error('EnemySubscriptionManager: Failed to update proximity subscription:', error);
     }
@@ -282,6 +301,23 @@ export class EnemySubscriptionManager {
   }
 
   public destroy(): void {
+    // Remove Phaser event listeners
     this.scene.events.off('update', this.checkProximityDistanceUpdate, this);
+
+    // Run all cleanup functions
+    for (const cleanup of this.cleanupFunctions) {
+      try {
+        cleanup();
+      } catch (error) {
+        console.error('EnemySubscriptionManager: Error during cleanup:', error);
+      }
+    }
+    this.cleanupFunctions = [];
+
+    // Clear references
+    this.dbConnection = null;
+    this.lastSubscriptionCenter = null;
+
+    console.log('EnemySubscriptionManager: Destroyed and cleaned up');
   }
 }

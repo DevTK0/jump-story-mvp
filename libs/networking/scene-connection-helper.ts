@@ -41,10 +41,11 @@ export class SceneConnectionHelper {
 
     this.logger.info(`Connecting to SpaceTimeDB (${this.config.target}): ${dbUri}`);
 
-    // Build connection
+    // Build connection with core table subscriptions
     this.connectionManager = new SpacetimeConnectionBuilder()
       .setUri(dbUri)
       .setModuleName(this.config.moduleName)
+      .subscribeToCoreTables() // Subscribe to Player, Job, PlayerJob, JobAttack
       .onConnect(this.handleDatabaseConnect.bind(this))
       .onDisconnect(() => this.logger.info('Disconnected from SpacetimeDB'))
       .onError((_ctx, err) => {
@@ -57,7 +58,7 @@ export class SceneConnectionHelper {
           })
         );
       })
-      .onSubscriptionApplied((_ctx) => this.logger.info('Subscription applied!'))
+      .onSubscriptionApplied((_ctx) => this.logger.info('Core tables subscription applied!'))
       .build();
 
     // Start connection

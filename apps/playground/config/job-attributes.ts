@@ -41,7 +41,7 @@ const sharedAttacks = {
     hits: 3,
     targets: 3,
     modifiers: ['sword' as const],
-    manaCost: 0,
+    manaCost: 10,
     ammoCost: 0,
   },
 };

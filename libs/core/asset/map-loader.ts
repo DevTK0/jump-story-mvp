@@ -49,6 +49,7 @@ export interface MapData {
   boundaries: MapBoundary[];
   chests: MapChest[];
   tilemap: Phaser.Tilemaps.Tilemap;
+  customProperties?: Record<string, any>;
 }
 
 export class MapLoader {
@@ -104,6 +105,7 @@ export class MapLoader {
     const climbeable = this.extractClimbeable(tilemap);
     const boundaries = this.extractBoundaries(tilemap);
     const chests = this.extractChests(tilemap);
+    const customProperties = this.extractCustomProperties(tilemap);
 
     return {
       ground,
@@ -112,6 +114,7 @@ export class MapLoader {
       boundaries,
       chests,
       tilemap,
+      customProperties,
     };
   }
 
@@ -235,6 +238,19 @@ export class MapLoader {
     return chests;
   }
 
+  private extractCustomProperties(tilemap: Phaser.Tilemaps.Tilemap): Record<string, any> {
+    const properties: Record<string, any> = {};
+    
+    // Access the tilemap data to get custom properties
+    const mapData = (tilemap as any).mapData;
+    if (mapData && mapData.properties) {
+      mapData.properties.forEach((prop: any) => {
+        properties[prop.name] = prop.value;
+      });
+    }
+    
+    return properties;
+  }
 
   public destroy(): void {
     // Cleanup if needed
