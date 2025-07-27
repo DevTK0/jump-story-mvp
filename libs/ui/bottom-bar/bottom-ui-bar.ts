@@ -26,8 +26,8 @@ export class BottomUIBar {
   private playerIdentity: Identity;
   private dbConnection: DbConnection | null = null;
 
-  // Job unlock data: Map<jobId, isUnlocked>
-  private playerJobUnlockStatus: Map<number, boolean> = new Map();
+  // Job unlock data: Map<jobKey, isUnlocked>
+  private playerJobUnlockStatus: Map<string, boolean> = new Map();
   // Job table data
   private jobTableData: any[] = [];
   // Flag to track if Job table is loaded
@@ -222,8 +222,8 @@ export class BottomUIBar {
     // Listen to PlayerJob updates
     this.dbConnection.db.playerJob.onUpdate((_ctx, _oldPj, newPj) => {
       if (newPj.playerIdentity.toHexString() === this.playerIdentity.toHexString()) {
-        this.playerJobUnlockStatus.set(newPj.jobId, newPj.isUnlocked);
-        this.logger.info(`PlayerJob updated: jobId=${newPj.jobId}, isUnlocked=${newPj.isUnlocked}`);
+        this.playerJobUnlockStatus.set(newPj.jobKey, newPj.isUnlocked);
+        this.logger.info(`PlayerJob updated: jobKey=${newPj.jobKey}, isUnlocked=${newPj.isUnlocked}`);
         // Pass updated data to menu button
         this.menuButton.setPlayerJobData(this.playerJobUnlockStatus, this.jobTableData);
       }
@@ -232,9 +232,9 @@ export class BottomUIBar {
     // Listen to PlayerJob inserts
     this.dbConnection.db.playerJob.onInsert((_ctx, newPj) => {
       if (newPj.playerIdentity.toHexString() === this.playerIdentity.toHexString()) {
-        this.playerJobUnlockStatus.set(newPj.jobId, newPj.isUnlocked);
+        this.playerJobUnlockStatus.set(newPj.jobKey, newPj.isUnlocked);
         this.logger.info(
-          `PlayerJob inserted: jobId=${newPj.jobId}, isUnlocked=${newPj.isUnlocked}`
+          `PlayerJob inserted: jobKey=${newPj.jobKey}, isUnlocked=${newPj.isUnlocked}`
         );
         console.log('BottomUIBar jobTableData:', this.jobTableData);
         console.log('BottomUIBar jobTableData length:', this.jobTableData.length);
@@ -256,8 +256,12 @@ export class BottomUIBar {
     // Update level
     this.levelDisplay.updateLevel(player.level);
 
-    // Update player info
-    this.playerInfo.updateInfo(player.name, 'Soldier'); // TODO: Get actual class/job
+    // Get job display name from job table data
+    const job = this.jobTableData.find((j) => j.jobKey === player.job);
+    const jobDisplayName = job?.displayName || 'Unknown';
+
+    // Update player info with actual job
+    this.playerInfo.updateInfo(player.name, jobDisplayName);
 
     // Update stat bars
     this.hpBar.updateValues(player.currentHp, player.maxHp);
@@ -291,8 +295,8 @@ export class BottomUIBar {
     // Clear and rebuild the unlock status map
     this.playerJobUnlockStatus.clear();
     playerJobs.forEach((pj) => {
-      this.playerJobUnlockStatus.set(pj.jobId, pj.isUnlocked);
-      this.logger.debug(`PlayerJob: jobId=${pj.jobId}, isUnlocked=${pj.isUnlocked}`);
+      this.playerJobUnlockStatus.set(pj.jobKey, pj.isUnlocked);
+      this.logger.debug(`PlayerJob: jobKey=${pj.jobKey}, isUnlocked=${pj.isUnlocked}`);
     });
 
     // Pass both job table data and unlock status to menu button

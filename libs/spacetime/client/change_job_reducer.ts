@@ -32,38 +32,32 @@ import {
   type ReducerEventContextInterface,
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
-export type PlayerJob = {
-  playerJobId: number,
-  playerIdentity: Identity,
-  jobKey: string,
-  isUnlocked: boolean,
+
+export type ChangeJob = {
+  newJobKey: string,
 };
 
 /**
  * A namespace for generated helper functions.
  */
-export namespace PlayerJob {
+export namespace ChangeJob {
   /**
   * A function which returns this type represented as an AlgebraicType.
   * This function is derived from the AlgebraicType used to generate this type.
   */
   export function getTypeScriptAlgebraicType(): AlgebraicType {
     return AlgebraicType.createProductType([
-      new ProductTypeElement("playerJobId", AlgebraicType.createU32Type()),
-      new ProductTypeElement("playerIdentity", AlgebraicType.createIdentityType()),
-      new ProductTypeElement("jobKey", AlgebraicType.createStringType()),
-      new ProductTypeElement("isUnlocked", AlgebraicType.createBoolType()),
+      new ProductTypeElement("newJobKey", AlgebraicType.createStringType()),
     ]);
   }
 
-  export function serialize(writer: BinaryWriter, value: PlayerJob): void {
-    PlayerJob.getTypeScriptAlgebraicType().serialize(writer, value);
+  export function serialize(writer: BinaryWriter, value: ChangeJob): void {
+    ChangeJob.getTypeScriptAlgebraicType().serialize(writer, value);
   }
 
-  export function deserialize(reader: BinaryReader): PlayerJob {
-    return PlayerJob.getTypeScriptAlgebraicType().deserialize(reader);
+  export function deserialize(reader: BinaryReader): ChangeJob {
+    return ChangeJob.getTypeScriptAlgebraicType().deserialize(reader);
   }
 
 }
-
 

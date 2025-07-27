@@ -11,7 +11,7 @@ export class MenuButton {
   private text: Phaser.GameObjects.Text;
   private dropdown: MenuDropdown;
   private onClick?: () => void;
-  private playerJobData: Map<number, boolean> = new Map();
+  private playerJobData: Map<string, boolean> = new Map();
 
   constructor(scene: Phaser.Scene, label: string = 'MENU') {
     this.scene = scene;
@@ -108,7 +108,7 @@ export class MenuButton {
     this.dropdown.setDbConnection(dbConnection);
   }
 
-  public setPlayerJobData(jobData: Map<number, boolean>, jobTableData?: any[]): void {
+  public setPlayerJobData(jobData: Map<string, boolean>, jobTableData?: any[]): void {
     console.log(jobData, jobTableData);
     this.playerJobData = jobData;
     this.dropdown.setPlayerJobData(jobData, jobTableData);

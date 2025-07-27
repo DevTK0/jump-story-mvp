@@ -34,6 +34,8 @@ import {
 } from "@clockworklabs/spacetimedb-sdk";
 
 // Import and reexport all reducer arg types
+import { ChangeJob } from "./change_job_reducer.ts";
+export { ChangeJob };
 import { CleanupDeadBodies } from "./cleanup_dead_bodies_reducer.ts";
 export { CleanupDeadBodies };
 import { CleanupInactivePlayers } from "./cleanup_inactive_players_reducer.ts";
@@ -330,6 +332,10 @@ const REMOTE_MODULE = {
     },
   },
   reducers: {
+    ChangeJob: {
+      reducerName: "ChangeJob",
+      argsType: ChangeJob.getTypeScriptAlgebraicType(),
+    },
     CleanupDeadBodies: {
       reducerName: "CleanupDeadBodies",
       argsType: CleanupDeadBodies.getTypeScriptAlgebraicType(),
@@ -464,6 +470,7 @@ const REMOTE_MODULE = {
 
 // A type representing all the possible variants of a reducer.
 export type Reducer = never
+| { name: "ChangeJob", args: ChangeJob }
 | { name: "CleanupDeadBodies", args: CleanupDeadBodies }
 | { name: "CleanupInactivePlayers", args: CleanupInactivePlayers }
 | { name: "CleanupOldMessages", args: CleanupOldMessages }
@@ -494,6 +501,22 @@ export type Reducer = never
 
 export class RemoteReducers {
   constructor(private connection: DbConnectionImpl, private setCallReducerFlags: SetReducerFlags) {}
+
+  changeJob(newJobKey: string) {
+    const __args = { newJobKey };
+    let __writer = new BinaryWriter(1024);
+    ChangeJob.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("ChangeJob", __argsBuffer, this.setCallReducerFlags.changeJobFlags);
+  }
+
+  onChangeJob(callback: (ctx: ReducerEventContext, newJobKey: string) => void) {
+    this.connection.onReducer("ChangeJob", callback);
+  }
+
+  removeOnChangeJob(callback: (ctx: ReducerEventContext, newJobKey: string) => void) {
+    this.connection.offReducer("ChangeJob", callback);
+  }
 
   cleanupDeadBodies(timer: CleanupDeadBodiesTimer) {
     const __args = { timer };
@@ -894,6 +917,11 @@ export class RemoteReducers {
 }
 
 export class SetReducerFlags {
+  changeJobFlags: CallReducerFlags = 'FullUpdate';
+  changeJob(flags: CallReducerFlags) {
+    this.changeJobFlags = flags;
+  }
+
   cleanupDeadBodiesFlags: CallReducerFlags = 'FullUpdate';
   cleanupDeadBodies(flags: CallReducerFlags) {
     this.cleanupDeadBodiesFlags = flags;

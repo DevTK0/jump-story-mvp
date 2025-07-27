@@ -163,7 +163,7 @@ public static partial class Module
         [PrimaryKey, AutoInc]
         public uint player_job_id;
         public Identity player_identity;
-        public uint job_id;
+        public string job_key;
         public bool is_unlocked;
     }
 

@@ -254,7 +254,7 @@ export abstract class AttackState extends PlayerState {
 
 export class Attack1State extends AttackState {
   constructor(player: Player, stateMachine: PlayerStateMachine) {
-    super(player, stateMachine, 1, 300); // 300ms attack duration
+    super(player, stateMachine, 1, 1500); // 1500ms attack duration for longer animations
   }
 
   getDbState(): DbPlayerState {
@@ -268,7 +268,7 @@ export class Attack1State extends AttackState {
 
 export class Attack2State extends AttackState {
   constructor(player: Player, stateMachine: PlayerStateMachine) {
-    super(player, stateMachine, 2, 600); // 600ms attack duration
+    super(player, stateMachine, 2, 1500); // 1500ms attack duration for longer animations
   }
 
   getDbState(): DbPlayerState {
@@ -282,7 +282,7 @@ export class Attack2State extends AttackState {
 
 export class Attack3State extends AttackState {
   constructor(player: Player, stateMachine: PlayerStateMachine) {
-    super(player, stateMachine, 3, 450); // 450ms attack duration
+    super(player, stateMachine, 3, 1500); // 1500ms attack duration for longer animations
   }
 
   getDbState(): DbPlayerState {

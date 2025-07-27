@@ -22,7 +22,7 @@ export class MenuDropdown {
   private classSelectionMenu: ClassSelectionMenu | null = null;
   private playerIdentity: Identity | null = null;
   private dbConnection: DbConnection | null = null;
-  private playerJobData: Map<number, boolean> = new Map();
+  private playerJobData: Map<string, boolean> = new Map();
   private jobTableData: any[] = [];
 
   private options: MenuOption[] = [
@@ -205,7 +205,7 @@ export class MenuDropdown {
     }
   }
 
-  public setPlayerJobData(jobData: Map<number, boolean>, jobTableData?: any[]): void {
+  public setPlayerJobData(jobData: Map<string, boolean>, jobTableData?: any[]): void {
     this.playerJobData = jobData;
     if (jobTableData) {
       this.jobTableData = jobTableData;

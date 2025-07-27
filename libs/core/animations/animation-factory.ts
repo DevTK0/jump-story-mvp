@@ -24,6 +24,7 @@ export interface AnimationFrameConfig {
   start: number;
   end: number;
   frameRate: number;
+  duration?: number; // Optional duration in milliseconds
 }
 
 export interface AnimationConfig {

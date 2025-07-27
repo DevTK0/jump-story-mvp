@@ -26,8 +26,8 @@ export class ClassSelectionMenu {
   // Available jobs loaded from job-attributes
   private classes: ClassOption[] = [];
 
-  // Map of job IDs to their unlock status
-  private playerJobUnlockStatus: Map<number, boolean> = new Map();
+  // Map of job keys to their unlock status
+  private playerJobUnlockStatus: Map<string, boolean> = new Map();
   // Job table data
   private jobTableData: any[] = [];
 
@@ -255,8 +255,13 @@ export class ClassSelectionMenu {
   private selectClass(classOption: ClassOption): void {
     this.logger.info(`Selected class: ${classOption.name}`);
 
-    // TODO: Send class change request to server via SpacetimeDB
-    // For now, just log and close the menu
+    // Call the ChangeJob reducer on the server
+    if (this._dbConnection) {
+      this._dbConnection.reducers.changeJob(classOption.id);
+      this.logger.info(`Sent job change request for job: ${classOption.id}`);
+    } else {
+      this.logger.error('No database connection available to change job');
+    }
 
     this.hide();
   }
@@ -282,7 +287,7 @@ export class ClassSelectionMenu {
     this.container.destroy();
   }
 
-  public setPlayerJobData(jobData: Map<number, boolean>, jobTableData?: any[]): void {
+  public setPlayerJobData(jobData: Map<string, boolean>, jobTableData?: any[]): void {
     this.playerJobUnlockStatus = jobData;
     console.log(jobData, jobTableData);
     if (jobTableData) {
@@ -309,20 +314,12 @@ export class ClassSelectionMenu {
 
     // Update class options with unlock status
     this.classes.forEach((classOption) => {
-      // Find the job ID for this job key
-      const job = jobs.find((j) => j.jobKey === classOption.id);
-      if (job) {
-        const isUnlocked = this.playerJobUnlockStatus.get(job.jobId) || false;
-        classOption.unlocked = isUnlocked;
-        this.logger.info(
-          `Class option ${classOption.id}: jobId=${job.jobId}, unlocked=${isUnlocked}`
-        );
-      } else {
-        this.logger.warn(`Could not find job in database for class option: ${classOption.id}`);
-        this.logger.debug(
-          `Looking for "${classOption.id}" in keys: ${jobs.map((j) => j.jobKey).join(', ')}`
-        );
-      }
+      // Check if this job key is unlocked
+      const isUnlocked = this.playerJobUnlockStatus.get(classOption.id) || false;
+      classOption.unlocked = isUnlocked;
+      this.logger.info(
+        `Class option ${classOption.id}: unlocked=${isUnlocked}`
+      );
     });
 
     // Refresh the UI to show updated unlock states

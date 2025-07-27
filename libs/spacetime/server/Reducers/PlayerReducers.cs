@@ -47,7 +47,7 @@ public static partial class Module
             // Check if this player-job combination already exists
             var existingEntries = ctx.Db.PlayerJob
                 .Iter()
-                .Where(pj => pj.player_identity == playerIdentity && pj.job_id == job.job_id)
+                .Where(pj => pj.player_identity == playerIdentity && pj.job_key == job.job_key)
                 .ToList();
                 
             if (existingEntries.Count > 0)
@@ -59,7 +59,7 @@ public static partial class Module
             var playerJob = new PlayerJob
             {
                 player_identity = playerIdentity,
-                job_id = job.job_id,
+                job_key = job.job_key,
                 is_unlocked = job.default_unlocked
             };
             
@@ -476,6 +476,87 @@ public static partial class Module
         }
 
         Log.Info($"Player {ctx.Sender} was instakilled (testing feature)");
+    }
+
+    [Reducer]
+    public static void ChangeJob(ReducerContext ctx, string newJobKey)
+    {
+        var player = ctx.Db.Player.identity.Find(ctx.Sender);
+        if (player == null)
+        {
+            Log.Info($"Player not found for job change: {ctx.Sender}");
+            return;
+        }
+
+        // Don't allow job change if player is dead
+        if (player.Value.current_hp <= 0 || player.Value.state == PlayerState.Dead)
+        {
+            Log.Info($"Player {ctx.Sender} cannot change jobs while dead");
+            return;
+        }
+
+        // Check if the player is already this job
+        if (player.Value.job == newJobKey)
+        {
+            Log.Info($"Player {ctx.Sender} is already job: {newJobKey}");
+            return;
+        }
+
+        // Look up the new job to validate it exists
+        var newJob = ctx.Db.Job.job_key.Find(newJobKey);
+        if (newJob == null)
+        {
+            Log.Info($"Job not found: {newJobKey}");
+            return;
+        }
+
+        // Check if the player has unlocked this job
+        var playerJobs = ctx.Db.PlayerJob
+            .Iter()
+            .Where(pj => pj.player_identity == ctx.Sender && pj.job_key == newJobKey)
+            .ToList();
+
+        if (playerJobs.Count == 0 || !playerJobs[0].is_unlocked)
+        {
+            Log.Info($"Player {ctx.Sender} has not unlocked job: {newJobKey}");
+            return;
+        }
+
+        // Calculate new max HP and Mana based on new job's base stats
+        float newMaxHp = PlayerConstants.CalculateMaxHpWithJob(player.Value.level, newJob.Value.health);
+        float newMaxMana = PlayerConstants.CalculateMaxManaWithJob(player.Value.level, newJob.Value.mana);
+
+        // Calculate HP/Mana percentage to maintain relative values
+        float hpPercentage = player.Value.current_hp / player.Value.max_hp;
+        float manaPercentage = player.Value.current_mana / player.Value.max_mana;
+
+        // Apply percentage to new max values (but ensure at least 1 HP)
+        float newCurrentHp = Math.Max(1, newMaxHp * hpPercentage);
+        float newCurrentMana = Math.Max(0, newMaxMana * manaPercentage);
+
+        // Update player with new job and stats
+        ctx.Db.Player.identity.Update(player.Value with
+        {
+            job = newJobKey,
+            max_hp = newMaxHp,
+            current_hp = newCurrentHp,
+            max_mana = newMaxMana,
+            current_mana = newCurrentMana,
+            last_active = ctx.Timestamp
+        });
+
+        // Update player cooldown to track the new job
+        var playerCooldown = ctx.Db.PlayerCooldown.player_identity.Find(ctx.Sender);
+        if (playerCooldown != null)
+        {
+            ctx.Db.PlayerCooldown.player_identity.Update(playerCooldown.Value with
+            {
+                job = newJobKey
+                // Cooldowns remain the same - player keeps their current cooldown timers
+            });
+        }
+
+        Log.Info($"Player {ctx.Sender} changed job from {player.Value.job} to {newJobKey}. HP: {player.Value.max_hp} -> {newMaxHp}, Mana: {player.Value.max_mana} -> {newMaxMana}");
     }
 
     private static bool IsAttackState(PlayerState state)

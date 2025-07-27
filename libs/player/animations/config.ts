@@ -9,9 +9,9 @@
 export const PLAYER_ANIMATION_TIMINGS = {
   // Attack animation durations (in milliseconds)
   ATTACK_DURATIONS: {
-    attack1: 300, // Quick slash
-    attack2: 600, // Heavy strike
-    attack3: 450, // Combo attack
+    attack1: 1500, // Supports up to 1.5 second animations
+    attack2: 1500, // Supports up to 1.5 second animations
+    attack3: 1500, // Supports up to 1.5 second animations
   },
 
   // State animation durations

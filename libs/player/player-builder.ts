@@ -179,6 +179,12 @@ export class PlayerBuilder {
         jobConfig
       );
       systems.set('combat', combatSystem);
+
+      // Listen for job changes to update combat system
+      player.on('jobChanged', (newJob: string) => {
+        const newJobConfig = jobAttributesConfig.jobs[newJob] || jobAttributesConfig.jobs.soldier;
+        combatSystem.setPlayerJob(newJob, newJobConfig);
+      });
     }
 
     if (this.enabledSystems.has('animations')) {

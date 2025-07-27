@@ -27,6 +27,7 @@ export class SyncManager {
 
   // State synchronization
   private currentPlayerState: PlayerState = { tag: 'Idle' };
+  private currentPlayerJob: string = 'soldier';
 
   // Configuration
   private config: SyncConfig;
@@ -49,6 +50,19 @@ export class SyncManager {
       console.error('❌ SyncManager: PlayerQueryService singleton not available');
     }
 
+    // Get initial player data to set current job
+    if (connection.identity) {
+      for (const player of connection.db.player.iter()) {
+        if (player.identity.toHexString() === connection.identity.toHexString()) {
+          console.log('[SyncManager] Found current player, job:', player.job);
+          if (player.job) {
+            this.currentPlayerJob = player.job;
+          }
+          break;
+        }
+      }
+    }
+
     // Set up position reconciliation monitoring
     this.setupPositionReconciliation();
   }
@@ -58,21 +72,33 @@ export class SyncManager {
 
     // Subscribe to player position updates from server
     this.dbConnection.db.player.onUpdate((_ctx, _oldPlayer, newPlayer) => {
+      console.log('[SyncManager] Player update received, identity:', newPlayer.identity.toHexString());
       // Only process updates for the current player
       if (
         this.dbConnection &&
         this.dbConnection.identity &&
         newPlayer.identity.toHexString() === this.dbConnection.identity.toHexString()
       ) {
+        console.log('[SyncManager] Update is for current player');
         this.handleServerPositionUpdate(newPlayer);
+      } else {
+        console.log('[SyncManager] Update is for different player');
       }
     });
   }
 
   private handleServerPositionUpdate(serverPlayer: ServerPlayer): void {
+    console.log('[SyncManager] handleServerPositionUpdate called, job:', serverPlayer.job, 'current:', this.currentPlayerJob);
+    
     // Skip reconciliation if player is dead - let death monitor handle respawn positioning
     if (serverPlayer.state.tag === 'Dead' || serverPlayer.currentHp <= 0) {
       return;
+    }
+
+    // Check for job change
+    if (serverPlayer.job && serverPlayer.job !== this.currentPlayerJob) {
+      console.log('[SyncManager] Job change detected:', this.currentPlayerJob, '->', serverPlayer.job);
+      this.handleJobChange(serverPlayer.job);
     }
 
     if (typeof serverPlayer.x === 'number' && typeof serverPlayer.y === 'number') {
@@ -86,6 +112,29 @@ export class SyncManager {
         this.updateLastSyncedPosition(reconciledPos.x, reconciledPos.y);
       });
     }
+  }
+
+  private handleJobChange(newJob: string): void {
+    console.log(`[SyncManager] handleJobChange: Job changing from ${this.currentPlayerJob} to ${newJob}`);
+    this.currentPlayerJob = newJob;
+
+    // Update player texture/sprite
+    console.log('[SyncManager] Setting texture to:', newJob);
+    this.player.setTexture(newJob);
+    
+    // Reset animation to idle for the new job
+    const animKey = `${newJob}_idle`;
+    console.log('[SyncManager] Looking for animation:', animKey);
+    if (this.player.scene.anims.exists(animKey)) {
+      console.log('[SyncManager] Playing animation:', animKey);
+      this.player.play(animKey);
+    } else {
+      console.log('[SyncManager] Animation not found:', animKey);
+    }
+
+    // Emit event for other systems to handle job change
+    this.player.emit('jobChanged', newJob);
+    console.log('[SyncManager] Job change complete');
   }
 
   public syncPosition(time: number, facing: FacingDirection, forceSync: boolean = false): void {

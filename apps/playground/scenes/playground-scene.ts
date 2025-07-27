@@ -20,7 +20,7 @@ const sceneConfig: SceneConfig = {
   debug: {
     enabled: false, // Debug mode disabled
     shadow: false, // Shadow effect enabled independently
-    invulnerable: true, // Set to true to prevent player from taking damage (useful for testing)
+    invulnerable: false, // Set to true to prevent player from taking damage (useful for testing)
   },
   sprites: spriteConfig, // Pass sprite configuration
 };

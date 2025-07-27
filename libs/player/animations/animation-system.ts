@@ -101,7 +101,9 @@ export class AnimationSystem implements System {
 
     // Only change if different from current
     const currentKey = this.animationManager.getCurrentAnimation();
-    const targetKey = AnimationFactory.getAnimationKey('soldier', targetAnimationType);
+    // Use the current texture key instead of hardcoded 'soldier'
+    const spriteKey = this.player.texture.key;
+    const targetKey = AnimationFactory.getAnimationKey(spriteKey, targetAnimationType);
     if (targetKey !== currentKey) {
       this.animationManager.play(targetAnimationType);
     }
