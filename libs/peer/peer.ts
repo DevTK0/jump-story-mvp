@@ -22,15 +22,34 @@ export class Peer extends Phaser.GameObjects.Sprite {
   private targetPosition = { x: 0, y: 0 };
   private interpolationSpeed = PEER_CONFIG.interpolation.speed;
 
+  // Track current job for change detection
+  private currentJob: string;
+
   // State machine for animation management
   private stateMachine!: PeerStateMachine;
   private isDeathAnimationComplete = false;
+  
+  // Death animation last frames for different jobs
+  private static readonly DEATH_LAST_FRAMES: Record<string, number> = {
+    soldier: 57,
+    knight: 80,
+    wizard: 138,
+    archer: 63,
+    swordsman: 93,
+    'armored-axeman': 57,
+    'knight-templar': 104,
+    healer: 84,
+  };
 
   constructor(config: PeerConfig) {
-    // Create soldier sprite with initial frame
-    super(config.scene, config.playerData.x, config.playerData.y, 'soldier', 0);
+    // Create sprite with job texture
+    const job = config.playerData.job || 'swordsman';
+    super(config.scene, config.playerData.x, config.playerData.y, job, 0);
+    
+    this.logger.info(`🎮 Creating peer ${config.playerData.name} with job: ${job} (playerData.job: ${config.playerData.job})`);
 
     this.playerData = config.playerData;
+    this.currentJob = job;
 
     // Add to scene (no physics - peers are visual only)
     config.scene.add.existing(this);
@@ -48,10 +67,7 @@ export class Peer extends Phaser.GameObjects.Sprite {
     // Make interactive for click events
     // The sprite frame is 100x100 but the actual character is smaller
     // Set a hit area around the character body
-    this.setInteractive(
-      new Phaser.Geom.Rectangle(35, 25, 30, 50),
-      Phaser.Geom.Rectangle.Contains
-    );
+    this.setInteractive(new Phaser.Geom.Rectangle(35, 25, 30, 50), Phaser.Geom.Rectangle.Contains);
     this.setupContextMenu();
 
     // Initialize target position
@@ -101,8 +117,15 @@ export class Peer extends Phaser.GameObjects.Sprite {
 
   public playAnimation(animationKey: string): void {
     if (!this.scene.anims.exists(animationKey)) {
-      this.logger.warn(`Animation ${animationKey} does not exist for peer ${this.playerData.name}`);
-      return;
+      this.logger.warn(`Animation ${animationKey} does not exist for peer ${this.playerData.name} with job ${this.currentJob}`);
+      // Try fallback to soldier animation if job animation doesn't exist
+      const fallbackKey = animationKey.replace(this.currentJob, 'soldier');
+      if (this.scene.anims.exists(fallbackKey)) {
+        this.logger.warn(`Using fallback animation ${fallbackKey}`);
+        animationKey = fallbackKey;
+      } else {
+        return;
+      }
     }
 
     // Check animation types
@@ -120,32 +143,68 @@ export class Peer extends Phaser.GameObjects.Sprite {
     if (isAttackAnim) {
       // For attacks, always stop current animation and restart
       this.anims.stop();
-      this.play(animationKey);
-
-      // Listen for animation complete to transition back
-      this.once('animationcomplete', () => {
-        // Let state machine handle the transition
-        this.stateMachine.handleServerStateChange(this.playerData.state);
-      });
+      try {
+        this.play(animationKey);
+        
+        // Listen for animation complete to transition back
+        this.once('animationcomplete', () => {
+          // Let state machine handle the transition
+          this.stateMachine.handleServerStateChange(this.playerData.state);
+        });
+      } catch (error) {
+        this.logger.error(`Failed to play attack animation ${animationKey}:`, error);
+      }
     } else if (isDeathAnim) {
       // Death animation plays once and stops
-      this.play(animationKey);
+      try {
+        this.play(animationKey);
 
-      this.once('animationcomplete', (animation: any) => {
-        if (animation.key === animationKey) {
-          this.anims.stop();
-          this.setFrame(PEER_CONFIG.animation.soldierDeathLastFrame);
-          this.isDeathAnimationComplete = true;
-        }
-      });
+        this.once('animationcomplete', (animation: any) => {
+          if (animation.key === animationKey) {
+            this.anims.stop();
+            // Use job-specific death frame
+            const deathFrame = Peer.DEATH_LAST_FRAMES[this.currentJob] || PEER_CONFIG.animation.soldierDeathLastFrame;
+            this.setFrame(deathFrame);
+            this.isDeathAnimationComplete = true;
+          }
+        });
+      } catch (error) {
+        this.logger.error(`Failed to play death animation ${animationKey}:`, error);
+      }
     } else {
       // Regular animations (idle, walk, etc) - should loop
-      this.play(animationKey, true); // true for loop
+      try {
+        this.play(animationKey, true); // true for loop
+      } catch (error) {
+        this.logger.error(`Failed to play animation ${animationKey}:`, error);
+      }
     }
   }
 
   public resetDeathAnimation(): void {
     this.isDeathAnimationComplete = false;
+  }
+
+  private handleJobChange(newJob: string): void {
+    this.logger.info(
+      `🔄 handleJobChange: Peer ${this.playerData.name} job changed from ${this.currentJob} to ${newJob}`
+    );
+    this.currentJob = newJob;
+
+    // Check if texture exists
+    if (this.scene.textures.exists(newJob)) {
+      this.logger.info(`✅ Texture '${newJob}' exists, updating sprite`);
+      // Update texture to new job
+      this.setTexture(newJob);
+    } else {
+      this.logger.error(`❌ Texture '${newJob}' not found! Available textures:`, 
+        Array.from(this.scene.textures.list.keys()).filter(k => !k.startsWith('__')));
+      // Fallback to soldier if texture doesn't exist
+      this.setTexture('soldier');
+    }
+
+    // Force state machine to update animations with new job
+    this.stateMachine.forceAnimationUpdate();
   }
 
   private setupContextMenu(): void {
@@ -177,7 +236,18 @@ export class Peer extends Phaser.GameObjects.Sprite {
 
   public updateFromData(playerData: PlayerData): void {
     const previousState = this.playerData?.state?.tag;
+    const previousJob = this.currentJob;
     this.playerData = playerData;
+
+    this.logger.info(`🔄 Peer updateFromData: ${this.playerData.name} - job: ${playerData.job}, previousJob: ${previousJob}`);
+
+    // Check for job change
+    if (playerData.job && playerData.job !== previousJob) {
+      this.logger.info(`🎯 Job change detected for ${this.playerData.name}: ${previousJob} -> ${playerData.job}`);
+      this.handleJobChange(playerData.job);
+    } else {
+      this.logger.debug(`📍 No job change for ${this.playerData.name}: still ${playerData.job}`);
+    }
 
     // State machine will handle respawn animation reset
 

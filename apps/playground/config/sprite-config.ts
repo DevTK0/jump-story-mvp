@@ -64,6 +64,7 @@ export const jobSprites = {
       walk: { start: 15, end: 22, frameRate: 12 },
       attack1: { start: 30, end: 45, frameRate: 15 },
       attack2: { start: 75, end: 86, frameRate: 15 },
+      attack3: { start: 75, end: 86, frameRate: 15 }, // Using attack2 frames as fallback
       damaged: { start: 120, end: 123, frameRate: 15 },
       death: { start: 135, end: 138, frameRate: 8 },
     },
@@ -186,7 +187,7 @@ export const enemySprites = {
     frameHeight: SPRITE_SIZE,
     animations: {
       idle: { start: 0, end: 5, frameRate: 8 },
-      walk: { start: 9, end: 16, frameRate: 10 },
+      walk: { start: 11, end: 18, frameRate: 10 },
       attack1: { start: 18, end: 23, frameRate: 15 },
       attack2: { start: 27, end: 32, frameRate: 15 },
       damaged: { start: 36, end: 39, frameRate: 15 },
@@ -199,7 +200,7 @@ export const enemySprites = {
     frameHeight: SPRITE_SIZE,
     animations: {
       idle: { start: 0, end: 5, frameRate: 8 },
-      walk: { start: 9, end: 16, frameRate: 10 },
+      walk: { start: 11, end: 18, frameRate: 10 },
       attack1: { start: 18, end: 23, frameRate: 15 },
       attack2: { start: 27, end: 32, frameRate: 15 },
       damaged: { start: 36, end: 39, frameRate: 15 },
@@ -212,7 +213,7 @@ export const enemySprites = {
     frameHeight: SPRITE_SIZE,
     animations: {
       idle: { start: 0, end: 5, frameRate: 8 },
-      walk: { start: 9, end: 16, frameRate: 10 },
+      walk: { start: 8, end: 15, frameRate: 10 },
       attack1: { start: 18, end: 22, frameRate: 15 },
       attack2: { start: 27, end: 31, frameRate: 15 },
       damaged: { start: 36, end: 40, frameRate: 15 },
@@ -251,7 +252,7 @@ export const enemySprites = {
     frameHeight: SPRITE_SIZE,
     animations: {
       idle: { start: 0, end: 5, frameRate: 8 },
-      walk: { start: 9, end: 16, frameRate: 10 },
+      walk: { start: 12, end: 20, frameRate: 10 },
       attack1: { start: 18, end: 25, frameRate: 15 },
       attack2: { start: 27, end: 34, frameRate: 15 },
       damaged: { start: 36, end: 39, frameRate: 15 },

@@ -47,11 +47,21 @@ export class DbMetricsTracker {
     const tableNames = [
       'player',
       'enemy',
-      'enemyRoute',
       'enemyDamageEvent',
       'playerDamageEvent',
+      'job',
+      'jobAttack',
+      'jobPassive',
+      'playerCooldown',
+      'playerJob',
+      'playerLevel',
+      'playerMessage',
+      'spawn',
+      'spawnRoute',
       'cleanupDeadBodiesTimer',
+      'combatTimeoutTimer',
       'enemyPatrolTimer',
+      'messageCleanupTimer',
       'spawnEnemiesTimer',
     ];
 

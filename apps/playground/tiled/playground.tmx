@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="1" nextlayerid="12" nextobjectid="35">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="1" nextlayerid="12" nextobjectid="51">
  <editorsettings>
-  <export target="../../apps/playground/maps/playground.tmj" format="json"/>
+  <export target="../maps/playground.tmj" format="json"/>
  </editorsettings>
  <tileset firstgid="1" name="TX Tileset Ground" tilewidth="32" tileheight="32" tilecount="256" columns="16">
   <image source="../public/assets/textures/TX Tileset Ground.png" width="512" height="512"/>
@@ -14,14 +14,6 @@
   <object id="30" x="96" y="160" width="32" height="288"/>
  </objectgroup>
  <objectgroup id="11" name="Enemies">
-  <object id="31" name="orc 2" x="704" y="128" width="160" height="32">
-   <properties>
-    <property name="enemy" value="orc"/>
-    <property name="number" value="4"/>
-    <property name="spawn_interval" value="3"/>
-    <property name="type" value="spawn"/>
-   </properties>
-  </object>
   <object id="32" name="orc 1" x="128" y="416" width="832" height="32">
    <properties>
     <property name="enemy" value="orc"/>
@@ -30,11 +22,86 @@
     <property name="type" value="spawn"/>
    </properties>
   </object>
+  <object id="35" name="armored-orc" x="192" y="288" width="32" height="32">
+   <properties>
+    <property name="enemy" value="armored-orc"/>
+    <property name="number" value="1"/>
+    <property name="spawn_interval" value="60"/>
+    <property name="type" value="spawn"/>
+   </properties>
+  </object>
+  <object id="36" name="elite-orc" x="384" y="288" width="32" height="32">
+   <properties>
+    <property name="enemy" value="elite-orc"/>
+    <property name="number" value="1"/>
+    <property name="spawn_interval" value="60"/>
+    <property name="type" value="spawn"/>
+   </properties>
+  </object>
+  <object id="43" name="orc-rider" x="320" y="288" width="32" height="32">
+   <properties>
+    <property name="enemy" value="orc-rider"/>
+    <property name="number" value="1"/>
+    <property name="spawn_interval" value="60"/>
+    <property name="type" value="spawn"/>
+   </properties>
+  </object>
+  <object id="44" name="armored-skeleton" x="448" y="192" width="32" height="32">
+   <properties>
+    <property name="enemy" value="armored-skeleton"/>
+    <property name="number" value="1"/>
+    <property name="spawn_interval" value="60"/>
+    <property name="type" value="spawn"/>
+   </properties>
+  </object>
+  <object id="45" name="skeleton-archer" x="512" y="192" width="32" height="32">
+   <properties>
+    <property name="enemy" value="skeleton-archer"/>
+    <property name="number" value="1"/>
+    <property name="spawn_interval" value="60"/>
+    <property name="type" value="spawn"/>
+   </properties>
+  </object>
+  <object id="46" name="greatsword-skeleton" x="576" y="192" width="32" height="32">
+   <properties>
+    <property name="enemy" value="greatsword-skeleton"/>
+    <property name="number" value="1"/>
+    <property name="spawn_interval" value="60"/>
+    <property name="type" value="spawn"/>
+   </properties>
+  </object>
+  <object id="48" name="slime" x="704" y="128" width="32" height="32">
+   <properties>
+    <property name="enemy" value="slime"/>
+    <property name="number" value="1"/>
+    <property name="spawn_interval" value="60"/>
+    <property name="type" value="spawn"/>
+   </properties>
+  </object>
+  <object id="49" name="werewolf" x="768" y="128" width="32" height="32">
+   <properties>
+    <property name="enemy" value="werewolf"/>
+    <property name="number" value="1"/>
+    <property name="spawn_interval" value="60"/>
+    <property name="type" value="spawn"/>
+   </properties>
+  </object>
+  <object id="50" name="werebear" x="832" y="128" width="32" height="32">
+   <properties>
+    <property name="enemy" value="werebear"/>
+    <property name="number" value="1"/>
+    <property name="spawn_interval" value="60"/>
+    <property name="type" value="spawn"/>
+   </properties>
+  </object>
  </objectgroup>
  <objectgroup id="6" name="Chests">
-  <object id="10" x="288" y="288" width="32" height="32">
+  <object id="47" name="skeleton" x="256" y="288" width="32" height="32">
    <properties>
-    <property name="type" value="chest"/>
+    <property name="enemy" value="skeleton"/>
+    <property name="number" value="1"/>
+    <property name="spawn_interval" value="60"/>
+    <property name="type" value="spawn"/>
    </properties>
   </object>
  </objectgroup>

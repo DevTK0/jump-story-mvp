@@ -57,7 +57,9 @@ export abstract class PeerState {
  */
 export class PeerIdleState extends PeerState {
   onEnter(_previousState?: PeerState): void {
-    this.peer.playAnimation('soldier-idle-anim');
+    const playerData = this.peer.getPlayerData();
+    const job = playerData.job || 'soldier';
+    this.peer.playAnimation(`${job}-idle-anim`);
   }
 
   onExit(_nextState?: PeerState): void {
@@ -86,7 +88,9 @@ export class PeerIdleState extends PeerState {
  */
 export class PeerWalkState extends PeerState {
   onEnter(_previousState?: PeerState): void {
-    this.peer.playAnimation('soldier-walk-anim');
+    const playerData = this.peer.getPlayerData();
+    const job = playerData.job || 'soldier';
+    this.peer.playAnimation(`${job}-walk-anim`);
   }
 
   onExit(_nextState?: PeerState): void {
@@ -115,8 +119,10 @@ export class PeerWalkState extends PeerState {
  */
 export class PeerClimbingState extends PeerState {
   onEnter(_previousState?: PeerState): void {
+    const playerData = this.peer.getPlayerData();
+    const job = playerData.job || 'soldier';
     // For now, use idle animation for climbing
-    this.peer.playAnimation('soldier-idle-anim');
+    this.peer.playAnimation(`${job}-idle-anim`);
   }
 
   onExit(_nextState?: PeerState): void {
@@ -145,20 +151,22 @@ export class PeerClimbingState extends PeerState {
  */
 export abstract class PeerAttackState extends PeerState {
   protected attackNumber: number;
-  protected animationKey: string;
 
   constructor(peer: Peer, stateMachine: PeerStateMachine, attackNumber: number) {
     super(peer, stateMachine);
     this.attackNumber = attackNumber;
-    this.animationKey = `soldier-attack${attackNumber}-anim`;
   }
 
   onEnter(_previousState?: PeerState): void {
+    const playerData = this.peer.getPlayerData();
+    const job = playerData.job || 'soldier';
+    const animationKey = `${job}-attack${this.attackNumber}-anim`;
+    
     // Play attack animation once
     console.log(
-      `PeerAttackState: Attempting to play animation ${this.animationKey} for attack ${this.attackNumber}`
+      `PeerAttackState: Attempting to play animation ${animationKey} for attack ${this.attackNumber}`
     );
-    this.peer.playAnimation(this.animationKey);
+    this.peer.playAnimation(animationKey);
 
     // Note: Peer class handles animation completion and state transitions
   }
@@ -232,7 +240,9 @@ export class PeerAttack3State extends PeerAttackState {
  */
 export class PeerDamagedState extends PeerState {
   onEnter(_previousState?: PeerState): void {
-    this.peer.playAnimation('soldier-damaged-anim');
+    const playerData = this.peer.getPlayerData();
+    const job = playerData.job || 'soldier';
+    this.peer.playAnimation(`${job}-damaged-anim`);
   }
 
   onExit(_nextState?: PeerState): void {
@@ -261,8 +271,10 @@ export class PeerDamagedState extends PeerState {
  */
 export class PeerDeadState extends PeerState {
   onEnter(_previousState?: PeerState): void {
+    const playerData = this.peer.getPlayerData();
+    const job = playerData.job || 'soldier';
     // Death animation is handled specially by Peer class
-    this.peer.playAnimation('soldier-death-anim');
+    this.peer.playAnimation(`${job}-death-anim`);
   }
 
   onExit(_nextState?: PeerState): void {

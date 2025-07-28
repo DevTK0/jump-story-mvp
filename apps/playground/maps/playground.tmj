@@ -42,38 +42,6 @@
          "objects":[
                 {
                  "height":32,
-                 "id":31,
-                 "name":"orc 2",
-                 "properties":[
-                        {
-                         "name":"enemy",
-                         "type":"string",
-                         "value":"orc"
-                        }, 
-                        {
-                         "name":"number",
-                         "type":"string",
-                         "value":"4"
-                        }, 
-                        {
-                         "name":"spawn_interval",
-                         "type":"string",
-                         "value":"3"
-                        }, 
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"spawn"
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":160,
-                 "x":704,
-                 "y":128
-                }, 
-                {
-                 "height":32,
                  "id":32,
                  "name":"orc 1",
                  "properties":[
@@ -103,6 +71,294 @@
                  "width":832,
                  "x":128,
                  "y":416
+                }, 
+                {
+                 "height":32,
+                 "id":35,
+                 "name":"armored-orc",
+                 "properties":[
+                        {
+                         "name":"enemy",
+                         "type":"string",
+                         "value":"armored-orc"
+                        }, 
+                        {
+                         "name":"number",
+                         "type":"string",
+                         "value":"1"
+                        }, 
+                        {
+                         "name":"spawn_interval",
+                         "type":"string",
+                         "value":"60"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"spawn"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":32,
+                 "x":192,
+                 "y":288
+                }, 
+                {
+                 "height":32,
+                 "id":36,
+                 "name":"elite-orc",
+                 "properties":[
+                        {
+                         "name":"enemy",
+                         "type":"string",
+                         "value":"elite-orc"
+                        }, 
+                        {
+                         "name":"number",
+                         "type":"string",
+                         "value":"1"
+                        }, 
+                        {
+                         "name":"spawn_interval",
+                         "type":"string",
+                         "value":"60"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"spawn"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":32,
+                 "x":384,
+                 "y":288
+                }, 
+                {
+                 "height":32,
+                 "id":43,
+                 "name":"orc-rider",
+                 "properties":[
+                        {
+                         "name":"enemy",
+                         "type":"string",
+                         "value":"orc-rider"
+                        }, 
+                        {
+                         "name":"number",
+                         "type":"string",
+                         "value":"1"
+                        }, 
+                        {
+                         "name":"spawn_interval",
+                         "type":"string",
+                         "value":"60"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"spawn"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":32,
+                 "x":320,
+                 "y":288
+                }, 
+                {
+                 "height":32,
+                 "id":44,
+                 "name":"armored-skeleton",
+                 "properties":[
+                        {
+                         "name":"enemy",
+                         "type":"string",
+                         "value":"armored-skeleton"
+                        }, 
+                        {
+                         "name":"number",
+                         "type":"string",
+                         "value":"1"
+                        }, 
+                        {
+                         "name":"spawn_interval",
+                         "type":"string",
+                         "value":"60"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"spawn"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":32,
+                 "x":448,
+                 "y":192
+                }, 
+                {
+                 "height":32,
+                 "id":45,
+                 "name":"skeleton-archer",
+                 "properties":[
+                        {
+                         "name":"enemy",
+                         "type":"string",
+                         "value":"skeleton-archer"
+                        }, 
+                        {
+                         "name":"number",
+                         "type":"string",
+                         "value":"1"
+                        }, 
+                        {
+                         "name":"spawn_interval",
+                         "type":"string",
+                         "value":"60"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"spawn"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":32,
+                 "x":512,
+                 "y":192
+                }, 
+                {
+                 "height":32,
+                 "id":46,
+                 "name":"greatsword-skeleton",
+                 "properties":[
+                        {
+                         "name":"enemy",
+                         "type":"string",
+                         "value":"greatsword-skeleton"
+                        }, 
+                        {
+                         "name":"number",
+                         "type":"string",
+                         "value":"1"
+                        }, 
+                        {
+                         "name":"spawn_interval",
+                         "type":"string",
+                         "value":"60"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"spawn"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":32,
+                 "x":576,
+                 "y":192
+                }, 
+                {
+                 "height":32,
+                 "id":48,
+                 "name":"slime",
+                 "properties":[
+                        {
+                         "name":"enemy",
+                         "type":"string",
+                         "value":"slime"
+                        }, 
+                        {
+                         "name":"number",
+                         "type":"string",
+                         "value":"1"
+                        }, 
+                        {
+                         "name":"spawn_interval",
+                         "type":"string",
+                         "value":"60"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"spawn"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":32,
+                 "x":704,
+                 "y":128
+                }, 
+                {
+                 "height":32,
+                 "id":49,
+                 "name":"werewolf",
+                 "properties":[
+                        {
+                         "name":"enemy",
+                         "type":"string",
+                         "value":"werewolf"
+                        }, 
+                        {
+                         "name":"number",
+                         "type":"string",
+                         "value":"1"
+                        }, 
+                        {
+                         "name":"spawn_interval",
+                         "type":"string",
+                         "value":"60"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"spawn"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":32,
+                 "x":768,
+                 "y":128
+                }, 
+                {
+                 "height":32,
+                 "id":50,
+                 "name":"werebear",
+                 "properties":[
+                        {
+                         "name":"enemy",
+                         "type":"string",
+                         "value":"werebear"
+                        }, 
+                        {
+                         "name":"number",
+                         "type":"string",
+                         "value":"1"
+                        }, 
+                        {
+                         "name":"spawn_interval",
+                         "type":"string",
+                         "value":"60"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"spawn"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":32,
+                 "x":832,
+                 "y":128
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -117,19 +373,34 @@
          "objects":[
                 {
                  "height":32,
-                 "id":10,
-                 "name":"",
+                 "id":47,
+                 "name":"skeleton",
                  "properties":[
+                        {
+                         "name":"enemy",
+                         "type":"string",
+                         "value":"skeleton"
+                        }, 
+                        {
+                         "name":"number",
+                         "type":"string",
+                         "value":"1"
+                        }, 
+                        {
+                         "name":"spawn_interval",
+                         "type":"string",
+                         "value":"60"
+                        }, 
                         {
                          "name":"type",
                          "type":"string",
-                         "value":"chest"
+                         "value":"spawn"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":32,
-                 "x":288,
+                 "x":256,
                  "y":288
                 }],
          "opacity":1,
@@ -484,7 +755,7 @@
          "y":0
         }],
  "nextlayerid":12,
- "nextobjectid":35,
+ "nextobjectid":51,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",
@@ -493,7 +764,7 @@
         {
          "columns":16,
          "firstgid":1,
-         "image":"..\/..\/..\/public\/assets\/textures\/TX Tileset Ground.png",
+         "image":"..\/public\/assets\/textures\/TX Tileset Ground.png",
          "imageheight":512,
          "imagewidth":512,
          "margin":0,
@@ -506,7 +777,7 @@
         {
          "columns":32,
          "firstgid":257,
-         "image":"..\/..\/..\/public\/assets\/textures\/TX Village Props.png",
+         "image":"..\/public\/assets\/textures\/TX Village Props.png",
          "imageheight":1024,
          "imagewidth":1024,
          "margin":0,
