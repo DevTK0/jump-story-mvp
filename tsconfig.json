@@ -23,7 +23,7 @@
       "@/*": ["libs/*"]
     }
   },
-  "include": ["apps/**/*", "libs/**/*", "test.ts", "scripts/clear-logs.ts", "vite-env.d.ts"],
+  "include": ["apps/**/*", "libs/**/*", "test/**/*", "test.ts", "scripts/clear-logs.ts", "vite-env.d.ts"],
   "exclude": ["node_modules", "dist"],
   "extends": "astro/tsconfigs/base"
 }
