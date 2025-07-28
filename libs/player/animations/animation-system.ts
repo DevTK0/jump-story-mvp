@@ -7,6 +7,7 @@ import { AnimationFactory } from '@/core/animations';
 import { createLogger, type ModuleLogger } from '@/core/logger';
 import { PlayerAnimationManager } from './player-animation-manager';
 import { PLAYER_ANIMATION_TIMINGS } from './config';
+import { getAttackAnimationDuration } from './animation-duration-helper';
 
 export class AnimationSystem implements System {
   private player: Player;
@@ -38,7 +39,9 @@ export class AnimationSystem implements System {
     const spriteKey = this.player.texture.key;
     const idleAnimKey = AnimationFactory.getAnimationKey(spriteKey, 'idle');
     if (!this.scene.anims.exists(idleAnimKey)) {
-      this.logger.warn(`Player animations not found for sprite '${spriteKey}'! They should be created at scene level.`);
+      this.logger.warn(
+        `Player animations not found for sprite '${spriteKey}'! They should be created at scene level.`
+      );
     }
   }
 
@@ -53,11 +56,9 @@ export class AnimationSystem implements System {
       this.animationManager.play(animationType, false);
 
       try {
-        // Use timing from centralized definitions
-        const attackDuration =
-          PLAYER_ANIMATION_TIMINGS.ATTACK_DURATIONS[
-            animationType as keyof typeof PLAYER_ANIMATION_TIMINGS.ATTACK_DURATIONS
-          ] || PLAYER_ANIMATION_TIMINGS.DEFAULT_ATTACK_DURATION;
+        // Use actual sprite animation duration
+        const jobKey = this.player.texture.key;
+        const attackDuration = getAttackAnimationDuration(jobKey, attackType);
         await this.delay(attackDuration);
         this.isPlayingAttackAnimation = false;
       } catch (error) {
@@ -79,7 +80,7 @@ export class AnimationSystem implements System {
       const currentKey = this.animationManager.getCurrentAnimation();
       const spriteKey = this.player.texture.key;
       const deathAnimKey = AnimationFactory.getAnimationKey(spriteKey, 'death');
-      
+
       if (currentKey !== deathAnimKey) {
         // Play death animation once
         this.animationManager.play('death', false);
@@ -200,7 +201,8 @@ export class AnimationSystem implements System {
       const knockbackForce = PLAYER_ANIMATION_TIMINGS.KNOCKBACK.FORCE;
 
       // For ground-based knockback, prioritize horizontal movement with small upward boost
-      const isGroundKnockback = Math.abs(knockbackDirection.y) < PLAYER_ANIMATION_TIMINGS.KNOCKBACK.GROUND_THRESHOLD;
+      const isGroundKnockback =
+        Math.abs(knockbackDirection.y) < PLAYER_ANIMATION_TIMINGS.KNOCKBACK.GROUND_THRESHOLD;
 
       if (isGroundKnockback) {
         // Ground knockback: moderate horizontal push + small upward boost

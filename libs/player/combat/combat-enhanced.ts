@@ -238,11 +238,8 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     this.player.setPlayerState({ isAttacking: true });
     this.attackCooldowns.set(attackNum, true);
 
-    // Transition to attack state
-    const attackStateName = `Attack${attackNum}`;
-    if (this.player.getStateMachine().canTransitionTo(attackStateName)) {
-      this.player.transitionToState(attackStateName);
-    }
+    // Don't transition to AttackState - enhanced combat manages its own timing
+    // Just set the attacking flag for other systems to check
 
     // Emit attack event using type-safe helper
     emitSceneEvent(this.scene, 'player:attacked', {

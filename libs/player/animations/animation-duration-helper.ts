@@ -19,13 +19,17 @@ export function getAttackAnimationDuration(jobKey: string, attackType: number): 
   const attackKey = `attack${attackType}` as keyof typeof animations;
   const attackAnim = animations[attackKey];
 
-  if (!attackAnim || typeof attackAnim !== 'object' || !('duration' in attackAnim)) {
-    console.warn(`Attack animation duration not found for ${jobKey}.${attackKey}`);
+  if (!attackAnim || typeof attackAnim !== 'object') {
+    console.warn(`Attack animation not found for ${jobKey}.${attackKey}`);
     // Fallback to config durations
     const fallbackKey = attackKey as keyof typeof PLAYER_ANIMATION_TIMINGS.ATTACK_DURATIONS;
     return PLAYER_ANIMATION_TIMINGS.ATTACK_DURATIONS[fallbackKey] || 
            PLAYER_ANIMATION_TIMINGS.DEFAULT_ATTACK_DURATION;
   }
 
-  return attackAnim.duration!;
+  // Calculate duration from frame data: (end - start + 1) / frameRate * 1000ms
+  const frameCount = attackAnim.end - attackAnim.start + 1;
+  const durationMs = Math.round((frameCount / attackAnim.frameRate) * 1000);
+  
+  return durationMs;
 }
