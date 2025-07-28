@@ -49,7 +49,10 @@ export class ChatManager {
 
     // Send message to backend if connection exists
     if (this.dbConnection && this.dbConnection.reducers) {
+      this.logger.info(`📤 ChatManager: Sending message to server: "${message}"`);
       this.dbConnection.reducers.sendPlayerMessage(message);
+    } else {
+      this.logger.error(`❌ ChatManager: No DB connection - cannot send message`);
     }
 
     // Check if it's a command

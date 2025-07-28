@@ -22,6 +22,7 @@ import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import * as dotenv from 'dotenv';
 import { jobAttributes } from '../apps/playground/config/job-attributes';
 import { playerLevelingCurve } from '../apps/playground/config/player-level';
+import { enemyAttributes } from '../apps/playground/config/enemy-attributes';
 
 // Load environment variables
 dotenv.config();
@@ -125,9 +126,8 @@ async function initializeSpacetime() {
 
     console.log('Populating enemy configurations...');
 
-    // Read and populate enemy config from JSON
-    const enemyAttributesPath = join(process.cwd(), 'apps/playground/config/enemy_attributes.json');
-    const enemyConfigContent = readFileSync(enemyAttributesPath, 'utf8');
+    // Populate enemy config from TypeScript config
+    const enemyConfigContent = JSON.stringify(enemyAttributes);
     await connection.reducers.populateEnemy(adminApiKey, enemyConfigContent);
 
     console.log('✅ Enemy configurations populated!');

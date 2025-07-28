@@ -159,7 +159,7 @@ export const jobAttributes: Record<string, JobConfig> = {
       },
     },
   },
-  armoredAxeman: {
+  'armored-axeman': {
     displayName: 'Armored Axeman',
     spriteKey: 'armored-axeman',
     defaultUnlocked: true,
@@ -187,7 +187,7 @@ export const jobAttributes: Record<string, JobConfig> = {
       },
     },
   },
-  knightTemplar: {
+  'knight-templar': {
     displayName: 'Knight Templar',
     spriteKey: 'knight-templar',
     defaultUnlocked: true,

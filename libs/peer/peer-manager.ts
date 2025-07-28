@@ -55,6 +55,12 @@ export class PeerManager {
 
   public setDbConnection(connection: DbConnection): void {
     this.dbConnection = connection;
+    this.logger.info(`🔗 PeerManager: Setting DB connection, connection exists: ${!!connection}, db exists: ${!!connection?.db}`);
+    
+    if (connection?.db) {
+      this.logger.info(`📊 Tables available: player=${!!connection.db.player}, playerMessage=${!!connection.db.playerMessage}`);
+    }
+    
     this.setupServerSubscriptions();
   }
 
@@ -129,7 +135,16 @@ export class PeerManager {
     this.dbConnection.db.player.onDelete(this.onPlayerDelete);
 
     // Subscribe to player messages
+    this.logger.info('🔌 PeerManager: Registering onPlayerMessageInsert handler');
     this.dbConnection.db.playerMessage.onInsert(this.onPlayerMessageInsert);
+    
+    // Test if we can see any messages in the table
+    this.logger.info(`📊 PeerManager: Current PlayerMessage count: ${this.dbConnection.db.playerMessage.count()}`);
+    
+    // List all current messages for debugging
+    for (const msg of this.dbConnection.db.playerMessage.iter()) {
+      this.logger.info(`📧 Existing message: ${msg.playerId.toHexString()} - "${msg.message}"`);
+    }
 
     // Store cleanup functions
     this.cleanupFunctions.push(() => {
@@ -207,25 +222,6 @@ export class PeerManager {
           this.loadProximityPeers();
         })
         .subscribe([playerQuery]);
-
-      // Also update message subscription for the new area
-      // Only subscribe to messages from the last 30 seconds (typical message display duration)
-      const messageAgeLimit = 30000; // 30 seconds in milliseconds
-      const cutoffTimeMicros = (Date.now() - messageAgeLimit) * 1000; // Convert to microseconds
-
-      // Build safe message proximity query
-      // Note: This is a more complex query that needs special handling
-      const messageQuery = buildProximityQuery(
-        'Player',
-        playerPosition.x,
-        playerPosition.y,
-        radius,
-        myIdentity
-      ).replace('SELECT * FROM Player', 
-        `SELECT pm.* FROM PlayerMessage pm JOIN Player p ON pm.player_id = p.identity`
-      ) + ` AND pm.sent_dt >= ${cutoffTimeMicros}i64`;
-
-      this.dbConnection.subscriptionBuilder().subscribe([messageQuery]);
     } catch (error) {
       this.logger.error('❌ PeerManager: Failed to update proximity subscription:', error);
     }
@@ -312,6 +308,8 @@ export class PeerManager {
 
     const radius = this.subscriptionConfig.proximityRadius;
     const myIdentityHex = this.localPlayerIdentity.toHexString();
+    
+    this.logger.info(`📬 PeerManager: Setting up proximity message subscription at (${playerPosition.x}, ${playerPosition.y}) with radius ${radius}`);
 
     try {
       // Subscribe to messages only from players within proximity using a JOIN
@@ -370,6 +368,7 @@ export class PeerManager {
           `📍 PeerManager: Player moved ${Math.round(distanceMoved)}px, updating proximity subscription`
         );
         this.updateProximitySubscription();
+        // Update message subscription for the new position
         this.setupProximityMessageSubscription();
       }
     } else {
@@ -560,8 +559,11 @@ export class PeerManager {
   };
 
   public onPlayerMessageInsert = (_ctx: EventContext, message: PlayerMessage): void => {
+    this.logger.info(`📨 PeerManager: Received PlayerMessage from ${message.playerId.toHexString()}: "${message.message}"`);
+    
     // Don't handle our own messages
     if (this.localPlayerIdentity && message.playerId.isEqual(this.localPlayerIdentity)) {
+      this.logger.debug(`📨 PeerManager: Ignoring own message`);
       return;
     }
 
@@ -583,15 +585,22 @@ export class PeerManager {
     const identityString = message.playerId.toHexString();
     const peer = this.peers.get(identityString);
 
+    this.logger.info(`📨 PeerManager: Looking for peer ${identityString}, found: ${peer ? 'yes' : 'no'}`);
+    this.logger.info(`📨 PeerManager: Current peers: ${Array.from(this.peers.keys()).join(', ')}`);
+
     if (peer && this.chatManager) {
       // Only show regular messages as speech bubbles, not commands
       if (message.messageType.tag === 'Message') {
+        this.logger.info(`💬 PeerManager: Showing speech bubble for peer ${identityString}`);
         // Show speech bubble above the peer
         this.chatManager.showSpeechBubble(peer, message.message);
       } else if (message.messageType.tag === 'Command' && message.message.startsWith('/')) {
+        this.logger.info(`🎮 PeerManager: Handling command for peer ${identityString}: ${message.message}`);
         // Handle emote commands for peers
         this.handlePeerCommand(peer, message.message);
       }
+    } else {
+      this.logger.warn(`⚠️ PeerManager: Cannot display message - peer not found or no chat manager`);
     }
     // Note: Messages from players not in proximity are intentionally ignored
     // They won't have a peer object and thus won't be displayed
