@@ -10,6 +10,7 @@ import type { JobConfig, Attack } from './attack-types';
 import { PlayerQueryService } from '../services/player-query-service';
 import { CombatValidationService } from '../services/combat-validation-service';
 import { CombatMessageDisplay } from './combat-message-display';
+import { getAttackAnimationDuration } from '../animations/animation-duration-helper';
 
 export interface AttackConfig {
   name: string;
@@ -262,11 +263,13 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     hitboxSprite: Phaser.Physics.Arcade.Sprite
   ): Promise<void> {
     try {
-      // Calculate phase durations based on animation
-      const totalDuration = config.cooldown * 0.6; // 60% for animation, 40% for cooldown
-      const startupMs = totalDuration * 0.3;
-      const activeMs = totalDuration * 0.4;
-      const recoveryMs = totalDuration * 0.3;
+      // Use actual sprite animation duration for all jobs
+      const animationDuration = getAttackAnimationDuration(this.playerJob, attackNum);
+      
+      // Calculate phase durations based on actual animation timing
+      const startupMs = animationDuration * 0.2;  // 20% for windup
+      const activeMs = animationDuration * 0.6;   // 60% for damage frames
+      const recoveryMs = animationDuration * 0.2; // 20% for recovery
 
       // Startup phase
       await this.delay(startupMs);
@@ -307,7 +310,15 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
 
       this.player.setPlayerState({ isAttacking: false });
 
-      // Start cooldown timer
+      // Transition to appropriate state based on player movement
+      const body = this.player.body as Phaser.Physics.Arcade.Body;
+      if (Math.abs(body.velocity.x) > 0.1) {
+        this.player.transitionToState('Walk');
+      } else {
+        this.player.transitionToState('Idle');
+      }
+      
+      // Start cooldown timer for next attack availability
       this.startCooldown(attackNum, config.cooldown);
     } catch (error) {
       console.warn('Attack execution interrupted:', error);

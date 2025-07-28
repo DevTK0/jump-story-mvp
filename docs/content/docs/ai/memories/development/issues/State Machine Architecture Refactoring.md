@@ -5,7 +5,9 @@ permalink: issues/state-machine-architecture-refactoring
 ---
 
 # State Machine Architecture Refactoring
+# State Machine Architecture Refactoring
 
+**Status: Abandoned** - The refactoring proved too difficult to implement due to complex interdependencies between systems.
 ## Problem Summary
 The player state machine is being bypassed in multiple ways, causing bugs and making state management unpredictable:
 
@@ -63,3 +65,24 @@ class Attack1State extends PlayerState {
 
 ## Tags
 #architecture #state-machine #refactoring #technical-debt
+
+## Refactoring Outcome
+After attempting the refactoring, it became clear that the complexity of the current implementation made a full architectural overhaul impractical:
+
+### Challenges Encountered
+- **Deep System Coupling**: The state machine logic is deeply intertwined with multiple systems (Combat, Animation, Movement, Scene Events)
+- **Legacy Code Dependencies**: Too many existing features rely on the current bypass patterns
+- **Risk vs Reward**: The potential for introducing new bugs outweighed the benefits of cleaner architecture
+- **Time Investment**: The refactoring would require rewriting significant portions of the codebase
+
+### Current Approach
+Instead of a full refactoring, the team decided to:
+1. Document the existing bypass patterns for better understanding
+2. Add comments warning about state machine limitations
+3. Implement targeted fixes for specific bugs as they arise
+4. Consider incremental improvements rather than wholesale changes
+
+### Lessons Learned
+- Sometimes technical debt is too expensive to pay off immediately
+- Working with the existing architecture, despite its flaws, can be more pragmatic
+- Documentation of quirks and workarounds is valuable for future developers
