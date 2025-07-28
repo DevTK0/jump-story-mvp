@@ -25,6 +25,7 @@ export interface AnimationFrameConfig {
   end: number;
   frameRate: number;
   duration?: number; // Optional duration in milliseconds
+  repeat?: number;
 }
 
 export interface AnimationConfig {
@@ -101,7 +102,9 @@ export class AnimationFactory {
           spriteKey,
           frames: { start: config.start, end: config.end },
           frameRate: config.frameRate,
-          repeat: this.getDefaultRepeatForAnimationType(animationType),
+          repeat: config.repeat
+            ? config.repeat
+            : this.getDefaultRepeatForAnimationType(animationType),
         });
         createdAnimationKeys.push(animationKey);
       }
@@ -179,7 +182,6 @@ export class AnimationFactory {
     return this.registeredAnimations.get(key);
   }
 
-
   /**
    * Get default repeat value based on animation type
    */
@@ -233,7 +235,6 @@ export class AnimationFactory {
     }
     return false;
   }
-
 }
 
 /**
@@ -269,7 +270,6 @@ export class AnimationManager {
     this.currentAnimation = animationKey;
     return true;
   }
-
 
   /**
    * Stop current animation

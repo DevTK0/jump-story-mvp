@@ -40,8 +40,15 @@ export interface AreaAttack extends BaseAttack {
   effectSprite: string;
 }
 
+// Dash attack properties
+export interface DashAttack extends BaseAttack {
+  attackType: 'dash';
+  dashDistance: number;
+  dashSpeed: number;
+}
+
 // Discriminated union - TypeScript will enforce correct fields based on attackType
-export type Attack = StandardAttack | ProjectileAttack | AreaAttack;
+export type Attack = StandardAttack | ProjectileAttack | AreaAttack | DashAttack;
 
 // Passive ability interface
 export interface Passive {
@@ -59,6 +66,10 @@ export function isProjectileAttack(attack: Attack): attack is ProjectileAttack {
 
 export function isAreaAttack(attack: Attack): attack is AreaAttack {
   return attack.attackType === 'area';
+}
+
+export function isDashAttack(attack: Attack): attack is DashAttack {
+  return attack.attackType === 'dash';
 }
 
 // Resistance values for different damage types

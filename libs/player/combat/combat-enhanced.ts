@@ -15,7 +15,7 @@ import { getAttackAnimationDuration } from '../animations/animation-duration-hel
 export interface AttackConfig {
   name: string;
   damage: number;
-  attackType: 'standard' | 'projectile' | 'area';
+  attackType: 'standard' | 'projectile' | 'area' | 'dash';
   cooldown: number;
   critChance: number;
   knockback: number;
@@ -24,6 +24,8 @@ export interface AttackConfig {
   projectileSpeed?: number;
   projectileSize?: number;
   radius?: number;
+  dashDistance?: number;
+  dashSpeed?: number;
 }
 
 export class CombatSystemEnhanced extends BaseDebugRenderer implements System, IDebuggable {
@@ -117,17 +119,20 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
   }
 
   private initializeHitboxes(): void {
-    // Create hitbox sprites for each standard attack
+    // Create hitbox sprites for each attack (standard and dash)
     for (let i = 1; i <= 3; i++) {
       const attackConfig = this.jobConfig.attacks[`attack${i}` as keyof typeof this.jobConfig.attacks];
-      if (attackConfig && attackConfig.attackType === 'standard') {
+      if (attackConfig && (attackConfig.attackType === 'standard' || attackConfig.attackType === 'dash')) {
         const hitbox = this.scene.physics.add.sprite(-200, -200, '');
         // Will be sized dynamically during attack
 
         if (hitbox.body) {
-          hitbox.body.enable = false;
-          (hitbox.body as Phaser.Physics.Arcade.Body).immovable = true;
-          (hitbox.body as Phaser.Physics.Arcade.Body).setGravityY(0);
+          const body = hitbox.body as Phaser.Physics.Arcade.Body;
+          body.enable = false;
+          body.immovable = true;
+          body.setGravityY(0);
+          body.setAllowGravity(false);
+          body.moves = false;
         }
 
         hitbox.setVisible(false);
@@ -191,11 +196,16 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
       }
     }
 
-    // Handle standard attacks
-    if (attackConfig.attackType === 'standard') {
-      this.performStandardAttack(attackNum, attackConfig);
-    } else {
-      console.log(`Attack type ${attackConfig.attackType} not yet implemented`);
+    // Handle attack types
+    switch (attackConfig.attackType) {
+      case 'standard':
+        this.performStandardAttack(attackNum, attackConfig);
+        break;
+      case 'dash':
+        this.performDashAttack(attackNum, attackConfig);
+        break;
+      default:
+        console.log(`Attack type ${attackConfig.attackType} not yet implemented`);
     }
 
     return true;
@@ -254,6 +264,54 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     this.executeAttackPhases(attackNum, config, hitboxSprite);
   }
 
+  private performDashAttack(attackNum: number, config: Attack): void {
+    const facing = this.player.facingDirection;
+
+    // Get or create hitbox sprite
+    const hitboxSprite = this.hitboxSprites.get(attackNum);
+    if (!hitboxSprite) return;
+
+    // Type guard to ensure we have a dash attack
+    if (config.attackType !== 'dash') return;
+
+    // Get actual player body
+    const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
+
+    // Calculate hitbox dimensions (same as standard)
+    const hitboxWidth = playerBody.width + config.range;
+    const hitboxHeight = playerBody.height;
+
+    // Calculate hitbox position
+    const playerCenterX = playerBody.x + playerBody.halfWidth;
+    const playerCenterY = playerBody.y + playerBody.halfHeight;
+    const hitboxCenterX = playerCenterX + (facing * config.range / 2);
+    
+    // Update hitbox sprite position
+    hitboxSprite.setPosition(hitboxCenterX, playerCenterY);
+
+    // Update physics body size and offset
+    if (hitboxSprite.body) {
+      const body = hitboxSprite.body as Phaser.Physics.Arcade.Body;
+      body.setSize(hitboxWidth, hitboxHeight);
+    }
+
+    // Update player state
+    this.player.setPlayerState({ isAttacking: true, isDashing: true });
+    this.attackCooldowns.set(attackNum, true);
+
+    // Emit attack event
+    emitSceneEvent(this.scene, 'player:attacked', {
+      type: 'dash',
+      direction: facing,
+      attackType: attackNum,
+      damage: config.damage,
+      critChance: config.critChance,
+    });
+
+    // Execute dash attack phases (with dash movement)
+    this.executeDashAttackPhases(attackNum, config, hitboxSprite);
+  }
+
   private async executeAttackPhases(
     attackNum: number,
     config: AttackConfig,
@@ -284,12 +342,14 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
         
         hitboxSprite.setPosition(hitboxCenterX, playerCenterY);
         
-        hitboxSprite.body.enable = true;
         const body = hitboxSprite.body as Phaser.Physics.Arcade.Body;
         body.reset(hitboxCenterX, playerCenterY);
+        body.enable = true;
         // Ensure physics properties are maintained after reset
         body.setGravityY(0);
+        body.setAllowGravity(false);
         body.immovable = true;
+        body.moves = false;
       }
 
       // Damage is handled directly by collision detection
@@ -335,6 +395,97 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     });
   }
 
+  private async executeDashAttackPhases(
+    attackNum: number,
+    config: Attack,
+    hitboxSprite: Phaser.Physics.Arcade.Sprite
+  ): Promise<void> {
+    // Type guard to ensure we have a dash attack
+    if (config.attackType !== 'dash') return;
+
+    try {
+      const animationDuration = getAttackAnimationDuration(this.playerJob, attackNum);
+      
+      // Ensure minimum duration for dash attacks
+      const MIN_DASH_DURATION = 800; // Minimum 800ms for dash attacks
+      const effectiveDuration = Math.max(animationDuration, MIN_DASH_DURATION);
+      
+      // Calculate phase durations
+      const startupMs = effectiveDuration * 0.15;  // 15% for windup
+      const dashMs = effectiveDuration * 0.5;      // 50% for dash movement
+      const activeMs = effectiveDuration * 0.2;    // 20% for damage frames
+      const recoveryMs = effectiveDuration * 0.15; // 15% for recovery
+
+      // Startup phase
+      await this.delay(startupMs);
+
+      // Store original velocity
+      const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
+      const originalVelocityX = playerBody.velocity.x;
+      const facing = this.player.facingDirection;
+
+      // Start dash movement
+      const dashVelocity = config.dashSpeed * facing;
+      playerBody.setVelocityX(dashVelocity);
+
+      // Enable hitbox during dash
+      if (hitboxSprite.body) {
+        const body = hitboxSprite.body as Phaser.Physics.Arcade.Body;
+        // Reset body before enabling to clear any accumulated velocity
+        body.reset(hitboxSprite.x, hitboxSprite.y);
+        body.enable = true;
+        body.setGravityY(0);
+        body.setAllowGravity(false);
+        body.immovable = true;
+        body.moves = false; // Prevent physics from moving the hitbox
+      }
+
+      // Dash duration - update hitbox position during dash
+      const dashSteps = 10;
+      const stepDelay = dashMs / dashSteps;
+      
+      for (let i = 0; i < dashSteps; i++) {
+        // Update hitbox position to follow player
+        const playerCenterX = playerBody.x + playerBody.halfWidth;
+        const playerCenterY = playerBody.y + playerBody.halfHeight;
+        const hitboxCenterX = playerCenterX + (facing * config.range / 2);
+        
+        hitboxSprite.setPosition(hitboxCenterX, playerCenterY);
+        
+        await this.delay(stepDelay);
+      }
+
+      // Active phase (damage still happening)
+      await this.delay(activeMs);
+
+      // Disable hitbox
+      if (hitboxSprite.body) {
+        hitboxSprite.body.enable = false;
+      }
+
+      // Restore original velocity (or stop if player was stationary)
+      playerBody.setVelocityX(Math.abs(originalVelocityX) < 10 ? 0 : originalVelocityX);
+
+      // Recovery phase
+      await this.delay(recoveryMs);
+
+      this.player.setPlayerState({ isAttacking: false, isDashing: false });
+
+      // Transition to appropriate state
+      if (Math.abs(playerBody.velocity.x) > 0.1) {
+        this.player.transitionToState('Walk');
+      } else {
+        this.player.transitionToState('Idle');
+      }
+      
+      // Start cooldown timer
+      this.startCooldown(attackNum, config.cooldown);
+    } catch (error) {
+      console.warn('Dash attack execution interrupted:', error);
+      this.cleanupAttack(attackNum, hitboxSprite);
+    }
+  }
+
   private cleanupAttack(attackNum: number, hitboxSprite: Phaser.Physics.Arcade.Sprite): void {
     // Disable hitbox
     if (hitboxSprite.body) {
@@ -342,7 +493,7 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     }
 
     // Reset player state
-    this.player.setPlayerState({ isAttacking: false });
+    this.player.setPlayerState({ isAttacking: false, isDashing: false });
     this.attackCooldowns.set(attackNum, false);
   }
 

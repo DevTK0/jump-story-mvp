@@ -70,6 +70,7 @@ export class Player extends Phaser.GameObjects.Sprite implements PhysicsEntity {
       isAlive: true,
       isClimbing: false,
       isAttacking: false,
+      isDashing: false,
       canJump: true,
       facingDirection: 1,
     };
@@ -167,6 +168,10 @@ export class Player extends Phaser.GameObjects.Sprite implements PhysicsEntity {
 
   public get isAttacking(): boolean {
     return this.playerState.isAttacking;
+  }
+
+  public get isDashing(): boolean {
+    return this.playerState.isDashing;
   }
 
   public get isAlive(): boolean {

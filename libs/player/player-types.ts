@@ -3,6 +3,7 @@ import type { EntityState } from '../core/types';
 export interface PlayerState extends EntityState {
   isClimbing: boolean;
   isAttacking: boolean;
+  isDashing: boolean;
   canJump: boolean;
   facingDirection: 1 | -1;
 }

@@ -9,7 +9,7 @@ import type { Identity } from '@clockworklabs/spacetimedb-sdk';
 // Define all scene event types
 export interface SceneEventMap {
   'player:attacked': {
-    type: 'melee' | 'ranged' | 'standard';
+    type: 'melee' | 'ranged' | 'standard' | 'dash';
     direction: number;
     attackType: number;
     damage?: number;
