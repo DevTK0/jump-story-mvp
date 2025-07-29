@@ -54,7 +54,6 @@ export class SyncManager {
     if (connection.identity) {
       for (const player of connection.db.player.iter()) {
         if (player.identity.toHexString() === connection.identity.toHexString()) {
-          console.log('[SyncManager] Found current player, job:', player.job);
           if (player.job) {
             this.currentPlayerJob = player.job;
           }
@@ -72,24 +71,18 @@ export class SyncManager {
 
     // Subscribe to player position updates from server
     this.dbConnection.db.player.onUpdate((_ctx, _oldPlayer, newPlayer) => {
-      console.log('[SyncManager] Player update received, identity:', newPlayer.identity.toHexString());
       // Only process updates for the current player
       if (
         this.dbConnection &&
         this.dbConnection.identity &&
         newPlayer.identity.toHexString() === this.dbConnection.identity.toHexString()
       ) {
-        console.log('[SyncManager] Update is for current player');
         this.handleServerPositionUpdate(newPlayer);
-      } else {
-        console.log('[SyncManager] Update is for different player');
       }
     });
   }
 
   private handleServerPositionUpdate(serverPlayer: ServerPlayer): void {
-    console.log('[SyncManager] handleServerPositionUpdate called, job:', serverPlayer.job, 'current:', this.currentPlayerJob);
-    
     // Skip reconciliation if player is dead - let death monitor handle respawn positioning
     if (serverPlayer.state.tag === 'Dead' || serverPlayer.currentHp <= 0) {
       return;
@@ -97,7 +90,6 @@ export class SyncManager {
 
     // Check for job change
     if (serverPlayer.job && serverPlayer.job !== this.currentPlayerJob) {
-      console.log('[SyncManager] Job change detected:', this.currentPlayerJob, '->', serverPlayer.job);
       this.handleJobChange(serverPlayer.job);
     }
 
@@ -115,26 +107,19 @@ export class SyncManager {
   }
 
   private handleJobChange(newJob: string): void {
-    console.log(`[SyncManager] handleJobChange: Job changing from ${this.currentPlayerJob} to ${newJob}`);
     this.currentPlayerJob = newJob;
 
     // Update player texture/sprite
-    console.log('[SyncManager] Setting texture to:', newJob);
     this.player.setTexture(newJob);
     
     // Reset animation to idle for the new job
     const animKey = `${newJob}_idle`;
-    console.log('[SyncManager] Looking for animation:', animKey);
     if (this.player.scene.anims.exists(animKey)) {
-      console.log('[SyncManager] Playing animation:', animKey);
       this.player.play(animKey);
-    } else {
-      console.log('[SyncManager] Animation not found:', animKey);
     }
 
     // Emit event for other systems to handle job change
     this.player.emit('jobChanged', newJob);
-    console.log('[SyncManager] Job change complete');
   }
 
   public syncPosition(time: number, facing: FacingDirection, forceSync: boolean = false): void {
@@ -178,7 +163,6 @@ export class SyncManager {
 
     // Don't sync non-death states if player is dead (HP <= 0)
     if (this.isPlayerDead() && newState.tag !== 'Dead') {
-      console.log(`Prevented state sync to ${newState.tag} - player is dead`);
       return;
     }
 
@@ -186,7 +170,6 @@ export class SyncManager {
     if (newState.tag !== this.currentPlayerState.tag) {
       this.dbConnection.reducers.updatePlayerState(newState);
       this.currentPlayerState = newState;
-      console.log(`Updated player state to: ${newState.tag}`);
     }
   }
 
@@ -201,7 +184,6 @@ export class SyncManager {
   public updateLastSyncedPosition(x: number, y: number): void {
     this.lastSyncedPosition.x = x;
     this.lastSyncedPosition.y = y;
-    console.log(`Updated last synced position to (${x}, ${y})`);
   }
 
   public getConfig(): Readonly<SyncConfig> {
@@ -224,8 +206,6 @@ export class SyncManager {
 
     const currentX = this.player.x;
     const currentY = this.player.y;
-
-    console.log(`Dead player landed - syncing final position (${currentX}, ${currentY})`);
 
     // Force sync the landing position
     this.dbConnection.reducers.updatePlayerPosition(currentX, currentY, facing);

@@ -144,13 +144,17 @@ export class Peer extends Phaser.GameObjects.Sprite {
       // For attacks, always stop current animation and restart
       this.anims.stop();
       try {
+        this.logger.info(`🎬 Playing attack animation: ${animationKey} for ${this.playerData.name}`);
         this.play(animationKey);
         
-        // Listen for animation complete to transition back
-        this.once('animationcomplete', () => {
-          // Let state machine handle the transition
-          this.stateMachine.handleServerStateChange(this.playerData.state);
-        });
+        // Log animation details
+        const anim = this.anims.currentAnim;
+        if (anim) {
+          this.logger.info(`📊 Animation details: frames=${anim.frames.length}, fps=${anim.frameRate}, duration=${anim.duration}ms`);
+        }
+        
+        // Don't transition immediately on animation complete anymore
+        // The attack state will handle duration and transition timing
       } catch (error) {
         this.logger.error(`Failed to play attack animation ${animationKey}:`, error);
       }
@@ -198,7 +202,7 @@ export class Peer extends Phaser.GameObjects.Sprite {
       this.setTexture(newJob);
     } else {
       this.logger.error(`❌ Texture '${newJob}' not found! Available textures:`, 
-        Array.from(this.scene.textures.list.keys()).filter(k => !k.startsWith('__')));
+        Object.keys(this.scene.textures.list).filter(k => !k.startsWith('__')));
       // Fallback to soldier if texture doesn't exist
       this.setTexture('soldier');
     }
@@ -288,9 +292,15 @@ export class Peer extends Phaser.GameObjects.Sprite {
 
     // Check if state changed and let state machine handle it
     if (previousState !== playerData.state.tag) {
-      this.logger.debug(
-        `Peer ${this.playerData.name} state changed from ${previousState} to ${playerData.state.tag}`
+      this.logger.info(
+        `🔄 Peer ${this.playerData.name} state changed from ${previousState} to ${playerData.state.tag}`
       );
+      
+      // Log attack states specifically
+      if (playerData.state.tag.startsWith('Attack')) {
+        this.logger.info(`⚔️ PEER ATTACK STATE: ${this.playerData.name} is attacking with ${playerData.state.tag}`);
+      }
+      
       this.stateMachine.handleServerStateChange(playerData.state);
     }
   }

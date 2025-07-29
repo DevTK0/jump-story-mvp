@@ -248,8 +248,11 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     this.player.setPlayerState({ isAttacking: true });
     this.attackCooldowns.set(attackNum, true);
 
-    // Don't transition to AttackState - enhanced combat manages its own timing
-    // Just set the attacking flag for other systems to check
+    // Transition to attack state so it syncs to server and peers can see it
+    const attackStateName = `Attack${attackNum}`;
+    if (this.player.getStateMachine().canTransitionTo(attackStateName)) {
+      this.player.getStateMachine().transitionTo(attackStateName);
+    }
 
     // Emit attack event using type-safe helper
     emitSceneEvent(this.scene, 'player:attacked', {
@@ -299,6 +302,12 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     this.player.setPlayerState({ isAttacking: true, isDashing: true });
     this.attackCooldowns.set(attackNum, true);
 
+    // Transition to attack state so it syncs to server and peers can see it
+    const attackStateName = `Attack${attackNum}`;
+    if (this.player.getStateMachine().canTransitionTo(attackStateName)) {
+      this.player.getStateMachine().transitionTo(attackStateName);
+    }
+
     // Emit attack event
     emitSceneEvent(this.scene, 'player:attacked', {
       type: 'dash',
@@ -319,7 +328,13 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
   ): Promise<void> {
     try {
       // Use actual sprite animation duration for all jobs
-      const animationDuration = getAttackAnimationDuration(this.playerJob, attackNum);
+      let animationDuration: number;
+      try {
+        animationDuration = getAttackAnimationDuration(this.playerJob, attackNum);
+      } catch (error) {
+        console.error(`Failed to get attack animation duration for ${this.playerJob} attack${attackNum}:`, error);
+        animationDuration = 300; // Fallback duration
+      }
       
       // Calculate phase durations based on actual animation timing
       const startupMs = animationDuration * 0.2;  // 20% for windup
@@ -369,10 +384,14 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
 
       // Transition to appropriate state based on player movement
       const body = this.player.body as Phaser.Physics.Arcade.Body;
-      if (Math.abs(body.velocity.x) > 0.1) {
-        this.player.transitionToState('Walk');
-      } else {
-        this.player.transitionToState('Idle');
+      const transitioned = Math.abs(body.velocity.x) > 0.1
+        ? this.player.transitionToState('Walk')
+        : this.player.transitionToState('Idle');
+      
+      if (!transitioned) {
+        console.warn(`Failed to transition from attack state after standard attack ${attackNum}`);
+        // Force transition to idle if normal transition fails
+        this.player.getStateMachine().transitionTo('Idle');
       }
       
       // Start cooldown timer for next attack availability
@@ -404,7 +423,13 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     if (config.attackType !== 'dash') return;
 
     try {
-      const animationDuration = getAttackAnimationDuration(this.playerJob, attackNum);
+      let animationDuration: number;
+      try {
+        animationDuration = getAttackAnimationDuration(this.playerJob, attackNum);
+      } catch (error) {
+        console.error(`Failed to get attack animation duration for ${this.playerJob} attack${attackNum}:`, error);
+        animationDuration = 300; // Fallback duration
+      }
       
       // Ensure minimum duration for dash attacks
       const MIN_DASH_DURATION = 800; // Minimum 800ms for dash attacks
@@ -472,10 +497,14 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
       this.player.setPlayerState({ isAttacking: false, isDashing: false });
 
       // Transition to appropriate state
-      if (Math.abs(playerBody.velocity.x) > 0.1) {
-        this.player.transitionToState('Walk');
-      } else {
-        this.player.transitionToState('Idle');
+      const transitioned = Math.abs(playerBody.velocity.x) > 0.1 
+        ? this.player.transitionToState('Walk')
+        : this.player.transitionToState('Idle');
+      
+      if (!transitioned) {
+        console.warn(`Failed to transition from attack state after dash attack ${attackNum}`);
+        // Force transition to idle if normal transition fails
+        this.player.getStateMachine().transitionTo('Idle');
       }
       
       // Start cooldown timer

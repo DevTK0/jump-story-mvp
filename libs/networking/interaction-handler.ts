@@ -135,7 +135,6 @@ export class InteractionHandler {
       // Check for invulnerability from scene config
       const sceneConfig = player.scene.data.get('sceneConfig') as any;
       if (sceneConfig?.debug?.invulnerable) {
-        this.logger.debug('Prevented damage - player is invulnerable (debug mode)');
         return;
       }
 

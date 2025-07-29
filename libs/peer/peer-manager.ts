@@ -150,7 +150,6 @@ export class PeerManager {
     this.cleanupFunctions.push(() => {
       if (this.dbConnection?.db) {
         // Note: SpaceTimeDB SDK doesn't provide removeListener methods yet
-        console.log('PeerManager: Cleanup would remove player and message listeners here');
       }
     });
 
@@ -175,7 +174,6 @@ export class PeerManager {
     this.cleanupFunctions.push(() => {
       if (this.dbConnection?.db) {
         // Note: SpaceTimeDB SDK doesn't provide removeListener methods yet
-        console.log('PeerManager: Cleanup would remove targeted peer listeners here');
       }
     });
   }

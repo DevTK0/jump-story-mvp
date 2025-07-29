@@ -177,8 +177,7 @@ export class ChatManager {
         this.playEmote('zzz');
         break;
       default:
-        // Unknown command - you could show an error message or just ignore
-        console.log(`Unknown command: ${commandName}`);
+        // Unknown command - silently ignore
         break;
     }
   }

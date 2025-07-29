@@ -107,7 +107,6 @@ export class SpriteConfigLoader {
    */
   public loadSprite(scene: Scene, spriteKey: string, definition: SpriteDefinition): void {
     if (this.loadedSprites.has(spriteKey)) {
-      console.log(`Sprite '${spriteKey}' already loaded, skipping`);
       return;
     }
 

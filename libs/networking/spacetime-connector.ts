@@ -99,8 +99,6 @@ export class SpacetimeConnector {
 
         // Store auth token
         localStorage.setItem('auth_token', token);
-        console.log('Connected to SpacetimeDB with identity:', identity.toHexString());
-
         // Set up subscriptions based on configuration
         this.setupSubscriptions(conn);
 
@@ -112,7 +110,6 @@ export class SpacetimeConnector {
 
       const onDisconnect = () => {
         clearTimeout(timeout);
-        console.log('Disconnected from SpacetimeDB');
         this.connection = null;
         this.identity = null;
         this.callbacks.onDisconnect?.();
@@ -152,7 +149,6 @@ export class SpacetimeConnector {
 
   private setupSubscriptions(conn: DbConnection): void {
     if (this.subscriptionConfig.skipAutoSubscribe) {
-      console.log('Skipping automatic subscriptions - manual subscription management enabled');
       return;
     }
 
@@ -161,7 +157,6 @@ export class SpacetimeConnector {
 
     // Subscribe to specific tables if configured
     if (this.subscriptionConfig.tables && this.subscriptionConfig.tables.length > 0) {
-      console.log('Subscribing to specific tables:', this.subscriptionConfig.tables);
       // SpaceTimeDB doesn't support selective table subscriptions directly,
       // so we need to use queries
       const queries = this.subscriptionConfig.tables.map(table => `SELECT * FROM ${table}`);
@@ -169,7 +164,6 @@ export class SpacetimeConnector {
     } 
     // Subscribe to custom queries if configured
     else if (this.subscriptionConfig.queries && this.subscriptionConfig.queries.length > 0) {
-      console.log('Subscribing with custom queries');
       builder.subscribe(this.subscriptionConfig.queries);
     }
     // If no specific configuration, warn about using subscribeToAllTables
@@ -184,7 +178,6 @@ export class SpacetimeConnector {
   }
 
   private handleSubscriptionApplied(ctx: SubscriptionEventContext): void {
-    console.log('Subscription applied!');
     this.callbacks.onSubscriptionApplied?.(ctx);
   }
 
@@ -217,7 +210,6 @@ export class SpacetimeConnector {
       // Notify disconnect callback if we were connected
       if (wasConnected) {
         this.callbacks.onDisconnect?.();
-        console.log('SpacetimeConnector: Disconnected and cleared references');
       }
     }
   }

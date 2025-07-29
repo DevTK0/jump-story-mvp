@@ -113,7 +113,6 @@ export class EnemySubscriptionManager {
         // Note: SpaceTimeDB SDK doesn't provide removeListener methods yet
         // This is a placeholder for when they add proper cleanup support
         // For now, we can only track that cleanup is needed
-        console.log('EnemySubscriptionManager: Cleanup would remove spawn table listeners here');
       }
     });
 
@@ -148,7 +147,6 @@ export class EnemySubscriptionManager {
     this.cleanupFunctions.push(() => {
       if (this.dbConnection?.db?.spawn) {
         // Note: SpaceTimeDB SDK doesn't provide removeListener methods yet
-        console.log('EnemySubscriptionManager: Cleanup would remove targeted enemy listeners here');
       }
     });
   }
@@ -208,9 +206,6 @@ export class EnemySubscriptionManager {
 
     const radius = this.config.proximityRadius;
 
-    console.log(
-      `🎯 EnemySubscriptionManager: Updating proximity subscription - Center: (${playerPosition.x}, ${playerPosition.y}), radius: ${radius}px`
-    );
 
     try {
       // Build safe proximity query
@@ -251,8 +246,6 @@ export class EnemySubscriptionManager {
       }
     }
 
-    console.log(`[EnemySubscriptionManager] Loading ${nearbyEnemies.length} enemies within proximity`);
-    
     // Notify about all enemies that should be loaded
     this.callbacks.onProximityLoad(nearbyEnemies);
   }
@@ -329,6 +322,5 @@ export class EnemySubscriptionManager {
     this.dbConnection = null;
     this.lastSubscriptionCenter = null;
 
-    console.log('EnemySubscriptionManager: Destroyed and cleaned up');
   }
 }

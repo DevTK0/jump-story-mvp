@@ -16,6 +16,11 @@ export function getAttackAnimationDuration(jobKey: string, attackType: number): 
   }
 
   const animations = jobSprites[jobKey].animations;
+  if (!animations) {
+    console.warn(`No animations found for job: ${jobKey}`);
+    return PLAYER_ANIMATION_TIMINGS.DEFAULT_ATTACK_DURATION;
+  }
+
   const attackKey = `attack${attackType}` as keyof typeof animations;
   const attackAnim = animations[attackKey];
 
@@ -25,6 +30,12 @@ export function getAttackAnimationDuration(jobKey: string, attackType: number): 
     const fallbackKey = attackKey as keyof typeof PLAYER_ANIMATION_TIMINGS.ATTACK_DURATIONS;
     return PLAYER_ANIMATION_TIMINGS.ATTACK_DURATIONS[fallbackKey] || 
            PLAYER_ANIMATION_TIMINGS.DEFAULT_ATTACK_DURATION;
+  }
+
+  // Ensure all required properties exist
+  if (typeof attackAnim.start !== 'number' || typeof attackAnim.end !== 'number' || typeof attackAnim.frameRate !== 'number') {
+    console.error(`Invalid animation data for ${jobKey}.${attackKey}:`, attackAnim);
+    return PLAYER_ANIMATION_TIMINGS.DEFAULT_ATTACK_DURATION;
   }
 
   // Calculate duration from frame data: (end - start + 1) / frameRate * 1000ms

@@ -167,7 +167,6 @@ export class AnimationSystem implements System {
   public playDamagedAnimation(knockbackDirection?: { x: number; y: number }): boolean {
     // Don't play damaged animation if already invulnerable
     if (this.isInvulnerable) {
-      console.log('🛡️ Damage blocked - player is invulnerable');
       return false;
     }
 

@@ -130,7 +130,6 @@ export class CombatSystem extends BaseDebugRenderer implements System, IDebuggab
 
     // Cannot attack when dead
     if (this.player.getStateMachine().isInState('Dead')) {
-      console.log('Prevented attack - player is dead');
       return false;
     }
 

@@ -151,6 +151,8 @@ export class PeerClimbingState extends PeerState {
  */
 export abstract class PeerAttackState extends PeerState {
   protected attackNumber: number;
+  protected attackDuration: number = 1500; // Match player attack duration
+  private startTime: number = 0;
 
   constructor(peer: Peer, stateMachine: PeerStateMachine, attackNumber: number) {
     super(peer, stateMachine);
@@ -161,22 +163,28 @@ export abstract class PeerAttackState extends PeerState {
     const playerData = this.peer.getPlayerData();
     const job = playerData.job || 'soldier';
     const animationKey = `${job}-attack${this.attackNumber}-anim`;
-    
+
+    // Record start time for duration tracking
+    this.startTime = Date.now();
+
     // Play attack animation once
-    console.log(
-      `PeerAttackState: Attempting to play animation ${animationKey} for attack ${this.attackNumber}`
-    );
     this.peer.playAnimation(animationKey);
 
-    // Note: Peer class handles animation completion and state transitions
+    // Note: Animation will complete quickly, but we'll stay in attack state for full duration
   }
 
   onExit(_nextState?: PeerState): void {
-    // Cleanup is handled by Peer class
+    // Reset start time
+    this.startTime = 0;
   }
 
   update(_time: number, _delta: number): void {
-    // Attack duration is managed by animation system
+    // Check if attack duration is over
+    const elapsed = Date.now() - this.startTime;
+    if (elapsed >= this.attackDuration) {
+      // Return to server-reported state
+      this.stateMachine.handleServerStateChange(this.peer.getPlayerData().state);
+    }
   }
 
   protected getAllowedTransitions(): string[] {

@@ -107,12 +107,6 @@ export class EnemyManager implements PhysicsEntity {
   }
 
   private spawnServerEnemy(serverEnemy: ServerEnemy): void {
-    console.log(`[EnemyManager] Spawning enemy:`, {
-      id: serverEnemy.spawnId,
-      type: serverEnemy.enemy,
-      position: { x: serverEnemy.x, y: serverEnemy.y },
-      state: serverEnemy.state.tag
-    });
     
     const sprite = this.spawnManager.spawnEnemy(serverEnemy);
 
@@ -165,7 +159,6 @@ export class EnemyManager implements PhysicsEntity {
     if (!sprite) return;
 
     if (!isInProximity) {
-      console.log(`[EnemyManager] Enemy ${serverEnemy.spawnId} out of proximity - despawning`);
       this.despawnServerEnemy(serverEnemy.spawnId);
       return;
     }

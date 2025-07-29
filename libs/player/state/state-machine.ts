@@ -56,7 +56,6 @@ export abstract class PlayerState {
  */
 export class IdleState extends PlayerState {
   onEnter(previousState?: PlayerState): void {
-    console.log(`Player entering Idle state from ${previousState?.getName() || 'none'}`);
     this.player.setPlayerState({
       isAttacking: false,
       isClimbing: false,
@@ -64,7 +63,6 @@ export class IdleState extends PlayerState {
   }
 
   onExit(nextState?: PlayerState): void {
-    console.log(`Player exiting Idle state to ${nextState?.getName() || 'none'}`);
   }
 
   update(_time: number, _delta: number): void {
@@ -89,7 +87,6 @@ export class IdleState extends PlayerState {
  */
 export class WalkState extends PlayerState {
   onEnter(previousState?: PlayerState): void {
-    console.log(`Player entering Walk state from ${previousState?.getName() || 'none'}`);
     this.player.setPlayerState({
       isAttacking: false,
       isClimbing: false,
@@ -97,7 +94,6 @@ export class WalkState extends PlayerState {
   }
 
   onExit(nextState?: PlayerState): void {
-    console.log(`Player exiting Walk state to ${nextState?.getName() || 'none'}`);
   }
 
   update(_time: number, _delta: number): void {
@@ -126,7 +122,6 @@ export class WalkState extends PlayerState {
  */
 export class JumpState extends PlayerState {
   onEnter(previousState?: PlayerState): void {
-    console.log(`Player entering Jump state from ${previousState?.getName() || 'none'}`);
     this.player.setPlayerState({
       isAttacking: false,
       isClimbing: false,
@@ -134,7 +129,6 @@ export class JumpState extends PlayerState {
   }
 
   onExit(nextState?: PlayerState): void {
-    console.log(`Player exiting Jump state to ${nextState?.getName() || 'none'}`);
   }
 
   update(_time: number, _delta: number): void {
@@ -169,7 +163,6 @@ export class JumpState extends PlayerState {
  */
 export class ClimbingState extends PlayerState {
   onEnter(previousState?: PlayerState): void {
-    console.log(`Player entering Climbing state from ${previousState?.getName() || 'none'}`);
     this.player.setPlayerState({
       isClimbing: true,
       isAttacking: false,
@@ -177,7 +170,6 @@ export class ClimbingState extends PlayerState {
   }
 
   onExit(nextState?: PlayerState): void {
-    console.log(`Player exiting Climbing state to ${nextState?.getName() || 'none'}`);
     this.player.setPlayerState({ isClimbing: false });
   }
 
@@ -219,9 +211,6 @@ export abstract class AttackState extends PlayerState {
   }
 
   onEnter(previousState?: PlayerState): void {
-    console.log(
-      `Player entering ${this.getName()} state from ${previousState?.getName() || 'none'}`
-    );
     this.player.setPlayerState({
       isAttacking: true,
       isClimbing: false,
@@ -230,7 +219,6 @@ export abstract class AttackState extends PlayerState {
   }
 
   onExit(nextState?: PlayerState): void {
-    console.log(`Player exiting ${this.getName()} state to ${nextState?.getName() || 'none'}`);
     this.player.setPlayerState({ isAttacking: false });
   }
 
@@ -302,7 +290,6 @@ export class DamagedState extends PlayerState {
   private startTime: number = 0;
 
   onEnter(previousState?: PlayerState): void {
-    console.log(`Player entering Damaged state from ${previousState?.getName() || 'none'}`);
     this.player.setPlayerState({
       isAttacking: false,
       isClimbing: false,
@@ -311,7 +298,6 @@ export class DamagedState extends PlayerState {
   }
 
   onExit(nextState?: PlayerState): void {
-    console.log(`Player exiting Damaged state to ${nextState?.getName() || 'none'}`);
   }
 
   update(_time: number, _delta: number): void {
@@ -347,7 +333,6 @@ export class DeadState extends PlayerState {
   private hasLanded: boolean = false;
 
   onEnter(previousState?: PlayerState): void {
-    console.log(`Player entering Dead state from ${previousState?.getName() || 'none'}`);
     this.player.setPlayerState({
       isAttacking: false,
       isClimbing: false,
@@ -360,7 +345,6 @@ export class DeadState extends PlayerState {
   }
 
   onExit(nextState?: PlayerState): void {
-    console.log(`Player exiting Dead state to ${nextState?.getName() || 'none'}`);
     // Re-enable collision detection when respawning
     this.hasLanded = false;
   }

@@ -99,19 +99,16 @@ export class SpacetimeConnectionBuilder {
    */
   public withDefaultCallbacks(): SpacetimeConnectionBuilder {
     return this.onConnect((_conn, identity, token) => {
-      console.log('Connected to SpacetimeDB:', {
-        identity: identity.toHexString(),
-        token: token.substring(0, 8) + '...',
-      });
+      // Connection established
     })
       .onDisconnect(() => {
-        console.log('Disconnected from SpacetimeDB');
+        // Disconnected
       })
       .onError((_ctx, error) => {
         console.error('SpacetimeDB connection error:', error);
       })
       .onSubscriptionApplied(() => {
-        console.log('SpacetimeDB subscription applied');
+        // Subscription applied
       });
   }
 
