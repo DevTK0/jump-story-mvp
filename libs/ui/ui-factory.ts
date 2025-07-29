@@ -7,6 +7,7 @@ import { PerformanceMetrics } from './performance/performance-metrics';
 import { DbMetricsTracker } from './performance/db-metrics-tracker';
 import { UI_CONFIG } from './ui-config';
 import { UIContextService, type UICreateConfig } from './services/ui-context-service';
+import { NameChangeDialog } from './menus/name-change-dialog';
 
 // Re-export UICreateConfig from UIContextService to maintain compatibility
 export type { UICreateConfig };
@@ -55,7 +56,29 @@ export class UIFactory {
     // Setup keyboard shortcuts
     this.setupKeyboardShortcuts(config);
     
+    // Check if player has default name and show name change dialog
+    this.checkAndShowNameChangeDialog(config);
+    
     this.logger.info('Game UI created successfully');
+  }
+  
+  private checkAndShowNameChangeDialog(config: UICreateConfig): void {
+    // Wait a bit for UI to be fully initialized
+    this.scene.time.delayedCall(500, () => {
+      // Check if player has default name
+      if (config.connection) {
+        for (const player of config.connection.db.player.iter()) {
+          if (player.identity.toHexString() === config.identity.toHexString()) {
+            if (player.name === 'Player') {
+              this.logger.info('Player has default name, showing name change dialog');
+              const nameChangeDialog = new NameChangeDialog(this.scene);
+              nameChangeDialog.show();
+            }
+            break;
+          }
+        }
+      }
+    });
   }
   
   /**

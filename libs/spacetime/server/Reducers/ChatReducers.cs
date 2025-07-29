@@ -15,6 +15,13 @@ public static partial class Module
             return;
         }
 
+        // Check if player is banned
+        if (player.Value.ban_status)
+        {
+            Log.Info($"Banned player {ctx.Sender} attempted to send message");
+            return;
+        }
+
         // Determine message type
         MessageType messageType = message.StartsWith("/") ? MessageType.Command : MessageType.Message;
         
@@ -44,6 +51,13 @@ public static partial class Module
         if (player is null)
         {
             Log.Info($"UpdatePlayerTyping: Player not found for {ctx.Sender}");
+            return;
+        }
+
+        // Check if player is banned
+        if (player.Value.ban_status)
+        {
+            Log.Info($"Banned player {ctx.Sender} attempted to update typing status");
             return;
         }
         

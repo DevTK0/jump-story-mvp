@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { BOTTOM_UI_CONFIG } from '../bottom-ui-config';
 import { createLogger, type ModuleLogger } from '@/core/logger';
 import { ClassSelectionMenu } from '@/ui/menus/class-selection-menu';
+import { NameChangeDialog } from '@/ui/menus/name-change-dialog';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { DbConnection } from '@/spacetime/client';
 import { UIContextService, UIEvents } from '../../services/ui-context-service';
@@ -21,6 +22,7 @@ export class MenuDropdown {
   private isVisible: boolean = false;
   private parentButton: Phaser.GameObjects.Container;
   private classSelectionMenu: ClassSelectionMenu | null = null;
+  private nameChangeDialog: NameChangeDialog | null = null;
   private playerIdentity: Identity | null = null;
   private dbConnection: DbConnection | null = null;
   private jobTableData: any[] = [];
@@ -207,10 +209,11 @@ export class MenuDropdown {
   }
 
   private showChangeNameDialog(): void {
-    this.logger.info('Change name dialog not yet implemented');
-    // TODO: Implement name change dialog
-    // This would typically show an input dialog where the user can enter a new name
-    // Then call a reducer on the server to update the player's name
+    if (!this.nameChangeDialog) {
+      // NameChangeDialog will get identity and connection from context
+      this.nameChangeDialog = new NameChangeDialog(this.scene);
+    }
+    this.nameChangeDialog.show();
   }
 
   // Keep these methods for backward compatibility but they won't be called anymore
@@ -231,5 +234,6 @@ export class MenuDropdown {
     this.items.destroy(true);
     this.container.destroy();
     this.classSelectionMenu?.destroy();
+    this.nameChangeDialog?.destroy();
   }
 }

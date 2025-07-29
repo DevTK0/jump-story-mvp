@@ -1,6 +1,7 @@
 using SpacetimeDB;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 public static partial class Module
 {
@@ -83,6 +84,20 @@ public static partial class Module
         var existingPlayer = ctx.Db.Player.identity.Find(ctx.Sender);
         if (existingPlayer is not null)
         {
+            // Check if player is banned
+            if (existingPlayer.Value.ban_status)
+            {
+                Log.Info($"Banned player {ctx.Sender} attempted to connect");
+                // Note: We can't prevent connection at this level, but we mark them as online
+                // The client should handle the ban status and disconnect
+                ctx.Db.Player.identity.Update(existingPlayer.Value with
+                {
+                    is_online = true,
+                    last_active = ctx.Timestamp
+                });
+                return;
+            }
+            
             // Player exists - just update their online status
             Log.Info($"Existing player {ctx.Sender} reconnected. Level: {existingPlayer.Value.level}, Experience: {existingPlayer.Value.experience}");
             ctx.Db.Player.identity.Update(existingPlayer.Value with
@@ -135,7 +150,8 @@ public static partial class Module
             job = defaultJob,
             in_combat = false,
             last_combat_time = ctx.Timestamp - TimeSpan.FromDays(1), // Initialize to old time
-            is_online = true
+            is_online = true,
+            ban_status = false // New players are not banned
         };
         ctx.Db.Player.Insert(newPlayer);
         
@@ -185,6 +201,13 @@ public static partial class Module
             return;
         }
 
+        // Check if player is banned
+        if (player.Value.ban_status)
+        {
+            Log.Info($"Banned player {ctx.Sender} attempted to update position");
+            return;
+        }
+
         var currentX = player.Value.x;
         var currentY = player.Value.y;
         
@@ -231,6 +254,13 @@ public static partial class Module
         if (player is null)
         {
             Log.Info($"Player not found: {ctx.Sender}");
+            return;
+        }
+
+        // Check if player is banned
+        if (player.Value.ban_status)
+        {
+            Log.Info($"Banned player {ctx.Sender} attempted to update state");
             return;
         }
 
@@ -285,6 +315,13 @@ public static partial class Module
         if (player == null)
         {
             Log.Info($"Player not found for damage: {ctx.Sender}");
+            return;
+        }
+
+        // Check if player is banned
+        if (player.Value.ban_status)
+        {
+            Log.Info($"Banned player {ctx.Sender} attempted to take damage");
             return;
         }
 
@@ -378,6 +415,13 @@ public static partial class Module
             return;
         }
 
+        // Check if player is banned
+        if (player.Value.ban_status)
+        {
+            Log.Info($"Banned player {ctx.Sender} attempted to respawn");
+            return;
+        }
+
         // Only allow respawn if player is dead (HP <= 0 or state is Dead)
         if (player.Value.current_hp > 0 && player.Value.state != PlayerState.Dead)
         {
@@ -432,6 +476,13 @@ public static partial class Module
         if (player == null)
         {
             Log.Info($"Player not found for teleport: {ctx.Sender}");
+            return;
+        }
+
+        // Check if player is banned
+        if (player.Value.ban_status)
+        {
+            Log.Info($"Banned player {ctx.Sender} attempted to teleport");
             return;
         }
 
@@ -521,6 +572,13 @@ public static partial class Module
             return;
         }
 
+        // Check if player is banned
+        if (player.Value.ban_status)
+        {
+            Log.Info($"Banned player {ctx.Sender} attempted to change job");
+            return;
+        }
+
         // Don't allow job change if player is dead
         if (player.Value.current_hp <= 0 || player.Value.state == PlayerState.Dead)
         {
@@ -597,6 +655,79 @@ public static partial class Module
         }
 
         Log.Info($"Player {ctx.Sender} changed job from {player.Value.job} to {newJobKey}. HP: {player.Value.max_hp} -> {newMaxHp}, Mana: {player.Value.max_mana} -> {newMaxMana}");
+    }
+
+    [Reducer]
+    public static void SetName(ReducerContext ctx, string newName)
+    {
+        var player = ctx.Db.Player.identity.Find(ctx.Sender);
+        if (player == null)
+        {
+            Log.Info($"Player not found for name change: {ctx.Sender}");
+            return;
+        }
+
+        // Check if player is banned
+        if (player.Value.ban_status)
+        {
+            Log.Info($"Banned player {ctx.Sender} attempted to set name");
+            return;
+        }
+
+        // Validate name length
+        if (string.IsNullOrWhiteSpace(newName))
+        {
+            Log.Info($"Player {ctx.Sender} attempted to set empty name");
+            return;
+        }
+
+        if (newName.Length > 20)
+        {
+            Log.Info($"Player {ctx.Sender} attempted to set name longer than 20 characters");
+            return;
+        }
+
+        // Trim the name to remove leading/trailing whitespace
+        newName = newName.Trim();
+
+        // Sanitize the name - only allow alphanumeric characters, spaces, hyphens, and underscores
+        newName = Regex.Replace(newName, @"[^a-zA-Z0-9\s\-_]", "");
+        
+        // Remove multiple consecutive spaces
+        newName = Regex.Replace(newName, @"\s+", " ");
+        
+        // Check if name is still valid after sanitization
+        if (string.IsNullOrWhiteSpace(newName))
+        {
+            Log.Info($"Player {ctx.Sender} attempted to set name that became empty after sanitization");
+            return;
+        }
+
+        // Check if the name is already taken by another player
+        foreach (var otherPlayer in ctx.Db.Player.Iter())
+        {
+            // Skip checking against self
+            if (otherPlayer.identity == ctx.Sender)
+            {
+                continue;
+            }
+
+            // Case-insensitive comparison to prevent similar names
+            if (string.Equals(otherPlayer.name, newName, StringComparison.OrdinalIgnoreCase))
+            {
+                Log.Info($"Player {ctx.Sender} attempted to set name '{newName}' which is already taken by {otherPlayer.identity}");
+                return;
+            }
+        }
+
+        // Update player name
+        ctx.Db.Player.identity.Update(player.Value with
+        {
+            name = newName,
+            last_active = ctx.Timestamp
+        });
+
+        Log.Info($"Player {ctx.Sender} changed name to: {newName}");
     }
 
     private static bool IsAttackState(PlayerState state)

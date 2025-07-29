@@ -55,6 +55,7 @@ export type Player = {
   inCombat: boolean,
   lastCombatTime: Timestamp,
   isOnline: boolean,
+  banStatus: boolean,
 };
 
 /**
@@ -86,6 +87,7 @@ export namespace Player {
       new ProductTypeElement("inCombat", AlgebraicType.createBoolType()),
       new ProductTypeElement("lastCombatTime", AlgebraicType.createTimestampType()),
       new ProductTypeElement("isOnline", AlgebraicType.createBoolType()),
+      new ProductTypeElement("banStatus", AlgebraicType.createBoolType()),
     ]);
   }
 

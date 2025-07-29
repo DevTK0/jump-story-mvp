@@ -59,9 +59,9 @@ export function buildProximityQuery(
     query += ` AND identity != ${escapeHexString(excludeIdentity)}`;
   }
 
-  // Filter for online players only when querying the Player table
+  // Filter for online and non-banned players only when querying the Player table
   if (tableName === 'Player') {
-    query += ` AND is_online = true`;
+    query += ` AND is_online = true AND ban_status = false`;
   }
 
   return query;

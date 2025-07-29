@@ -76,6 +76,8 @@ import { RespawnPlayer } from "./respawn_player_reducer.ts";
 export { RespawnPlayer };
 import { SendPlayerMessage } from "./send_player_message_reducer.ts";
 export { SendPlayerMessage };
+import { SetName } from "./set_name_reducer.ts";
+export { SetName };
 import { SpawnAllEnemies } from "./spawn_all_enemies_reducer.ts";
 export { SpawnAllEnemies };
 import { SpawnMissingEnemies } from "./spawn_missing_enemies_reducer.ts";
@@ -433,6 +435,10 @@ const REMOTE_MODULE = {
       reducerName: "SendPlayerMessage",
       argsType: SendPlayerMessage.getTypeScriptAlgebraicType(),
     },
+    SetName: {
+      reducerName: "SetName",
+      argsType: SetName.getTypeScriptAlgebraicType(),
+    },
     SpawnAllEnemies: {
       reducerName: "SpawnAllEnemies",
       argsType: SpawnAllEnemies.getTypeScriptAlgebraicType(),
@@ -512,6 +518,7 @@ export type Reducer = never
 | { name: "RecoverFromDamage", args: RecoverFromDamage }
 | { name: "RespawnPlayer", args: RespawnPlayer }
 | { name: "SendPlayerMessage", args: SendPlayerMessage }
+| { name: "SetName", args: SetName }
 | { name: "SpawnAllEnemies", args: SpawnAllEnemies }
 | { name: "SpawnMissingEnemies", args: SpawnMissingEnemies }
 | { name: "TeleportPlayer", args: TeleportPlayer }
@@ -840,6 +847,22 @@ export class RemoteReducers {
     this.connection.offReducer("SendPlayerMessage", callback);
   }
 
+  setName(newName: string) {
+    const __args = { newName };
+    let __writer = new BinaryWriter(1024);
+    SetName.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("SetName", __argsBuffer, this.setCallReducerFlags.setNameFlags);
+  }
+
+  onSetName(callback: (ctx: ReducerEventContext, newName: string) => void) {
+    this.connection.onReducer("SetName", callback);
+  }
+
+  removeOnSetName(callback: (ctx: ReducerEventContext, newName: string) => void) {
+    this.connection.offReducer("SetName", callback);
+  }
+
   spawnAllEnemies(adminApiKey: string) {
     const __args = { adminApiKey };
     let __writer = new BinaryWriter(1024);
@@ -1048,6 +1071,11 @@ export class SetReducerFlags {
   sendPlayerMessageFlags: CallReducerFlags = 'FullUpdate';
   sendPlayerMessage(flags: CallReducerFlags) {
     this.sendPlayerMessageFlags = flags;
+  }
+
+  setNameFlags: CallReducerFlags = 'FullUpdate';
+  setName(flags: CallReducerFlags) {
+    this.setNameFlags = flags;
   }
 
   spawnAllEnemiesFlags: CallReducerFlags = 'FullUpdate';

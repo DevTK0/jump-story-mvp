@@ -34,6 +34,13 @@ public static partial class Module
             return;
         }
 
+        // Check if player is banned
+        if (player.Value.ban_status)
+        {
+            Log.Info($"Banned player {ctx.Sender} attempted to attack");
+            return;
+        }
+
         if (player.Value.current_hp <= 0 || player.Value.state == PlayerState.Dead)
         {
             Log.Info($"Dead player {ctx.Sender} cannot attack");

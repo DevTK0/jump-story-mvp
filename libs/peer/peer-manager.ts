@@ -251,6 +251,11 @@ export class PeerManager {
         continue;
       }
 
+      // Skip banned players
+      if (player.banStatus) {
+        continue;
+      }
+
       const distance = Math.sqrt(
         Math.pow(player.x - playerPosition.x, 2) + Math.pow(player.y - playerPosition.y, 2)
       );
@@ -327,6 +332,8 @@ export class PeerManager {
                      WHERE p.identity != x'${myIdentityHex}'
                      AND p.x >= ${playerPosition.x - radius} AND p.x <= ${playerPosition.x + radius}
                      AND p.y >= ${playerPosition.y - radius} AND p.y <= ${playerPosition.y + radius}
+                     AND p.is_online = true
+                     AND p.ban_status = false
                      AND pm.sent_dt >= ${cutoffTimeMicros}i64`,
       ]);
 
@@ -433,6 +440,11 @@ export class PeerManager {
       return;
     }
 
+    // Skip banned players
+    if (playerData.banStatus) {
+      return;
+    }
+
     const identityString = playerData.identity.toHexString();
 
     // Don't create duplicate peers
@@ -486,12 +498,13 @@ export class PeerManager {
     const identityString = newPlayerData.identity.toHexString();
     const peer = this.peers.get(identityString);
 
-    // Handle offline players
-    if (!newPlayerData.isOnline) {
+    // Handle offline or banned players
+    if (!newPlayerData.isOnline || newPlayerData.banStatus) {
       if (peer) {
-        // Player went offline - remove their peer
+        // Player went offline or got banned - remove their peer
+        const reason = !newPlayerData.isOnline ? 'went offline' : 'was banned';
         this.logger.info(
-          `🚪 PeerManager: Removing peer ${newPlayerData.name} - player went offline`
+          `🚪 PeerManager: Removing peer ${newPlayerData.name} - player ${reason}`
         );
 
         // Clean up any chat UI elements for this peer
