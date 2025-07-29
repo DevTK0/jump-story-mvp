@@ -246,6 +246,11 @@ export class PeerManager {
         continue;
       }
 
+      // Skip offline players
+      if (!player.isOnline) {
+        continue;
+      }
+
       const distance = Math.sqrt(
         Math.pow(player.x - playerPosition.x, 2) + Math.pow(player.y - playerPosition.y, 2)
       );
@@ -423,6 +428,11 @@ export class PeerManager {
       return;
     }
 
+    // Skip offline players
+    if (!playerData.isOnline) {
+      return;
+    }
+
     const identityString = playerData.identity.toHexString();
 
     // Don't create duplicate peers
@@ -465,7 +475,7 @@ export class PeerManager {
 
   public onPlayerUpdate = (
     _ctx: EventContext,
-    _oldPlayerData: PlayerData,
+    oldPlayerData: PlayerData,
     newPlayerData: PlayerData
   ): void => {
     // Don't update local player
@@ -475,6 +485,25 @@ export class PeerManager {
 
     const identityString = newPlayerData.identity.toHexString();
     const peer = this.peers.get(identityString);
+
+    // Handle offline players
+    if (!newPlayerData.isOnline) {
+      if (peer) {
+        // Player went offline - remove their peer
+        this.logger.info(
+          `🚪 PeerManager: Removing peer ${newPlayerData.name} - player went offline`
+        );
+
+        // Clean up any chat UI elements for this peer
+        if (this.chatManager) {
+          this.chatManager.clearAllForEntity(peer);
+        }
+
+        peer.destroy();
+        this.peers.delete(identityString);
+      }
+      return;
+    }
 
     // Check proximity if using proximity subscription
     if (this.subscriptionConfig.useProximitySubscription) {

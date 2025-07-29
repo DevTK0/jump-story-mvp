@@ -79,7 +79,21 @@ public static partial class Module
     {
         Log.Info($"{ctx.Sender} just connected.");
 
-        // Create player with initial position and stats
+        // Check if player already exists
+        var existingPlayer = ctx.Db.Player.identity.Find(ctx.Sender);
+        if (existingPlayer is not null)
+        {
+            // Player exists - just update their online status
+            Log.Info($"Existing player {ctx.Sender} reconnected. Level: {existingPlayer.Value.level}, Experience: {existingPlayer.Value.experience}");
+            ctx.Db.Player.identity.Update(existingPlayer.Value with
+            {
+                is_online = true,
+                last_active = ctx.Timestamp
+            });
+            return;
+        }
+
+        // Create new player with initial position and stats
         var startingLevel = PlayerConstants.STARTING_LEVEL;
         var defaultJob = "soldier"; // Default job for new players
         
@@ -120,7 +134,8 @@ public static partial class Module
             is_typing = false,
             job = defaultJob,
             in_combat = false,
-            last_combat_time = ctx.Timestamp - TimeSpan.FromDays(1) // Initialize to old time
+            last_combat_time = ctx.Timestamp - TimeSpan.FromDays(1), // Initialize to old time
+            is_online = true
         };
         ctx.Db.Player.Insert(newPlayer);
         
@@ -145,21 +160,19 @@ public static partial class Module
     {
         Log.Info($"{ctx.Sender} disconnected.");
 
-        // Remove player from database when they disconnect
+        // Update player online status instead of deleting
         var player = ctx.Db.Player.identity.Find(ctx.Sender);
         if (player is not null)
         {
-            ctx.Db.Player.identity.Delete(ctx.Sender);
-            Log.Info($"Removed player {ctx.Sender} from database");
+            ctx.Db.Player.identity.Update(player.Value with
+            {
+                is_online = false,
+                last_active = ctx.Timestamp
+            });
+            Log.Info($"Player {ctx.Sender} marked as offline. Level: {player.Value.level}, Experience: {player.Value.experience}");
         }
         
-        // Remove player cooldowns
-        var playerCooldown = ctx.Db.PlayerCooldown.player_identity.Find(ctx.Sender);
-        if (playerCooldown is not null)
-        {
-            ctx.Db.PlayerCooldown.player_identity.Delete(ctx.Sender);
-            Log.Info($"Removed player cooldowns for {ctx.Sender}");
-        }
+        // Note: We keep player cooldowns in the database for when they reconnect
     }
 
     [Reducer]

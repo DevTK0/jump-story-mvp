@@ -190,9 +190,8 @@ export class ManagerRegistry {
     this.playerDamageManager.setDbConnection(connection);
     
     // Initialize peer manager with identity
-    // TEMPORARILY DISABLE PROXIMITY SUBSCRIPTIONS FOR DEBUGGING
     this.peerManager = new PeerManager(this.scene, {
-      useProximitySubscription: false, // Changed from true to debug chat messages
+      useProximitySubscription: true,
       proximityRadius: PROXIMITY_CONFIG.peer.defaultRadius,
       proximityUpdateInterval: PROXIMITY_CONFIG.peer.defaultUpdateInterval,
     });

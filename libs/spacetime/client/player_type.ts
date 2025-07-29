@@ -54,6 +54,7 @@ export type Player = {
   job: string,
   inCombat: boolean,
   lastCombatTime: Timestamp,
+  isOnline: boolean,
 };
 
 /**
@@ -84,6 +85,7 @@ export namespace Player {
       new ProductTypeElement("job", AlgebraicType.createStringType()),
       new ProductTypeElement("inCombat", AlgebraicType.createBoolType()),
       new ProductTypeElement("lastCombatTime", AlgebraicType.createTimestampType()),
+      new ProductTypeElement("isOnline", AlgebraicType.createBoolType()),
     ]);
   }
 

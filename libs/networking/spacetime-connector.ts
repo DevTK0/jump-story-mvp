@@ -1,6 +1,8 @@
 import { DbConnection, type ErrorContext, type SubscriptionEventContext } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 
+const CREDS_KEY = 'auth_token';
+
 // Connection-specific error types
 export class ConnectionError extends Error {
   public readonly code = 'CONNECTION_ERROR';
@@ -98,7 +100,7 @@ export class SpacetimeConnector {
         this.identity = identity;
 
         // Store auth token
-        localStorage.setItem('auth_token', token);
+        localStorage.setItem(CREDS_KEY, token);
         // Set up subscriptions based on configuration
         this.setupSubscriptions(conn);
 
@@ -135,9 +137,21 @@ export class SpacetimeConnector {
         reject(connectionError);
       };
 
-      DbConnection.builder()
+      // Get saved token from localStorage
+      const token = localStorage.getItem(CREDS_KEY);
+      
+      console.log('[SpacetimeConnector] Connecting with token:', token ? 'Found' : 'Not found');
+      
+      const builder = DbConnection.builder()
         .withUri(this.config.uri)
-        .withModuleName(this.config.moduleName)
+        .withModuleName(this.config.moduleName);
+      
+      // Add token if available
+      if (token) {
+        builder.withToken(token);
+      }
+      
+      builder
         .onConnect(onConnect)
         .onDisconnect(onDisconnect)
         .onConnectError(onConnectError)
@@ -205,12 +219,27 @@ export class SpacetimeConnector {
       this.connectionPromise = null;
       
       // Clear auth token
-      localStorage.removeItem('auth_token');
+      localStorage.removeItem(CREDS_KEY);
       
       // Notify disconnect callback if we were connected
       if (wasConnected) {
         this.callbacks.onDisconnect?.();
       }
     }
+  }
+
+  /**
+   * Clear the stored authentication token without disconnecting.
+   * Useful for forcing a fresh login on next connection.
+   */
+  public clearStoredToken(): void {
+    localStorage.removeItem(CREDS_KEY);
+  }
+
+  /**
+   * Check if there's a stored authentication token.
+   */
+  public hasStoredToken(): boolean {
+    return localStorage.getItem(CREDS_KEY) !== null;
   }
 }

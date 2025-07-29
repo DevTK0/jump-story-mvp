@@ -149,12 +149,12 @@ export class SpacetimeConnectionBuilder {
 
   /**
    * Subscribe to core tables required by multiple systems
-   * This includes Player, Job, PlayerJob, JobAttack, Spawn, Enemy, PlayerLevel, PlayerMessage, and damage event tables
+   * This includes Job, PlayerJob, JobAttack, Spawn, Enemy, PlayerLevel, PlayerMessage, and damage event tables
+   * Note: Player table is handled separately by PeerManager with proximity-based subscriptions
    */
   public subscribeToCoreTables(): SpacetimeConnectionBuilder {
     this.subscriptionConfig.skipAutoSubscribe = false;
     this.subscriptionConfig.tables = [
-      'Player', 
       'Job', 
       'PlayerJob', 
       'JobAttack',

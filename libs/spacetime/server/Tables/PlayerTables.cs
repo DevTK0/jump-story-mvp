@@ -25,6 +25,7 @@ public static partial class Module
         public string job; // Job key like "soldier", "knight", etc.
         public bool in_combat; // Whether player is currently in combat
         public Timestamp last_combat_time; // When player last entered combat or attacked/was attacked
+        public bool is_online; // Whether player is currently online
     }
 
     [Table(Name = "EnemyDamageEvent", Public = true)]

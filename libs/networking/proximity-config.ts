@@ -3,11 +3,11 @@
  */
 export const PROXIMITY_CONFIG = {
   enemy: {
-    defaultRadius: 800,
+    defaultRadius: 700,
     defaultUpdateInterval: 1000,
   },
   peer: {
-    defaultRadius: 800,
+    defaultRadius: 700,
     defaultUpdateInterval: 1000,
   },
 } as const;
