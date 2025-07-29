@@ -15,7 +15,7 @@ export class PlayerContextMenu {
   private background: Phaser.GameObjects.Rectangle;
   private items: Phaser.GameObjects.Group;
   private logger: ModuleLogger = createLogger('PlayerContextMenu');
-  
+
   private targetIdentity: Identity | null = null;
   private targetName: string = '';
   private isVisible: boolean = false;
@@ -28,38 +28,26 @@ export class PlayerContextMenu {
       },
     },
     {
-      label: 'Send Message',
-      action: (_identity, name) => {
-        this.logger.info(`Send message to: ${name}`);
-      },
-    },
-    {
       label: 'Invite to Party',
       action: (_identity, name) => {
         this.logger.info(`Invite to party: ${name}`);
-      },
-    },
-    {
-      label: 'Trade',
-      action: (_identity, name) => {
-        this.logger.info(`Trade with: ${name}`);
       },
     },
   ];
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    
+
     // Create a simple background rectangle
-    this.background = this.scene.add.rectangle(0, 0, 150, 180, 0x2a2a2a);
+    this.background = this.scene.add.rectangle(0, 0, 200, 120, 0x2a2a2a);
     this.background.setScrollFactor(0);
-    this.background.setDepth(1000);
+    this.background.setDepth(9999);
     this.background.setVisible(false);
     this.background.setStrokeStyle(2, 0x4a4a4a);
-    
+
     // Create group for menu items
     this.items = this.scene.add.group();
-    
+
     // Setup click outside listener
     this.setupClickOutsideListener();
   }
@@ -67,7 +55,7 @@ export class PlayerContextMenu {
   private setupClickOutsideListener(): void {
     this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (!this.isVisible) return;
-      
+
       // Check if click is outside the menu
       const bounds = this.background.getBounds();
       if (!bounds.contains(pointer.x, pointer.y)) {
@@ -76,69 +64,73 @@ export class PlayerContextMenu {
     });
   }
 
-  public show(x: number, y: number, playerIdentity: Identity, playerName: string, isAdmin: boolean = false): void {
+  public show(
+    x: number,
+    y: number,
+    playerIdentity: Identity,
+    playerName: string,
+    isAdmin: boolean = false
+  ): void {
     this.targetIdentity = playerIdentity;
     this.targetName = playerName;
-    
+
     // Clear previous items
     this.clearMenuItems();
-    
+
     // Convert world coordinates to screen coordinates
     const camera = this.scene.cameras.main;
     const screenX = x - camera.scrollX;
     const screenY = y - camera.scrollY;
-    
+
     // Position background - offset by half width/height to make top-left at click position
     const bgWidth = 150;
-    const bgHeight = 180;
-    this.background.setPosition(screenX + bgWidth/2, screenY + bgHeight/2);
+    const bgHeight = 110;
+    this.background.setPosition(screenX + bgWidth / 2, screenY + bgHeight / 2);
     this.background.setVisible(true);
     this.isVisible = true;
-    
+
     // Add header text
-    const headerText = this.scene.add.text(screenX + bgWidth/2, screenY + 20, playerName, {
+    const headerText = this.scene.add.text(screenX + bgWidth / 2, screenY + 20, playerName, {
       fontSize: '14px',
       color: '#ffffff',
-      fontStyle: 'bold'
+      fontStyle: 'bold',
     });
     headerText.setOrigin(0.5, 0.5);
     headerText.setScrollFactor(0);
-    headerText.setDepth(1001);
+    headerText.setDepth(10000);
     this.items.add(headerText);
-    
+
     // Add menu items
     let yOffset = 50;
     this.actions.forEach((action) => {
       if (action && (!action.requiresAdmin || isAdmin)) {
-        const itemText = this.scene.add.text(screenX + 15, screenY + yOffset, 
-          action.label, {
+        const itemText = this.scene.add.text(screenX + 15, screenY + yOffset, action.label, {
           fontSize: '12px',
-          color: '#ffffff'
+          color: '#ffffff',
         });
         itemText.setScrollFactor(0);
-        itemText.setDepth(1001);
+        itemText.setDepth(10000);
         itemText.setInteractive({ useHandCursor: true });
-        
+
         itemText.on('pointerover', () => {
           itemText.setColor('#aaaaff');
         });
-        
+
         itemText.on('pointerout', () => {
           itemText.setColor('#ffffff');
         });
-        
+
         itemText.on('pointerdown', () => {
           if (this.targetIdentity) {
             action.action(this.targetIdentity, this.targetName);
             this.hide();
           }
         });
-        
+
         this.items.add(itemText);
         yOffset += 25;
       }
     });
-    
   }
 
   public hide(): void {

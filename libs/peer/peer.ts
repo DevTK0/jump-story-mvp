@@ -214,6 +214,7 @@ export class Peer extends Phaser.GameObjects.Sprite {
   private setupContextMenu(): void {
     // Left-click handling
     this.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      this.logger.info(`🖱️ Peer clicked: ${this.playerData.name} at (${pointer.worldX}, ${pointer.worldY})`);
       if (pointer.leftButtonDown()) {
         // Emit type-safe event for scene to handle - use world coordinates
         emitSceneEvent(this.scene, 'peer:clicked', {

@@ -43,8 +43,15 @@ export class ContextMenuExtension {
     x: number;
     y: number;
   }): void => {
-    // Show context menu at click position
-    this.contextMenu.show(data.x, data.y, data.identity, data.name, this.config.isAdmin || false);
+    console.log('🎯 ContextMenuExtension: Received peer:clicked event', data);
+    try {
+      // Show context menu at click position
+      console.log('🎯 ContextMenuExtension: Calling contextMenu.show()...');
+      this.contextMenu.show(data.x, data.y, data.identity, data.name, this.config.isAdmin || false);
+      console.log('🎯 ContextMenuExtension: contextMenu.show() completed');
+    } catch (error) {
+      console.error('🎯 ContextMenuExtension: Error showing context menu:', error);
+    }
   };
 
   private handlePlayerClick = (data: {
