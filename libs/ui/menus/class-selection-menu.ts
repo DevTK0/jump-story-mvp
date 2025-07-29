@@ -32,16 +32,16 @@ export class ClassSelectionMenu {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    
+
     // Get data from context service
     const context = UIContextService.getInstance();
     this._dbConnection = context.getDbConnection();
-    
+
     // Get initial job data
     const jobData = context.getJobData();
     this.playerJobUnlockStatus = jobData.jobData;
     this.jobTableData = jobData.jobTableData;
-    
+
     // Subscribe to job data updates
     context.on(UIEvents.PLAYER_JOB_DATA_UPDATED, this.handleJobDataUpdate, this);
 
@@ -296,9 +296,11 @@ export class ClassSelectionMenu {
   private handleJobDataUpdate(data: { jobData: Map<string, boolean>; jobTableData: any[] }): void {
     this.playerJobUnlockStatus = data.jobData;
     this.jobTableData = data.jobTableData;
-    
-    this.logger.info(`Job data updated via context: ${data.jobData.size} entries, ${data.jobTableData.length} jobs`);
-    
+
+    this.logger.info(
+      `Job data updated via context: ${data.jobData.size} entries, ${data.jobTableData.length} jobs`
+    );
+
     // Update display if menu is visible
     if (this.isVisible) {
       this.updateJobUnlockStates();
@@ -309,19 +311,10 @@ export class ClassSelectionMenu {
     // Unsubscribe from context events
     const context = UIContextService.getInstance();
     context.off(UIEvents.PLAYER_JOB_DATA_UPDATED, this.handleJobDataUpdate, this);
-    
+
     this.container.destroy();
   }
 
-  public setPlayerJobData(jobData: Map<string, boolean>, jobTableData?: any[]): void {
-    this.playerJobUnlockStatus = jobData;
-    if (jobTableData) {
-      this.jobTableData = jobTableData;
-    }
-    this.logger.info(
-      `Received job data with ${jobData.size} entries and ${this.jobTableData.length} jobs`
-    );
-  }
 
   private updateJobUnlockStates(): void {
     // Use pre-loaded job data instead of trying to access from dbConnection
@@ -339,9 +332,7 @@ export class ClassSelectionMenu {
       // Check if this job key is unlocked
       const isUnlocked = this.playerJobUnlockStatus.get(classOption.id) || false;
       classOption.unlocked = isUnlocked;
-      this.logger.info(
-        `Class option ${classOption.id}: unlocked=${isUnlocked}`
-      );
+      this.logger.info(`Class option ${classOption.id}: unlocked=${isUnlocked}`);
     });
 
     // Refresh the UI to show updated unlock states

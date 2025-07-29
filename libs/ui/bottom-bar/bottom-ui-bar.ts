@@ -149,11 +149,6 @@ export class BottomUIBar {
     this.jobTableData = data.jobTableData;
     
     this.logger.info(`Job data updated via context: ${data.jobData.size} entries, ${data.jobTableData.length} jobs`);
-    
-    // Update menu button with new data (keep using setPlayerJobData for now)
-    if (this.menuButton) {
-      this.menuButton.setPlayerJobData(data.jobData, data.jobTableData);
-    }
   }
 
   private setupDataSubscriptions(): void {
@@ -174,6 +169,23 @@ export class BottomUIBar {
       this.logger.info(`🔍 Loaded job: jobKey="${job.jobKey}", displayName="${job.displayName}"`);
     }
     this.logger.info(`Job table loaded with ${this.jobTableData.length} entries`);
+    
+    // Load any existing PlayerJob data immediately
+    const playerJobs: any[] = [];
+    for (const pj of dbConn.db.playerJob.iter()) {
+      if (pj.playerIdentity.isEqual(this.playerIdentity)) {
+        playerJobs.push(pj);
+      }
+    }
+    
+    // Populate unlock status from existing data
+    playerJobs.forEach((pj) => {
+      this.playerJobUnlockStatus.set(pj.jobKey, pj.isUnlocked);
+      this.logger.debug(`Initial PlayerJob: jobKey=${pj.jobKey}, isUnlocked=${pj.isUnlocked}`);
+    });
+    
+    // Update context service with initial data
+    UIContextService.getInstance().updateJobData(this.playerJobUnlockStatus, this.jobTableData);
 
     // Listen to Job table inserts to keep jobTableData updated
     dbConn.db.job.onInsert((_ctx, newJob) => {

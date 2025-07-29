@@ -50,7 +50,7 @@ export class MenuDropdown {
     const context = UIContextService.getInstance();
     this.playerIdentity = context.getPlayerIdentity();
     this.dbConnection = context.getDbConnection();
-    
+
     // Subscribe to job data updates
     context.on(UIEvents.PLAYER_JOB_DATA_UPDATED, this.handleJobDataUpdate, this);
 
@@ -188,7 +188,7 @@ export class MenuDropdown {
         this.logger.warn('Player not found in database');
       }
     }
-    
+
     if (!this.classSelectionMenu) {
       // ClassSelectionMenu will get identity and connection from context
       this.classSelectionMenu = new ClassSelectionMenu(this.scene);
@@ -198,8 +198,12 @@ export class MenuDropdown {
 
   private handleJobDataUpdate(data: { jobData: Map<string, boolean>; jobTableData: any[] }): void {
     this.jobTableData = data.jobTableData;
+
+    this.logger.info(
+      `Job data updated via context: ${data.jobData.size} entries, ${data.jobTableData.length} jobs`
+    );
     
-    this.logger.info(`Job data updated via context: ${data.jobData.size} entries, ${data.jobTableData.length} jobs`);
+    // No need to update ClassSelectionMenu here as it has its own event subscription
   }
 
   private showChangeNameDialog(): void {
@@ -218,23 +222,11 @@ export class MenuDropdown {
     // No longer needed - gets from context
   }
 
-  public setPlayerJobData(jobData: Map<string, boolean>, jobTableData?: any[]): void {
-    if (jobTableData) {
-      this.jobTableData = jobTableData;
-    }
-    this.logger.info(`MenuDropdown received job data with ${jobData.size} entries, ${this.jobTableData.length} jobs`);
-    // Update existing class selection menu if it exists
-    if (this.classSelectionMenu) {
-      this.logger.info('ClassSelectionMenu exists, updating it with job data');
-      this.classSelectionMenu.setPlayerJobData(jobData, this.jobTableData);
-    }
-  }
-
   public destroy(): void {
     // Unsubscribe from context events
     const context = UIContextService.getInstance();
     context.off(UIEvents.PLAYER_JOB_DATA_UPDATED, this.handleJobDataUpdate, this);
-    
+
     this.hide();
     this.items.destroy(true);
     this.container.destroy();

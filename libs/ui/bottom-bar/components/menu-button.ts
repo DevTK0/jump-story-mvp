@@ -119,11 +119,6 @@ export class MenuButton {
     // No longer needed - dropdown gets from context
   }
 
-  public setPlayerJobData(jobData: Map<string, boolean>, jobTableData?: any[]): void {
-    // Still pass through for now until dropdown is updated
-    this.dropdown.setPlayerJobData(jobData, jobTableData);
-  }
-
   public destroy(): void {
     // Unsubscribe from context events
     const context = UIContextService.getInstance();
