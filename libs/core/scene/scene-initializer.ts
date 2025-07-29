@@ -229,11 +229,39 @@ export class SceneInitializer {
       throw new Error('Player configuration missing');
     }
     
-    // Import PlayerBuilder dynamically to avoid circular deps
+    // Import PlayerBuilder and PlayerQueryService dynamically to avoid circular deps
     const { PlayerBuilder } = await import('@/player');
+    const { PlayerQueryService } = await import('@/player/services/player-query-service');
+    
+    // Default spawn coordinates
+    let spawnX = this.config.player.spawnX;
+    let spawnY = this.config.player.spawnY;
+    
+    // Try to get existing player position
+    const playerQueryService = PlayerQueryService.getInstance();
+    if (playerQueryService) {
+      // Give the PlayerQueryService a moment to load data from its subscription
+      // This is necessary because the subscription might not have fired yet
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const existingPlayer = playerQueryService.findCurrentPlayer();
+      
+      // Use stored position if player exists and is alive
+      if (existingPlayer && existingPlayer.currentHp > 0) {
+        spawnX = existingPlayer.x;
+        spawnY = existingPlayer.y;
+        this.logger.info(`Using stored player position: (${spawnX}, ${spawnY})`);
+      } else if (existingPlayer && existingPlayer.currentHp <= 0) {
+        this.logger.info('Player is dead, using default spawn point');
+      } else {
+        this.logger.debug('No existing player data found, using default spawn');
+      }
+    } else {
+      this.logger.debug('PlayerQueryService not available, using default spawn');
+    }
     
     const player = new PlayerBuilder(this.scene)
-      .setPosition(this.config.player.spawnX, this.config.player.spawnY)
+      .setPosition(spawnX, spawnY)
       .setTexture(this.config.player.texture)
       .withAllSystems()
       .build();
