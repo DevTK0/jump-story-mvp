@@ -166,19 +166,14 @@ export class BottomUIBar {
     const playerIdentityHex = this.playerIdentity.toHexString();
     this.logger.info(`Setting up PlayerJob subscription for identity: ${playerIdentityHex}`);
 
-    // First subscribe to Job table (global data)
-    dbConn
-      .subscriptionBuilder()
-      .onApplied(() => {
-        this.logger.info('Job table subscription applied');
-        // Load any existing job table data
-        this.jobTableData = [];
-        for (const job of dbConn.db.job.iter()) {
-          this.jobTableData.push(job);
-        }
-        this.logger.info(`Job table loaded with ${this.jobTableData.length} entries`);
-      })
-      .subscribe([`SELECT * FROM job`]);
+    // Job table is already subscribed at connection level via subscribeToCoreTables()
+    // Load job data directly
+    this.jobTableData = [];
+    for (const job of dbConn.db.job.iter()) {
+      this.jobTableData.push(job);
+      this.logger.info(`🔍 Loaded job: jobKey="${job.jobKey}", displayName="${job.displayName}"`);
+    }
+    this.logger.info(`Job table loaded with ${this.jobTableData.length} entries`);
 
     // Listen to Job table inserts to keep jobTableData updated
     dbConn.db.job.onInsert((_ctx, newJob) => {
@@ -256,8 +251,13 @@ export class BottomUIBar {
     this.levelDisplay.updateLevel(player.level);
 
     // Get job display name from job table data
+    this.logger.info(`🔍 Looking for job: player.job="${player.job}", jobTableData has ${this.jobTableData.length} entries`);
+    if (this.jobTableData.length > 0) {
+      this.logger.info(`🔍 Available jobKeys: ${this.jobTableData.map(j => j.jobKey).join(', ')}`);
+    }
     const job = this.jobTableData.find((j) => j.jobKey === player.job);
     const jobDisplayName = job?.displayName || 'Unknown';
+    this.logger.info(`🔍 Found job: ${job ? 'yes' : 'no'}, displayName="${jobDisplayName}"`);
 
     // Update player info with actual job
     this.playerInfo.updateInfo(player.name, jobDisplayName);

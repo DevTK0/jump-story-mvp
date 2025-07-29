@@ -27,12 +27,6 @@ export class MenuDropdown {
 
   private options: MenuOption[] = [
     {
-      label: 'Inventory',
-      action: () => {
-        this.logger.info('Open inventory');
-      },
-    },
-    {
       label: 'Jobs',
       action: () => {
         this.logger.info('Open job selection');
@@ -40,21 +34,10 @@ export class MenuDropdown {
       },
     },
     {
-      label: 'Quests',
+      label: 'Change name',
       action: () => {
-        this.logger.info('Open quests');
-      },
-    },
-    {
-      label: 'Settings',
-      action: () => {
-        this.logger.info('Open settings');
-      },
-    },
-    {
-      label: 'Logout',
-      action: () => {
-        this.logger.info('Logout');
+        this.logger.info('Change player name');
+        this.showChangeNameDialog();
       },
     },
   ];
@@ -217,6 +200,13 @@ export class MenuDropdown {
     this.jobTableData = data.jobTableData;
     
     this.logger.info(`Job data updated via context: ${data.jobData.size} entries, ${data.jobTableData.length} jobs`);
+  }
+
+  private showChangeNameDialog(): void {
+    this.logger.info('Change name dialog not yet implemented');
+    // TODO: Implement name change dialog
+    // This would typically show an input dialog where the user can enter a new name
+    // Then call a reducer on the server to update the player's name
   }
 
   // Keep these methods for backward compatibility but they won't be called anymore
