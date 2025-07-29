@@ -233,11 +233,12 @@ export class SceneInitializer {
     const { PlayerBuilder } = await import('@/player');
     const { PlayerQueryService } = await import('@/player/services/player-query-service');
     
-    // Default spawn coordinates
+    // Default spawn coordinates and texture
     let spawnX = this.config.player.spawnX;
     let spawnY = this.config.player.spawnY;
+    let texture = this.config.player.texture;
     
-    // Try to get existing player position
+    // Try to get existing player data
     const playerQueryService = PlayerQueryService.getInstance();
     if (playerQueryService) {
       // Give the PlayerQueryService a moment to load data from its subscription
@@ -246,13 +247,15 @@ export class SceneInitializer {
       
       const existingPlayer = playerQueryService.findCurrentPlayer();
       
-      // Use stored position if player exists and is alive
+      // Use stored position and job if player exists and is alive
       if (existingPlayer && existingPlayer.currentHp > 0) {
         spawnX = existingPlayer.x;
         spawnY = existingPlayer.y;
-        this.logger.info(`Using stored player position: (${spawnX}, ${spawnY})`);
+        texture = existingPlayer.job || texture; // Use player's job as texture
+        this.logger.info(`Using stored player position: (${spawnX}, ${spawnY}) and job: ${texture}`);
       } else if (existingPlayer && existingPlayer.currentHp <= 0) {
         this.logger.info('Player is dead, using default spawn point');
+        texture = existingPlayer.job || texture; // Still use player's job even if dead
       } else {
         this.logger.debug('No existing player data found, using default spawn');
       }
@@ -262,7 +265,7 @@ export class SceneInitializer {
     
     const player = new PlayerBuilder(this.scene)
       .setPosition(spawnX, spawnY)
-      .setTexture(this.config.player.texture)
+      .setTexture(texture)
       .withAllSystems()
       .build();
     

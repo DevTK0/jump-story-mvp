@@ -55,14 +55,14 @@ export abstract class PlayerState {
  * Idle state - player is standing still
  */
 export class IdleState extends PlayerState {
-  onEnter(previousState?: PlayerState): void {
+  onEnter(_previousState?: PlayerState): void {
     this.player.setPlayerState({
       isAttacking: false,
       isClimbing: false,
     });
   }
 
-  onExit(nextState?: PlayerState): void {
+  onExit(_nextState?: PlayerState): void {
   }
 
   update(_time: number, _delta: number): void {
@@ -86,14 +86,14 @@ export class IdleState extends PlayerState {
  * Walking state - player is moving
  */
 export class WalkState extends PlayerState {
-  onEnter(previousState?: PlayerState): void {
+  onEnter(_previousState?: PlayerState): void {
     this.player.setPlayerState({
       isAttacking: false,
       isClimbing: false,
     });
   }
 
-  onExit(nextState?: PlayerState): void {
+  onExit(_nextState?: PlayerState): void {
   }
 
   update(_time: number, _delta: number): void {
@@ -121,14 +121,14 @@ export class WalkState extends PlayerState {
  * Jumping state - player is in the air
  */
 export class JumpState extends PlayerState {
-  onEnter(previousState?: PlayerState): void {
+  onEnter(_previousState?: PlayerState): void {
     this.player.setPlayerState({
       isAttacking: false,
       isClimbing: false,
     });
   }
 
-  onExit(nextState?: PlayerState): void {
+  onExit(_nextState?: PlayerState): void {
   }
 
   update(_time: number, _delta: number): void {
@@ -162,14 +162,14 @@ export class JumpState extends PlayerState {
  * Climbing state - player is on a climbable surface
  */
 export class ClimbingState extends PlayerState {
-  onEnter(previousState?: PlayerState): void {
+  onEnter(_previousState?: PlayerState): void {
     this.player.setPlayerState({
       isClimbing: true,
       isAttacking: false,
     });
   }
 
-  onExit(nextState?: PlayerState): void {
+  onExit(_nextState?: PlayerState): void {
     this.player.setPlayerState({ isClimbing: false });
   }
 
@@ -210,7 +210,7 @@ export abstract class AttackState extends PlayerState {
     this.attackDuration = attackDuration;
   }
 
-  onEnter(previousState?: PlayerState): void {
+  onEnter(_previousState?: PlayerState): void {
     this.player.setPlayerState({
       isAttacking: true,
       isClimbing: false,
@@ -218,7 +218,7 @@ export abstract class AttackState extends PlayerState {
     this.startTime = Date.now();
   }
 
-  onExit(nextState?: PlayerState): void {
+  onExit(_nextState?: PlayerState): void {
     this.player.setPlayerState({ isAttacking: false });
   }
 
@@ -289,7 +289,7 @@ export class DamagedState extends PlayerState {
   private damagedDuration: number = 1000; // 1 second of invulnerability
   private startTime: number = 0;
 
-  onEnter(previousState?: PlayerState): void {
+  onEnter(_previousState?: PlayerState): void {
     this.player.setPlayerState({
       isAttacking: false,
       isClimbing: false,
@@ -297,7 +297,7 @@ export class DamagedState extends PlayerState {
     this.startTime = Date.now();
   }
 
-  onExit(nextState?: PlayerState): void {
+  onExit(_nextState?: PlayerState): void {
   }
 
   update(_time: number, _delta: number): void {
@@ -332,7 +332,7 @@ export class DamagedState extends PlayerState {
 export class DeadState extends PlayerState {
   private hasLanded: boolean = false;
 
-  onEnter(previousState?: PlayerState): void {
+  onEnter(_previousState?: PlayerState): void {
     this.player.setPlayerState({
       isAttacking: false,
       isClimbing: false,
@@ -344,7 +344,7 @@ export class DeadState extends PlayerState {
     this.hasLanded = false;
   }
 
-  onExit(nextState?: PlayerState): void {
+  onExit(_nextState?: PlayerState): void {
     // Re-enable collision detection when respawning
     this.hasLanded = false;
   }

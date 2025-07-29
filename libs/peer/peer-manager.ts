@@ -487,7 +487,7 @@ export class PeerManager {
 
   public onPlayerUpdate = (
     _ctx: EventContext,
-    oldPlayerData: PlayerData,
+    _oldPlayerData: PlayerData,
     newPlayerData: PlayerData
   ): void => {
     // Don't update local player

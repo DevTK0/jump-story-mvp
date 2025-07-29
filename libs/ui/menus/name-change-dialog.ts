@@ -159,7 +159,6 @@ export class NameChangeDialog {
     
     // Position the input in the center of the dialog
     const camera = this.scene.cameras.main;
-    const centerX = camera.width / 2;
     const centerY = camera.height / 2;
     
     this.inputElement.style.left = '50%';
