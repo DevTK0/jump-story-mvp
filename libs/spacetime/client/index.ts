@@ -86,6 +86,8 @@ import { TeleportPlayer } from "./teleport_player_reducer.ts";
 export { TeleportPlayer };
 import { UpdateEnemyPatrol } from "./update_enemy_patrol_reducer.ts";
 export { UpdateEnemyPatrol };
+import { UpdateLeaderboard } from "./update_leaderboard_reducer.ts";
+export { UpdateLeaderboard };
 import { UpdatePlayerPosition } from "./update_player_position_reducer.ts";
 export { UpdatePlayerPosition };
 import { UpdatePlayerState } from "./update_player_state_reducer.ts";
@@ -104,6 +106,8 @@ import { JobAttackTableHandle } from "./job_attack_table.ts";
 export { JobAttackTableHandle };
 import { JobPassiveTableHandle } from "./job_passive_table.ts";
 export { JobPassiveTableHandle };
+import { LeaderboardTableHandle } from "./leaderboard_table.ts";
+export { LeaderboardTableHandle };
 import { PlayerTableHandle } from "./player_table.ts";
 export { PlayerTableHandle };
 import { PlayerCooldownTableHandle } from "./player_cooldown_table.ts";
@@ -126,6 +130,8 @@ import { CombatTimeoutTimerTableHandle } from "./combat_timeout_timer_table.ts";
 export { CombatTimeoutTimerTableHandle };
 import { EnemyPatrolTimerTableHandle } from "./enemy_patrol_timer_table.ts";
 export { EnemyPatrolTimerTableHandle };
+import { LeaderboardUpdateTimerTableHandle } from "./leaderboard_update_timer_table.ts";
+export { LeaderboardUpdateTimerTableHandle };
 import { MessageCleanupTimerTableHandle } from "./message_cleanup_timer_table.ts";
 export { MessageCleanupTimerTableHandle };
 import { SpawnEnemiesTimerTableHandle } from "./spawn_enemies_timer_table.ts";
@@ -160,6 +166,10 @@ import { JobAttack } from "./job_attack_type.ts";
 export { JobAttack };
 import { JobPassive } from "./job_passive_type.ts";
 export { JobPassive };
+import { Leaderboard } from "./leaderboard_type.ts";
+export { Leaderboard };
+import { LeaderboardUpdateTimer } from "./leaderboard_update_timer_type.ts";
+export { LeaderboardUpdateTimer };
 import { MessageCleanupTimer } from "./message_cleanup_timer_type.ts";
 export { MessageCleanupTimer };
 import { MessageType } from "./message_type_type.ts";
@@ -230,6 +240,15 @@ const REMOTE_MODULE = {
       primaryKeyInfo: {
         colName: "passiveId",
         colType: JobPassive.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    Leaderboard: {
+      tableName: "Leaderboard",
+      rowType: Leaderboard.getTypeScriptAlgebraicType(),
+      primaryKey: "rank",
+      primaryKeyInfo: {
+        colName: "rank",
+        colType: Leaderboard.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     Player: {
@@ -329,6 +348,15 @@ const REMOTE_MODULE = {
       primaryKeyInfo: {
         colName: "scheduledId",
         colType: EnemyPatrolTimer.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    leaderboard_update_timer: {
+      tableName: "leaderboard_update_timer",
+      rowType: LeaderboardUpdateTimer.getTypeScriptAlgebraicType(),
+      primaryKey: "scheduledId",
+      primaryKeyInfo: {
+        colName: "scheduledId",
+        colType: LeaderboardUpdateTimer.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     message_cleanup_timer: {
@@ -455,6 +483,10 @@ const REMOTE_MODULE = {
       reducerName: "UpdateEnemyPatrol",
       argsType: UpdateEnemyPatrol.getTypeScriptAlgebraicType(),
     },
+    UpdateLeaderboard: {
+      reducerName: "UpdateLeaderboard",
+      argsType: UpdateLeaderboard.getTypeScriptAlgebraicType(),
+    },
     UpdatePlayerPosition: {
       reducerName: "UpdatePlayerPosition",
       argsType: UpdatePlayerPosition.getTypeScriptAlgebraicType(),
@@ -523,6 +555,7 @@ export type Reducer = never
 | { name: "SpawnMissingEnemies", args: SpawnMissingEnemies }
 | { name: "TeleportPlayer", args: TeleportPlayer }
 | { name: "UpdateEnemyPatrol", args: UpdateEnemyPatrol }
+| { name: "UpdateLeaderboard", args: UpdateLeaderboard }
 | { name: "UpdatePlayerPosition", args: UpdatePlayerPosition }
 | { name: "UpdatePlayerState", args: UpdatePlayerState }
 | { name: "UpdatePlayerTyping", args: UpdatePlayerTyping }
@@ -927,6 +960,22 @@ export class RemoteReducers {
     this.connection.offReducer("UpdateEnemyPatrol", callback);
   }
 
+  updateLeaderboard(timer: LeaderboardUpdateTimer) {
+    const __args = { timer };
+    let __writer = new BinaryWriter(1024);
+    UpdateLeaderboard.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("UpdateLeaderboard", __argsBuffer, this.setCallReducerFlags.updateLeaderboardFlags);
+  }
+
+  onUpdateLeaderboard(callback: (ctx: ReducerEventContext, timer: LeaderboardUpdateTimer) => void) {
+    this.connection.onReducer("UpdateLeaderboard", callback);
+  }
+
+  removeOnUpdateLeaderboard(callback: (ctx: ReducerEventContext, timer: LeaderboardUpdateTimer) => void) {
+    this.connection.offReducer("UpdateLeaderboard", callback);
+  }
+
   updatePlayerPosition(x: number, y: number, facing: FacingDirection) {
     const __args = { x, y, facing };
     let __writer = new BinaryWriter(1024);
@@ -1098,6 +1147,11 @@ export class SetReducerFlags {
     this.updateEnemyPatrolFlags = flags;
   }
 
+  updateLeaderboardFlags: CallReducerFlags = 'FullUpdate';
+  updateLeaderboard(flags: CallReducerFlags) {
+    this.updateLeaderboardFlags = flags;
+  }
+
   updatePlayerPositionFlags: CallReducerFlags = 'FullUpdate';
   updatePlayerPosition(flags: CallReducerFlags) {
     this.updatePlayerPositionFlags = flags;
@@ -1136,6 +1190,10 @@ export class RemoteTables {
 
   get jobPassive(): JobPassiveTableHandle {
     return new JobPassiveTableHandle(this.connection.clientCache.getOrCreateTable<JobPassive>(REMOTE_MODULE.tables.JobPassive));
+  }
+
+  get leaderboard(): LeaderboardTableHandle {
+    return new LeaderboardTableHandle(this.connection.clientCache.getOrCreateTable<Leaderboard>(REMOTE_MODULE.tables.Leaderboard));
   }
 
   get player(): PlayerTableHandle {
@@ -1180,6 +1238,10 @@ export class RemoteTables {
 
   get enemyPatrolTimer(): EnemyPatrolTimerTableHandle {
     return new EnemyPatrolTimerTableHandle(this.connection.clientCache.getOrCreateTable<EnemyPatrolTimer>(REMOTE_MODULE.tables.enemy_patrol_timer));
+  }
+
+  get leaderboardUpdateTimer(): LeaderboardUpdateTimerTableHandle {
+    return new LeaderboardUpdateTimerTableHandle(this.connection.clientCache.getOrCreateTable<LeaderboardUpdateTimer>(REMOTE_MODULE.tables.leaderboard_update_timer));
   }
 
   get messageCleanupTimer(): MessageCleanupTimerTableHandle {

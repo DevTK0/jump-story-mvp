@@ -3,6 +3,7 @@ import { BOTTOM_UI_CONFIG } from '../bottom-ui-config';
 import { createLogger, type ModuleLogger } from '@/core/logger';
 import { ClassSelectionMenu } from '@/ui/menus/class-selection-menu';
 import { NameChangeDialog } from '@/ui/menus/name-change-dialog';
+import { LeaderboardDialog } from '@/ui/menus/leaderboard-dialog';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { DbConnection } from '@/spacetime/client';
 import { UIContextService, UIEvents } from '../../services/ui-context-service';
@@ -23,9 +24,9 @@ export class MenuDropdown {
   private parentButton: Phaser.GameObjects.Container;
   private classSelectionMenu: ClassSelectionMenu | null = null;
   private nameChangeDialog: NameChangeDialog | null = null;
+  private leaderboardDialog: LeaderboardDialog | null = null;
   private playerIdentity: Identity | null = null;
   private dbConnection: DbConnection | null = null;
-  private jobTableData: any[] = [];
 
   private options: MenuOption[] = [
     {
@@ -40,6 +41,13 @@ export class MenuDropdown {
       action: () => {
         this.logger.info('Change player name');
         this.showChangeNameDialog();
+      },
+    },
+    {
+      label: 'Leaderboard',
+      action: () => {
+        this.logger.info('Open leaderboard');
+        this.showLeaderboardDialog();
       },
     },
   ];
@@ -199,8 +207,6 @@ export class MenuDropdown {
   }
 
   private handleJobDataUpdate(data: { jobData: Map<string, boolean>; jobTableData: any[] }): void {
-    this.jobTableData = data.jobTableData;
-
     this.logger.info(
       `Job data updated via context: ${data.jobData.size} entries, ${data.jobTableData.length} jobs`
     );
@@ -214,6 +220,14 @@ export class MenuDropdown {
       this.nameChangeDialog = new NameChangeDialog(this.scene);
     }
     this.nameChangeDialog.show();
+  }
+
+  private showLeaderboardDialog(): void {
+    if (!this.leaderboardDialog) {
+      // LeaderboardDialog will get data from context
+      this.leaderboardDialog = new LeaderboardDialog(this.scene);
+    }
+    this.leaderboardDialog.show();
   }
 
   // Keep these methods for backward compatibility but they won't be called anymore
@@ -235,5 +249,6 @@ export class MenuDropdown {
     this.container.destroy();
     this.classSelectionMenu?.destroy();
     this.nameChangeDialog?.destroy();
+    this.leaderboardDialog?.destroy();
   }
 }

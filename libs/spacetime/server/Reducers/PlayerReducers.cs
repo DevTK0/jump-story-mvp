@@ -40,7 +40,13 @@ public static partial class Module
             scheduled_at = new ScheduleAt.Interval(TimeSpan.FromSeconds(1))
         });
         
-        Log.Info("Initialized dead body cleanup, enemy spawning, enemy patrol, message cleanup, and combat timeout schedulers");
+        // Schedule leaderboard updates every 60 seconds
+        ctx.Db.leaderboard_update_timer.Insert(new LeaderboardUpdateTimer
+        {
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromSeconds(60))
+        });
+        
+        Log.Info("Initialized dead body cleanup, enemy spawning, enemy patrol, message cleanup, combat timeout, and leaderboard update schedulers");
     }
 
     // Helper function to populate PlayerJob entries for a new player

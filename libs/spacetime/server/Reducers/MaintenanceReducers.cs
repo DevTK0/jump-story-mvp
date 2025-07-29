@@ -471,4 +471,48 @@ public static partial class Module
             UpdateEnemyIfChanged(ctx, enemy, newX, newMovingRight, newAggroTarget, hasAggro);
         }
     }
+
+    [Reducer]
+    public static void UpdateLeaderboard(ReducerContext ctx, LeaderboardUpdateTimer timer)
+    {
+        // Query top 10 players sorted by level (desc) then experience (desc)
+        var topPlayers = ctx.Db.Player.Iter()
+            .Where(p => !p.ban_status) // Exclude banned players
+            .OrderByDescending(p => p.level)
+            .ThenByDescending(p => p.experience)
+            .Take(10)
+            .ToList();
+
+        // Clear existing leaderboard entries
+        var existingEntries = ctx.Db.Leaderboard.Iter().ToList();
+        foreach (var entry in existingEntries)
+        {
+            ctx.Db.Leaderboard.rank.Delete(entry.rank);
+        }
+
+        // Insert new leaderboard entries
+        uint rank = 1;
+        foreach (var player in topPlayers)
+        {
+            // Get job display name
+            var job = ctx.Db.Job.job_key.Find(player.job);
+            var jobDisplayName = job != null ? job.Value.display_name : player.job; // Fallback to job key if not found
+
+            var leaderboardEntry = new Leaderboard
+            {
+                rank = rank,
+                player_identity = player.identity,
+                player_name = player.name,
+                level = player.level,
+                experience = player.experience,
+                job_name = jobDisplayName,
+                last_updated = ctx.Timestamp
+            };
+
+            ctx.Db.Leaderboard.Insert(leaderboardEntry);
+            rank++;
+        }
+
+        Log.Info($"Updated leaderboard with {topPlayers.Count} players");
+    }
 }

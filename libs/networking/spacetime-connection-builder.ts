@@ -98,7 +98,7 @@ export class SpacetimeConnectionBuilder {
    * Configure with default development callbacks (console logging)
    */
   public withDefaultCallbacks(): SpacetimeConnectionBuilder {
-    return this.onConnect((_conn, identity, token) => {
+    return this.onConnect((_conn, _identity, _token) => {
       // Connection established
     })
       .onDisconnect(() => {
@@ -149,7 +149,7 @@ export class SpacetimeConnectionBuilder {
 
   /**
    * Subscribe to core tables required by multiple systems
-   * This includes Job, PlayerJob, JobAttack, Spawn, Enemy, PlayerLevel, PlayerMessage, and damage event tables
+   * This includes Job, PlayerJob, JobAttack, Spawn, Enemy, PlayerLevel, PlayerMessage, Leaderboard, and damage event tables
    * Note: Player table is handled separately by PeerManager with proximity-based subscriptions
    */
   public subscribeToCoreTables(): SpacetimeConnectionBuilder {
@@ -163,7 +163,8 @@ export class SpacetimeConnectionBuilder {
       'PlayerDamageEvent',
       'EnemyDamageEvent',
       'PlayerLevel',  // Configuration table for level requirements
-      'PlayerMessage' // Chat messages and emotes
+      'PlayerMessage', // Chat messages and emotes
+      'Leaderboard'    // Top 10 players leaderboard
     ];
     return this;
   }

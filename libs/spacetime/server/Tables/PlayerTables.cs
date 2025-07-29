@@ -133,4 +133,25 @@ public static partial class Module
         public string job_key;
         public bool is_unlocked;
     }
+
+    [Table(Name = "Leaderboard", Public = true)]
+    public partial struct Leaderboard
+    {
+        [PrimaryKey]
+        public uint rank; // 1-10
+        public Identity player_identity;
+        public string player_name;
+        public uint level;
+        public uint experience;
+        public string job_name; // Display name of the job
+        public Timestamp last_updated;
+    }
+
+    [Table(Name = "leaderboard_update_timer", Scheduled = nameof(UpdateLeaderboard), ScheduledAt = nameof(scheduled_at))]
+    public partial struct LeaderboardUpdateTimer
+    {
+        [PrimaryKey, AutoInc]
+        public ulong scheduled_id;
+        public ScheduleAt scheduled_at;
+    }
 }
