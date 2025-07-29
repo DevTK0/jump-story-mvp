@@ -242,9 +242,16 @@ export class Peer extends Phaser.GameObjects.Sprite {
   public updateFromData(playerData: PlayerData): void {
     const previousState = this.playerData?.state?.tag;
     const previousJob = this.currentJob;
+    const previousName = this.playerData?.name;
     this.playerData = playerData;
 
     this.logger.info(`🔄 Peer updateFromData: ${this.playerData.name} - job: ${playerData.job}, previousJob: ${previousJob}`);
+
+    // Check for name change
+    if (playerData.name && playerData.name !== previousName) {
+      this.logger.info(`📝 Name change detected for peer: ${previousName} -> ${playerData.name}`);
+      this.nameLabel.setText(playerData.name);
+    }
 
     // Check for job change
     if (playerData.job && playerData.job !== previousJob) {

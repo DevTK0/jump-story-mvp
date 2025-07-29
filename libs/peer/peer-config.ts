@@ -12,7 +12,7 @@ export const PEER_CONFIG = {
     alpha: 0.9, // Slight transparency
     tint: 0xbbbbbb, // Grayish tint to distinguish from main player
     nameLabel: {
-      offsetY: -60,
+      offsetY: 40,  // Changed from -60 to 40 to position below the character
       fontSize: '12px',
       color: '#ffffff',
       stroke: '#000000',

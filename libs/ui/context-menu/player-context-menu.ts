@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { createLogger, type ModuleLogger } from '@/core/logger';
+import { PlayerProfileDialog } from '../menus/player-profile-dialog';
+import { UIContextService } from '../services/ui-context-service';
 
 export interface MenuAction {
   label: string;
@@ -23,8 +25,23 @@ export class PlayerContextMenu {
   private actions: (MenuAction | null)[] = [
     {
       label: 'View Profile',
-      action: (_identity, name) => {
+      action: (identity, name) => {
         this.logger.info(`View profile: ${name}`);
+        
+        // Get player data from database
+        const uiContext = UIContextService.getInstance();
+        const dbConnection = uiContext.getDbConnection();
+        
+        if (dbConnection) {
+          const player = dbConnection.db.player.identity.find(identity);
+          if (player) {
+            // Show player profile dialog
+            const profileDialog = new PlayerProfileDialog(this.scene, player);
+            profileDialog.show();
+          } else {
+            this.logger.warn(`Player not found: ${identity.toHexString()}`);
+          }
+        }
       },
     },
     {
