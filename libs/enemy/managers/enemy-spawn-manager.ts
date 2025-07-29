@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import type { Spawn as ServerEnemy } from '@/spacetime/client';
+import type { Spawn as ServerEnemy, DbConnection } from '@/spacetime/client';
 import { ENEMY_CONFIG } from '../config/enemy-config';
 import { EnemyHealthBar } from '../ui/enemy-health-bar';
 import { EnemyStateMachine } from '../state/enemy-state-machine';
@@ -13,10 +13,15 @@ export class EnemySpawnManager {
   private enemyHealthBars = new Map<number, EnemyHealthBar>();
   private enemyStateMachines = new Map<number, EnemyStateMachine>();
   private enemyGroup: Phaser.Physics.Arcade.Group;
+  private dbConnection: DbConnection | null = null;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.enemyGroup = this.scene.physics.add.group();
+  }
+
+  public setDbConnection(connection: DbConnection): void {
+    this.dbConnection = connection;
   }
 
   /**
@@ -147,8 +152,21 @@ export class EnemySpawnManager {
    * Create health bar for enemy
    */
   private createHealthBar(serverEnemy: ServerEnemy, sprite: Phaser.Physics.Arcade.Sprite): void {
-    // Assume max HP is 100 (this should ideally come from server data)
-    const maxHp = 100;
+    // Query the Enemy table to get the max HP for this enemy type
+    let maxHp = 100; // Default fallback
+    
+    if (this.dbConnection && this.dbConnection.db.enemy) {
+      // Find the enemy configuration by name
+      const enemyConfig = this.dbConnection.db.enemy.name.find(serverEnemy.enemy);
+      if (enemyConfig) {
+        maxHp = enemyConfig.health;
+      } else {
+        console.warn(`Enemy config not found for type: ${serverEnemy.enemy}, using default max HP`);
+      }
+    } else {
+      console.warn('DbConnection not available for enemy health lookup, using default max HP');
+    }
+    
     const healthBar = new EnemyHealthBar(this.scene, sprite.x, sprite.y, maxHp);
 
     // Update health bar with current HP

@@ -54,6 +54,7 @@ export class EnemyManager implements PhysicsEntity {
 
   public setDbConnection(connection: DbConnection): void {
     this.subscriptionManager.setDbConnection(connection);
+    this.spawnManager.setDbConnection(connection);
   }
 
   private verifyEnemyAnimations(): void {
