@@ -255,8 +255,8 @@ export const enemySprites = {
       walk: { start: 12, end: 20, frameRate: 10 },
       attack1: { start: 24, end: 25, frameRate: 15 },
       attack2: { start: 36, end: 34, frameRate: 15 },
-      damaged: { start: 48, end: 51, frameRate: 15 },
-      death: { start: 60, end: 63, frameRate: 12 },
+      damaged: { start: 60, end: 63, frameRate: 15 },
+      death: { start: 72, end: 75, frameRate: 12 },
     },
   },
   slime: {

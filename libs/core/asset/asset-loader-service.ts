@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { createLogger, type ModuleLogger } from '../logger';
 import { MapLoader, type MapData } from './map-loader';
 import { AnimationFactory, type AnimationFrameConfig, type SpriteAnimationSet } from '../animations';
-import { SpriteConfigLoader, type SpriteConfig } from './sprite-config-loader';
+import { spriteConfigLoader, type SpriteConfig } from './sprite-config-loader';
 import { AssetResolver } from './asset-resolver';
 import { ErrorBoundary, AssetError } from '../error';
 
@@ -58,13 +58,12 @@ export class AssetLoaderService {
     this.logger.info('Creating animations from sprite config');
     
     const animFactory = new AnimationFactory(this.scene);
-    const configLoader = new SpriteConfigLoader();
     
-    // Load sprite configuration
-    configLoader.setConfig(this.spriteConfig);
+    // Load sprite configuration into singleton
+    spriteConfigLoader.setConfig(this.spriteConfig);
     
     // Get all animation definitions from the config
-    const animationDefinitions = configLoader.getAllAnimationDefinitions();
+    const animationDefinitions = spriteConfigLoader.getAllAnimationDefinitions();
     
     // Register and create animations for each sprite
     Object.entries(animationDefinitions).forEach(([spriteKey, animations]) => {
@@ -112,24 +111,23 @@ export class AssetLoaderService {
   private loadSpriteSheets(): void {
     this.logger.debug('Loading sprite sheets from config...');
     
-    const configLoader = new SpriteConfigLoader();
-    configLoader.setConfig(this.spriteConfig);
+    // Use singleton sprite config loader
+    spriteConfigLoader.setConfig(this.spriteConfig);
     
     // Load all character and enemy sprites from config
     if (this.spriteConfig.sprites.jobs) {
-      configLoader.loadSpritesForCategory(this.scene, 'jobs');
+      spriteConfigLoader.loadSpritesForCategory(this.scene, 'jobs');
     }
     
     if (this.spriteConfig.sprites.enemies) {
-      configLoader.loadSpritesForCategory(this.scene, 'enemies');
+      spriteConfigLoader.loadSpritesForCategory(this.scene, 'enemies');
     }
   }
   
   
   private loadEmotes(): void {
-    // Get emotes from sprite config
-    const configLoader = new SpriteConfigLoader();
-    configLoader.setConfig(this.spriteConfig);
+    // Get emotes from sprite config (using singleton)
+    spriteConfigLoader.setConfig(this.spriteConfig);
     
     
     // Load emotes based on sprite config structure

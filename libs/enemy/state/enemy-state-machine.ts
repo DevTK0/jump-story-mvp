@@ -1,4 +1,5 @@
 import { PlayerState as DbPlayerState } from '@/spacetime/client';
+import { spriteConfigLoader } from '@/core/asset/sprite-config-loader';
 
 /**
  * Base class for all enemy states
@@ -235,9 +236,22 @@ export class EnemyDeadState extends EnemyState {
     // Stop animation and keep on last frame
     this.sprite.anims.stop();
 
-    // Set to last frame of death animation
-    // This is enemy-type specific, but we'll use a sensible default
-    const deathFrame = this.enemy === 'orc' ? 43 : 0;
+    // Get the death animation config from sprite config
+    const enemySprite = spriteConfigLoader.getSpriteDefinition('enemies', this.enemy);
+    let deathFrame = 0; // Default to first frame if not found
+    
+    if (enemySprite && enemySprite.animations && 'death' in enemySprite.animations) {
+      const deathAnim = enemySprite.animations.death;
+      if (deathAnim && 'end' in deathAnim) {
+        deathFrame = deathAnim.end;
+      }
+    }
+    
+    // If sprite config isn't loaded or enemy not found, log warning
+    if (deathFrame === 0 && this.enemy !== 'unknown') {
+      console.warn(`Death frame not found for enemy type: ${this.enemy}`);
+    }
+    
     this.sprite.setFrame(deathFrame);
 
     // Apply death tint

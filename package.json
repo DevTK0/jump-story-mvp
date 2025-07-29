@@ -45,7 +45,6 @@
     "starlight-theme-nova": "^0.9.0"
   },
   "devDependencies": {
-    "@browserbasehq/mcp-stagehand": "^0.5.1",
     "@testing-library/dom": "^10.4.1",
     "@types/node": "^24.0.8",
     "@vitest/ui": "^3.2.4",
