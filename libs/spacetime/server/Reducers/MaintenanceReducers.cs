@@ -515,4 +515,31 @@ public static partial class Module
 
         Log.Info($"Updated leaderboard with {topPlayers.Count} players");
     }
+
+    [Reducer]
+    public static void CleanupOldBroadcasts(ReducerContext ctx, BroadcastCleanupTimer timer)
+    {
+        // Clean up broadcasts older than 15 seconds
+        var fifteenSecondsAgo = ctx.Timestamp - TimeSpan.FromSeconds(15);
+        var broadcastsToRemove = new List<uint>();
+
+        foreach (var broadcast in ctx.Db.Broadcast.Iter())
+        {
+            if (broadcast.publish_dt < fifteenSecondsAgo)
+            {
+                broadcastsToRemove.Add(broadcast.broadcast_id);
+            }
+        }
+
+        // Delete old broadcasts
+        foreach (var broadcastId in broadcastsToRemove)
+        {
+            ctx.Db.Broadcast.broadcast_id.Delete(broadcastId);
+        }
+
+        if (broadcastsToRemove.Count > 0)
+        {
+            Log.Info($"Cleaned up {broadcastsToRemove.Count} old broadcasts");
+        }
+    }
 }

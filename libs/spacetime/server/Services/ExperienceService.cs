@@ -150,13 +150,37 @@ public static partial class Module
         };
         ctx.Db.Player.identity.Update(updatedPlayer);
 
-        // Log level ups
+        // Log level ups and check for leaderboard broadcast
         if (levelUpResult.LevelsGained > 0)
         {
             Log.Info($"🎉 Player {player.identity} leveled up! {player.level} -> {levelUpResult.NewLevel}");
             if (levelUpResult.ExpSpent > 0)
             {
                 Log.Info($"   Spent {levelUpResult.ExpSpent} EXP on level ups, {levelUpResult.RemainingExp} EXP remaining");
+            }
+
+            // Check if player is on the leaderboard
+            var onLeaderboard = false;
+            foreach (var leaderboardEntry in ctx.Db.Leaderboard.Iter())
+            {
+                if (leaderboardEntry.player_identity == player.identity)
+                {
+                    onLeaderboard = true;
+                    break;
+                }
+            }
+
+            // Broadcast if player is on leaderboard
+            if (onLeaderboard)
+            {
+                var broadcastMessage = $"{player.name} has reached level {levelUpResult.NewLevel}!";
+                var broadcast = new Broadcast
+                {
+                    message = broadcastMessage,
+                    publish_dt = ctx.Timestamp
+                };
+                ctx.Db.Broadcast.Insert(broadcast);
+                Log.Info($"Broadcast level up for leaderboard player: {broadcastMessage}");
             }
         }
 

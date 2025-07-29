@@ -34,6 +34,8 @@ import {
 } from "@clockworklabs/spacetimedb-sdk";
 
 // Import and reexport all reducer arg types
+import { BroadcastMessage } from "./broadcast_message_reducer.ts";
+export { BroadcastMessage };
 import { ChangeJob } from "./change_job_reducer.ts";
 export { ChangeJob };
 import { CheckCombatTimeouts } from "./check_combat_timeouts_reducer.ts";
@@ -42,6 +44,8 @@ import { CleanupDeadBodies } from "./cleanup_dead_bodies_reducer.ts";
 export { CleanupDeadBodies };
 import { CleanupInactivePlayers } from "./cleanup_inactive_players_reducer.ts";
 export { CleanupInactivePlayers };
+import { CleanupOldBroadcasts } from "./cleanup_old_broadcasts_reducer.ts";
+export { CleanupOldBroadcasts };
 import { CleanupOldMessages } from "./cleanup_old_messages_reducer.ts";
 export { CleanupOldMessages };
 import { ClearAllJobData } from "./clear_all_job_data_reducer.ts";
@@ -96,6 +100,8 @@ import { UpdatePlayerTyping } from "./update_player_typing_reducer.ts";
 export { UpdatePlayerTyping };
 
 // Import and reexport all table handle types
+import { BroadcastTableHandle } from "./broadcast_table.ts";
+export { BroadcastTableHandle };
 import { EnemyTableHandle } from "./enemy_table.ts";
 export { EnemyTableHandle };
 import { EnemyDamageEventTableHandle } from "./enemy_damage_event_table.ts";
@@ -124,6 +130,8 @@ import { SpawnTableHandle } from "./spawn_table.ts";
 export { SpawnTableHandle };
 import { SpawnRouteTableHandle } from "./spawn_route_table.ts";
 export { SpawnRouteTableHandle };
+import { BroadcastCleanupTimerTableHandle } from "./broadcast_cleanup_timer_table.ts";
+export { BroadcastCleanupTimerTableHandle };
 import { CleanupDeadBodiesTimerTableHandle } from "./cleanup_dead_bodies_timer_table.ts";
 export { CleanupDeadBodiesTimerTableHandle };
 import { CombatTimeoutTimerTableHandle } from "./combat_timeout_timer_table.ts";
@@ -142,6 +150,10 @@ import { AiBehavior } from "./ai_behavior_type.ts";
 export { AiBehavior };
 import { AttackType } from "./attack_type_type.ts";
 export { AttackType };
+import { Broadcast } from "./broadcast_type.ts";
+export { Broadcast };
+import { BroadcastCleanupTimer } from "./broadcast_cleanup_timer_type.ts";
+export { BroadcastCleanupTimer };
 import { CleanupDeadBodiesTimer } from "./cleanup_dead_bodies_timer_type.ts";
 export { CleanupDeadBodiesTimer };
 import { CombatTimeoutTimer } from "./combat_timeout_timer_type.ts";
@@ -197,6 +209,15 @@ export { SpawnRoute };
 
 const REMOTE_MODULE = {
   tables: {
+    Broadcast: {
+      tableName: "Broadcast",
+      rowType: Broadcast.getTypeScriptAlgebraicType(),
+      primaryKey: "broadcastId",
+      primaryKeyInfo: {
+        colName: "broadcastId",
+        colType: Broadcast.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
     Enemy: {
       tableName: "Enemy",
       rowType: Enemy.getTypeScriptAlgebraicType(),
@@ -323,6 +344,15 @@ const REMOTE_MODULE = {
         colType: SpawnRoute.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
+    broadcast_cleanup_timer: {
+      tableName: "broadcast_cleanup_timer",
+      rowType: BroadcastCleanupTimer.getTypeScriptAlgebraicType(),
+      primaryKey: "scheduledId",
+      primaryKeyInfo: {
+        colName: "scheduledId",
+        colType: BroadcastCleanupTimer.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
     cleanup_dead_bodies_timer: {
       tableName: "cleanup_dead_bodies_timer",
       rowType: CleanupDeadBodiesTimer.getTypeScriptAlgebraicType(),
@@ -379,6 +409,10 @@ const REMOTE_MODULE = {
     },
   },
   reducers: {
+    BroadcastMessage: {
+      reducerName: "BroadcastMessage",
+      argsType: BroadcastMessage.getTypeScriptAlgebraicType(),
+    },
     ChangeJob: {
       reducerName: "ChangeJob",
       argsType: ChangeJob.getTypeScriptAlgebraicType(),
@@ -394,6 +428,10 @@ const REMOTE_MODULE = {
     CleanupInactivePlayers: {
       reducerName: "CleanupInactivePlayers",
       argsType: CleanupInactivePlayers.getTypeScriptAlgebraicType(),
+    },
+    CleanupOldBroadcasts: {
+      reducerName: "CleanupOldBroadcasts",
+      argsType: CleanupOldBroadcasts.getTypeScriptAlgebraicType(),
     },
     CleanupOldMessages: {
       reducerName: "CleanupOldMessages",
@@ -529,10 +567,12 @@ const REMOTE_MODULE = {
 
 // A type representing all the possible variants of a reducer.
 export type Reducer = never
+| { name: "BroadcastMessage", args: BroadcastMessage }
 | { name: "ChangeJob", args: ChangeJob }
 | { name: "CheckCombatTimeouts", args: CheckCombatTimeouts }
 | { name: "CleanupDeadBodies", args: CleanupDeadBodies }
 | { name: "CleanupInactivePlayers", args: CleanupInactivePlayers }
+| { name: "CleanupOldBroadcasts", args: CleanupOldBroadcasts }
 | { name: "CleanupOldMessages", args: CleanupOldMessages }
 | { name: "ClearAllJobData", args: ClearAllJobData }
 | { name: "Connect", args: Connect }
@@ -563,6 +603,22 @@ export type Reducer = never
 
 export class RemoteReducers {
   constructor(private connection: DbConnectionImpl, private setCallReducerFlags: SetReducerFlags) {}
+
+  broadcastMessage(message: string) {
+    const __args = { message };
+    let __writer = new BinaryWriter(1024);
+    BroadcastMessage.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("BroadcastMessage", __argsBuffer, this.setCallReducerFlags.broadcastMessageFlags);
+  }
+
+  onBroadcastMessage(callback: (ctx: ReducerEventContext, message: string) => void) {
+    this.connection.onReducer("BroadcastMessage", callback);
+  }
+
+  removeOnBroadcastMessage(callback: (ctx: ReducerEventContext, message: string) => void) {
+    this.connection.offReducer("BroadcastMessage", callback);
+  }
 
   changeJob(newJobKey: string) {
     const __args = { newJobKey };
@@ -626,6 +682,22 @@ export class RemoteReducers {
 
   removeOnCleanupInactivePlayers(callback: (ctx: ReducerEventContext, adminApiKey: string) => void) {
     this.connection.offReducer("CleanupInactivePlayers", callback);
+  }
+
+  cleanupOldBroadcasts(timer: BroadcastCleanupTimer) {
+    const __args = { timer };
+    let __writer = new BinaryWriter(1024);
+    CleanupOldBroadcasts.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("CleanupOldBroadcasts", __argsBuffer, this.setCallReducerFlags.cleanupOldBroadcastsFlags);
+  }
+
+  onCleanupOldBroadcasts(callback: (ctx: ReducerEventContext, timer: BroadcastCleanupTimer) => void) {
+    this.connection.onReducer("CleanupOldBroadcasts", callback);
+  }
+
+  removeOnCleanupOldBroadcasts(callback: (ctx: ReducerEventContext, timer: BroadcastCleanupTimer) => void) {
+    this.connection.offReducer("CleanupOldBroadcasts", callback);
   }
 
   cleanupOldMessages(timer: MessageCleanupTimer) {
@@ -1027,6 +1099,11 @@ export class RemoteReducers {
 }
 
 export class SetReducerFlags {
+  broadcastMessageFlags: CallReducerFlags = 'FullUpdate';
+  broadcastMessage(flags: CallReducerFlags) {
+    this.broadcastMessageFlags = flags;
+  }
+
   changeJobFlags: CallReducerFlags = 'FullUpdate';
   changeJob(flags: CallReducerFlags) {
     this.changeJobFlags = flags;
@@ -1045,6 +1122,11 @@ export class SetReducerFlags {
   cleanupInactivePlayersFlags: CallReducerFlags = 'FullUpdate';
   cleanupInactivePlayers(flags: CallReducerFlags) {
     this.cleanupInactivePlayersFlags = flags;
+  }
+
+  cleanupOldBroadcastsFlags: CallReducerFlags = 'FullUpdate';
+  cleanupOldBroadcasts(flags: CallReducerFlags) {
+    this.cleanupOldBroadcastsFlags = flags;
   }
 
   cleanupOldMessagesFlags: CallReducerFlags = 'FullUpdate';
@@ -1172,6 +1254,10 @@ export class SetReducerFlags {
 export class RemoteTables {
   constructor(private connection: DbConnectionImpl) {}
 
+  get broadcast(): BroadcastTableHandle {
+    return new BroadcastTableHandle(this.connection.clientCache.getOrCreateTable<Broadcast>(REMOTE_MODULE.tables.Broadcast));
+  }
+
   get enemy(): EnemyTableHandle {
     return new EnemyTableHandle(this.connection.clientCache.getOrCreateTable<Enemy>(REMOTE_MODULE.tables.Enemy));
   }
@@ -1226,6 +1312,10 @@ export class RemoteTables {
 
   get spawnRoute(): SpawnRouteTableHandle {
     return new SpawnRouteTableHandle(this.connection.clientCache.getOrCreateTable<SpawnRoute>(REMOTE_MODULE.tables.SpawnRoute));
+  }
+
+  get broadcastCleanupTimer(): BroadcastCleanupTimerTableHandle {
+    return new BroadcastCleanupTimerTableHandle(this.connection.clientCache.getOrCreateTable<BroadcastCleanupTimer>(REMOTE_MODULE.tables.broadcast_cleanup_timer));
   }
 
   get cleanupDeadBodiesTimer(): CleanupDeadBodiesTimerTableHandle {

@@ -46,7 +46,13 @@ public static partial class Module
             scheduled_at = new ScheduleAt.Interval(TimeSpan.FromSeconds(60))
         });
         
-        Log.Info("Initialized dead body cleanup, enemy spawning, enemy patrol, message cleanup, combat timeout, and leaderboard update schedulers");
+        // Schedule broadcast cleanup every 15 seconds
+        ctx.Db.broadcast_cleanup_timer.Insert(new BroadcastCleanupTimer
+        {
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromSeconds(15))
+        });
+        
+        Log.Info("Initialized dead body cleanup, enemy spawning, enemy patrol, message cleanup, combat timeout, leaderboard update, and broadcast cleanup schedulers");
     }
 
     // Helper function to populate PlayerJob entries for a new player
@@ -739,5 +745,33 @@ public static partial class Module
     private static bool IsAttackState(PlayerState state)
     {
         return PlayerStateMachine.IsAttackState(state);
+    }
+
+    [Reducer]
+    public static void BroadcastMessage(ReducerContext ctx, string message)
+    {
+        // Validate the message
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            Log.Info($"Player {ctx.Sender} attempted to broadcast empty message");
+            return;
+        }
+
+        // Limit message length to prevent abuse
+        if (message.Length > 200)
+        {
+            Log.Info($"Player {ctx.Sender} attempted to broadcast message longer than 200 characters");
+            return;
+        }
+
+        // Create broadcast entry
+        var broadcast = new Broadcast
+        {
+            message = message,
+            publish_dt = ctx.Timestamp
+        };
+
+        ctx.Db.Broadcast.Insert(broadcast);
+        Log.Info($"Broadcast message created: {message}");
     }
 }

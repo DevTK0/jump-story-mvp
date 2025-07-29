@@ -154,4 +154,21 @@ public static partial class Module
         public ulong scheduled_id;
         public ScheduleAt scheduled_at;
     }
+
+    [Table(Name = "Broadcast", Public = true)]
+    public partial struct Broadcast
+    {
+        [PrimaryKey, AutoInc]
+        public uint broadcast_id;
+        public string message;
+        public Timestamp publish_dt;
+    }
+
+    [Table(Name = "broadcast_cleanup_timer", Scheduled = nameof(CleanupOldBroadcasts), ScheduledAt = nameof(scheduled_at))]
+    public partial struct BroadcastCleanupTimer
+    {
+        [PrimaryKey, AutoInc]
+        public ulong scheduled_id;
+        public ScheduleAt scheduled_at;
+    }
 }

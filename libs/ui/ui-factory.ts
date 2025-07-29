@@ -8,6 +8,7 @@ import { DbMetricsTracker } from './performance/db-metrics-tracker';
 import { UI_CONFIG } from './ui-config';
 import { UIContextService, type UICreateConfig } from './services/ui-context-service';
 import { NameChangeDialog } from './menus/name-change-dialog';
+import { BroadcastDisplay } from './broadcast/broadcast-display';
 
 // Re-export UICreateConfig from UIContextService to maintain compatibility
 export type { UICreateConfig };
@@ -24,6 +25,7 @@ export class UIFactory {
   private bottomUIBar?: BottomUIBar;
   private fpsCounter?: FPSCounter;
   private performanceMetrics?: PerformanceMetrics;
+  private broadcastDisplay?: BroadcastDisplay;
   
   // Keyboard shortcuts
   private keyboardHandlers: Map<string, () => void> = new Map();
@@ -52,6 +54,9 @@ export class UIFactory {
     
     // Create performance UI
     this.createPerformanceUI();
+    
+    // Create broadcast display
+    this.createBroadcastDisplay(config);
     
     // Setup keyboard shortcuts
     this.setupKeyboardShortcuts(config);
@@ -113,6 +118,7 @@ export class UIFactory {
     this.bottomUIBar?.destroy();
     this.fpsCounter?.destroy();
     this.performanceMetrics?.destroy();
+    this.broadcastDisplay?.destroy();
     
     // Destroy UIContextService if it was initialized
     if (UIContextService.isInitialized()) {
@@ -155,6 +161,14 @@ export class UIFactory {
         fontSize: '14px',
         alpha: 0.7,
       });
+    }
+  }
+  
+  private createBroadcastDisplay(config: UICreateConfig): void {
+    // Create broadcast display if we have a connection
+    if (config.connection) {
+      this.broadcastDisplay = new BroadcastDisplay(this.scene, config.connection);
+      this.logger.debug('BroadcastDisplay created');
     }
   }
   
