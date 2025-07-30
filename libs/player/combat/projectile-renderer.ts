@@ -6,6 +6,8 @@
 import Phaser from 'phaser';
 import { EnemyDamageEvent } from '@/spacetime/client';
 import { EnemyManager } from '@/enemy';
+import { PeerManager } from '@/peer';
+import { PROJECTILE_RENDERER_CONFIG } from './projectile-renderer-config';
 
 interface ProjectileState {
   sprite: Phaser.GameObjects.Sprite;
@@ -22,13 +24,9 @@ export class ProjectileRenderer {
   private scene: Phaser.Scene;
   private enemyManager: EnemyManager | null = null;
   private playerSprite: Phaser.GameObjects.Sprite | null = null;
+  private peerManager: PeerManager | null = null;
+  private localPlayerIdentity: string | null = null;
   private activeProjectiles: ProjectileState[] = [];
-  
-  // Configuration
-  private readonly PROJECTILE_SPEED = 400; // pixels per second
-  private readonly PROJECTILE_DEPTH = 100;
-  private readonly PROJECTILE_SCALE = 2; // Scale multiplier for visibility
-  private readonly PROJECTILE_MIN_DISTANCE = 10; // Distance threshold for completion
   
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -49,10 +47,24 @@ export class ProjectileRenderer {
   }
 
   /**
+   * Set the peer manager for getting peer sprites
+   */
+  public setPeerManager(peerManager: PeerManager): void {
+    this.peerManager = peerManager;
+  }
+
+  /**
+   * Set the local player identity for comparison
+   */
+  public setLocalPlayerIdentity(identity: string): void {
+    this.localPlayerIdentity = identity;
+  }
+
+  /**
    * Create a homing projectile for a damage event
    */
   public createProjectile(damageEvent: EnemyDamageEvent): void {
-    if (!damageEvent.projectile || !this.enemyManager || !this.playerSprite) {
+    if (!damageEvent.projectile || !this.enemyManager) {
       return;
     }
 
@@ -62,15 +74,22 @@ export class ProjectileRenderer {
       return;
     }
 
+    // Determine the attacker sprite based on playerIdentity
+    const attackerSprite = this.getAttackerSprite(damageEvent.playerIdentity);
+    if (!attackerSprite) {
+      // Can't render projectile without attacker sprite
+      return;
+    }
+
     // Create projectile sprite
     const projectileSprite = this.scene.add.sprite(
-      this.playerSprite.x,
-      this.playerSprite.y, // Spawn from player's center
+      attackerSprite.x,
+      attackerSprite.y, // Spawn from attacker's center
       damageEvent.projectile
     );
 
-    projectileSprite.setDepth(this.PROJECTILE_DEPTH);
-    projectileSprite.setScale(this.PROJECTILE_SCALE);
+    projectileSprite.setDepth(PROJECTILE_RENDERER_CONFIG.visual.depth);
+    projectileSprite.setScale(PROJECTILE_RENDERER_CONFIG.visual.scale);
     
     // Try to play animation if it exists, otherwise just use the sprite
     const animKey = `projectile_${damageEvent.projectile}`;
@@ -80,13 +99,13 @@ export class ProjectileRenderer {
 
     // Calculate duration based on distance and speed
     const distance = Phaser.Math.Distance.Between(
-      this.playerSprite.x,
-      this.playerSprite.y,
+      attackerSprite.x,
+      attackerSprite.y,
       enemySprite.x,
       enemySprite.y
     );
-    const calculatedDuration = (distance / this.PROJECTILE_SPEED) * 1000; // Convert to milliseconds
-    const duration = Math.max(calculatedDuration, 300); // Minimum 300ms for visibility
+    const calculatedDuration = (distance / PROJECTILE_RENDERER_CONFIG.movement.speed) * 1000; // Convert to milliseconds
+    const duration = Math.max(calculatedDuration, PROJECTILE_RENDERER_CONFIG.movement.minDuration); // Minimum duration for visibility
 
     // Create projectile state
     const projectileState: ProjectileState = {
@@ -149,7 +168,7 @@ export class ProjectileRenderer {
             );
             
             // If very close to enemy, complete immediately
-            if (distance < this.PROJECTILE_MIN_DISTANCE) {
+            if (distance < PROJECTILE_RENDERER_CONFIG.movement.minDistance) {
               this.scene.tweens.killTweensOf(sprite);
               this.onProjectileComplete(projectileState);
             }
@@ -168,11 +187,11 @@ export class ProjectileRenderer {
     // Add a subtle scale effect
     this.scene.tweens.add({
       targets: sprite,
-      scaleX: 1.1,
-      scaleY: 1.1,
+      scaleX: PROJECTILE_RENDERER_CONFIG.animation.scalePulse.scale,
+      scaleY: PROJECTILE_RENDERER_CONFIG.animation.scalePulse.scale,
       duration: duration / 2,
-      yoyo: true,
-      ease: 'Sine.inOut',
+      yoyo: PROJECTILE_RENDERER_CONFIG.animation.scalePulse.yoyo,
+      ease: PROJECTILE_RENDERER_CONFIG.animation.scalePulse.ease,
     });
   }
 
@@ -225,6 +244,31 @@ export class ProjectileRenderer {
         }
       }
     });
+  }
+
+  /**
+   * Get the attacker sprite based on player identity
+   */
+  private getAttackerSprite(attackerIdentity: any): Phaser.GameObjects.Sprite | null {
+    // Convert identity to string for comparison
+    const attackerIdString = attackerIdentity.toHexString();
+    
+    // Check if it's the local player
+    if (attackerIdString === this.localPlayerIdentity) {
+      return this.playerSprite;
+    }
+    
+    // Otherwise, try to get peer sprite
+    if (this.peerManager) {
+      const peerSprite = this.peerManager.getPeerSprite(attackerIdString);
+      if (peerSprite) {
+        return peerSprite;
+      }
+    }
+    
+    // Fallback to player sprite if we can't find the peer
+    // This handles cases where peer hasn't loaded yet
+    return null;
   }
 
   /**

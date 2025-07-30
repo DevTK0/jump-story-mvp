@@ -6,6 +6,7 @@
 import Phaser from 'phaser';
 import { EnemyDamageEvent } from '@/spacetime/client';
 import { EnemyManager } from '@/enemy';
+import { PeerManager } from '@/peer';
 import {
   DAMAGE_RENDERER_CONFIG,
   getDamageTypeKey,
@@ -27,6 +28,8 @@ export class EnemyDamageRenderer {
   private scene: Phaser.Scene;
   private enemyManager: EnemyManager | null = null;
   private projectileRenderer: ProjectileRenderer;
+  private peerManager: PeerManager | null = null;
+  private localPlayerIdentity: string | null = null;
 
   // Object pooling
   private textPool: Phaser.GameObjects.Text[] = [];
@@ -52,6 +55,22 @@ export class EnemyDamageRenderer {
    */
   public setPlayerSprite(playerSprite: Phaser.GameObjects.Sprite): void {
     this.projectileRenderer.setPlayerSprite(playerSprite);
+  }
+
+  /**
+   * Set the peer manager reference
+   */
+  public setPeerManager(peerManager: PeerManager): void {
+    this.peerManager = peerManager;
+    this.projectileRenderer.setPeerManager(peerManager);
+  }
+
+  /**
+   * Set the local player identity
+   */
+  public setLocalPlayerIdentity(identity: string): void {
+    this.localPlayerIdentity = identity;
+    this.projectileRenderer.setLocalPlayerIdentity(identity);
   }
 
   /**

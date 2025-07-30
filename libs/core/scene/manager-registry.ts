@@ -214,6 +214,9 @@ export class ManagerRegistry {
     // Initialize level up manager with identity
     this.levelUpAnimationManager.initialize(connection, identity);
     
+    // Pass identity to enemy damage manager for projectile rendering
+    this.enemyDamageManager.setLocalPlayerIdentity(identity.toHexString());
+    
     // Setup damage event subscriptions
     this.setupDamageEventSubscription(connection);
   }
@@ -226,6 +229,9 @@ export class ManagerRegistry {
     if (this.peerManager) {
       this.peerManager.setLevelUpAnimationManager(this.levelUpAnimationManager);
       this.peerManager.setChatManager(this.chatManager);
+      
+      // Connect peer manager to enemy damage renderer for projectile rendering
+      this.enemyDamageManager.setPeerManager(this.peerManager);
     }
   }
   

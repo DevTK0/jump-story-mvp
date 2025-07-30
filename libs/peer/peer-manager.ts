@@ -710,6 +710,15 @@ export class PeerManager {
     return Array.from(this.peers.values());
   }
 
+  /**
+   * Get a peer sprite by identity string
+   * This provides encapsulated access to peer sprites without exposing the internal Map
+   */
+  public getPeerSprite(identityString: string): Phaser.GameObjects.Sprite | null {
+    const peer = this.peers.get(identityString);
+    return peer || null;
+  }
+
   public update(): void {
     // Update all peers for smooth interpolation
     for (const peer of this.peers.values()) {

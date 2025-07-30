@@ -18,3 +18,4 @@ export {
   getDamageDisplayText,
   getDamageStyle,
 } from './damage-renderer-config';
+export { PROJECTILE_RENDERER_CONFIG } from './projectile-renderer-config';
