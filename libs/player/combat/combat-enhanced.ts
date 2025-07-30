@@ -262,6 +262,13 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
       damage: config.damage,
       critChance: config.critChance,
     });
+    
+    // Emit skill activation event for UI tracking
+    emitSceneEvent(this.scene, 'skill:activated', {
+      slotIndex: attackNum - 1, // Convert 1-3 to 0-2 for UI
+      skillName: config.name,
+      cooldown: config.cooldown
+    });
 
     // Execute attack phases
     this.executeAttackPhases(attackNum, config, hitboxSprite);
@@ -315,6 +322,13 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
       attackType: attackNum,
       damage: config.damage,
       critChance: config.critChance,
+    });
+    
+    // Emit skill activation event for UI tracking
+    emitSceneEvent(this.scene, 'skill:activated', {
+      slotIndex: attackNum - 1, // Convert 1-3 to 0-2 for UI
+      skillName: config.name,
+      cooldown: config.cooldown
     });
 
     // Execute dash attack phases (with dash movement)

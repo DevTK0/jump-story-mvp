@@ -21,7 +21,6 @@ export class CombatSkillSlot {
   private hotkeyText: Phaser.GameObjects.Text;
   private skillLabel: Phaser.GameObjects.Text;
   private cooldownOverlay?: Phaser.GameObjects.Rectangle;
-  private cooldownText?: Phaser.GameObjects.Text;
   
   private logger: ModuleLogger;
   private slotIndex: number;
@@ -198,10 +197,6 @@ export class CombatSkillSlot {
         this.cooldownOverlay.destroy();
         this.cooldownOverlay = undefined;
       }
-      if (this.cooldownText) {
-        this.cooldownText.destroy();
-        this.cooldownText = undefined;
-      }
       return;
     }
     
@@ -214,36 +209,22 @@ export class CombatSkillSlot {
         COMBAT_SKILL_CONFIG.cooldown.overlayColor,
         COMBAT_SKILL_CONFIG.cooldown.overlayAlpha
       );
-      this.cooldownOverlay.setOrigin(0, 0);
+      this.cooldownOverlay.setOrigin(0, 1); // Origin at bottom-left for top-to-bottom fill
       this.cooldownOverlay.setDepth(COMBAT_SKILL_CONFIG.depth.cooldownOverlay);
       this.container.add(this.cooldownOverlay);
     }
     
-    // Update cooldown text
-    if (!this.cooldownText) {
-      this.cooldownText = this.scene.add.text(
-        COMBAT_SKILL_CONFIG.slot.width / 2,
-        COMBAT_SKILL_CONFIG.slot.height / 2,
-        '',
-        {
-          fontSize: COMBAT_SKILL_CONFIG.cooldown.fontSize,
-          fontFamily: COMBAT_SKILL_CONFIG.skillContent.fontFamily,
-          color: COMBAT_SKILL_CONFIG.cooldown.fontColor,
-        }
-      );
-      this.cooldownText.setOrigin(0.5, 0.5);
-      this.cooldownText.setDepth(COMBAT_SKILL_CONFIG.depth.cooldownOverlay + 1);
-      this.container.add(this.cooldownText);
-    }
-    
-    this.cooldownText.setText(Math.ceil(currentCooldown).toString());
-    
     // Update overlay height based on cooldown progress
     const progress = currentCooldown / maxCooldown;
+    const overlayHeight = COMBAT_SKILL_CONFIG.slot.height * progress;
+    
     this.cooldownOverlay.setSize(
       COMBAT_SKILL_CONFIG.slot.width,
-      COMBAT_SKILL_CONFIG.slot.height * progress
+      overlayHeight
     );
+    
+    // Position at bottom of slot for top-to-bottom shrinking effect
+    this.cooldownOverlay.setPosition(0, COMBAT_SKILL_CONFIG.slot.height);
   }
   
   // Callback setters

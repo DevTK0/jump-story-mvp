@@ -16,6 +16,7 @@ export class CombatSkillBar {
   private logger: ModuleLogger;
   
   private dbConnection: DbConnection | null = null;
+  private skillCooldowns: Map<number, { startTime: number; duration: number }> = new Map(); // slot index -> cooldown info
   
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -58,6 +59,9 @@ export class CombatSkillBar {
         }
       });
     }
+    
+    // Listen for skill activation events from combat system
+    this.scene.events.on('skill:activated', this.handleSkillActivatedEvent, this);
   }
   
   private initializeSkillsFromJob(): void {
@@ -100,8 +104,10 @@ export class CombatSkillBar {
     attackKeys.forEach((key, index) => {
       if (index < 3) {
         const attack = (attacks as any)[key];
+        const skillId = `${key}_A${index + 1}`;
+        
         skills.set(index, {
-          id: `${key}_A${index + 1}`,
+          id: skillId,
           name: attack.name,
           description: attack.description || 'No description available.',
           hotkey: hotkeys[index],
@@ -289,16 +295,39 @@ export class CombatSkillBar {
     this.container.setPosition(x, y);
   }
   
-  private handleSkillActivation(_slot: CombatSkillSlot, skillData?: SkillData): void {
+  private handleSkillActivation(slot: CombatSkillSlot, skillData?: SkillData): void {
     if (!skillData || !this.dbConnection) return;
     
-    this.logger.info(`Activating skill: ${skillData.name}`);
+    // Find the slot index
+    const slotIndex = this.skillSlots.indexOf(slot);
+    if (slotIndex === -1 || slotIndex >= 3) return; // Only handle attack slots (0-2)
     
-    // TODO: Call appropriate reducer based on skill type
-    // For now, just log
-    if (skillData.slotType === 'attack') {
-      this.logger.info(`Would call attack reducer for skill: ${skillData.id}`);
-      // Example: this.dbConnection.reducers.useSkill(skillData.id);
+    // Check if skill is on cooldown
+    const cooldownInfo = this.skillCooldowns.get(slotIndex);
+    if (cooldownInfo) {
+      const currentTime = Date.now();
+      const remainingTime = (cooldownInfo.startTime + cooldownInfo.duration) - currentTime;
+      if (remainingTime > 0) {
+        this.logger.debug(`Skill ${skillData.name} still on cooldown: ${remainingTime}ms remaining`);
+        return;
+      }
+    }
+    
+    this.logger.info(`UI: Skill slot ${slotIndex} clicked`);
+    
+    // Note: Cooldown tracking is now handled by handleSkillActivatedEvent
+    // This method just handles UI interaction feedback
+  }
+  
+  private handleSkillActivatedEvent(data: { slotIndex: number; skillName: string; cooldown: number }): void {
+    this.logger.info(`Skill activated: ${data.skillName} (slot ${data.slotIndex})`);
+    
+    // Start cooldown for this skill
+    if (data.cooldown && data.cooldown > 0) {
+      this.skillCooldowns.set(data.slotIndex, {
+        startTime: Date.now(),
+        duration: data.cooldown * 1000 // Convert to milliseconds
+      });
     }
   }
   
@@ -320,9 +349,36 @@ export class CombatSkillBar {
     this.positionContainer();
   }
   
+  
   public updateSkillCooldown(slotIndex: number, currentCooldown: number, maxCooldown: number): void {
     if (this.skillSlots[slotIndex]) {
       this.skillSlots[slotIndex].updateCooldown(currentCooldown, maxCooldown);
+    }
+  }
+  
+  public update(): void {
+    // Update cooldown visuals for each attack skill
+    const currentTime = Date.now();
+    
+    // Only update attack slots (0-2)
+    for (let i = 0; i < 3; i++) {
+      const cooldownInfo = this.skillCooldowns.get(i);
+      
+      if (cooldownInfo) {
+        const remainingTime = Math.max(0, (cooldownInfo.startTime + cooldownInfo.duration) - currentTime);
+        
+        if (remainingTime > 0) {
+          // Update the visual for this skill slot
+          this.updateSkillCooldown(i, remainingTime, cooldownInfo.duration);
+        } else {
+          // Cooldown finished, clear it
+          this.skillCooldowns.delete(i);
+          this.updateSkillCooldown(i, 0, 1);
+        }
+      } else {
+        // No cooldown, ensure slot is clear
+        this.updateSkillCooldown(i, 0, 1);
+      }
     }
   }
   
@@ -340,6 +396,12 @@ export class CombatSkillBar {
     // Remove context event listeners
     const context = UIContextService.getInstance();
     context.off(UIEvents.SKILL_DATA_UPDATED, this.handleSkillDataUpdate, this);
+    
+    // Remove skill activation listener
+    this.scene.events.off('skill:activated', this.handleSkillActivatedEvent, this);
+    
+    // Clear cooldowns
+    this.skillCooldowns.clear();
     
     // Destroy all skill slots
     this.skillSlots.forEach(slot => slot.destroy());

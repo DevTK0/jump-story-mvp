@@ -101,6 +101,11 @@ export class UIFactory {
     if (this.performanceMetrics) {
       this.performanceMetrics.update(time, delta);
     }
+    
+    // Update combat skill bar cooldowns
+    if (this.combatSkillBar) {
+      this.combatSkillBar.update();
+    }
   }
   
   /**
