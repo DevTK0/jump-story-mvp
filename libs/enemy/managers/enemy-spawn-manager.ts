@@ -3,6 +3,7 @@ import type { Spawn as ServerEnemy, DbConnection } from '@/spacetime/client';
 import { ENEMY_CONFIG } from '../config/enemy-config';
 import { EnemyHealthBar } from '../ui/enemy-health-bar';
 import { EnemyStateMachine } from '../state/enemy-state-machine';
+import { enemyAttributes } from '../../../apps/playground/config/enemy-attributes';
 
 /**
  * Handles enemy spawning, despawning, and lifecycle management
@@ -12,6 +13,7 @@ export class EnemySpawnManager {
   private enemies = new Map<number, Phaser.Physics.Arcade.Sprite>();
   private enemyHealthBars = new Map<number, EnemyHealthBar>();
   private enemyStateMachines = new Map<number, EnemyStateMachine>();
+  private enemyNameLabels = new Map<number, Phaser.GameObjects.Text>();
   private enemyGroup: Phaser.Physics.Arcade.Group;
   private dbConnection: DbConnection | null = null;
 
@@ -35,6 +37,7 @@ export class EnemySpawnManager {
     this.initializeEnemyAnimation(sprite, serverEnemy.enemy, isDead);
     this.configureEnemyPhysics(sprite, isDead);
     this.createHealthBar(serverEnemy, sprite);
+    this.createNameLabel(serverEnemy, sprite);
     this.registerEnemy(sprite, serverEnemy);
 
     return sprite;
@@ -46,6 +49,7 @@ export class EnemySpawnManager {
   public despawnEnemy(spawnId: number): void {
     const sprite = this.enemies.get(spawnId);
     const healthBar = this.enemyHealthBars.get(spawnId);
+    const nameLabel = this.enemyNameLabels.get(spawnId);
 
     if (sprite) {
       // Remove from physics group immediately to prevent further interactions
@@ -82,6 +86,12 @@ export class EnemySpawnManager {
     if (healthBar) {
       healthBar.destroy();
       this.enemyHealthBars.delete(spawnId);
+    }
+    
+    // Clean up name label
+    if (nameLabel) {
+      nameLabel.destroy();
+      this.enemyNameLabels.delete(spawnId);
     }
   }
 
@@ -176,6 +186,37 @@ export class EnemySpawnManager {
   }
 
   /**
+   * Create name label for enemy
+   */
+  private createNameLabel(serverEnemy: ServerEnemy, sprite: Phaser.Physics.Arcade.Sprite): void {
+    // Get enemy name from the enemy attributes configuration
+    let enemyName = serverEnemy.enemy; // Default to type if name not found
+    
+    const enemyConfig = enemyAttributes.enemies[serverEnemy.enemy];
+    if (enemyConfig && enemyConfig.name) {
+      enemyName = enemyConfig.name;
+    }
+    
+    // Create text label
+    const nameLabel = this.scene.add.text(
+      sprite.x,
+      sprite.y + ENEMY_CONFIG.nameLabel.offsetY,
+      enemyName,
+      {
+        fontSize: ENEMY_CONFIG.nameLabel.fontSize,
+        color: ENEMY_CONFIG.nameLabel.color,
+        stroke: ENEMY_CONFIG.nameLabel.stroke,
+        strokeThickness: ENEMY_CONFIG.nameLabel.strokeThickness,
+      }
+    );
+    
+    nameLabel.setOrigin(0.5, 0.5);
+    nameLabel.setDepth(ENEMY_CONFIG.nameLabel.depth);
+    
+    this.enemyNameLabels.set(serverEnemy.spawnId, nameLabel);
+  }
+
+  /**
    * Register enemy in collections and groups
    */
   private registerEnemy(sprite: Phaser.Physics.Arcade.Sprite, serverEnemy: ServerEnemy): void {
@@ -205,6 +246,10 @@ export class EnemySpawnManager {
   public getHealthBar(spawnId: number): EnemyHealthBar | undefined {
     return this.enemyHealthBars.get(spawnId);
   }
+  
+  public getNameLabel(spawnId: number): Phaser.GameObjects.Text | undefined {
+    return this.enemyNameLabels.get(spawnId);
+  }
 
   public getStateMachine(spawnId: number): EnemyStateMachine | undefined {
     return this.enemyStateMachines.get(spawnId);
@@ -218,9 +263,11 @@ export class EnemySpawnManager {
     this.enemies.forEach((sprite) => sprite.destroy());
     this.enemyHealthBars.forEach((healthBar) => healthBar.destroy());
     this.enemyStateMachines.forEach((stateMachine) => stateMachine.destroy());
+    this.enemyNameLabels.forEach((nameLabel) => nameLabel.destroy());
     this.enemies.clear();
     this.enemyHealthBars.clear();
     this.enemyStateMachines.clear();
+    this.enemyNameLabels.clear();
     this.enemyGroup.destroy();
   }
 }

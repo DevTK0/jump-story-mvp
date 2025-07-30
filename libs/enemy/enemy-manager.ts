@@ -8,6 +8,7 @@ import {
   type EnemySubscriptionConfig,
 } from './managers/enemy-subscription-manager';
 import { createLogger } from '@/core/logger';
+import { ENEMY_CONFIG } from './config/enemy-config';
 import type { PhysicsEntity } from '@/core/physics/physics-entity';
 import type { PhysicsRegistry } from '@/core/physics/physics-registry';
 
@@ -125,6 +126,10 @@ export class EnemyManager implements PhysicsEntity {
       if (healthBar) {
         healthBar.updatePosition(x, sprite.y);
       }
+      const nameLabel = this.spawnManager.getNameLabel(serverEnemy.spawnId);
+      if (nameLabel) {
+        nameLabel.setPosition(x, sprite.y + ENEMY_CONFIG.nameLabel.offsetY);
+      }
     });
   }
 
@@ -146,6 +151,7 @@ export class EnemyManager implements PhysicsEntity {
   private updateServerEnemy(serverEnemy: ServerEnemy): void {
     const sprite = this.spawnManager.getEnemy(serverEnemy.spawnId);
     const healthBar = this.spawnManager.getHealthBar(serverEnemy.spawnId);
+    const nameLabel = this.spawnManager.getNameLabel(serverEnemy.spawnId);
     
     // Check proximity if using proximity subscription
     const isInProximity = this.subscriptionManager.isEnemyInProximity(serverEnemy);
@@ -165,7 +171,7 @@ export class EnemyManager implements PhysicsEntity {
     }
 
     // Update position and movement
-    const previousX = this.movementManager.updateEnemyPosition(serverEnemy, sprite, healthBar);
+    const previousX = this.movementManager.updateEnemyPosition(serverEnemy, sprite, healthBar, nameLabel);
 
     // Check for state changes
     const previousState = this.enemyStates.get(serverEnemy.spawnId);

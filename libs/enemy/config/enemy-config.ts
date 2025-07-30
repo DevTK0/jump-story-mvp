@@ -72,6 +72,18 @@ export const ENEMY_CONFIG = {
   },
 
   /**
+   * Name label configuration
+   */
+  nameLabel: {
+    offsetY: 25, // Position below the enemy sprite
+    fontSize: '11px',
+    color: '#ffffff',
+    stroke: '#000000',
+    strokeThickness: 2,
+    depth: 6, // Above enemy sprite but below health bar
+  },
+
+  /**
    * Enemy type configurations
    */
   types: {

@@ -40,7 +40,8 @@ export class EnemyMovementManager {
   public updateEnemyPosition(
     serverEnemy: ServerEnemy,
     sprite: Phaser.Physics.Arcade.Sprite,
-    healthBar?: EnemyHealthBar
+    healthBar?: EnemyHealthBar,
+    _nameLabel?: Phaser.GameObjects.Text
   ): number {
     // Store previous position for movement detection
     const previousX = sprite.x;
