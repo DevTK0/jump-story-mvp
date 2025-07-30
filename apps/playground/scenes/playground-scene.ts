@@ -3,7 +3,6 @@ import { SceneInitializer, type SceneConfig } from '@/core';
 import type { IDebuggable } from '@/debug/debug-interfaces';
 import { DebugState } from '@/debug/debug-state';
 import { ContextMenuExtension } from '@/core/scene/extensions/context-menu-extension';
-import { TeleportStoneManager } from '@/teleport/teleport-stone-manager';
 import spriteConfig from '../config/sprite-config';
 
 // Scene configuration
@@ -35,7 +34,6 @@ const sceneConfig: SceneConfig = {
 export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
   private initializer: SceneInitializer;
   private contextMenuExtension?: ContextMenuExtension;
-  private teleportStoneManager?: TeleportStoneManager;
   public player?: any; // For backward compatibility with systems expecting scene.player
 
   constructor() {
@@ -59,13 +57,6 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
       enabled: true,
       isAdmin: false, // TODO: Get from user permissions
     });
-
-    // Initialize teleport stone manager
-    const connection = systems.connection?.getConnection();
-    if (connection) {
-      this.teleportStoneManager = new TeleportStoneManager(this, connection);
-      this.teleportStoneManager.init();
-    }
   }
 
   update(time: number, delta: number): void {
@@ -73,7 +64,6 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
   }
 
   shutdown(): void {
-    this.teleportStoneManager?.destroy();
     this.contextMenuExtension?.destroy();
     this.initializer.shutdown();
   }

@@ -8,6 +8,7 @@ import { InteractionHandler } from '@/networking';
 import { EnemyDamageRenderer, PlayerDamageRenderer } from '@/player';
 import { LevelUpAnimationManager, ChatManager } from '@/ui';
 import { Player } from '@/player';
+import { TeleportStoneManager } from '@/teleport/teleport-stone-manager';
 import type { MapData } from '../asset/map-loader';
 import { DbConnection } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
@@ -37,6 +38,7 @@ export class ManagerRegistry {
   private playerDamageManager!: PlayerDamageRenderer;
   private levelUpAnimationManager!: LevelUpAnimationManager;
   private chatManager!: ChatManager;
+  private teleportStoneManager!: TeleportStoneManager;
   
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -141,6 +143,7 @@ export class ManagerRegistry {
     this.levelUpAnimationManager?.destroy();
     this.playerDamageManager?.destroy();
     this.enemyDamageManager?.destroy();
+    this.teleportStoneManager?.destroy();
     this.peerManager?.destroy();
     this.enemyManager?.destroy();
   }
@@ -162,6 +165,9 @@ export class ManagerRegistry {
       cameraShakeDuration: CAMERA_CONFIG.shake.defaultDuration,
       cameraShakeIntensity: CAMERA_CONFIG.shake.defaultIntensity,
     });
+    
+    // Teleport stone manager
+    this.teleportStoneManager = new TeleportStoneManager(this.scene);
   }
   
   private createRenderingManagers(config: ManagerInitConfig): void {
@@ -188,6 +194,7 @@ export class ManagerRegistry {
     this.interactionManager.setDbConnection(connection);
     this.chatManager.setDbConnection(connection);
     this.playerDamageManager.setDbConnection(connection);
+    this.teleportStoneManager.setDbConnection(connection);
     
     // Initialize peer manager with identity
     this.peerManager = new PeerManager(this.scene, {
@@ -259,5 +266,9 @@ export class ManagerRegistry {
   
   getInteractionManager(): InteractionHandler {
     return this.interactionManager;
+  }
+  
+  getTeleportStoneManager(): TeleportStoneManager {
+    return this.teleportStoneManager;
   }
 }

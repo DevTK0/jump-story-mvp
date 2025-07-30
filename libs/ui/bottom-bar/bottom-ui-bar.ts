@@ -265,7 +265,7 @@ export class BottomUIBar {
     });
 
     // Subscribe to teleport tables
-    this.subscribeTeleportTables(dbConn, playerIdentityHex);
+    // Teleport subscriptions now handled by TeleportStoneManager
     
     // Get initial data
     for (const player of this.dbConnection.db.player.iter()) {
@@ -305,64 +305,6 @@ export class BottomUIBar {
     this.expBar.updateValues(player.experience, expRequired);
   }
 
-  private subscribeTeleportTables(dbConn: DbConnection, playerIdentityHex: string): void {
-    // Listen to Teleport table updates (all teleport locations)
-    dbConn.db.teleport.onInsert((_ctx, newTeleport) => {
-      // Add to table data
-      this.teleportTableData.push(newTeleport);
-      this.logger.info(`Teleport location added: ${newTeleport.locationName}`);
-      // Update context service
-      UIContextService.getInstance().updateTeleportData(this.playerTeleportUnlockStatus, this.teleportTableData);
-    });
-    
-    dbConn.db.teleport.onUpdate((_ctx, oldTeleport, newTeleport) => {
-      // Update in table data
-      const index = this.teleportTableData.findIndex((t) => t.locationName === oldTeleport.locationName);
-      if (index !== -1) {
-        this.teleportTableData[index] = newTeleport;
-        this.logger.info(`Teleport updated: ${newTeleport.locationName}`);
-        // Update context service
-        UIContextService.getInstance().updateTeleportData(this.playerTeleportUnlockStatus, this.teleportTableData);
-      }
-    });
-    
-    // Subscribe to PlayerTeleport data for this player
-    dbConn
-      .subscriptionBuilder()
-      .onApplied(() => {
-        this.logger.info('PlayerTeleport subscription applied');
-        const ptCount = Array.from(dbConn.db.playerTeleport.iter()).length;
-        this.logger.info(`PlayerTeleport table now has ${ptCount} entries`);
-        this.updatePlayerTeleportData();
-      })
-      .subscribe([`SELECT * FROM player_teleport WHERE player_identity = x'${playerIdentityHex}'`]);
-    
-    // Listen to PlayerTeleport updates
-    if (this.dbConnection) {
-      this.dbConnection.db.playerTeleport.onUpdate((_ctx, _oldPt, newPt) => {
-      if (newPt.playerIdentity.toHexString() === this.playerIdentity.toHexString()) {
-        this.playerTeleportUnlockStatus.set(newPt.locationName, newPt.isUnlocked);
-        this.logger.info(`PlayerTeleport updated: locationName=${newPt.locationName}, isUnlocked=${newPt.isUnlocked}`);
-        // Update context service
-        UIContextService.getInstance().updateTeleportData(this.playerTeleportUnlockStatus, this.teleportTableData);
-      }
-      });
-    }
-    
-    // Listen to PlayerTeleport inserts
-    if (this.dbConnection) {
-      this.dbConnection.db.playerTeleport.onInsert((_ctx, newPt) => {
-      if (newPt.playerIdentity.toHexString() === this.playerIdentity.toHexString()) {
-        this.playerTeleportUnlockStatus.set(newPt.locationName, newPt.isUnlocked);
-        this.logger.info(
-          `PlayerTeleport inserted: locationName=${newPt.locationName}, isUnlocked=${newPt.isUnlocked}`
-        );
-        // Update context service
-        UIContextService.getInstance().updateTeleportData(this.playerTeleportUnlockStatus, this.teleportTableData);
-      }
-      });
-    }
-  }
   
   private updatePlayerJobData(): void {
     if (!this.dbConnection || !this.dbConnection.db.playerJob || !this.dbConnection.db.job) {
@@ -435,39 +377,6 @@ export class BottomUIBar {
     this.positionComponents();
   }
 
-  private updatePlayerTeleportData(): void {
-    if (!this.dbConnection || !this.dbConnection.db.playerTeleport || !this.dbConnection.db.teleport) {
-      this.logger.warn('Tables not yet loaded for PlayerTeleport data update');
-      return;
-    }
-    
-    // Get all teleport locations
-    this.teleportTableData = [];
-    for (const teleport of this.dbConnection.db.teleport.iter()) {
-      this.teleportTableData.push(teleport);
-    }
-    this.logger.info(`Found ${this.teleportTableData.length} teleport locations`);
-    
-    // Get current PlayerTeleport data
-    const playerTeleports: any[] = [];
-    for (const pt of this.dbConnection.db.playerTeleport.iter()) {
-      if (pt.playerIdentity.isEqual(this.playerIdentity)) {
-        playerTeleports.push(pt);
-      }
-    }
-    
-    this.logger.info(`Found ${playerTeleports.length} player teleport entries`);
-    
-    // Update unlock status map
-    this.playerTeleportUnlockStatus.clear();
-    playerTeleports.forEach((pt) => {
-      this.playerTeleportUnlockStatus.set(pt.locationName, pt.isUnlocked);
-      this.logger.info(`Teleport ${pt.locationName}: unlocked=${pt.isUnlocked}`);
-    });
-    
-    // Update context service with the gathered data
-    UIContextService.getInstance().updateTeleportData(this.playerTeleportUnlockStatus, this.teleportTableData);
-  }
   
   public destroy(): void {
     // Remove resize listener

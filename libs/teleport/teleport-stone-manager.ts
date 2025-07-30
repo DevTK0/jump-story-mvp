@@ -1,190 +1,117 @@
 import * as Phaser from 'phaser';
 import { DbConnection, Teleport, PlayerTeleport } from '@/spacetime/client';
-import type { EventContext } from '@/spacetime/client';
+import { TeleportSubscriptionManager } from './managers/teleport-subscription-manager';
+import { TeleportSpriteManager } from './managers/teleport-sprite-manager';
+import { createLogger, type ModuleLogger } from '@/core/logger';
+import { UIContextService } from '@/ui/services/ui-context-service';
 
+/**
+ * Main teleport manager that orchestrates teleport subsystems
+ * Follows the pattern established by EnemyManager
+ */
 export class TeleportStoneManager {
   private scene: Phaser.Scene;
-  private clientDB: DbConnection;
-  private teleportSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
-  private playerIdentity: string | null = null;
+  private logger: ModuleLogger;
+  
+  // Subsystem managers
+  private subscriptionManager: TeleportSubscriptionManager;
+  private spriteManager: TeleportSpriteManager;
+  
+  // State tracking
+  private teleportLocations: Map<string, Teleport> = new Map();
+  private playerUnlockStatus: Map<string, boolean> = new Map();
 
-  constructor(scene: Phaser.Scene, clientDB: DbConnection) {
+  constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    this.clientDB = clientDB;
-  }
-
-  public init(): void {
-    const identity = this.clientDB.identity;
-    if (!identity) {
-      console.warn('Player identity not available yet. TeleportStoneManager not initialized.');
-      return;
-    }
-    this.playerIdentity = identity.toHexString();
-
-    // Subscribe to teleport tables
-    this.subscribeTeleportTables();
-
-    // Register reducers to listen for teleport data
-    this.registerReducers();
-
-    // Query existing teleports will happen after subscription is applied
-  }
-
-  private subscribeTeleportTables(): void {
-    this.clientDB
-      .subscriptionBuilder()
-      .onApplied(() => {
-        this.initializeExistingTeleports();
-      })
-      .subscribe(['SELECT * FROM Teleport', 'SELECT * FROM PlayerTeleport']);
-  }
-
-  private registerReducers(): void {
-    // Subscribe to Teleport table for stone locations
-    this.clientDB.db.teleport.onInsert((_ctx: EventContext, teleport: Teleport) => {
-      this.createTeleportStone(teleport);
-    });
-
-    this.clientDB.db.teleport.onDelete((_ctx: EventContext, teleport: Teleport) => {
-      this.removeTeleportStone(teleport.locationName);
-    });
-
-    this.clientDB.db.playerTeleport.onInsert(
-      (_ctx: EventContext, playerTeleport: PlayerTeleport) => {
-        if (playerTeleport.playerIdentity.toHexString() === this.playerIdentity) {
-          this.updateTeleportSprite(playerTeleport.locationName, playerTeleport.isUnlocked);
-        }
-      }
-    );
-
-    this.clientDB.db.playerTeleport.onUpdate(
-      (_ctx: EventContext, _oldData: PlayerTeleport, newData: PlayerTeleport) => {
-        if (newData.playerIdentity.toHexString() === this.playerIdentity) {
-          this.updateTeleportSprite(newData.locationName, newData.isUnlocked);
-        }
-      }
-    );
-  }
-
-  private initializeExistingTeleports(): void {
-    // Create sprites for all existing teleports
-    const teleports = Array.from(this.clientDB.db.teleport.iter());
-    for (const teleport of teleports) {
-      this.createTeleportStone(teleport);
-    }
-
-    // Update sprites based on player's unlock states
-    const playerTeleports = Array.from(this.clientDB.db.playerTeleport.iter());
-    const myTeleports = playerTeleports.filter(
-      (pt) => pt.playerIdentity.toHexString() === this.playerIdentity
-    );
-
-    for (const playerTeleport of myTeleports) {
-      this.updateTeleportSprite(playerTeleport.locationName, playerTeleport.isUnlocked);
-    }
-  }
-
-  private createTeleportStone(teleport: Teleport): void {
-    if (this.teleportSprites.has(teleport.locationName)) {
-      return; // Already exists
-    }
-
-    // Create sprite centered on the teleport tile
-    const sprite = this.scene.add.sprite(
-      teleport.x + 16,
-      teleport.y + 16,
-      'teleport-stone',
-      0
-    );
-
-    sprite.setDepth(1);
-    sprite.setOrigin(0.5, 0.5);
-    this.teleportSprites.set(teleport.locationName, sprite);
-  }
-
-  private removeTeleportStone(locationName: string): void {
-    const sprite = this.teleportSprites.get(locationName);
-    if (sprite) {
-      sprite.destroy();
-      this.teleportSprites.delete(locationName);
-    }
-  }
-
-  private updateTeleportSprite(locationName: string, isUnlocked: boolean): void {
-    const sprite = this.teleportSprites.get(locationName);
-    if (!sprite) {
-      console.warn(`Teleport sprite not found for location: ${locationName}`);
-      return;
-    }
-
-    const currentFrame = sprite.frame.name;
-    const targetFrame = isUnlocked ? 1 : 0;
-
-    if (currentFrame !== targetFrame.toString()) {
-      sprite.setFrame(targetFrame);
-      
-      if (isUnlocked) {
-        this.playUnlockAnimation(sprite);
-      }
-    }
-  }
-
-  private playUnlockAnimation(sprite: Phaser.GameObjects.Sprite): void {
-    // Scale animation
-    this.scene.tweens.add({
-      targets: sprite,
-      scaleX: 1.3,
-      scaleY: 1.3,
-      duration: 200,
-      ease: 'Power2',
-      yoyo: true,
-      onComplete: () => {
-        this.createUnlockParticles(sprite.x, sprite.y);
-      },
-    });
-
-    // Flash effect
-    this.scene.tweens.add({
-      targets: sprite,
-      alpha: 0.3,
-      duration: 100,
-      ease: 'Power1',
-      yoyo: true,
-      repeat: 2,
+    this.logger = createLogger('TeleportStoneManager');
+    
+    // Initialize subsystems
+    this.spriteManager = new TeleportSpriteManager(scene);
+    
+    // Initialize subscription manager with callbacks
+    this.subscriptionManager = new TeleportSubscriptionManager(scene, {
+      onTeleportInsert: this.handleTeleportInsert.bind(this),
+      onTeleportUpdate: this.handleTeleportUpdate.bind(this),
+      onTeleportDelete: this.handleTeleportDelete.bind(this),
+      onPlayerTeleportInsert: this.handlePlayerTeleportInsert.bind(this),
+      onPlayerTeleportUpdate: this.handlePlayerTeleportUpdate.bind(this),
     });
   }
 
-  private createUnlockParticles(x: number, y: number): void {
-    // Create simple sparkle effect using individual sprites
-    for (let i = 0; i < 8; i++) {
-      const angle = (i / 8) * Math.PI * 2;
-      const speed = 100 + Math.random() * 50;
-
-      const particle = this.scene.add.sprite(x, y, 'teleport-stone', 1);
-      particle.setScale(0.3);
-      particle.setAlpha(1);
-      particle.setBlendMode(Phaser.BlendModes.ADD);
-
-      // Animate outward
-      this.scene.tweens.add({
-        targets: particle,
-        x: x + Math.cos(angle) * speed,
-        y: y + Math.sin(angle) * speed,
-        alpha: 0,
-        scale: 0,
-        duration: 500,
-        ease: 'Power2',
-        onComplete: () => {
-          particle.destroy();
-        },
-      });
-    }
+  public setDbConnection(connection: DbConnection): void {
+    this.subscriptionManager.setDbConnection(connection);
   }
 
+  /**
+   * Handle teleport location insertion
+   */
+  private handleTeleportInsert(teleport: Teleport): void {
+    this.teleportLocations.set(teleport.locationName, teleport);
+    this.spriteManager.createTeleportStone(teleport.locationName, teleport.x, teleport.y);
+    this.updateUIContextService();
+  }
+
+  /**
+   * Handle teleport location update
+   */
+  private handleTeleportUpdate(teleport: Teleport): void {
+    this.teleportLocations.set(teleport.locationName, teleport);
+    
+    // Remove old sprite and create new one at updated location
+    this.spriteManager.removeTeleportStone(teleport.locationName);
+    this.spriteManager.createTeleportStone(teleport.locationName, teleport.x, teleport.y);
+    
+    // Reapply unlock status if it exists
+    const isUnlocked = this.playerUnlockStatus.get(teleport.locationName) || false;
+    this.spriteManager.updateTeleportSprite(teleport.locationName, isUnlocked);
+    
+    this.updateUIContextService();
+  }
+
+  /**
+   * Handle teleport location deletion
+   */
+  private handleTeleportDelete(teleport: Teleport): void {
+    this.teleportLocations.delete(teleport.locationName);
+    this.spriteManager.removeTeleportStone(teleport.locationName);
+    this.playerUnlockStatus.delete(teleport.locationName);
+    this.updateUIContextService();
+  }
+
+  /**
+   * Handle player teleport unlock status insertion
+   */
+  private handlePlayerTeleportInsert(playerTeleport: PlayerTeleport): void {
+    this.playerUnlockStatus.set(playerTeleport.locationName, playerTeleport.isUnlocked);
+    this.spriteManager.updateTeleportSprite(playerTeleport.locationName, playerTeleport.isUnlocked);
+    this.updateUIContextService();
+  }
+
+  /**
+   * Handle player teleport unlock status update
+   */
+  private handlePlayerTeleportUpdate(playerTeleport: PlayerTeleport): void {
+    this.playerUnlockStatus.set(playerTeleport.locationName, playerTeleport.isUnlocked);
+    this.spriteManager.updateTeleportSprite(playerTeleport.locationName, playerTeleport.isUnlocked);
+    this.updateUIContextService();
+  }
+
+  /**
+   * Update UIContextService with current teleport data
+   */
+  private updateUIContextService(): void {
+    const teleportTableData = Array.from(this.teleportLocations.values());
+    UIContextService.getInstance().updateTeleportData(this.playerUnlockStatus, teleportTableData);
+  }
+
+  /**
+   * Clean up all managers
+   */
   public destroy(): void {
-    for (const sprite of this.teleportSprites.values()) {
-      sprite.destroy();
-    }
-    this.teleportSprites.clear();
+    this.spriteManager.destroy();
+    this.subscriptionManager.destroy();
+    this.teleportLocations.clear();
+    this.playerUnlockStatus.clear();
+    this.logger.info('TeleportStoneManager destroyed');
   }
 }

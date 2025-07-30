@@ -1,12 +1,13 @@
-import { DbConnection } from '@/spacetime/client';
+import { DbConnection, Job, Teleport, Player } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import Phaser from 'phaser';
 import { createLogger, type ModuleLogger } from '@/core/logger';
+import { TypedEventEmitter } from './typed-event-emitter';
 
 export interface UICreateConfig {
   connection: DbConnection;
   identity: Identity;
-  player: any; // Type from @/player
+  player: Player;
 }
 
 export enum UIEvents {
@@ -17,23 +18,43 @@ export enum UIEvents {
 }
 
 /**
+ * Type-safe event payload definitions for UIContextService events
+ */
+export interface UIEventPayloads {
+  [UIEvents.DB_CONNECTION_UPDATED]: DbConnection;
+  [UIEvents.PLAYER_JOB_DATA_UPDATED]: {
+    jobData: Map<string, boolean>;
+    jobTableData: Job[];
+  };
+  [UIEvents.TELEPORT_DATA_UPDATED]: {
+    teleportData: Map<string, boolean>;
+    teleportTableData: Teleport[];
+  };
+  [UIEvents.PLAYER_IDENTITY_SET]: Identity;
+}
+
+/**
  * Centralized service for managing shared UI data and eliminating prop drilling.
  * Provides a single source of truth for database connections, player identity,
  * and job data across all UI components.
+ * 
+ * Architecture Note: UIContextService uses its own event system instead of scene events
+ * because it's a singleton that persists across scene transitions. Scene events are
+ * tied to specific scene instances and don't support cross-scene communication.
  */
 export class UIContextService {
   private static instance: UIContextService;
   private dbConnection: DbConnection | null = null;
   private playerIdentity: Identity | null = null;
   private jobData: Map<string, boolean> = new Map();
-  private jobTableData: any[] = [];
+  private jobTableData: Job[] = [];
   private teleportData: Map<string, boolean> = new Map();
-  private teleportTableData: any[] = [];
-  private eventEmitter: Phaser.Events.EventEmitter;
+  private teleportTableData: Teleport[] = [];
+  private eventEmitter: TypedEventEmitter<UIEventPayloads>;
   private logger: ModuleLogger;
 
   private constructor(_scene: Phaser.Scene) {
-    this.eventEmitter = new Phaser.Events.EventEmitter();
+    this.eventEmitter = new TypedEventEmitter<UIEventPayloads>();
     this.logger = createLogger('UIContextService');
   }
 
@@ -88,7 +109,7 @@ export class UIContextService {
   /**
    * Get the current job data
    */
-  getJobData(): { jobData: Map<string, boolean>; jobTableData: any[] } {
+  getJobData(): { jobData: Map<string, boolean>; jobTableData: Job[] } {
     return { 
       jobData: new Map(this.jobData), // Return copy to prevent external modifications
       jobTableData: [...this.jobTableData]
@@ -98,7 +119,7 @@ export class UIContextService {
   /**
    * Update job data and emit change event
    */
-  updateJobData(jobData: Map<string, boolean>, jobTableData: any[]): void {
+  updateJobData(jobData: Map<string, boolean>, jobTableData: Job[]): void {
     this.jobData = new Map(jobData);
     this.jobTableData = [...jobTableData];
     
@@ -116,7 +137,7 @@ export class UIContextService {
   /**
    * Get the current teleport data
    */
-  getTeleportData(): { teleportData: Map<string, boolean>; teleportTableData: any[] } {
+  getTeleportData(): { teleportData: Map<string, boolean>; teleportTableData: Teleport[] } {
     return { 
       teleportData: new Map(this.teleportData), // Return copy to prevent external modifications
       teleportTableData: [...this.teleportTableData]
@@ -126,7 +147,7 @@ export class UIContextService {
   /**
    * Update teleport data and emit change event
    */
-  updateTeleportData(teleportData: Map<string, boolean>, teleportTableData: any[]): void {
+  updateTeleportData(teleportData: Map<string, boolean>, teleportTableData: Teleport[]): void {
     this.teleportData = new Map(teleportData);
     this.teleportTableData = [...teleportTableData];
     
@@ -152,16 +173,20 @@ export class UIContextService {
 
   /**
    * Subscribe to context events
+   * @deprecated Use typed event methods when possible
    */
   on(event: string, callback: Function, context?: any): void {
-    this.eventEmitter.on(event, callback, context);
+    // Cast to maintain backward compatibility
+    this.eventEmitter.on(event as keyof UIEventPayloads, callback as any, context);
   }
 
   /**
    * Unsubscribe from context events
+   * @deprecated Use typed event methods when possible
    */
   off(event: string, callback: Function, context?: any): void {
-    this.eventEmitter.off(event, callback, context);
+    // Cast to maintain backward compatibility
+    this.eventEmitter.off(event as keyof UIEventPayloads, callback as any, context);
   }
 
   /**
