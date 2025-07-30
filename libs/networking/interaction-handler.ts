@@ -26,6 +26,7 @@ export class InteractionHandler {
   private currentAttackType: number = 1; // Default to attack1
   private enemyManager: InteractionEnemyManager | null = null;
   private playerQueryService: PlayerQueryService | null = null;
+  private player: Player | null = null;
   private logger = createLogger('InteractionHandler');
 
   // Track enemies damaged in current attack to prevent duplicates
@@ -91,6 +92,15 @@ export class InteractionHandler {
       // Use centralized state service validation
       if (!enemyManager.canEnemyTakeDamage(spawnId)) {
         return;
+      }
+
+      // Check if hit is valid for current attack type (fan angle check for projectiles)
+      if (this.player) {
+        const combatSystem = this.player.getSystem('combat') as any;
+        if (combatSystem && combatSystem.isHitValid && !combatSystem.isHitValid(enemy)) {
+          this.logger.debug('Hit rejected by fan angle check');
+          return;
+        }
       }
 
       // Prevent multiple damage to same enemy in single attack
@@ -268,6 +278,7 @@ export class InteractionHandler {
     player: Player,
     enemyManager: InteractionEnemyManager
   ): InteractionCallbacks {
+    this.player = player;
     return {
       onAttackHitEnemy: this.handleAttackHitEnemy(enemyManager),
       onPlayerTouchEnemy: this.handlePlayerTouchEnemy(player),

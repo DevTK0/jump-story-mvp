@@ -192,6 +192,7 @@ public static partial class Module
                     player_identity = ctx.Sender,
                     damage_amount = finalDamage,
                     damage_type = damageType,
+                    projectile = jobAttack.Value.attack_type == "projectile" ? jobAttack.Value.projectile : null,
                     timestamp = ctx.Timestamp
                 });
 

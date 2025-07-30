@@ -57,9 +57,8 @@ public static partial class Module
         public uint ammo_cost;
         public string modifiers; // comma-separated, e.g., "sword,greatsword"
         
-        // Optional fields for projectile attacks
-        public uint? projectile_speed;
-        public uint? projectile_size;
+        // Optional field for projectile attacks
+        public string? projectile; // Sprite key for projectile visual
         
         // Optional field for area attacks
         public uint? area_radius;

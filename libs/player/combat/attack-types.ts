@@ -3,7 +3,16 @@
  */
 
 // Valid attack modifiers
-export type AttackModifier = 'sword' | 'axe' | 'bow' | 'spear' | 'dark' | 'spike' | 'claw' | 'greatsword' | 'holy';
+export type AttackModifier =
+  | 'sword'
+  | 'axe'
+  | 'bow'
+  | 'spear'
+  | 'dark'
+  | 'spike'
+  | 'claw'
+  | 'greatsword'
+  | 'holy';
 
 // Base attack properties shared by all attack types
 interface BaseAttack {
@@ -18,6 +27,7 @@ interface BaseAttack {
   modifiers: AttackModifier[];
   manaCost: number;
   ammoCost: number;
+  description: string;
 }
 
 // Melee-specific properties
@@ -28,9 +38,7 @@ export interface StandardAttack extends BaseAttack {
 // Projectile-specific properties
 export interface ProjectileAttack extends BaseAttack {
   attackType: 'projectile';
-  projectileSpeed: number;
-  projectileSize: number;
-  projectileSprite: string;
+  projectile: string; // Required projectile sprite key
 }
 
 // Area-of-effect properties
@@ -109,97 +117,6 @@ export interface JobConfig {
     passive3?: Passive;
   };
 }
-
-// Example usage showing TypeScript enforcement
-export const EXAMPLE_WARRIOR_CONFIG: JobConfig = {
-  displayName: 'Warrior',
-  spriteKey: 'warrior',
-  defaultUnlocked: true,
-  baseStats: {
-    health: 120,
-    moveSpeed: 160,
-    mana: 50,
-    hpRecovery: 1,
-    manaRecovery: 0.5,
-    resistances: {
-      sword: 10,
-      axe: 5,
-      bow: -10,
-      spear: 0,
-      dark: -5,
-      spike: 0,
-      claw: -5,
-      greatsword: 15,
-    },
-  },
-  attacks: {
-    attack1: {
-      attackType: 'standard',
-      name: 'Quick Slash',
-      damage: 10,
-      cooldown: 300,
-      critChance: 0.15,
-      knockback: 5,
-      range: 10,
-      hits: 1,
-      targets: 1,
-      modifiers: ['sword'],
-      manaCost: 0,
-      ammoCost: 0,
-    },
-    attack2: {
-      attackType: 'standard',
-      name: 'Heavy Strike',
-      damage: 25,
-      cooldown: 800,
-      critChance: 0.25,
-      knockback: 15,
-      range: 10,
-      hits: 1,
-      targets: 1,
-      modifiers: ['sword'],
-      manaCost: 5,
-      ammoCost: 0,
-    },
-    attack3: {
-      attackType: 'area',
-      name: 'Ground Slam',
-      damage: 20,
-      cooldown: 1200,
-      critChance: 0.1,
-      range: 10,
-      hits: 1,
-      knockback: 15,
-      targets: 3,
-      modifiers: ['holy'],
-      manaCost: 10,
-      ammoCost: 0,
-      radius: 1000,
-      effectSprite: 'groundSlam',
-    },
-  },
-  passives: {
-    passive1: {
-      name: 'Warrior\'s Resolve',
-    },
-  },
-};
-
-// Example showing TypeScript errors
-export const INVALID_CONFIG_EXAMPLE = {
-  attack1: {
-    attackType: 'melee',
-    name: 'Bad Attack',
-    damage: 10,
-    cooldown: 300,
-    critChance: 0.15,
-    // TypeScript ERROR: 'projectileSpeed' does not exist on MeleeAttack
-    // projectileSpeed: 300,
-
-    // TypeScript ERROR: Missing required melee fields
-    // hitboxShape, hitboxOffset, hitboxSize
-  },
-};
 
 // Runtime validation function
 export function validateAttackConfig(attack: any): attack is Attack {

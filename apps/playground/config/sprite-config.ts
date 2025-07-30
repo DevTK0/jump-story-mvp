@@ -332,6 +332,34 @@ export const objectSprites: Record<string, SpriteDefinition> = {
   },
 };
 
+// Projectile sprites
+export const projectileSprites: Record<string, SpriteDefinition> = {
+  arrow: {
+    path: 'assets/spritesheet/projectiles/Arrow01(32x32).png',
+    frameWidth: 32,
+    frameHeight: 32,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static sprite
+    },
+  },
+  'power-arrow': {
+    path: 'assets/spritesheet/projectiles/Arrow02(32x32).png',
+    frameWidth: 32,
+    frameHeight: 32,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static sprite
+    },
+  },
+  'piercing-arrow': {
+    path: 'assets/spritesheet/projectiles/Arrow03(32x32).png',
+    frameWidth: 32,
+    frameHeight: 32,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static sprite
+    },
+  },
+};
+
 // Complete sprite configuration
 const spriteConfig: SpriteConfig = {
   sprites: {
@@ -339,6 +367,7 @@ const spriteConfig: SpriteConfig = {
     enemies: enemySprites,
     emotes: emoteSprites,
     objects: objectSprites,
+    projectiles: projectileSprites,
   },
 } as const;
 
@@ -349,3 +378,4 @@ export default spriteConfig;
 export type JobSpriteKey = keyof typeof jobSprites;
 export type EnemySpriteKey = keyof typeof enemySprites;
 export type EmoteSpriteKey = keyof typeof emoteSprites;
+export type ProjectileSpriteKey = keyof typeof projectileSprites;

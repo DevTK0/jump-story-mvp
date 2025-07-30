@@ -12,6 +12,7 @@ import {
   getDamageDisplayText,
   getDamageStyle,
 } from './damage-renderer-config';
+import { ProjectileRenderer } from './projectile-renderer';
 
 interface DamageNumberState {
   text: Phaser.GameObjects.Text;
@@ -25,6 +26,7 @@ interface DamageNumberState {
 export class EnemyDamageRenderer {
   private scene: Phaser.Scene;
   private enemyManager: EnemyManager | null = null;
+  private projectileRenderer: ProjectileRenderer;
 
   // Object pooling
   private textPool: Phaser.GameObjects.Text[] = [];
@@ -34,6 +36,7 @@ export class EnemyDamageRenderer {
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.initializePool();
+    this.projectileRenderer = new ProjectileRenderer(scene);
   }
 
   /**
@@ -41,6 +44,14 @@ export class EnemyDamageRenderer {
    */
   public setEnemyManager(enemyManager: EnemyManager): void {
     this.enemyManager = enemyManager;
+    this.projectileRenderer.setEnemyManager(enemyManager);
+  }
+
+  /**
+   * Set the player sprite reference for projectile origin
+   */
+  public setPlayerSprite(playerSprite: Phaser.GameObjects.Sprite): void {
+    this.projectileRenderer.setPlayerSprite(playerSprite);
   }
 
   /**
@@ -122,6 +133,11 @@ export class EnemyDamageRenderer {
         `[EnemyDamageRenderer] No position found for enemy ${damageEvent.spawnId} - enemy sprite may be missing or invisible`
       );
       return;
+    }
+
+    // If this is a projectile attack, create the projectile animation
+    if (damageEvent.projectile) {
+      this.projectileRenderer.createProjectile(damageEvent);
     }
 
     // Check if we're at max concurrent numbers
@@ -417,6 +433,13 @@ export class EnemyDamageRenderer {
   }
 
   /**
+   * Update the renderer (called each frame)
+   */
+  public update(): void {
+    this.projectileRenderer.update();
+  }
+
+  /**
    * Get debug information
    */
   public getDebugInfo(): Record<string, any> {
@@ -425,6 +448,7 @@ export class EnemyDamageRenderer {
       activeNumbers: this.allActiveNumbers.length,
       activeEnemies: this.activeNumbers.size,
       maxConcurrent: DAMAGE_RENDERER_CONFIG.performance.maxConcurrentNumbers,
+      ...this.projectileRenderer.getDebugInfo(),
     };
   }
 
@@ -445,5 +469,8 @@ export class EnemyDamageRenderer {
     this.activeNumbers.clear();
     this.allActiveNumbers.length = 0;
     this.textPool.length = 0;
+
+    // Destroy projectile renderer
+    this.projectileRenderer.destroy();
   }
 }

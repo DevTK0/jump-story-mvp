@@ -282,7 +282,7 @@
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"60"
+                         "value":"3"
                         }, 
                         {
                          "name":"type",
@@ -293,8 +293,8 @@
                  "type":"",
                  "visible":true,
                  "width":32,
-                 "x":576,
-                 "y":416
+                 "x":448,
+                 "y":192
                 }, 
                 {
                  "height":32,

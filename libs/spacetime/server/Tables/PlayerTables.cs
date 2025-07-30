@@ -38,6 +38,7 @@ public static partial class Module
         public Identity player_identity;
         public float damage_amount;
         public DamageType damage_type;
+        public string? projectile; // Projectile sprite key for ranged attacks
         public Timestamp timestamp;
     }
 
@@ -50,6 +51,7 @@ public static partial class Module
         public uint spawn_id; // The spawn that caused the damage
         public float damage_amount;
         public DamageType damage_type;
+        public string? projectile; // Projectile sprite key for ranged attacks
         public Timestamp timestamp;
     }
 

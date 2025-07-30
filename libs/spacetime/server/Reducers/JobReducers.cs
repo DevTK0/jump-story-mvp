@@ -83,8 +83,7 @@ public static partial class Module
         uint manaCost,
         uint ammoCost,
         string modifiers,
-        uint? projectileSpeed,
-        uint? projectileSize,
+        string? projectile,
         uint? areaRadius)
     {
         // Validate admin API key
@@ -135,8 +134,7 @@ public static partial class Module
             mana_cost = manaCost,
             ammo_cost = ammoCost,
             modifiers = modifiers,
-            projectile_speed = projectileSpeed,
-            projectile_size = projectileSize,
+            projectile = projectile,
             area_radius = areaRadius
         };
 

@@ -73,15 +73,17 @@ export class AssetLoaderService {
         animFactory.registerSpriteAnimations(spriteKey, animations as SpriteAnimationSet);
         animFactory.createSpriteAnimations(spriteKey);
       } else if ('play' in animations) {
-        // Emote animations - create manually
-        const emoteAnim = animations as { play: AnimationFrameConfig };
+        // Emote or projectile animations - create manually
+        const playAnim = animations as { play: AnimationFrameConfig };
+        const animKey = spriteKey.includes('emote') ? `${spriteKey}_anim` : `projectile_${spriteKey}`;
+        
         this.scene.anims.create({
-          key: `${spriteKey}_anim`,
+          key: animKey,
           frames: this.scene.anims.generateFrameNumbers(spriteKey, {
-            start: emoteAnim.play.start,
-            end: emoteAnim.play.end,
+            start: playAnim.play.start,
+            end: playAnim.play.end,
           }),
-          frameRate: emoteAnim.play.frameRate,
+          frameRate: playAnim.play.frameRate,
           repeat: -1, // Loop forever
         });
       }
@@ -125,6 +127,10 @@ export class AssetLoaderService {
     
     if ((this.spriteConfig.sprites as any).objects) {
       spriteConfigLoader.loadSpritesForCategory(this.scene, 'objects');
+    }
+    
+    if ((this.spriteConfig.sprites as any).projectiles) {
+      spriteConfigLoader.loadSpritesForCategory(this.scene, 'projectiles');
     }
   }
   

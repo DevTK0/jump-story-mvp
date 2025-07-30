@@ -200,13 +200,11 @@ async function initializeSpacetime() {
         console.log(`    Adding attack: ${attack.name} (slot: ${attackSlot}, type: ${attack.attackType})`);
         
         // Prepare optional fields based on attack type
-        let projectileSpeed: number | null = null;
-        let projectileSize: number | null = null;
+        let projectile: string | null = null;
         let areaRadius: number | null = null;
 
         if (attack.attackType === 'projectile') {
-          projectileSpeed = attack.projectileSpeed || null;
-          projectileSize = attack.projectileSize || null;
+          projectile = attack.projectile || null;
         } else if (attack.attackType === 'area') {
           areaRadius = attack.radius || null;
         }
@@ -228,8 +226,7 @@ async function initializeSpacetime() {
             attack.manaCost,
             attack.ammoCost,
             attack.modifiers.join(','), // Convert array to comma-separated string
-            projectileSpeed,
-            projectileSize,
+            projectile,
             areaRadius
           );
           console.log(`    ✅ Attack ${attack.name} added`);

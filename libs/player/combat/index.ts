@@ -10,6 +10,7 @@ export { DeathStateService } from './death-state-service';
 // Damage visualization
 export { EnemyDamageRenderer } from './enemy-damage-renderer';
 export { PlayerDamageRenderer } from './player-damage-renderer';
+export { ProjectileRenderer } from './projectile-renderer';
 export {
   DAMAGE_RENDERER_CONFIG,
   DAMAGE_COLOR_THEMES,

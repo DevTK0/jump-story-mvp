@@ -39,6 +39,12 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
 
   // Attack state
   private attackCooldowns: Map<number, boolean> = new Map();
+  private currentAttackConfig: Attack | null = null;
+  private currentAttackNum: number = 0;
+  
+  // Configuration
+  private readonly PROJECTILE_FAN_HALF_ANGLE = 45; // degrees
+  private readonly PROJECTILE_HITBOX_HEIGHT_MULTIPLIER = 10;
 
   // Combat components
   private hitboxSprites: Map<number, Phaser.Physics.Arcade.Sprite> = new Map();
@@ -119,10 +125,10 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
   }
 
   private initializeHitboxes(): void {
-    // Create hitbox sprites for each attack (standard and dash)
+    // Create hitbox sprites for each attack (standard, dash, and projectile)
     for (let i = 1; i <= 3; i++) {
       const attackConfig = this.jobConfig.attacks[`attack${i}` as keyof typeof this.jobConfig.attacks];
-      if (attackConfig && (attackConfig.attackType === 'standard' || attackConfig.attackType === 'dash')) {
+      if (attackConfig && (attackConfig.attackType === 'standard' || attackConfig.attackType === 'dash' || attackConfig.attackType === 'projectile')) {
         const hitbox = this.scene.physics.add.sprite(-200, -200, '');
         // Will be sized dynamically during attack
 
@@ -204,6 +210,9 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
       case 'dash':
         this.performDashAttack(attackNum, attackConfig);
         break;
+      case 'projectile':
+        this.performProjectileAttack(attackNum, attackConfig);
+        break;
       default:
         console.log(`Attack type ${attackConfig.attackType} not yet implemented`);
     }
@@ -213,6 +222,10 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
 
   private performStandardAttack(attackNum: number, config: Attack): void {
     const facing = this.player.facingDirection;
+    
+    // Track current attack
+    this.currentAttackConfig = config;
+    this.currentAttackNum = attackNum;
 
     // Get or create hitbox sprite
     const hitboxSprite = this.hitboxSprites.get(attackNum);
@@ -276,6 +289,10 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
 
   private performDashAttack(attackNum: number, config: Attack): void {
     const facing = this.player.facingDirection;
+    
+    // Track current attack
+    this.currentAttackConfig = config;
+    this.currentAttackNum = attackNum;
 
     // Get or create hitbox sprite
     const hitboxSprite = this.hitboxSprites.get(attackNum);
@@ -287,7 +304,7 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     // Get actual player body
     const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
 
-    // Calculate hitbox dimensions (same as standard)
+    // Calculate hitbox dimensions
     const hitboxWidth = playerBody.width + config.range;
     const hitboxHeight = playerBody.height;
 
@@ -395,6 +412,7 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
       await this.delay(recoveryMs);
 
       this.player.setPlayerState({ isAttacking: false });
+      this.resetCurrentAttack();
 
       // Transition to appropriate state based on player movement
       const body = this.player.body as Phaser.Physics.Arcade.Body;
@@ -537,7 +555,155 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
 
     // Reset player state
     this.player.setPlayerState({ isAttacking: false, isDashing: false });
+    this.resetCurrentAttack();
     this.attackCooldowns.set(attackNum, false);
+  }
+
+
+  private performProjectileAttack(attackNum: number, config: Attack): void {
+    const facing = this.player.facingDirection;
+    
+    // Type guard to ensure we have a projectile attack
+    if (config.attackType !== 'projectile') return;
+    
+    // Track current attack
+    this.currentAttackConfig = config;
+    this.currentAttackNum = attackNum;
+
+    // Get or create hitbox sprite
+    const hitboxSprite = this.hitboxSprites.get(attackNum);
+    if (!hitboxSprite) return;
+
+    // Get actual player body
+    const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
+
+    // Calculate hitbox dimensions - taller for projectile attacks to support fan shape
+    const hitboxWidth = playerBody.width + config.range;
+    const hitboxHeight = playerBody.height * this.PROJECTILE_HITBOX_HEIGHT_MULTIPLIER;
+
+    // Calculate hitbox position
+    const playerCenterX = playerBody.x + playerBody.halfWidth;
+    const playerCenterY = playerBody.y + playerBody.halfHeight;
+    const hitboxCenterX = playerCenterX + (facing * config.range / 2);
+    
+    // Update hitbox sprite position
+    hitboxSprite.setPosition(hitboxCenterX, playerCenterY);
+
+    // Update physics body size and offset
+    if (hitboxSprite.body) {
+      const body = hitboxSprite.body as Phaser.Physics.Arcade.Body;
+      body.setSize(hitboxWidth, hitboxHeight);
+    }
+
+    // Update player state
+    this.player.setPlayerState({ isAttacking: true });
+    this.attackCooldowns.set(attackNum, true);
+
+    // Transition to attack state so it syncs to server and peers can see it
+    const attackStateName = `Attack${attackNum}`;
+    if (this.player.getStateMachine().canTransitionTo(attackStateName)) {
+      this.player.getStateMachine().transitionTo(attackStateName);
+    }
+
+    // Emit attack event
+    emitSceneEvent(this.scene, 'player:attacked', {
+      type: 'projectile',
+      direction: facing,
+      attackType: attackNum,
+      damage: config.damage,
+      critChance: config.critChance,
+      projectile: config.projectile,
+    });
+    
+    // Emit skill activation event for UI tracking
+    emitSceneEvent(this.scene, 'skill:activated', {
+      slotIndex: attackNum - 1, // Convert 1-3 to 0-2 for UI
+      skillName: config.name,
+      cooldown: config.cooldown
+    });
+
+    // Execute projectile attack phases with hitbox
+    this.executeProjectileAttackPhases(attackNum, config, hitboxSprite);
+  }
+
+  private async executeProjectileAttackPhases(
+    attackNum: number,
+    config: Attack,
+    hitboxSprite: Phaser.Physics.Arcade.Sprite
+  ): Promise<void> {
+    try {
+      // Use actual sprite animation duration
+      let animationDuration: number;
+      try {
+        animationDuration = getAttackAnimationDuration(this.playerJob, attackNum);
+      } catch (error) {
+        console.error(`Failed to get attack animation duration for ${this.playerJob} attack${attackNum}:`, error);
+        animationDuration = 300; // Fallback duration
+      }
+      
+      // Calculate phase durations based on actual animation timing
+      const startupMs = animationDuration * 0.2;  // 20% for windup
+      const activeMs = animationDuration * 0.6;   // 60% for damage frames
+      const recoveryMs = animationDuration * 0.2; // 20% for recovery
+
+      // Startup phase
+      await this.delay(startupMs);
+
+      // Active phase - enable hitbox
+      if (hitboxSprite.body) {
+        // Update hitbox position to current player position before enabling
+        const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
+        const facing = this.player.facingDirection;
+        
+        // Recalculate position with forward extension
+        const playerCenterX = playerBody.x + playerBody.halfWidth;
+        const playerCenterY = playerBody.y + playerBody.halfHeight;
+        const hitboxCenterX = playerCenterX + (facing * config.range / 2);
+        
+        hitboxSprite.setPosition(hitboxCenterX, playerCenterY);
+        
+        const body = hitboxSprite.body as Phaser.Physics.Arcade.Body;
+        body.reset(hitboxCenterX, playerCenterY);
+        body.enable = true;
+        // Ensure physics properties are maintained after reset
+        body.setGravityY(0);
+        body.setAllowGravity(false);
+        body.immovable = true;
+        body.moves = false;
+      }
+
+      // Damage is handled directly by collision detection
+
+      // Active phase duration
+      await this.delay(activeMs);
+
+      // Disable hitbox
+      if (hitboxSprite.body) {
+        hitboxSprite.body.enable = false;
+      }
+
+      // Recovery phase
+      await this.delay(recoveryMs);
+
+      this.player.setPlayerState({ isAttacking: false });
+      this.resetCurrentAttack();
+
+      // Transition to appropriate state based on player movement
+      const body = this.player.body as Phaser.Physics.Arcade.Body;
+      const transitioned = Math.abs(body.velocity.x) > 0.1
+        ? this.player.transitionToState('Walk')
+        : this.player.transitionToState('Idle');
+      
+      if (!transitioned) {
+        console.warn(`Failed to transition from attack state after projectile attack ${attackNum}`);
+        this.player.getStateMachine().transitionTo('Idle');
+      }
+      
+      this.startCooldown(attackNum, config.cooldown);
+    } catch (error) {
+      console.warn('Projectile attack execution interrupted:', error);
+      this.cleanupAttack(attackNum, hitboxSprite);
+    }
   }
 
   // Public API - Compatibility with existing physics system
@@ -576,6 +742,59 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
 
   public getPlayerJob(): string {
     return this.playerJob;
+  }
+
+  /**
+   * Check if a hit is valid for the current attack type
+   * For projectile attacks, this performs a fan angle check
+   */
+  public isHitValid(enemySprite: Phaser.GameObjects.Sprite): boolean {
+    // If no attack is active or it's not a projectile, allow the hit
+    if (!this.currentAttackConfig || this.currentAttackConfig.attackType !== 'projectile') {
+      return true;
+    }
+
+    // For projectile attacks, check if enemy is within fan angle
+    const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
+    const playerCenterX = playerBody.x + playerBody.halfWidth;
+    const playerCenterY = playerBody.y + playerBody.halfHeight;
+    
+    // Calculate vector from player to enemy
+    const enemyBody = enemySprite.body as Phaser.Physics.Arcade.Body;
+    const enemyCenterX = enemyBody.x + enemyBody.halfWidth;
+    const enemyCenterY = enemyBody.y + enemyBody.halfHeight;
+    
+    const deltaX = enemyCenterX - playerCenterX;
+    const deltaY = enemyCenterY - playerCenterY;
+    
+    // Normalize the vector
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    if (distance === 0) return true; // Enemy is on top of player
+    
+    const normalizedX = deltaX / distance;
+    const normalizedY = deltaY / distance;
+    
+    // Player facing vector (1 = right, -1 = left)
+    const facingX = this.player.facingDirection;
+    const facingY = 0;
+    
+    // Calculate angle between vectors using dot product
+    const dotProduct = normalizedX * facingX + normalizedY * facingY;
+    const angle = Math.acos(Math.max(-1, Math.min(1, dotProduct))); // Clamp to avoid NaN
+    
+    // Convert to degrees
+    const angleDegrees = angle * (180 / Math.PI);
+    
+    // Check if within fan angle
+    return angleDegrees <= this.PROJECTILE_FAN_HALF_ANGLE;
+  }
+
+  /**
+   * Reset current attack tracking
+   */
+  public resetCurrentAttack(): void {
+    this.currentAttackConfig = null;
+    this.currentAttackNum = 0;
   }
 
   public setPlayerJob(jobName: string, jobConfig: JobConfig): void {

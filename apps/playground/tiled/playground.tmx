@@ -70,11 +70,11 @@
     <property name="type" value="spawn"/>
    </properties>
   </object>
-  <object id="48" name="slime" x="576" y="416" width="32" height="32">
+  <object id="48" name="slime" x="448" y="192" width="32" height="32">
    <properties>
     <property name="enemy" value="slime"/>
     <property name="number" value="1"/>
-    <property name="spawn_interval" value="60"/>
+    <property name="spawn_interval" value="3"/>
     <property name="type" value="spawn"/>
    </properties>
   </object>

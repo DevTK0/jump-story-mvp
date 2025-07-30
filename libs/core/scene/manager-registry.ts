@@ -129,6 +129,11 @@ export class ManagerRegistry {
       this.peerManager.update();
     }
     
+    // Update enemy damage renderer for projectile animations
+    if (this.enemyDamageManager) {
+      this.enemyDamageManager.update();
+    }
+    
     // Enemy manager is server-driven, no update needed
   }
   
@@ -174,6 +179,7 @@ export class ManagerRegistry {
     // Enemy damage renderer
     this.enemyDamageManager = new EnemyDamageRenderer(this.scene);
     this.enemyDamageManager.setEnemyManager(this.enemyManager);
+    this.enemyDamageManager.setPlayerSprite(config.player);
     
     // Player damage renderer
     this.playerDamageManager = new PlayerDamageRenderer(this.scene);
