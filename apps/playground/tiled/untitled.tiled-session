@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "",
+    "activeFile": "playground.tmx",
     "expandedProjectPaths": [
         "."
     ],
@@ -38,10 +38,10 @@
         },
         "playground.tmx": {
             "scale": 0.7958,
-            "selectedLayer": 1,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 720.030158331239,
-                "y": 143.88037195275194
+                "x": 469.96732847449107,
+                "y": 293.4154310128173
             }
         },
         "playground.tmx#TX Tileset Ground": {
@@ -58,6 +58,7 @@
     "map.lastUsedExportFilter": "JSON map files (*.tmj *.json)",
     "map.lastUsedFormat": "tmx",
     "openFiles": [
+        "playground.tmx"
     ],
     "project": "untitled.tiled-project",
     "recentFiles": [

@@ -12,7 +12,8 @@ export interface UICreateConfig {
 export enum UIEvents {
   DB_CONNECTION_UPDATED = 'ui:db-connection-updated',
   PLAYER_JOB_DATA_UPDATED = 'ui:player-job-data-updated',
-  PLAYER_IDENTITY_SET = 'ui:player-identity-set'
+  PLAYER_IDENTITY_SET = 'ui:player-identity-set',
+  TELEPORT_DATA_UPDATED = 'ui:teleport-data-updated'
 }
 
 /**
@@ -26,6 +27,8 @@ export class UIContextService {
   private playerIdentity: Identity | null = null;
   private jobData: Map<string, boolean> = new Map();
   private jobTableData: any[] = [];
+  private teleportData: Map<string, boolean> = new Map();
+  private teleportTableData: any[] = [];
   private eventEmitter: Phaser.Events.EventEmitter;
   private logger: ModuleLogger;
 
@@ -107,6 +110,34 @@ export class UIContextService {
     this.eventEmitter.emit(UIEvents.PLAYER_JOB_DATA_UPDATED, { 
       jobData: this.jobData, 
       jobTableData: this.jobTableData 
+    });
+  }
+
+  /**
+   * Get the current teleport data
+   */
+  getTeleportData(): { teleportData: Map<string, boolean>; teleportTableData: any[] } {
+    return { 
+      teleportData: new Map(this.teleportData), // Return copy to prevent external modifications
+      teleportTableData: [...this.teleportTableData]
+    };
+  }
+
+  /**
+   * Update teleport data and emit change event
+   */
+  updateTeleportData(teleportData: Map<string, boolean>, teleportTableData: any[]): void {
+    this.teleportData = new Map(teleportData);
+    this.teleportTableData = [...teleportTableData];
+    
+    this.logger.debug('Teleport data updated', {
+      teleportDataSize: teleportData.size,
+      teleportTableLength: teleportTableData.length
+    });
+    
+    this.eventEmitter.emit(UIEvents.TELEPORT_DATA_UPDATED, { 
+      teleportData: this.teleportData, 
+      teleportTableData: this.teleportTableData 
     });
   }
 

@@ -1,0 +1,355 @@
+import Phaser from 'phaser';
+import { createLogger, type ModuleLogger } from '@/core/logger';
+import { DbConnection } from '@/spacetime/client';
+import { UIContextService, UIEvents } from '../services/ui-context-service';
+
+export interface TeleportOption {
+  locationName: string;
+  x: number;
+  y: number;
+  unlocked: boolean;
+  position: { row: number; col: number };
+}
+
+export class TeleportSelectionMenu {
+  private scene: Phaser.Scene;
+  private container!: Phaser.GameObjects.Container;
+  private background!: Phaser.GameObjects.Rectangle;
+  private logger: ModuleLogger = createLogger('TeleportSelectionMenu');
+
+  private isVisible: boolean = false;
+  private _dbConnection: DbConnection | null = null;
+
+  // Available teleport locations
+  private teleportOptions: TeleportOption[] = [];
+
+  // Map of location names to their unlock status
+  private playerTeleportUnlockStatus: Map<string, boolean> = new Map();
+  // Teleport table data
+  private teleportTableData: any[] = [];
+
+  constructor(scene: Phaser.Scene) {
+    this.scene = scene;
+
+    // Get data from context service
+    const context = UIContextService.getInstance();
+    this._dbConnection = context.getDbConnection();
+
+    // Get initial teleport data
+    const teleportData = context.getTeleportData();
+    this.playerTeleportUnlockStatus = teleportData.teleportData;
+    this.teleportTableData = teleportData.teleportTableData;
+
+    // Subscribe to teleport data updates
+    context.on(UIEvents.TELEPORT_DATA_UPDATED, this.handleTeleportDataUpdate, this);
+
+    // Generate teleport options from data
+    this.generateTeleportOptions();
+
+    this.createUI();
+    this.hide(); // Start hidden
+
+    // Setup escape key to close
+    this.scene.input.keyboard?.on('keydown-ESC', () => {
+      if (this.isVisible) {
+        this.hide();
+      }
+    });
+  }
+
+  private createUI(): void {
+    // Create main container
+    this.container = this.scene.add.container(0, 0);
+    this.container.setScrollFactor(0);
+    this.container.setDepth(2000); // High depth to appear above everything
+
+    const camera = this.scene.cameras.main;
+    const centerX = camera.width / 2;
+    const centerY = camera.height / 2;
+
+    // Create semi-transparent background overlay
+    const overlay = this.scene.add.rectangle(
+      centerX,
+      centerY,
+      camera.width,
+      camera.height,
+      0x000000,
+      0.7
+    );
+    overlay.setInteractive(); // Block clicks from going through
+
+    // Create menu background
+    const menuWidth = 500;
+    const menuHeight = 650;
+    this.background = this.scene.add.rectangle(centerX, centerY, menuWidth, menuHeight, 0x2a2a2a);
+    this.background.setStrokeStyle(2, 0x4a4a4a);
+
+    // Create title
+    const title = this.scene.add.text(centerX, centerY - menuHeight / 2 + 40, 'Select Teleport Location', {
+      fontSize: '24px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+    });
+    title.setOrigin(0.5, 0.5);
+
+    // Create close button
+    const closeButton = this.scene.add.text(
+      centerX + menuWidth / 2 - 20,
+      centerY - menuHeight / 2 + 20,
+      'X',
+      {
+        fontSize: '20px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+      }
+    );
+    closeButton.setOrigin(0.5, 0.5);
+    closeButton.setInteractive({ useHandCursor: true });
+    closeButton.on('pointerover', () => closeButton.setColor('#ff6666'));
+    closeButton.on('pointerout', () => closeButton.setColor('#ffffff'));
+    closeButton.on('pointerdown', () => this.hide());
+
+    // Add all to container
+    this.container.add([overlay, this.background, title, closeButton]);
+
+    // Create teleport options
+    this.createTeleportOptions(centerX, centerY, menuWidth, menuHeight);
+  }
+
+  private generateTeleportOptions(): void {
+    let index = 0;
+    const cols = 3;
+
+    // Convert teleport data to options
+    this.teleportTableData.forEach((teleport) => {
+      const row = Math.floor(index / cols);
+      const col = index % cols;
+
+      const unlocked = this.playerTeleportUnlockStatus.get(teleport.locationName) || false;
+
+      this.teleportOptions.push({
+        locationName: teleport.locationName,
+        x: teleport.x,
+        y: teleport.y,
+        unlocked: unlocked,
+        position: { row, col },
+      });
+
+      index++;
+    });
+  }
+
+  private createTeleportOptions(
+    centerX: number,
+    centerY: number,
+    _menuWidth: number,
+    _menuHeight: number
+  ): void {
+    const gridSize = 120; // Same as job cells
+    const padding = 30;
+    const cols = 3;
+    const rows = Math.ceil(this.teleportOptions.length / cols);
+
+    // Calculate starting position to center the grid
+    const totalWidth = cols * gridSize + (cols - 1) * padding;
+    const totalHeight = rows * gridSize + (rows - 1) * padding;
+    const startX = centerX - totalWidth / 2 + gridSize / 2;
+    const startY = centerY - totalHeight / 2 + gridSize / 2 - 20; // Offset up a bit
+
+    this.teleportOptions.forEach((teleportOption) => {
+      const x = startX + teleportOption.position.col * (gridSize + padding);
+      const y = startY + teleportOption.position.row * (gridSize + padding);
+
+      // Create sprite background
+      const spriteBg = this.scene.add.rectangle(
+        x,
+        y,
+        gridSize,
+        gridSize,
+        teleportOption.unlocked ? 0x3a3a3a : 0x2a2a2a
+      );
+      spriteBg.setStrokeStyle(2, teleportOption.unlocked ? 0x5a5a5a : 0x3a3a3a);
+
+      // Create teleport stone sprite
+      const sprite = this.scene.add.sprite(x, y, 'teleport-stone');
+      // Set frame based on unlock status (0 = locked, 1 = unlocked)
+      sprite.setFrame(teleportOption.unlocked ? 1 : 0);
+      sprite.setScale(1.0); // Teleport stones are 100x100, grid is 120x120
+      
+      // Apply grayscale tint if locked
+      if (!teleportOption.unlocked) {
+        sprite.setTint(0x808080);
+      }
+
+      // Create location name below sprite
+      const locationName = this.scene.add.text(x, y + gridSize / 2 + 10, teleportOption.locationName, {
+        fontSize: '12px',
+        color: teleportOption.unlocked ? '#ffffff' : '#808080',
+        fontStyle: 'bold',
+      });
+      locationName.setOrigin(0.5, 0.5);
+
+      // Add "LOCKED" text indicator for locked teleports
+      if (!teleportOption.unlocked) {
+        const lockedText = this.scene.add.text(x, y, 'LOCKED', {
+          fontSize: '14px',
+          color: '#ff4444',
+          fontStyle: 'bold',
+          backgroundColor: '#000000',
+          padding: { x: 4, y: 2 },
+        });
+        lockedText.setOrigin(0.5, 0.5);
+        lockedText.setAlpha(0.9);
+
+        this.container.add(lockedText);
+      }
+
+      // Only make unlocked teleports interactive
+      if (teleportOption.unlocked) {
+        spriteBg.setInteractive({ useHandCursor: true });
+
+        // Hover effects
+        spriteBg.on('pointerover', () => {
+          spriteBg.setFillStyle(0x4a4a4a);
+          sprite.setScale(1.1);
+        });
+
+        spriteBg.on('pointerout', () => {
+          spriteBg.setFillStyle(0x3a3a3a);
+          sprite.setScale(1.0);
+        });
+
+        // Click handler
+        spriteBg.on('pointerdown', () => {
+          this.selectTeleport(teleportOption);
+        });
+      }
+
+      this.container.add([spriteBg, sprite, locationName]);
+    });
+  }
+
+  private selectTeleport(teleportOption: TeleportOption): void {
+    this.logger.info(`Selected teleport: ${teleportOption.locationName} at (${teleportOption.x}, ${teleportOption.y})`);
+
+    // Call the TeleportPlayer reducer with the location coordinates
+    if (this._dbConnection) {
+      // Teleport to the center of the tile (add 16 to both x and y since teleport coords are top-left)
+      const teleportX = teleportOption.x + 16;
+      const teleportY = teleportOption.y + 16;
+      
+      this._dbConnection.reducers.teleportPlayer(teleportX, teleportY);
+      this.logger.info(`Sent teleport request to (${teleportX}, ${teleportY})`);
+      
+      // Force immediate client position update to handle short-distance teleports
+      // Get player from scene data if available
+      const player = this.scene.data.get('player');
+      if (player && player.setPosition) {
+        // Small delay to ensure server has processed the teleport
+        this.scene.time.delayedCall(100, () => {
+          player.setPosition(teleportX, teleportY);
+          this.logger.info(`Forced client position update to (${teleportX}, ${teleportY})`);
+        });
+      }
+    } else {
+      this.logger.error('No database connection available to teleport');
+    }
+
+    this.hide();
+  }
+
+  public setDbConnection(dbConnection: DbConnection): void {
+    this._dbConnection = dbConnection;
+  }
+
+  public show(): void {
+    // Check if player is dead or in combat before showing
+    if (this._dbConnection && this._dbConnection.identity) {
+      let playerFound = false;
+      for (const player of this._dbConnection.db.player.iter()) {
+        if (player.identity.toHexString() === this._dbConnection.identity.toHexString()) {
+          playerFound = true;
+          
+          // Check if player is dead
+          if (player.currentHp <= 0 || player.state.tag === 'Dead') {
+            this.logger.warn('Cannot teleport while dead');
+            return;
+          }
+          
+          // Check if player is in combat
+          if (player.inCombat === true) {
+            this.logger.warn('Cannot teleport while in combat');
+            return;
+          }
+          
+          break;
+        }
+      }
+      if (!playerFound) {
+        this.logger.warn('Player not found in database');
+      }
+    }
+
+    this.container.setVisible(true);
+    this.isVisible = true;
+
+    // Refresh teleport options
+    this.updateTeleportUnlockStates();
+  }
+
+  public hide(): void {
+    this.container.setVisible(false);
+    this.isVisible = false;
+  }
+
+  private handleTeleportDataUpdate(data: { teleportData: Map<string, boolean>; teleportTableData: any[] }): void {
+    this.playerTeleportUnlockStatus = data.teleportData;
+    this.teleportTableData = data.teleportTableData;
+
+    this.logger.info(
+      `Teleport data updated via context: ${data.teleportData.size} entries, ${data.teleportTableData.length} teleports`
+    );
+
+    // Update display if menu is visible
+    if (this.isVisible) {
+      this.updateTeleportUnlockStates();
+    }
+  }
+
+  public destroy(): void {
+    // Unsubscribe from context events
+    const context = UIContextService.getInstance();
+    context.off(UIEvents.TELEPORT_DATA_UPDATED, this.handleTeleportDataUpdate, this);
+
+    this.container.destroy();
+  }
+
+  private updateTeleportUnlockStates(): void {
+    // Regenerate options with latest data
+    this.teleportOptions = [];
+    this.generateTeleportOptions();
+
+    // Refresh the UI to show updated unlock states
+    this.refreshTeleportOptions();
+  }
+
+  private refreshTeleportOptions(): void {
+    // Remove existing teleport option elements
+    const elementsToRemove: Phaser.GameObjects.GameObject[] = [];
+    this.container.list.forEach((child) => {
+      // Keep the overlay, background, title, and close button (first 4 elements)
+      if (this.container.list.indexOf(child) > 3) {
+        elementsToRemove.push(child);
+      }
+    });
+    elementsToRemove.forEach((element) => element.destroy());
+
+    // Recreate teleport options with updated unlock states
+    const camera = this.scene.cameras.main;
+    const centerX = camera.width / 2;
+    const centerY = camera.height / 2;
+    const menuWidth = 500;
+    const menuHeight = 650;
+    this.createTeleportOptions(centerX, centerY, menuWidth, menuHeight);
+  }
+}

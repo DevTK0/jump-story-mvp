@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { DbConnection, Teleport, PlayerTeleport, Player } from '@/spacetime/client';
+import { DbConnection, Teleport, PlayerTeleport } from '@/spacetime/client';
 import type { EventContext } from '@/spacetime/client';
 
 export class TeleportStoneManager {

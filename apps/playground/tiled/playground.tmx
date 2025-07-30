@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="1" nextlayerid="13" nextobjectid="53">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="1" nextlayerid="13" nextobjectid="55">
  <editorsettings>
   <export target="../maps/playground.tmj" format="json"/>
  </editorsettings>
@@ -22,7 +22,7 @@
     <property name="type" value="spawn"/>
    </properties>
   </object>
-  <object id="35" name="armored-orc" x="192" y="288" width="32" height="32">
+  <object id="35" name="armored-orc" x="128" y="416" width="32" height="32">
    <properties>
     <property name="enemy" value="armored-orc"/>
     <property name="number" value="1"/>
@@ -30,7 +30,7 @@
     <property name="type" value="spawn"/>
    </properties>
   </object>
-  <object id="36" name="elite-orc" x="384" y="288" width="32" height="32">
+  <object id="36" name="elite-orc" x="320" y="416" width="32" height="32">
    <properties>
     <property name="enemy" value="elite-orc"/>
     <property name="number" value="1"/>
@@ -38,7 +38,7 @@
     <property name="type" value="spawn"/>
    </properties>
   </object>
-  <object id="43" name="orc-rider" x="320" y="288" width="32" height="32">
+  <object id="43" name="orc-rider" x="256" y="416" width="32" height="32">
    <properties>
     <property name="enemy" value="orc-rider"/>
     <property name="number" value="1"/>
@@ -46,7 +46,7 @@
     <property name="type" value="spawn"/>
    </properties>
   </object>
-  <object id="44" name="armored-skeleton" x="448" y="192" width="32" height="32">
+  <object id="44" name="armored-skeleton" x="384" y="416" width="32" height="32">
    <properties>
     <property name="enemy" value="armored-skeleton"/>
     <property name="number" value="1"/>
@@ -54,7 +54,7 @@
     <property name="type" value="spawn"/>
    </properties>
   </object>
-  <object id="45" name="skeleton-archer" x="512" y="192" width="32" height="32">
+  <object id="45" name="skeleton-archer" x="448" y="416" width="32" height="32">
    <properties>
     <property name="enemy" value="skeleton-archer"/>
     <property name="number" value="1"/>
@@ -62,7 +62,7 @@
     <property name="type" value="spawn"/>
    </properties>
   </object>
-  <object id="46" name="greatsword-skeleton" x="576" y="192" width="32" height="32">
+  <object id="46" name="greatsword-skeleton" x="480" y="416" width="32" height="32">
    <properties>
     <property name="enemy" value="greatsword-skeleton"/>
     <property name="number" value="1"/>
@@ -70,7 +70,7 @@
     <property name="type" value="spawn"/>
    </properties>
   </object>
-  <object id="48" name="slime" x="704" y="128" width="32" height="32">
+  <object id="48" name="slime" x="576" y="416" width="32" height="32">
    <properties>
     <property name="enemy" value="slime"/>
     <property name="number" value="1"/>
@@ -78,7 +78,7 @@
     <property name="type" value="spawn"/>
    </properties>
   </object>
-  <object id="49" name="werewolf" x="768" y="128" width="32" height="32">
+  <object id="49" name="werewolf" x="640" y="416" width="32" height="32">
    <properties>
     <property name="enemy" value="werewolf"/>
     <property name="number" value="1"/>
@@ -86,7 +86,7 @@
     <property name="type" value="spawn"/>
    </properties>
   </object>
-  <object id="50" name="werebear" x="832" y="128" width="32" height="32">
+  <object id="50" name="werebear" x="704" y="416" width="32" height="32">
    <properties>
     <property name="enemy" value="werebear"/>
     <property name="number" value="1"/>
@@ -96,14 +96,24 @@
   </object>
  </objectgroup>
  <objectgroup id="12" name="Teleport">
-  <object id="51" name="statue of life" x="224" y="288" width="32" height="32">
+  <object id="51" name="stone of light" x="224" y="288" width="32" height="32">
+   <properties>
+    <property name="type" value="teleport"/>
+   </properties>
+  </object>
+  <object id="53" name="stone of darkness" x="768" y="128" width="32" height="32">
+   <properties>
+    <property name="type" value="teleport"/>
+   </properties>
+  </object>
+  <object id="54" name="stone of flowers" x="544" y="192" width="32" height="32">
    <properties>
     <property name="type" value="teleport"/>
    </properties>
   </object>
  </objectgroup>
  <objectgroup id="6" name="Chests">
-  <object id="47" name="skeleton" x="256" y="288" width="32" height="32">
+  <object id="47" name="skeleton" x="192" y="416" width="32" height="32">
    <properties>
     <property name="enemy" value="skeleton"/>
     <property name="number" value="1"/>

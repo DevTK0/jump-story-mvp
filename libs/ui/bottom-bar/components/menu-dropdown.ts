@@ -4,6 +4,7 @@ import { createLogger, type ModuleLogger } from '@/core/logger';
 import { ClassSelectionMenu } from '@/ui/menus/class-selection-menu';
 import { NameChangeDialog } from '@/ui/menus/name-change-dialog';
 import { LeaderboardDialog } from '@/ui/menus/leaderboard-dialog';
+import { TeleportSelectionMenu } from '@/ui/menus/teleport-selection-menu';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { DbConnection } from '@/spacetime/client';
 import { UIContextService, UIEvents } from '../../services/ui-context-service';
@@ -25,6 +26,7 @@ export class MenuDropdown {
   private classSelectionMenu: ClassSelectionMenu | null = null;
   private nameChangeDialog: NameChangeDialog | null = null;
   private leaderboardDialog: LeaderboardDialog | null = null;
+  private teleportSelectionMenu: TeleportSelectionMenu | null = null;
   private playerIdentity: Identity | null = null;
   private dbConnection: DbConnection | null = null;
 
@@ -34,6 +36,13 @@ export class MenuDropdown {
       action: () => {
         this.logger.info('Open job selection');
         this.showClassSelectionMenu();
+      },
+    },
+    {
+      label: 'Teleport',
+      action: () => {
+        this.logger.info('Open teleport selection');
+        this.showTeleportSelectionMenu();
       },
     },
     {
@@ -230,6 +239,14 @@ export class MenuDropdown {
     this.leaderboardDialog.show();
   }
 
+  private showTeleportSelectionMenu(): void {
+    if (!this.teleportSelectionMenu) {
+      // TeleportSelectionMenu will get identity and connection from context
+      this.teleportSelectionMenu = new TeleportSelectionMenu(this.scene);
+    }
+    this.teleportSelectionMenu?.show();
+  }
+
   // Keep these methods for backward compatibility but they won't be called anymore
   public setPlayerIdentity(_identity: Identity): void {
     // No longer needed - gets from context
@@ -250,5 +267,6 @@ export class MenuDropdown {
     this.classSelectionMenu?.destroy();
     this.nameChangeDialog?.destroy();
     this.leaderboardDialog?.destroy();
+    this.teleportSelectionMenu?.destroy();
   }
 }
