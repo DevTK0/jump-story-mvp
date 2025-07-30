@@ -15,7 +15,6 @@ export interface TeleportSubscriptionCallbacks {
  * Follows the pattern established by EnemySubscriptionManager
  */
 export class TeleportSubscriptionManager {
-  private scene: Phaser.Scene;
   private dbConnection: DbConnection | null = null;
   private callbacks: TeleportSubscriptionCallbacks;
   private playerIdentityHex: string | null = null;
@@ -23,10 +22,9 @@ export class TeleportSubscriptionManager {
   private cleanupFunctions: Array<() => void> = [];
 
   constructor(
-    scene: Phaser.Scene,
+    _scene: Phaser.Scene,
     callbacks: TeleportSubscriptionCallbacks
   ) {
-    this.scene = scene;
     this.callbacks = callbacks;
     this.logger = createLogger('TeleportSubscriptionManager');
   }

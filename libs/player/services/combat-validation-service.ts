@@ -1,6 +1,4 @@
-import { DbConnection, PlayerCooldown } from '@/spacetime/client';
-import { createLogger, type ModuleLogger } from '@/core/logger';
-import { Timestamp } from '@clockworklabs/spacetimedb-sdk';
+import type { DbConnection } from '@/spacetime/client';
 import type { JobConfig, Attack } from '../combat/attack-types';
 
 export interface CombatValidationResult {
@@ -14,11 +12,9 @@ export interface CombatValidationResult {
  */
 export class CombatValidationService {
   private static instance: CombatValidationService | null = null;
-  private dbConnection: DbConnection;
-  private logger: ModuleLogger = createLogger('CombatValidationService');
 
-  private constructor(dbConnection: DbConnection) {
-    this.dbConnection = dbConnection;
+  private constructor(_dbConnection: DbConnection) {
+    // Note: dbConnection parameter kept for API compatibility
   }
 
   /**
@@ -84,112 +80,22 @@ export class CombatValidationService {
 
   /**
    * Check if attack is on cooldown
+   * Note: Cooldowns are now tracked client-side in the UI
    */
-  private checkCooldown(attackNum: number): CombatValidationResult {
-    if (!this.dbConnection?.db?.playerCooldown || !this.dbConnection.identity) {
-      // If we can't check cooldowns, allow the attack (server will validate)
-      return { canAttack: true };
-    }
-
-    // Find current player's cooldown data
-    const myIdentity = this.dbConnection.identity;
-    let playerCooldown: PlayerCooldown | null = null;
-
-    for (const cooldown of this.dbConnection.db.playerCooldown.iter()) {
-      if (cooldown.playerIdentity.toHexString() === myIdentity.toHexString()) {
-        playerCooldown = cooldown;
-        break;
-      }
-    }
-
-    if (!playerCooldown) {
-      // No cooldown data found, allow attack
-      return { canAttack: true };
-    }
-
-    // Get the last used timestamp for this attack
-    const lastUsed = this.getLastUsedTimestamp(playerCooldown, attackNum);
-    if (!lastUsed) {
-      return { canAttack: true };
-    }
-
-    // Get attack config from job to check cooldown duration
-    // Note: We need the job config to get the cooldown duration
-    // This is passed in via canUseAttack, so we'll need to refactor slightly
-    
-    // For now, just return true as we need more context
-    // The actual cooldown check will be done in the enhanced version
+  private checkCooldown(_attackNum: number): CombatValidationResult {
+    // Cooldowns are now handled client-side in CombatSkillBar
     return { canAttack: true };
   }
 
   /**
-   * Get last used timestamp for a specific attack
-   */
-  private getLastUsedTimestamp(cooldown: PlayerCooldown, attackNum: number): Timestamp | null {
-    switch (attackNum) {
-      case 1:
-        return cooldown.attack1LastUsed;
-      case 2:
-        return cooldown.attack2LastUsed;
-      case 3:
-        return cooldown.attack3LastUsed;
-      default:
-        return null;
-    }
-  }
-
-  /**
    * Check cooldown with full context
+   * Note: Cooldowns are now tracked client-side in the UI
    */
   public checkCooldownWithConfig(
-    attackNum: number,
-    attackConfig: Attack
+    _attackNum: number,
+    _attackConfig: Attack
   ): CombatValidationResult {
-    if (!this.dbConnection?.db?.playerCooldown || !this.dbConnection.identity) {
-      return { canAttack: true };
-    }
-
-    // Find current player's cooldown data
-    const myIdentity = this.dbConnection.identity;
-    let playerCooldown: PlayerCooldown | null = null;
-
-    for (const cooldown of this.dbConnection.db.playerCooldown.iter()) {
-      if (cooldown.playerIdentity.toHexString() === myIdentity.toHexString()) {
-        playerCooldown = cooldown;
-        break;
-      }
-    }
-
-    if (!playerCooldown) {
-      return { canAttack: true };
-    }
-
-    // Get the last used timestamp
-    const lastUsed = this.getLastUsedTimestamp(playerCooldown, attackNum);
-    if (!lastUsed) {
-      this.logger.debug(`No last used timestamp for attack ${attackNum}`);
-      return { canAttack: true };
-    }
-
-    // Calculate if cooldown has expired
-    // Server expects cooldown in seconds, so convert to milliseconds
-    const cooldownMs = attackConfig.cooldown * 1000;
-    const now = Date.now();
-    const lastUsedMs = lastUsed.toDate().getTime();
-    const canUseAt = lastUsedMs + cooldownMs;
-
-    this.logger.debug(`Cooldown check - Attack: ${attackNum}, Cooldown: ${attackConfig.cooldown}s (${cooldownMs}ms)`);
-    this.logger.debug(`Last used: ${new Date(lastUsedMs).toISOString()}, Can use at: ${new Date(canUseAt).toISOString()}`);
-    this.logger.debug(`Current time: ${new Date(now).toISOString()}, Can attack: ${canUseAt <= now}`);
-
-    if (canUseAt > now) {
-      const remainingSeconds = Math.ceil((canUseAt - now) / 1000);
-      return {
-        canAttack: false,
-        reason: `Attack on cooldown (${remainingSeconds}s remaining)`
-      };
-    }
-
+    // Cooldowns are now handled client-side in CombatSkillBar
     return { canAttack: true };
   }
 }

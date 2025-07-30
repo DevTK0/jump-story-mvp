@@ -10,7 +10,6 @@ import { UIContextService } from '@/ui/services/ui-context-service';
  * Follows the pattern established by EnemyManager
  */
 export class TeleportStoneManager {
-  private scene: Phaser.Scene;
   private logger: ModuleLogger;
   
   // Subsystem managers
@@ -22,7 +21,6 @@ export class TeleportStoneManager {
   private playerUnlockStatus: Map<string, boolean> = new Map();
 
   constructor(scene: Phaser.Scene) {
-    this.scene = scene;
     this.logger = createLogger('TeleportStoneManager');
     
     // Initialize subsystems

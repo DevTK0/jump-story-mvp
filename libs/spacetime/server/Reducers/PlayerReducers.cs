@@ -203,18 +203,6 @@ public static partial class Module
         
         // Populate PlayerTeleport entries for all teleports (all locked initially)
         PopulatePlayerTeleports(ctx, ctx.Sender);
-        
-        // Initialize player cooldowns with very old timestamp (attacks available immediately)
-        var veryOldTime = ctx.Timestamp - TimeSpan.FromDays(1); // 1 day ago
-        var playerCooldown = new PlayerCooldown
-        {
-            player_identity = ctx.Sender,
-            job = "soldier", // Default job
-            attack1_last_used = veryOldTime, // All attacks available immediately
-            attack2_last_used = veryOldTime,
-            attack3_last_used = veryOldTime
-        };
-        ctx.Db.PlayerCooldown.Insert(playerCooldown);
     }
 
     [Reducer(ReducerKind.ClientDisconnected)]
@@ -233,8 +221,6 @@ public static partial class Module
             });
             Log.Info($"Player {ctx.Sender} marked as offline. Level: {player.Value.level}, Experience: {player.Value.experience}");
         }
-        
-        // Note: We keep player cooldowns in the database for when they reconnect
     }
 
     [Reducer]
@@ -723,17 +709,6 @@ public static partial class Module
             current_mana = newCurrentMana,
             last_active = ctx.Timestamp
         });
-
-        // Update player cooldown to track the new job
-        var playerCooldown = ctx.Db.PlayerCooldown.player_identity.Find(ctx.Sender);
-        if (playerCooldown != null)
-        {
-            ctx.Db.PlayerCooldown.player_identity.Update(playerCooldown.Value with
-            {
-                job = newJobKey
-                // Cooldowns remain the same - player keeps their current cooldown timers
-            });
-        }
 
         Log.Info($"Player {ctx.Sender} changed job from {player.Value.job} to {newJobKey}. HP: {player.Value.max_hp} -> {newMaxHp}, Mana: {player.Value.max_mana} -> {newMaxMana}");
     }

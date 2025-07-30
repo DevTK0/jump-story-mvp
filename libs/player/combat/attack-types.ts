@@ -53,6 +53,7 @@ export type Attack = StandardAttack | ProjectileAttack | AreaAttack | DashAttack
 // Passive ability interface
 export interface Passive {
   name: string;
+  description?: string;
 }
 
 // Type guards for runtime checking
@@ -103,7 +104,9 @@ export interface JobConfig {
     attack3: Attack;
   };
   passives: {
-    passive1: Passive;
+    passive1?: Passive;
+    passive2?: Passive;
+    passive3?: Passive;
   };
 }
 

@@ -113,17 +113,6 @@ public static partial class Module
         public Timestamp sent_dt;
     }
 
-    [Table(Name = "PlayerCooldown", Public = true)]
-    public partial struct PlayerCooldown
-    {
-        [PrimaryKey]
-        public Identity player_identity;
-        public string job; // Current job of the player
-        public Timestamp attack1_last_used; // When attack1 was last used
-        public Timestamp attack2_last_used; // When attack2 was last used
-        public Timestamp attack3_last_used; // When attack3 was last used
-    }
-
     [Table(Name = "PlayerJob", Public = true)]
     public partial struct PlayerJob
     {

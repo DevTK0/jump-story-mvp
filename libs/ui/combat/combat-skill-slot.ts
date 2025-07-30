@@ -47,7 +47,6 @@ export class CombatSkillSlot {
     this.container.setSize(COMBAT_SKILL_CONFIG.slot.width, COMBAT_SKILL_CONFIG.slot.height);
     this.container.setDepth(COMBAT_SKILL_CONFIG.depth.slots);
     
-    // Create background
     const config = COMBAT_SKILL_CONFIG.slot;
     this.background = this.scene.add.rectangle(
       0, 0,
@@ -57,7 +56,6 @@ export class CombatSkillSlot {
     );
     this.background.setOrigin(0, 0);
     
-    // Create border
     this.border = this.scene.add.rectangle(
       0, 0,
       config.width,
@@ -65,9 +63,8 @@ export class CombatSkillSlot {
     );
     this.border.setOrigin(0, 0);
     this.border.setStrokeStyle(config.borderWidth, config.borderColor);
-    this.border.setFillStyle(0, 0); // Transparent fill
+    this.border.setFillStyle(0, 0);
     
-    // Create hotkey text
     this.hotkeyText = this.scene.add.text(
       COMBAT_SKILL_CONFIG.hotkey.offsetX,
       COMBAT_SKILL_CONFIG.hotkey.offsetY,
@@ -79,7 +76,6 @@ export class CombatSkillSlot {
       }
     );
     
-    // Create skill label (placeholder)
     this.skillLabel = this.scene.add.text(
       config.width / 2,
       config.height / 2,
@@ -92,7 +88,6 @@ export class CombatSkillSlot {
     );
     this.skillLabel.setOrigin(0.5, 0.5);
     
-    // Add to container
     this.container.add([
       this.background,
       this.border,
@@ -100,11 +95,9 @@ export class CombatSkillSlot {
       this.skillLabel
     ]);
     
-    // Make interactive
     this.background.setInteractive({ useHandCursor: true });
     this.setupInteraction();
     
-    // Set initial placeholder data
     this.setPlaceholderData();
   }
   
@@ -150,7 +143,6 @@ export class CombatSkillSlot {
       this.hotkeyText.setText(placeholderConfig.hotkey);
       this.skillLabel.setText(placeholderConfig.label);
       
-      // Create placeholder skill data with label in the ID
       this.skillData = {
         id: `skill_${placeholderConfig.label}`,
         name: `Skill ${placeholderConfig.label}`,
@@ -166,12 +158,10 @@ export class CombatSkillSlot {
     
     if (skillData) {
       this.hotkeyText.setText(skillData.hotkey || '');
-      // Use the skill ID's suffix (e.g., 'A1' from 'attack_basic_A1')
       const label = skillData.id.split('_').pop() || '';
       this.skillLabel.setText(label);
       this.setDisabled(false);
     } else {
-      // Empty slot - still show the label from config
       const placeholderConfig = COMBAT_SKILL_CONFIG.skills[this.slotIndex as keyof typeof COMBAT_SKILL_CONFIG.skills];
       if (placeholderConfig) {
         this.hotkeyText.setText(placeholderConfig.hotkey);
@@ -192,7 +182,6 @@ export class CombatSkillSlot {
   
   public updateCooldown(currentCooldown: number, maxCooldown: number): void {
     if (currentCooldown <= 0) {
-      // Remove cooldown overlay
       if (this.cooldownOverlay) {
         this.cooldownOverlay.destroy();
         this.cooldownOverlay = undefined;
@@ -200,7 +189,6 @@ export class CombatSkillSlot {
       return;
     }
     
-    // Create or update cooldown overlay
     if (!this.cooldownOverlay) {
       this.cooldownOverlay = this.scene.add.rectangle(
         0, 0,
@@ -209,12 +197,11 @@ export class CombatSkillSlot {
         COMBAT_SKILL_CONFIG.cooldown.overlayColor,
         COMBAT_SKILL_CONFIG.cooldown.overlayAlpha
       );
-      this.cooldownOverlay.setOrigin(0, 1); // Origin at bottom-left for top-to-bottom fill
+      this.cooldownOverlay.setOrigin(0, 1);
       this.cooldownOverlay.setDepth(COMBAT_SKILL_CONFIG.depth.cooldownOverlay);
       this.container.add(this.cooldownOverlay);
     }
     
-    // Update overlay height based on cooldown progress
     const progress = currentCooldown / maxCooldown;
     const overlayHeight = COMBAT_SKILL_CONFIG.slot.height * progress;
     
@@ -223,7 +210,6 @@ export class CombatSkillSlot {
       overlayHeight
     );
     
-    // Position at bottom of slot for top-to-bottom shrinking effect
     this.cooldownOverlay.setPosition(0, COMBAT_SKILL_CONFIG.slot.height);
   }
   

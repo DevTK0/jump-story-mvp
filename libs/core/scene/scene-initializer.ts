@@ -332,11 +332,20 @@ export class SceneInitializer {
     const identity = this.connectionHelper.getIdentity();
     
     if (connection && identity) {
-      this.uiFactory.createGameUI({
-        connection,
-        identity,
-        player: this.systems.player!,
-      });
+      // Get the player data from SpacetimeDB
+      const { PlayerQueryService } = await import('@/player/services/player-query-service');
+      const playerQueryService = PlayerQueryService.getInstance();
+      const playerData = playerQueryService?.findCurrentPlayer();
+      
+      if (playerData) {
+        this.uiFactory.createGameUI({
+          connection,
+          identity,
+          player: playerData,
+        });
+      } else {
+        this.logger.warn('No player data found in SpacetimeDB, UI creation may fail');
+      }
     }
   }
   

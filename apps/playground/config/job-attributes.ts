@@ -22,7 +22,7 @@ const sharedAttacks = {
     attackType: 'standard' as const,
     name: 'Power Slash',
     description:
-      'A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.',
+      'A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.',
     damage: 50,
     cooldown: 0.5,
     critChance: 0,

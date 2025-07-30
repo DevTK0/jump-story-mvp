@@ -16,7 +16,7 @@ export class CombatSkillBar {
   private logger: ModuleLogger;
   
   private dbConnection: DbConnection | null = null;
-  private skillCooldowns: Map<number, { startTime: number; duration: number }> = new Map(); // slot index -> cooldown info
+  private skillCooldowns: Map<number, { startTime: number; duration: number }> = new Map();
   
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -95,19 +95,15 @@ export class CombatSkillBar {
       return;
     }
     
-    // Map attacks to skill slots (bottom row)
     const attacks = jobConfig.attacks;
     const attackKeys = Object.keys(attacks);
     const hotkeys = ['X', 'C', 'V'];
     
-    // Add attack skills (slots 0-2)
     attackKeys.forEach((key, index) => {
       if (index < 3) {
         const attack = (attacks as any)[key];
-        const skillId = `${key}_A${index + 1}`;
-        
         skills.set(index, {
-          id: skillId,
+          id: `${key}_A${index + 1}`,
           name: attack.name,
           description: attack.description || 'No description available.',
           hotkey: hotkeys[index],
@@ -118,11 +114,9 @@ export class CombatSkillBar {
       }
     });
     
-    // Add passive skills (slots 3-5) - only add if they exist
     const passives = jobConfig.passives || {};
     const passiveKeys = Object.keys(passives);
     
-    // Add existing passives
     passiveKeys.forEach((key, index) => {
       if (index < 3) {
         const passive = (passives as any)[key];
@@ -135,8 +129,6 @@ export class CombatSkillBar {
       }
     });
     
-    // Don't fill empty passive slots - let them remain empty
-    // Only fill empty attack slots if needed
     for (let i = 0; i < 3; i++) {
       if (!skills.has(i)) {
         skills.set(i, {
@@ -149,13 +141,8 @@ export class CombatSkillBar {
       }
     }
     
-    // Update UI context service with skill data
     UIContextService.getInstance().updateSkillData(skills);
-    
-    // Manually trigger update for initial display
     this.handleSkillDataUpdate({ skillData: skills });
-    
-    this.logger.info(`Initialized skills for job: ${currentJob}`);
   }
   
   private initializeDefaultSkills(): void {
@@ -236,7 +223,6 @@ export class CombatSkillBar {
     
     let slotIndex = 0;
     
-    // Create slots in grid layout (bottom row first for attacks)
     for (let row = config.grid.rows - 1; row >= 0; row--) {
       for (let col = 0; col < config.grid.cols; col++) {
         const x = padding + col * (slotWidth + spacing);
@@ -244,7 +230,6 @@ export class CombatSkillBar {
         
         const slot = new CombatSkillSlot(this.scene, slotIndex, x, y);
         
-        // Set up callbacks
         slot.onHover((hoveredSlot, skillData) => {
           if (skillData) {
             const worldPos = hoveredSlot.getWorldPosition();
@@ -271,8 +256,6 @@ export class CombatSkillBar {
         slotIndex++;
       }
     }
-    
-    this.logger.info(`Created ${this.skillSlots.length} skill slots`);
   }
   
   private positionContainer(): void {
@@ -296,13 +279,11 @@ export class CombatSkillBar {
   }
   
   private handleSkillActivation(slot: CombatSkillSlot, skillData?: SkillData): void {
-    if (!skillData || !this.dbConnection) return;
+    if (!skillData) return;
     
-    // Find the slot index
     const slotIndex = this.skillSlots.indexOf(slot);
-    if (slotIndex === -1 || slotIndex >= 3) return; // Only handle attack slots (0-2)
+    if (slotIndex === -1 || slotIndex >= 3) return;
     
-    // Check if skill is on cooldown
     const cooldownInfo = this.skillCooldowns.get(slotIndex);
     if (cooldownInfo) {
       const currentTime = Date.now();
@@ -314,19 +295,13 @@ export class CombatSkillBar {
     }
     
     this.logger.info(`UI: Skill slot ${slotIndex} clicked`);
-    
-    // Note: Cooldown tracking is now handled by handleSkillActivatedEvent
-    // This method just handles UI interaction feedback
   }
   
   private handleSkillActivatedEvent(data: { slotIndex: number; skillName: string; cooldown: number }): void {
-    this.logger.info(`Skill activated: ${data.skillName} (slot ${data.slotIndex})`);
-    
-    // Start cooldown for this skill
-    if (data.cooldown && data.cooldown > 0) {
+    if (data.cooldown > 0) {
       this.skillCooldowns.set(data.slotIndex, {
         startTime: Date.now(),
-        duration: data.cooldown * 1000 // Convert to milliseconds
+        duration: data.cooldown * 1000
       });
     }
   }

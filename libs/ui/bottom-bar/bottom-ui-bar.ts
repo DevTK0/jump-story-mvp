@@ -31,10 +31,6 @@ export class BottomUIBar {
   private playerJobUnlockStatus: Map<string, boolean> = new Map();
   // Job table data
   private jobTableData: any[] = [];
-  // Teleport unlock data: Map<locationName, isUnlocked>
-  private playerTeleportUnlockStatus: Map<string, boolean> = new Map();
-  // Teleport table data
-  private teleportTableData: any[] = [];
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -160,9 +156,6 @@ export class BottomUIBar {
   }
   
   private handleTeleportDataUpdate(data: { teleportData: Map<string, boolean>; teleportTableData: any[] }): void {
-    this.playerTeleportUnlockStatus = data.teleportData;
-    this.teleportTableData = data.teleportTableData;
-    
     this.logger.info(`Teleport data updated via context: ${data.teleportData.size} entries, ${data.teleportTableData.length} teleports`);
   }
 

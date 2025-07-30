@@ -88,36 +88,7 @@ public static partial class Module
             return;
         }
 
-        // Check cooldowns
-        var playerCooldown = ctx.Db.PlayerCooldown.player_identity.Find(ctx.Sender);
-        if (playerCooldown == null)
-        {
-            Log.Error($"PlayerCooldown not found for player {ctx.Sender}");
-            return;
-        }
-
-        // Check if the attack is on cooldown
-        var currentTime = ctx.Timestamp;
-        var lastUsed = attackSlot switch
-        {
-            1 => playerCooldown.Value.attack1_last_used,
-            2 => playerCooldown.Value.attack2_last_used,
-            3 => playerCooldown.Value.attack3_last_used,
-            _ => currentTime - TimeSpan.FromDays(1) // Default to long ago
-        };
-
-        // Calculate when the attack can be used again
-        var cooldownDuration = TimeSpan.FromSeconds(jobAttack.Value.cooldown);
-        var canUseAt = lastUsed + cooldownDuration;
-
-        Log.Info($"Cooldown check - Attack: {jobAttack.Value.name}, Slot: {attackSlot}, Cooldown: {jobAttack.Value.cooldown}s");
-        Log.Info($"Last used: {lastUsed}, Current time: {currentTime}, Can use at: {canUseAt}");
-
-        if (canUseAt > currentTime)
-        {
-            Log.Info($"Player {ctx.Sender} attack {attackSlot} is still on cooldown");
-            return;
-        }
+        // Note: Cooldowns are now tracked on the client side for responsiveness
 
         // Deduct mana cost and enter combat
         var currentPlayer = player.Value;
@@ -241,24 +212,7 @@ public static partial class Module
             }
         }
 
-        // Update attack last used time after successful attack
-        var updatedCooldown = playerCooldown.Value;
-        
-        switch (attackSlot)
-        {
-            case 1:
-                updatedCooldown = updatedCooldown with { attack1_last_used = ctx.Timestamp };
-                break;
-            case 2:
-                updatedCooldown = updatedCooldown with { attack2_last_used = ctx.Timestamp };
-                break;
-            case 3:
-                updatedCooldown = updatedCooldown with { attack3_last_used = ctx.Timestamp };
-                break;
-        }
-        
-        ctx.Db.PlayerCooldown.player_identity.Update(updatedCooldown);
-        Log.Info($"Player {ctx.Sender} used attack {attackSlot} at {ctx.Timestamp}");
+        Log.Info($"Player {ctx.Sender} used attack {attackSlot} ({jobAttack.Value.name}) at {ctx.Timestamp}");
 
         Log.Info($"Player {ctx.Sender} attack hit {damageCount} enemies, killed {killCount}");
     }

@@ -118,8 +118,6 @@ import { LeaderboardTableHandle } from "./leaderboard_table.ts";
 export { LeaderboardTableHandle };
 import { PlayerTableHandle } from "./player_table.ts";
 export { PlayerTableHandle };
-import { PlayerCooldownTableHandle } from "./player_cooldown_table.ts";
-export { PlayerCooldownTableHandle };
 import { PlayerDamageEventTableHandle } from "./player_damage_event_table.ts";
 export { PlayerDamageEventTableHandle };
 import { PlayerJobTableHandle } from "./player_job_table.ts";
@@ -194,8 +192,6 @@ import { MessageType } from "./message_type_type.ts";
 export { MessageType };
 import { Player } from "./player_type.ts";
 export { Player };
-import { PlayerCooldown } from "./player_cooldown_type.ts";
-export { PlayerCooldown };
 import { PlayerDamageEvent } from "./player_damage_event_type.ts";
 export { PlayerDamageEvent };
 import { PlayerJob } from "./player_job_type.ts";
@@ -289,15 +285,6 @@ const REMOTE_MODULE = {
       primaryKeyInfo: {
         colName: "identity",
         colType: Player.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
-      },
-    },
-    PlayerCooldown: {
-      tableName: "PlayerCooldown",
-      rowType: PlayerCooldown.getTypeScriptAlgebraicType(),
-      primaryKey: "playerIdentity",
-      primaryKeyInfo: {
-        colName: "playerIdentity",
-        colType: PlayerCooldown.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     PlayerDamageEvent: {
@@ -1338,10 +1325,6 @@ export class RemoteTables {
 
   get player(): PlayerTableHandle {
     return new PlayerTableHandle(this.connection.clientCache.getOrCreateTable<Player>(REMOTE_MODULE.tables.Player));
-  }
-
-  get playerCooldown(): PlayerCooldownTableHandle {
-    return new PlayerCooldownTableHandle(this.connection.clientCache.getOrCreateTable<PlayerCooldown>(REMOTE_MODULE.tables.PlayerCooldown));
   }
 
   get playerDamageEvent(): PlayerDamageEventTableHandle {

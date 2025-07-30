@@ -32,6 +32,11 @@ export interface SceneEventMap {
     x: number;
     y: number;
   };
+  'skill:activated': {
+    slotIndex: number;
+    skillName: string;
+    cooldown: number;
+  };
   // Add more events here as the game grows
 }
 
