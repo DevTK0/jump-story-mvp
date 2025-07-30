@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { createLogger, type ModuleLogger } from '@/core/logger';
 import { PlayerStatsUI } from './stats/player-stats-ui';
 import { BottomUIBar } from './bottom-bar/bottom-ui-bar';
+import { CombatSkillBar } from './combat/combat-skill-bar';
 import { FPSCounter } from './performance/fps-counter';
 import { PerformanceMetrics } from './performance/performance-metrics';
 import { DbMetricsTracker } from './performance/db-metrics-tracker';
@@ -23,6 +24,7 @@ export class UIFactory {
   // UI Components
   private playerStatsUI?: PlayerStatsUI;
   private bottomUIBar?: BottomUIBar;
+  private combatSkillBar?: CombatSkillBar;
   private fpsCounter?: FPSCounter;
   private performanceMetrics?: PerformanceMetrics;
   private broadcastDisplay?: BroadcastDisplay;
@@ -116,6 +118,7 @@ export class UIFactory {
     // Destroy UI components
     this.playerStatsUI?.destroy();
     this.bottomUIBar?.destroy();
+    this.combatSkillBar?.destroy();
     this.fpsCounter?.destroy();
     this.performanceMetrics?.destroy();
     this.broadcastDisplay?.destroy();
@@ -131,6 +134,9 @@ export class UIFactory {
   private createPlayerStatsUI(_config: UICreateConfig): void {
     // Create the new bottom UI bar - no need to pass identity or connection
     this.bottomUIBar = new BottomUIBar(this.scene);
+    
+    // Create combat skill bar
+    this.combatSkillBar = new CombatSkillBar(this.scene);
     
     // Keep the old stats UI but hide it (for backward compatibility)
     this.playerStatsUI = new PlayerStatsUI(this.scene);

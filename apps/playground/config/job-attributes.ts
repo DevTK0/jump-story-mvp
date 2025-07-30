@@ -5,6 +5,8 @@ const sharedAttacks = {
   attack1: {
     attackType: 'standard' as const,
     name: 'Quick Strike',
+    description:
+      'A swift blade attack that deals moderate damage to nearby enemies. Low cooldown allows for rapid strikes.',
     damage: 10,
     cooldown: 0.5,
     critChance: 0,
@@ -19,6 +21,8 @@ const sharedAttacks = {
   attack2: {
     attackType: 'standard' as const,
     name: 'Power Slash',
+    description:
+      'A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.',
     damage: 50,
     cooldown: 0.5,
     critChance: 0,
@@ -33,6 +37,8 @@ const sharedAttacks = {
   attack3: {
     attackType: 'standard' as const,
     name: 'Combo Attack',
+    description:
+      'Unleash a flurry of 3 strikes with high critical chance. Extended range and moderate mana cost.',
     damage: 15,
     cooldown: 0.5,
     critChance: 1,
@@ -72,6 +78,13 @@ export const jobAttributes: Record<string, JobConfig> = {
     passives: {
       passive1: {
         name: 'Combat Training',
+        description:
+          'Years of military discipline grant +10% attack speed and +5% damage reduction.',
+      },
+      passive2: {
+        name: 'Combat Training',
+        description:
+          'Years of military discipline grant +10% attack speed and +5% damage reduction.',
       },
     },
   },
@@ -100,6 +113,8 @@ export const jobAttributes: Record<string, JobConfig> = {
     passives: {
       passive1: {
         name: 'Shield Wall',
+        description:
+          'Heavy armor training provides +25% damage reduction and immunity to knockback.',
       },
     },
   },
@@ -128,6 +143,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     passives: {
       passive1: {
         name: 'Arcane Power',
+        description: 'Mystical knowledge grants +50% mana regeneration and +20% spell damage.',
       },
     },
   },
@@ -156,6 +172,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     passives: {
       passive1: {
         name: 'Eagle Eye',
+        description: 'Keen vision increases attack range by +30% and critical hit chance by +15%.',
       },
     },
   },
@@ -184,6 +201,8 @@ export const jobAttributes: Record<string, JobConfig> = {
     passives: {
       passive1: {
         name: 'Heavy Armor',
+        description:
+          'Reinforced plating grants +20% damage reduction but reduces movement speed by -10%.',
       },
     },
   },
@@ -212,6 +231,8 @@ export const jobAttributes: Record<string, JobConfig> = {
     passives: {
       passive1: {
         name: 'Divine Protection',
+        description:
+          'Holy blessing provides +30% resistance to dark magic and +2 HP regeneration per second.',
       },
     },
   },
@@ -274,6 +295,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     passives: {
       passive1: {
         name: 'Reach Advantage',
+        description: 'Spear mastery extends attack range by +40% and enables dash attacks.',
       },
     },
   },
@@ -302,6 +324,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     passives: {
       passive1: {
         name: 'Blessed Recovery',
+        description: 'Divine favor grants +100% health regeneration and heals nearby allies.',
       },
     },
   },
@@ -330,6 +353,8 @@ export const jobAttributes: Record<string, JobConfig> = {
     passives: {
       passive1: {
         name: 'Sword Mastery',
+        description:
+          'Expert swordsmanship increases attack speed by +15% and parry chance by +10%.',
       },
     },
   },

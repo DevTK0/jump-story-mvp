@@ -3,6 +3,7 @@ import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import Phaser from 'phaser';
 import { createLogger, type ModuleLogger } from '@/core/logger';
 import { TypedEventEmitter } from './typed-event-emitter';
+import type { SkillData } from '../combat/combat-skill-slot';
 
 export interface UICreateConfig {
   connection: DbConnection;
@@ -14,7 +15,8 @@ export enum UIEvents {
   DB_CONNECTION_UPDATED = 'ui:db-connection-updated',
   PLAYER_JOB_DATA_UPDATED = 'ui:player-job-data-updated',
   PLAYER_IDENTITY_SET = 'ui:player-identity-set',
-  TELEPORT_DATA_UPDATED = 'ui:teleport-data-updated'
+  TELEPORT_DATA_UPDATED = 'ui:teleport-data-updated',
+  SKILL_DATA_UPDATED = 'ui:skill-data-updated'
 }
 
 /**
@@ -31,6 +33,9 @@ export interface UIEventPayloads {
     teleportTableData: Teleport[];
   };
   [UIEvents.PLAYER_IDENTITY_SET]: Identity;
+  [UIEvents.SKILL_DATA_UPDATED]: {
+    skillData: Map<number, SkillData>;
+  };
 }
 
 /**
@@ -50,6 +55,7 @@ export class UIContextService {
   private jobTableData: Job[] = [];
   private teleportData: Map<string, boolean> = new Map();
   private teleportTableData: Teleport[] = [];
+  private skillData: Map<number, SkillData> = new Map();
   private eventEmitter: TypedEventEmitter<UIEventPayloads>;
   private logger: ModuleLogger;
 
@@ -159,6 +165,30 @@ export class UIContextService {
     this.eventEmitter.emit(UIEvents.TELEPORT_DATA_UPDATED, { 
       teleportData: this.teleportData, 
       teleportTableData: this.teleportTableData 
+    });
+  }
+
+  /**
+   * Get the current skill data
+   */
+  getSkillData(): { skillData: Map<number, SkillData> } {
+    return { 
+      skillData: new Map(this.skillData) // Return copy to prevent external modifications
+    };
+  }
+
+  /**
+   * Update skill data and emit change event
+   */
+  updateSkillData(skillData: Map<number, SkillData>): void {
+    this.skillData = new Map(skillData);
+    
+    this.logger.debug('Skill data updated', {
+      skillCount: skillData.size
+    });
+    
+    this.eventEmitter.emit(UIEvents.SKILL_DATA_UPDATED, { 
+      skillData: this.skillData
     });
   }
 
