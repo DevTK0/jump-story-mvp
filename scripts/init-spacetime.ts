@@ -264,6 +264,55 @@ async function initializeSpacetime() {
 
     console.log(`✅ Job configurations initialized successfully! (${jobCount} jobs)`);
 
+    console.log('🌟 Initializing teleport locations...');
+
+    // Extract teleport locations from tilemap
+    let teleportCount = 0;
+    const teleportLocations: Array<{ name: string; x: number; y: number }> = [];
+
+    for (const layer of tilemap.layers) {
+      if (layer.name === 'Teleport' && layer.objects) {
+        for (const obj of layer.objects) {
+          if (obj.properties) {
+            let isTeleport = false;
+            for (const prop of obj.properties) {
+              if (prop.name === 'type' && prop.value === 'teleport') {
+                isTeleport = true;
+                break;
+              }
+            }
+
+            if (isTeleport && obj.name) {
+              teleportLocations.push({
+                name: obj.name,
+                x: obj.x,
+                y: obj.y
+              });
+              teleportCount++;
+              console.log(`  Found teleport: ${obj.name} at (${obj.x}, ${obj.y})`);
+            }
+          }
+        }
+      }
+    }
+
+    if (teleportCount > 0) {
+      // Create InitializeTeleports reducer call
+      console.log(`  Populating ${teleportCount} teleport locations...`);
+      
+      // Create JSON content for teleport locations
+      const teleportContent = JSON.stringify(teleportLocations);
+      
+      try {
+        await connection.reducers.initializeTeleports(adminApiKey, teleportContent);
+        console.log(`✅ Teleport locations initialized successfully! (${teleportCount} teleports)`);
+      } catch (error) {
+        console.error('❌ Failed to initialize teleport locations:', (error as Error).message);
+      }
+    } else {
+      console.log('  No teleport locations found in tilemap.');
+    }
+
     // Give extra time for all operations to complete
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -272,6 +321,9 @@ async function initializeSpacetime() {
     console.log(`✅ ${routeCount} spawn areas ready with individual timing!`);
     console.log('🐺 Initial enemy population spawned!');
     console.log(`🎮 Job configurations populated! (${jobCount} jobs)`);
+    if (teleportCount > 0) {
+      console.log(`🌟 Teleport locations initialized! (${teleportCount} teleports)`);
+    }
   } catch (error) {
     console.error('❌ Failed to initialize SpaceTime database:', (error as Error).message);
     process.exit(1);

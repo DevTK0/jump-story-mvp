@@ -318,12 +318,27 @@ export const emoteSprites = {
   typing: createEmoteDefinition('typing', 8), // Slower frame rate
 } as const;
 
+// Object sprites (world objects like teleport stones)
+export const objectSprites: Record<string, SpriteDefinition> = {
+  'teleport-stone': {
+    path: 'assets/spritesheet/npcs/teleport_stone.png',
+    frameWidth: 100,
+    frameHeight: 100,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Default animation
+      locked: { start: 0, end: 0, frameRate: 1 },
+      unlocked: { start: 1, end: 1, frameRate: 1 },
+    },
+  },
+};
+
 // Complete sprite configuration
 const spriteConfig: SpriteConfig = {
   sprites: {
     jobs: jobSprites,
     enemies: enemySprites,
     emotes: emoteSprites,
+    objects: objectSprites,
   },
 } as const;
 

@@ -144,4 +144,66 @@ public static partial class Module
         }
     }
 
+    [Reducer]
+    public static void InitializeTeleports(ReducerContext ctx, string adminApiKey, string teleportJson)
+    {
+        // Validate admin API key
+        if (!AdminConstants.IsValidAdminKey(adminApiKey))
+        {
+            Log.Warn($"Unauthorized attempt to initialize teleports from {ctx.Sender}");
+            return;
+        }
+
+        Log.Info("Initializing Teleport table from JSON data...");
+        
+        try
+        {
+            // Clear existing teleport data
+            var existingTeleports = new List<string>();
+            foreach (var teleport in ctx.Db.Teleport.Iter())
+            {
+                existingTeleports.Add(teleport.location_name);
+            }
+            
+            foreach (var locationName in existingTeleports)
+            {
+                ctx.Db.Teleport.location_name.Delete(locationName);
+            }
+            
+            if (existingTeleports.Count > 0)
+            {
+                Log.Info($"Cleared {existingTeleports.Count} existing teleport locations");
+            }
+            
+            // Parse JSON data
+            var jsonDoc = JsonDocument.Parse(teleportJson);
+            var teleportArray = jsonDoc.RootElement.EnumerateArray();
+            
+            int teleportCount = 0;
+            foreach (var teleportElement in teleportArray)
+            {
+                var name = teleportElement.GetProperty("name").GetString();
+                var x = (float)teleportElement.GetProperty("x").GetDouble();
+                var y = (float)teleportElement.GetProperty("y").GetDouble();
+                
+                // Insert the teleport location
+                ctx.Db.Teleport.Insert(new Teleport
+                {
+                    location_name = name,
+                    x = x,
+                    y = y
+                });
+                
+                teleportCount++;
+                Log.Info($"Added teleport location '{name}' at ({x}, {y})");
+            }
+            
+            Log.Info($"✅ Successfully initialized {teleportCount} teleport locations");
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Failed to initialize teleports: {ex.Message}");
+        }
+    }
+
 }

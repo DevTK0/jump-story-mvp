@@ -122,6 +122,10 @@ export class AssetLoaderService {
     if (this.spriteConfig.sprites.enemies) {
       spriteConfigLoader.loadSpritesForCategory(this.scene, 'enemies');
     }
+    
+    if ((this.spriteConfig.sprites as any).objects) {
+      spriteConfigLoader.loadSpritesForCategory(this.scene, 'objects');
+    }
   }
   
   

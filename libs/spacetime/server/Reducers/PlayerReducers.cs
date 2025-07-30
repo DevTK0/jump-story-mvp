@@ -87,6 +87,37 @@ public static partial class Module
         }
     }
 
+    private static void PopulatePlayerTeleports(ReducerContext ctx, Identity playerIdentity)
+    {
+        // Get all teleports from the Teleport table
+        var allTeleports = ctx.Db.Teleport.Iter();
+        
+        foreach (var teleport in allTeleports)
+        {
+            // Check if this player-teleport combination already exists
+            var existingEntries = ctx.Db.PlayerTeleport
+                .Iter()
+                .Where(pt => pt.player_identity == playerIdentity && pt.location_name == teleport.location_name)
+                .ToList();
+                
+            if (existingEntries.Count > 0)
+            {
+                Log.Info($"PlayerTeleport entry already exists for player {playerIdentity} - teleport: {teleport.location_name}");
+                continue;
+            }
+            
+            var playerTeleport = new PlayerTeleport
+            {
+                player_identity = playerIdentity,
+                location_name = teleport.location_name,
+                is_unlocked = false // All teleports start locked
+            };
+            
+            ctx.Db.PlayerTeleport.Insert(playerTeleport);
+            Log.Info($"Created PlayerTeleport entry for player {playerIdentity} - teleport: {teleport.location_name}, unlocked: false");
+        }
+    }
+
     [Reducer(ReducerKind.ClientConnected)]
     public static void Connect(ReducerContext ctx)
     {
@@ -169,6 +200,9 @@ public static partial class Module
         
         // Populate PlayerJob entries for all jobs
         PopulatePlayerJobs(ctx, ctx.Sender);
+        
+        // Populate PlayerTeleport entries for all teleports (all locked initially)
+        PopulatePlayerTeleports(ctx, ctx.Sender);
         
         // Initialize player cooldowns with very old timestamp (attacks available immediately)
         var veryOldTime = ctx.Timestamp - TimeSpan.FromDays(1); // 1 day ago
@@ -257,6 +291,41 @@ public static partial class Module
             last_active = ctx.Timestamp
         });
         Log.Info($"Updated position for {ctx.Sender} to ({x}, {y}) facing {facing}");
+        
+        // Check for teleport unlocks
+        foreach (var teleport in ctx.Db.Teleport.Iter())
+        {
+            // Teleport coordinates are from top-left of a 32x32 tile
+            // Calculate center of the teleport tile
+            var teleportCenterX = teleport.x + 16f;
+            var teleportCenterY = teleport.y + 16f;
+            
+            // Check if player is within range of teleport center (35x35 pixel area for leeway)
+            var xDiff = Math.Abs(x - teleportCenterX);
+            var yDiff = Math.Abs(y - teleportCenterY);
+            
+            if (xDiff <= 17.5f && yDiff <= 17.5f) // Within 17.5 pixels in each direction = 35x35 pixel area
+            {
+                // Check if already unlocked
+                var existingUnlock = ctx.Db.PlayerTeleport
+                    .Iter()
+                    .FirstOrDefault(pt => pt.player_identity == ctx.Sender && 
+                                         pt.location_name == teleport.location_name);
+                
+                if (existingUnlock.player_identity == ctx.Sender && !existingUnlock.is_unlocked)
+                {
+                    // Delete old entry and insert updated one
+                    ctx.Db.PlayerTeleport.player_teleport_id.Delete(existingUnlock.player_teleport_id);
+                    ctx.Db.PlayerTeleport.Insert(new PlayerTeleport
+                    {
+                        player_identity = ctx.Sender,
+                        location_name = teleport.location_name,
+                        is_unlocked = true
+                    });
+                    Log.Info($"Player {ctx.Sender} unlocked teleport: {teleport.location_name}");
+                }
+            }
+        }
     }
 
     [Reducer]

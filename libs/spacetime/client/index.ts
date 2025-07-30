@@ -66,6 +66,8 @@ import { InitializeJobAttack } from "./initialize_job_attack_reducer.ts";
 export { InitializeJobAttack };
 import { InitializeJobPassive } from "./initialize_job_passive_reducer.ts";
 export { InitializeJobPassive };
+import { InitializeTeleports } from "./initialize_teleports_reducer.ts";
+export { InitializeTeleports };
 import { InstakillPlayer } from "./instakill_player_reducer.ts";
 export { InstakillPlayer };
 import { PlayerTakeDamage } from "./player_take_damage_reducer.ts";
@@ -126,10 +128,14 @@ import { PlayerLevelTableHandle } from "./player_level_table.ts";
 export { PlayerLevelTableHandle };
 import { PlayerMessageTableHandle } from "./player_message_table.ts";
 export { PlayerMessageTableHandle };
+import { PlayerTeleportTableHandle } from "./player_teleport_table.ts";
+export { PlayerTeleportTableHandle };
 import { SpawnTableHandle } from "./spawn_table.ts";
 export { SpawnTableHandle };
 import { SpawnRouteTableHandle } from "./spawn_route_table.ts";
 export { SpawnRouteTableHandle };
+import { TeleportTableHandle } from "./teleport_table.ts";
+export { TeleportTableHandle };
 import { BroadcastCleanupTimerTableHandle } from "./broadcast_cleanup_timer_table.ts";
 export { BroadcastCleanupTimerTableHandle };
 import { CleanupDeadBodiesTimerTableHandle } from "./cleanup_dead_bodies_timer_table.ts";
@@ -200,12 +206,16 @@ import { PlayerMessage } from "./player_message_type.ts";
 export { PlayerMessage };
 import { PlayerState } from "./player_state_type.ts";
 export { PlayerState };
+import { PlayerTeleport } from "./player_teleport_type.ts";
+export { PlayerTeleport };
 import { Spawn } from "./spawn_type.ts";
 export { Spawn };
 import { SpawnEnemiesTimer } from "./spawn_enemies_timer_type.ts";
 export { SpawnEnemiesTimer };
 import { SpawnRoute } from "./spawn_route_type.ts";
 export { SpawnRoute };
+import { Teleport } from "./teleport_type.ts";
+export { Teleport };
 
 const REMOTE_MODULE = {
   tables: {
@@ -326,6 +336,15 @@ const REMOTE_MODULE = {
         colType: PlayerMessage.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
+    PlayerTeleport: {
+      tableName: "PlayerTeleport",
+      rowType: PlayerTeleport.getTypeScriptAlgebraicType(),
+      primaryKey: "playerTeleportId",
+      primaryKeyInfo: {
+        colName: "playerTeleportId",
+        colType: PlayerTeleport.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
     Spawn: {
       tableName: "Spawn",
       rowType: Spawn.getTypeScriptAlgebraicType(),
@@ -342,6 +361,15 @@ const REMOTE_MODULE = {
       primaryKeyInfo: {
         colName: "routeId",
         colType: SpawnRoute.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    Teleport: {
+      tableName: "Teleport",
+      rowType: Teleport.getTypeScriptAlgebraicType(),
+      primaryKey: "locationName",
+      primaryKeyInfo: {
+        colName: "locationName",
+        colType: Teleport.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     broadcast_cleanup_timer: {
@@ -473,6 +501,10 @@ const REMOTE_MODULE = {
       reducerName: "InitializeJobPassive",
       argsType: InitializeJobPassive.getTypeScriptAlgebraicType(),
     },
+    InitializeTeleports: {
+      reducerName: "InitializeTeleports",
+      argsType: InitializeTeleports.getTypeScriptAlgebraicType(),
+    },
     InstakillPlayer: {
       reducerName: "InstakillPlayer",
       argsType: InstakillPlayer.getTypeScriptAlgebraicType(),
@@ -583,6 +615,7 @@ export type Reducer = never
 | { name: "InitializeJob", args: InitializeJob }
 | { name: "InitializeJobAttack", args: InitializeJobAttack }
 | { name: "InitializeJobPassive", args: InitializeJobPassive }
+| { name: "InitializeTeleports", args: InitializeTeleports }
 | { name: "InstakillPlayer", args: InstakillPlayer }
 | { name: "PlayerTakeDamage", args: PlayerTakeDamage }
 | { name: "PopulateEnemy", args: PopulateEnemy }
@@ -842,6 +875,22 @@ export class RemoteReducers {
 
   removeOnInitializeJobPassive(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, passiveSlot: number, name: string) => void) {
     this.connection.offReducer("InitializeJobPassive", callback);
+  }
+
+  initializeTeleports(adminApiKey: string, teleportJson: string) {
+    const __args = { adminApiKey, teleportJson };
+    let __writer = new BinaryWriter(1024);
+    InitializeTeleports.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("InitializeTeleports", __argsBuffer, this.setCallReducerFlags.initializeTeleportsFlags);
+  }
+
+  onInitializeTeleports(callback: (ctx: ReducerEventContext, adminApiKey: string, teleportJson: string) => void) {
+    this.connection.onReducer("InitializeTeleports", callback);
+  }
+
+  removeOnInitializeTeleports(callback: (ctx: ReducerEventContext, adminApiKey: string, teleportJson: string) => void) {
+    this.connection.offReducer("InitializeTeleports", callback);
   }
 
   instakillPlayer(adminApiKey: string) {
@@ -1169,6 +1218,11 @@ export class SetReducerFlags {
     this.initializeJobPassiveFlags = flags;
   }
 
+  initializeTeleportsFlags: CallReducerFlags = 'FullUpdate';
+  initializeTeleports(flags: CallReducerFlags) {
+    this.initializeTeleportsFlags = flags;
+  }
+
   instakillPlayerFlags: CallReducerFlags = 'FullUpdate';
   instakillPlayer(flags: CallReducerFlags) {
     this.instakillPlayerFlags = flags;
@@ -1306,12 +1360,20 @@ export class RemoteTables {
     return new PlayerMessageTableHandle(this.connection.clientCache.getOrCreateTable<PlayerMessage>(REMOTE_MODULE.tables.PlayerMessage));
   }
 
+  get playerTeleport(): PlayerTeleportTableHandle {
+    return new PlayerTeleportTableHandle(this.connection.clientCache.getOrCreateTable<PlayerTeleport>(REMOTE_MODULE.tables.PlayerTeleport));
+  }
+
   get spawn(): SpawnTableHandle {
     return new SpawnTableHandle(this.connection.clientCache.getOrCreateTable<Spawn>(REMOTE_MODULE.tables.Spawn));
   }
 
   get spawnRoute(): SpawnRouteTableHandle {
     return new SpawnRouteTableHandle(this.connection.clientCache.getOrCreateTable<SpawnRoute>(REMOTE_MODULE.tables.SpawnRoute));
+  }
+
+  get teleport(): TeleportTableHandle {
+    return new TeleportTableHandle(this.connection.clientCache.getOrCreateTable<Teleport>(REMOTE_MODULE.tables.Teleport));
   }
 
   get broadcastCleanupTimer(): BroadcastCleanupTimerTableHandle {

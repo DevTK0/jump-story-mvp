@@ -171,4 +171,23 @@ public static partial class Module
         public ulong scheduled_id;
         public ScheduleAt scheduled_at;
     }
+
+    [Table(Name = "Teleport", Public = true)]
+    public partial struct Teleport
+    {
+        [PrimaryKey]
+        public string location_name;
+        public float x;
+        public float y;
+    }
+
+    [Table(Name = "PlayerTeleport", Public = true)]
+    public partial struct PlayerTeleport
+    {
+        [PrimaryKey, AutoInc]
+        public uint player_teleport_id;
+        public Identity player_identity;
+        public string location_name;
+        public bool is_unlocked;
+    }
 }
