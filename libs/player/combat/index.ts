@@ -1,7 +1,7 @@
 // Combat system and related types
-export { CombatSystem, type AttackConfig } from './combat';
 export { CombatSystemEnhanced } from './combat-enhanced';
 export { CombatMessageDisplay } from './combat-message-display';
+export type { IHitValidator } from './hit-validator-interface';
 
 // Death management
 export { DeathMonitor } from './death-monitor';

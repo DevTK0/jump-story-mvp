@@ -5,6 +5,7 @@ import { AnimationSystem } from '@/player/animations';
 import { AttackType } from '@/spacetime/client';
 import { PlayerQueryService } from '@/player';
 import { createLogger } from '@/core/logger';
+import type { IHitValidator } from '@/player/combat/hit-validator-interface';
 import type {
   DatabaseConnection,
   AttackHitbox,
@@ -96,10 +97,13 @@ export class InteractionHandler {
 
       // Check if hit is valid for current attack type (fan angle check for projectiles)
       if (this.player) {
-        const combatSystem = this.player.getSystem('combat') as any;
-        if (combatSystem && combatSystem.isHitValid && !combatSystem.isHitValid(enemy)) {
-          this.logger.debug('Hit rejected by fan angle check');
-          return;
+        const combatSystem = this.player.getSystem('combat');
+        if (combatSystem && 'isHitValid' in combatSystem) {
+          const hitValidator = combatSystem as IHitValidator;
+          if (!hitValidator.isHitValid(enemy)) {
+            this.logger.debug('Hit rejected by fan angle check');
+            return;
+          }
         }
       }
 

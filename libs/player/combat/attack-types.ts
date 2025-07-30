@@ -125,12 +125,14 @@ export function validateAttackConfig(attack: any): attack is Attack {
   }
 
   switch (attack.attackType) {
-    case 'melee':
-      return !!(attack.hitboxShape && attack.hitboxOffset && attack.hitboxSize);
+    case 'standard':
+      return true; // Standard attacks have no additional required fields
     case 'projectile':
-      return !!(attack.projectileSpeed && attack.projectileSize && attack.projectileSprite);
+      return !!attack.projectile; // Only requires projectile sprite key
     case 'area':
-      return !!(attack.areaShape && attack.areaSize);
+      return !!attack.radius;
+    case 'dash':
+      return !!(attack.dashDistance && attack.dashSpeed);
     default:
       return false;
   }

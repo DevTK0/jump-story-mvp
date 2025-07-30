@@ -25,8 +25,7 @@ export {
 
 // Combat systems and services
 export {
-  CombatSystem,
-  type AttackConfig,
+  CombatSystemEnhanced,
   DeathMonitor,
   DeathStateService,
   EnemyDamageRenderer,
