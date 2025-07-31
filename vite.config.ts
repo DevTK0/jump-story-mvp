@@ -6,7 +6,7 @@ import fs from 'fs';
 const copyAppAssetsPlugin = () => {
   return {
     name: 'copy-app-assets',
-    buildStart() {
+    writeBundle() {
       // Only copy during build, not during dev
       const appsDir = path.resolve(__dirname, 'apps');
       const apps = fs.readdirSync(appsDir).filter((app) => {
