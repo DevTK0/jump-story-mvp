@@ -921,8 +921,8 @@ public static partial class Module
         {
             totalPlayers++;
             
-            // Skip dead or offline players
-            if (player.current_hp <= 0 || player.state == PlayerState.Dead || !player.is_online)
+            // Skip dead, damaged (invulnerable), or offline players
+            if (player.current_hp <= 0 || player.state == PlayerState.Dead || player.state == PlayerState.Damaged || !player.is_online)
             {
                 skippedPlayers++;
                 Log.Info($"Skipping player {player.name} - HP: {player.current_hp}, State: {player.state}, Online: {player.is_online}");
