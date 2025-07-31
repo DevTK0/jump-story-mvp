@@ -52,8 +52,6 @@ import { ClearAllJobData } from "./clear_all_job_data_reducer.ts";
 export { ClearAllJobData };
 import { Connect } from "./connect_reducer.ts";
 export { Connect };
-import { DamageBoss } from "./damage_boss_reducer.ts";
-export { DamageBoss };
 import { DamageEnemy } from "./damage_enemy_reducer.ts";
 export { DamageEnemy };
 import { Debug } from "./debug_reducer.ts";
@@ -114,12 +112,8 @@ export { UpdatePlayerTyping };
 // Import and reexport all table handle types
 import { BossTableHandle } from "./boss_table.ts";
 export { BossTableHandle };
-import { BossDamageEventTableHandle } from "./boss_damage_event_table.ts";
-export { BossDamageEventTableHandle };
 import { BossRouteTableHandle } from "./boss_route_table.ts";
 export { BossRouteTableHandle };
-import { BossSpawnTableHandle } from "./boss_spawn_table.ts";
-export { BossSpawnTableHandle };
 import { BossTriggerTableHandle } from "./boss_trigger_table.ts";
 export { BossTriggerTableHandle };
 import { BroadcastTableHandle } from "./broadcast_table.ts";
@@ -176,12 +170,8 @@ import { AttackType } from "./attack_type_type.ts";
 export { AttackType };
 import { Boss } from "./boss_type.ts";
 export { Boss };
-import { BossDamageEvent } from "./boss_damage_event_type.ts";
-export { BossDamageEvent };
 import { BossRoute } from "./boss_route_type.ts";
 export { BossRoute };
-import { BossSpawn } from "./boss_spawn_type.ts";
-export { BossSpawn };
 import { BossTrigger } from "./boss_trigger_type.ts";
 export { BossTrigger };
 import { Broadcast } from "./broadcast_type.ts";
@@ -204,6 +194,8 @@ import { EnemyDamageEvent } from "./enemy_damage_event_type.ts";
 export { EnemyDamageEvent };
 import { EnemyPatrolTimer } from "./enemy_patrol_timer_type.ts";
 export { EnemyPatrolTimer };
+import { EnemyType } from "./enemy_type_type.ts";
+export { EnemyType };
 import { FacingDirection } from "./facing_direction_type.ts";
 export { FacingDirection };
 import { Job } from "./job_type.ts";
@@ -254,15 +246,6 @@ const REMOTE_MODULE = {
         colType: Boss.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
-    BossDamageEvent: {
-      tableName: "BossDamageEvent",
-      rowType: BossDamageEvent.getTypeScriptAlgebraicType(),
-      primaryKey: "damageEventId",
-      primaryKeyInfo: {
-        colName: "damageEventId",
-        colType: BossDamageEvent.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
-      },
-    },
     BossRoute: {
       tableName: "BossRoute",
       rowType: BossRoute.getTypeScriptAlgebraicType(),
@@ -270,15 +253,6 @@ const REMOTE_MODULE = {
       primaryKeyInfo: {
         colName: "routeId",
         colType: BossRoute.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
-      },
-    },
-    BossSpawn: {
-      tableName: "BossSpawn",
-      rowType: BossSpawn.getTypeScriptAlgebraicType(),
-      primaryKey: "bossSpawnId",
-      primaryKeyInfo: {
-        colName: "bossSpawnId",
-        colType: BossSpawn.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     BossTrigger: {
@@ -535,10 +509,6 @@ const REMOTE_MODULE = {
       reducerName: "Connect",
       argsType: Connect.getTypeScriptAlgebraicType(),
     },
-    DamageBoss: {
-      reducerName: "DamageBoss",
-      argsType: DamageBoss.getTypeScriptAlgebraicType(),
-    },
     DamageEnemy: {
       reducerName: "DamageEnemy",
       argsType: DamageEnemy.getTypeScriptAlgebraicType(),
@@ -690,7 +660,6 @@ export type Reducer = never
 | { name: "CleanupOldMessages", args: CleanupOldMessages }
 | { name: "ClearAllJobData", args: ClearAllJobData }
 | { name: "Connect", args: Connect }
-| { name: "DamageBoss", args: DamageBoss }
 | { name: "DamageEnemy", args: DamageEnemy }
 | { name: "Debug", args: Debug }
 | { name: "Disconnect", args: Disconnect }
@@ -858,22 +827,6 @@ export class RemoteReducers {
 
   removeOnConnect(callback: (ctx: ReducerEventContext) => void) {
     this.connection.offReducer("Connect", callback);
-  }
-
-  damageBoss(bossSpawnIds: number[], attackType: AttackType) {
-    const __args = { bossSpawnIds, attackType };
-    let __writer = new BinaryWriter(1024);
-    DamageBoss.getTypeScriptAlgebraicType().serialize(__writer, __args);
-    let __argsBuffer = __writer.getBuffer();
-    this.connection.callReducer("DamageBoss", __argsBuffer, this.setCallReducerFlags.damageBossFlags);
-  }
-
-  onDamageBoss(callback: (ctx: ReducerEventContext, bossSpawnIds: number[], attackType: AttackType) => void) {
-    this.connection.onReducer("DamageBoss", callback);
-  }
-
-  removeOnDamageBoss(callback: (ctx: ReducerEventContext, bossSpawnIds: number[], attackType: AttackType) => void) {
-    this.connection.offReducer("DamageBoss", callback);
   }
 
   damageEnemy(spawnIds: number[], attackType: AttackType) {
@@ -1355,11 +1308,6 @@ export class SetReducerFlags {
     this.clearAllJobDataFlags = flags;
   }
 
-  damageBossFlags: CallReducerFlags = 'FullUpdate';
-  damageBoss(flags: CallReducerFlags) {
-    this.damageBossFlags = flags;
-  }
-
   damageEnemyFlags: CallReducerFlags = 'FullUpdate';
   damageEnemy(flags: CallReducerFlags) {
     this.damageEnemyFlags = flags;
@@ -1504,16 +1452,8 @@ export class RemoteTables {
     return new BossTableHandle(this.connection.clientCache.getOrCreateTable<Boss>(REMOTE_MODULE.tables.Boss));
   }
 
-  get bossDamageEvent(): BossDamageEventTableHandle {
-    return new BossDamageEventTableHandle(this.connection.clientCache.getOrCreateTable<BossDamageEvent>(REMOTE_MODULE.tables.BossDamageEvent));
-  }
-
   get bossRoute(): BossRouteTableHandle {
     return new BossRouteTableHandle(this.connection.clientCache.getOrCreateTable<BossRoute>(REMOTE_MODULE.tables.BossRoute));
-  }
-
-  get bossSpawn(): BossSpawnTableHandle {
-    return new BossSpawnTableHandle(this.connection.clientCache.getOrCreateTable<BossSpawn>(REMOTE_MODULE.tables.BossSpawn));
   }
 
   get bossTrigger(): BossTriggerTableHandle {

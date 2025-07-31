@@ -35,6 +35,7 @@ import {
 import { Spawn } from "./spawn_type";
 import { FacingDirection as __FacingDirection } from "./facing_direction_type";
 import { PlayerState as __PlayerState } from "./player_state_type";
+import { EnemyType as __EnemyType } from "./enemy_type_type";
 
 import { type EventContext, type Reducer, RemoteReducers, RemoteTables } from ".";
 

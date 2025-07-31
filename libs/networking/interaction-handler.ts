@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { Player } from '@/player';
+import { BossManager } from '@/enemy';
 import { onSceneEvent } from '@/core/scene';
 import { AnimationSystem } from '@/player/animations';
 import { AttackType } from '@/spacetime/client';
@@ -26,6 +27,7 @@ export class InteractionHandler {
   private dbConnection: DatabaseConnection | null;
   private currentAttackType: number = 1; // Default to attack1
   private enemyManager: InteractionEnemyManager | null = null;
+  private bossManager: BossManager | null = null;
   private playerQueryService: PlayerQueryService | null = null;
   private player: Player | null = null;
   private logger = createLogger('InteractionHandler');
@@ -75,23 +77,45 @@ export class InteractionHandler {
    */
   public handleAttackHitEnemy(
     enemyManager: InteractionEnemyManager
-  ): (_hitbox: AttackHitbox, enemy: EnemySprite) => void {
-    return (_hitbox: AttackHitbox, enemy: EnemySprite) => {
+  ): (_hitbox: AttackHitbox, target: EnemySprite) => void {
+    return (_hitbox: AttackHitbox, target: EnemySprite) => {
       // Don't allow attacks if player is dead
       if (this.isPlayerDead()) {
         this.logger.debug('Prevented attack - player is dead');
         return;
       }
 
-      // Get enemy ID first to use centralized validation
-      const spawnId = enemyManager.getEnemyIdFromSprite(enemy);
+      let spawnId: number | null = null;
+      let targetType: 'enemy' | 'boss' | null = null;
+      let canTakeDamage = false;
+
+      // Try to resolve as a regular enemy first
+      if (this.enemyManager) {
+        const enemyId = this.enemyManager.getEnemyIdFromSprite(target);
+        if (enemyId !== null) {
+          spawnId = enemyId;
+          targetType = 'enemy';
+          canTakeDamage = this.enemyManager.canEnemyTakeDamage(spawnId);
+        }
+      }
+
+      // If not an enemy, try to resolve as a boss
+      if (spawnId === null && this.bossManager) {
+        const bossId = this.bossManager.getBossIdFromSprite(target);
+        if (bossId !== null) {
+          spawnId = bossId;
+          targetType = 'boss';
+          canTakeDamage = this.bossManager.canBossTakeDamage(spawnId);
+        }
+      }
+
       if (spawnId === null) {
-        this.logger.debug('Prevented attack - enemy ID not found');
+        this.logger.debug('Prevented attack - target ID not found');
         return;
       }
 
-      // Use centralized state service validation
-      if (!enemyManager.canEnemyTakeDamage(spawnId)) {
+      if (!canTakeDamage) {
+        this.logger.debug(`Target ${spawnId} (${targetType}) cannot take damage`);
         return;
       }
 
@@ -100,25 +124,25 @@ export class InteractionHandler {
         const combatSystem = this.player.getSystem('combat');
         if (combatSystem && 'isHitValid' in combatSystem) {
           const hitValidator = combatSystem as IHitValidator;
-          if (!hitValidator.isHitValid(enemy)) {
+          if (!hitValidator.isHitValid(target)) {
             this.logger.debug('Hit rejected by fan angle check');
             return;
           }
         }
       }
 
-      // Prevent multiple damage to same enemy in single attack
+      // Prevent multiple damage to same target in single attack
       if (this.damagedInCurrentAttack.has(spawnId)) {
-        this.logger.debug('Prevented duplicate damage to enemy', spawnId);
+        this.logger.debug(`Prevented duplicate damage to ${targetType}`, spawnId);
         return;
       }
 
-      // Mark enemy as damaged in this attack
+      // Mark target as damaged in this attack
       this.damagedInCurrentAttack.add(spawnId);
       
-      // Collect this enemy for batch processing
+      // Collect this target for batch processing
       this.enemiesHitInCurrentAttack.push(spawnId);
-      this.logger.debug(`Collected enemy ${spawnId} - total: ${this.enemiesHitInCurrentAttack.length}`);
+      this.logger.debug(`Collected ${targetType} ${spawnId} - total: ${this.enemiesHitInCurrentAttack.length}`);
 
       // Send the hits immediately (they'll be batched by the server)
       // Schedule for next frame to collect all hits in this physics step
@@ -129,7 +153,14 @@ export class InteractionHandler {
       });
 
       // Visual feedback for successful hit
-      this.logger.info('Enemy hit!', spawnId);
+      this.logger.info(`${targetType} hit!`, spawnId);
+      
+      // Play hit animation for the target
+      if (targetType === 'enemy' && this.enemyManager) {
+        this.enemyManager.playHitAnimation(spawnId);
+      } else if (targetType === 'boss' && this.bossManager) {
+        this.bossManager.playHitAnimation(spawnId);
+      }
     };
   }
 
@@ -307,6 +338,13 @@ export class InteractionHandler {
    */
   public setEnemyManager(enemyManager: InteractionEnemyManager | null): void {
     this.enemyManager = enemyManager;
+  }
+
+  /**
+   * Set reference to boss manager for state checking
+   */
+  public setBossManager(bossManager: BossManager | null): void {
+    this.bossManager = bossManager;
   }
 
   /**

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { createLogger, type ModuleLogger } from '../logger';
-import { EnemyManager } from '@/enemy';
+import { EnemyManager, BossManager } from '@/enemy';
 import { PeerManager } from '@/peer';
 import { PhysicsSetupCoordinator } from '@/core/physics/physics-setup-coordinator';
 import { MapPhysicsFactory } from '@/core/physics/map-physics-factory';
@@ -31,6 +31,7 @@ export class ManagerRegistry {
   
   // Managers
   private enemyManager!: EnemyManager;
+  private bossManager!: BossManager;
   private peerManager?: PeerManager;
   private physicsManager!: PhysicsSetupCoordinator;
   private interactionManager!: InteractionHandler;
@@ -85,6 +86,7 @@ export class ManagerRegistry {
     // Register entities that implement PhysicsEntity
     this.physicsManager.registerEntity(player);
     this.physicsManager.registerEntity(this.enemyManager);
+    this.physicsManager.registerEntity(this.bossManager);
     
     // Set up physics for all registered entities
     this.physicsManager.setupAllPhysics();
@@ -153,6 +155,7 @@ export class ManagerRegistry {
     this.teleportStoneManager?.destroy();
     this.peerManager?.destroy();
     this.enemyManager?.destroy();
+    this.bossManager?.destroy();
   }
   
   // Manager creation methods
@@ -163,6 +166,9 @@ export class ManagerRegistry {
       useProximitySubscription: true,
       proximityRadius: PROXIMITY_CONFIG.enemy.defaultRadius,
     });
+    
+    // Boss manager (global subscription)
+    this.bossManager = new BossManager(this.scene);
     
     // Physics coordinator
     this.physicsManager = new PhysicsSetupCoordinator(this.scene);
@@ -202,6 +208,7 @@ export class ManagerRegistry {
   private setupDatabaseConnections(connection: DbConnection, identity: Identity): void {
     // Set connections on managers that need them
     this.enemyManager.setDbConnection(connection);
+    this.bossManager.setDbConnection(connection);
     this.interactionManager.setDbConnection(connection);
     this.chatManager.setDbConnection(connection);
     this.playerDamageManager.setDbConnection(connection);
@@ -229,6 +236,9 @@ export class ManagerRegistry {
   private setupManagerRelationships(): void {
     // Connect enemy manager to interaction handler
     this.interactionManager.setEnemyManager(this.enemyManager);
+    
+    // Connect boss manager to interaction handler
+    this.interactionManager.setBossManager(this.bossManager);
     
     // Connect peer manager with other UI managers
     if (this.peerManager) {
@@ -261,6 +271,10 @@ export class ManagerRegistry {
   
   getEnemyManager(): EnemyManager {
     return this.enemyManager;
+  }
+  
+  getBossManager(): BossManager {
+    return this.bossManager;
   }
   
   getPeerManager(): PeerManager | undefined {

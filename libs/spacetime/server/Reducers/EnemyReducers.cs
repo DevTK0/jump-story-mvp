@@ -166,8 +166,10 @@ public static partial class Module
                     route_id = route.route_id,
                     enemy = route.enemy,
                     current_hp = enemyData.Value.health,
+                    max_hp = enemyData.Value.health,
                     level = enemyData.Value.level,
-                    aggro_start_time = ctx.Timestamp
+                    aggro_start_time = ctx.Timestamp,
+                    enemy_type = EnemyType.Regular
                 };
                 
                 var newEnemy = CreateEnemyUpdate(baseEnemy, spawnPosition.x, spawnPosition.y, true, null, false, ctx.Timestamp, PlayerState.Idle);

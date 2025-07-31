@@ -19,23 +19,7 @@ public static partial class Module
         
     }
 
-    [Table(Name = "BossSpawn", Public = true)]
-    public partial struct BossSpawn
-    {
-        [PrimaryKey, AutoInc]
-        public uint boss_spawn_id;
-        public uint route_id;            // References BossRoute.route_id
-        public string boss_id;           // References Boss.boss_id
-        public float x;
-        public float y;
-        public PlayerState state;        // Reuse player states
-        public FacingDirection facing;
-        public float current_hp;
-        public float max_hp;             // Calculated from base_health
-        public Timestamp spawn_time;
-        public Timestamp last_updated;
-        public Identity? current_target;      // Current attack target
-    }
+    // BossSpawn table removed - now using unified Spawn table with enemy_type field
 
     [Table(Name = "BossRoute", Public = true)]
     public partial struct BossRoute
@@ -46,21 +30,7 @@ public static partial class Module
         public DbRect spawn_area;        // Where boss can spawn
     }
 
-    [Table(Name = "BossDamageEvent", Public = true)]
-    public partial struct BossDamageEvent
-    {
-        [PrimaryKey, AutoInc]
-        public uint damage_event_id;
-        public uint boss_spawn_id;       // The boss instance
-        public Identity player_identity; // Player who dealt damage
-        public float damage_amount;
-        public DamageType damage_type;   // Reuse existing damage types
-        public string? projectile;       // Projectile sprite key
-        public string? skill_effect;     // VFX to play
-        public AttackType attack_type;   // Which player attack was used
-        public Timestamp timestamp;
-        
-    }
+    // BossDamageEvent table removed - now using unified EnemyDamageEvent table for both enemies and bosses
 
     // Timer for boss attack processing
     // [Table(Name = "boss_attack_timer", Scheduled = nameof(ProcessBossAttacks), ScheduledAt = nameof(scheduled_at))]

@@ -188,11 +188,13 @@ public static partial class Module
             state = newState ?? originalEnemy.state,
             facing = newFacing,
             current_hp = originalEnemy.current_hp,
+            max_hp = originalEnemy.max_hp,
             level = originalEnemy.level,
             last_updated = currentTimestamp,
             moving_right = newMovingRight,
             aggro_target = newAggroTarget,
-            aggro_start_time = hasAggro ? originalEnemy.aggro_start_time : currentTimestamp
+            aggro_start_time = hasAggro ? originalEnemy.aggro_start_time : currentTimestamp,
+            enemy_type = originalEnemy.enemy_type
         };
     }
 

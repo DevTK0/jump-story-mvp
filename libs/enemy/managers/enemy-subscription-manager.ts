@@ -92,15 +92,21 @@ export class EnemySubscriptionManager {
   private setupGlobalSubscription(): void {
     if (!this.dbConnection) return;
 
-    // Subscribe to enemy table changes
+    // Subscribe to enemy table changes - filter for regular enemies only
     const onInsert = (_ctx: any, enemy: ServerEnemy) => {
-      this.callbacks.onEnemyInsert(enemy);
+      if (enemy.enemyType.tag === 'Regular') {
+        this.callbacks.onEnemyInsert(enemy);
+      }
     };
     const onDelete = (_ctx: any, enemy: ServerEnemy) => {
-      this.callbacks.onEnemyDelete(enemy.spawnId);
+      if (enemy.enemyType.tag === 'Regular') {
+        this.callbacks.onEnemyDelete(enemy.spawnId);
+      }
     };
     const onUpdate = (_ctx: any, _oldEnemy: ServerEnemy, newEnemy: ServerEnemy) => {
-      this.callbacks.onEnemyUpdate(newEnemy);
+      if (newEnemy.enemyType.tag === 'Regular') {
+        this.callbacks.onEnemyUpdate(newEnemy);
+      }
     };
 
     this.dbConnection.db.spawn.onInsert(onInsert);
@@ -116,9 +122,11 @@ export class EnemySubscriptionManager {
       }
     });
 
-    // Spawn existing enemies that are already in the database
+    // Spawn existing enemies that are already in the database - filter for regular enemies only
     for (const enemy of this.dbConnection.db.spawn.iter()) {
-      this.callbacks.onEnemyInsert(enemy);
+      if (enemy.enemyType.tag === 'Regular') {
+        this.callbacks.onEnemyInsert(enemy);
+      }
     }
   }
 
@@ -128,15 +136,21 @@ export class EnemySubscriptionManager {
   private setupTargetedEnemyEventListeners(): void {
     if (!this.dbConnection) return;
 
-    // With proximity subscription, events will only fire for nearby enemies
+    // With proximity subscription, events will only fire for nearby enemies - filter for regular enemies only
     const onInsert = (_ctx: any, enemy: ServerEnemy) => {
-      this.callbacks.onEnemyInsert(enemy);
+      if (enemy.enemyType.tag === 'Regular') {
+        this.callbacks.onEnemyInsert(enemy);
+      }
     };
     const onDelete = (_ctx: any, enemy: ServerEnemy) => {
-      this.callbacks.onEnemyDelete(enemy.spawnId);
+      if (enemy.enemyType.tag === 'Regular') {
+        this.callbacks.onEnemyDelete(enemy.spawnId);
+      }
     };
     const onUpdate = (_ctx: any, _oldEnemy: ServerEnemy, newEnemy: ServerEnemy) => {
-      this.callbacks.onEnemyUpdate(newEnemy);
+      if (newEnemy.enemyType.tag === 'Regular') {
+        this.callbacks.onEnemyUpdate(newEnemy);
+      }
     };
 
     this.dbConnection.db.spawn.onInsert(onInsert);
@@ -235,14 +249,16 @@ export class EnemySubscriptionManager {
     const radius = this.config.proximityRadius;
     const nearbyEnemies: ServerEnemy[] = [];
 
-    // Load enemies that are within proximity
+    // Load enemies that are within proximity - filter for regular enemies only
     for (const enemy of this.dbConnection.db.spawn.iter()) {
-      const distance = Math.sqrt(
-        Math.pow(enemy.x - playerPosition.x, 2) + Math.pow(enemy.y - playerPosition.y, 2)
-      );
+      if (enemy.enemyType.tag === 'Regular') {
+        const distance = Math.sqrt(
+          Math.pow(enemy.x - playerPosition.x, 2) + Math.pow(enemy.y - playerPosition.y, 2)
+        );
 
-      if (distance <= radius) {
-        nearbyEnemies.push(enemy);
+        if (distance <= radius) {
+          nearbyEnemies.push(enemy);
+        }
       }
     }
 

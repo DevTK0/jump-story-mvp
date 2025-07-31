@@ -84,6 +84,42 @@ export const ENEMY_CONFIG = {
   },
 
   /**
+   * Boss-specific configuration
+   */
+  boss: {
+    display: {
+      scale: 5, // Larger than regular enemies
+      depth: 6, // Higher depth for prominence
+      deadDepth: 2,
+      origin: {
+        x: 0.5,
+        y: 0.5,
+      },
+    },
+    healthBar: {
+      width: 64, // Wider health bar for bosses
+      height: 8, // Taller health bar
+      offsetY: -40, // Higher offset due to larger sprite
+      backgroundColor: 0x000000,
+      borderColor: 0xffffff,
+      healthColor: 0xff0000,
+      damageColor: 0xff0000,
+      borderWidth: 2,
+      cornerRadius: 2,
+      alpha: 0.9,
+      showDuration: 5000, // Show longer for bosses
+    },
+    nameLabel: {
+      offsetY: 40, // Lower due to larger sprite
+      fontSize: '14px', // Larger font for bosses
+      color: '#ffff00', // Yellow for boss names
+      stroke: '#000000',
+      strokeThickness: 3,
+      depth: 7,
+    },
+  },
+
+  /**
    * Enemy type configurations
    */
   types: {

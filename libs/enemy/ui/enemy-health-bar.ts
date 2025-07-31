@@ -12,11 +12,13 @@ export class EnemyHealthBar {
   private maxHp: number;
   private currentHp: number;
   private isVisible: boolean = false;
+  private config: typeof ENEMY_CONFIG.healthBar;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, maxHp: number) {
+  constructor(scene: Phaser.Scene, x: number, y: number, maxHp: number, config?: typeof ENEMY_CONFIG.healthBar) {
     this.scene = scene;
     this.maxHp = maxHp;
     this.currentHp = maxHp;
+    this.config = config || ENEMY_CONFIG.healthBar;
 
     // Create container to hold all health bar elements
     this.container = scene.add.container(x, y);
@@ -35,7 +37,7 @@ export class EnemyHealthBar {
   }
 
   private drawHealthBar(): void {
-    const config = ENEMY_CONFIG.healthBar;
+    const config = this.config;
     const halfWidth = config.width / 2;
     const halfHeight = config.height / 2;
 
@@ -95,7 +97,7 @@ export class EnemyHealthBar {
   }
 
   public updatePosition(x: number, y: number): void {
-    this.container.setPosition(x, y + ENEMY_CONFIG.healthBar.offsetY);
+    this.container.setPosition(x, y + this.config.offsetY);
   }
 
   public show(): void {
@@ -117,7 +119,7 @@ export class EnemyHealthBar {
     }
 
     // Set timer to hide after duration
-    this.hideTimer = this.scene.time.delayedCall(ENEMY_CONFIG.healthBar.showDuration, () => {
+    this.hideTimer = this.scene.time.delayedCall(this.config.showDuration, () => {
       this.hide();
     });
   }

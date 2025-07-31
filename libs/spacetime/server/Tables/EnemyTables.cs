@@ -7,6 +7,13 @@ public enum AiBehavior : byte
     Aggressive,  // Actively seeks and chases players
 }
 
+[Type]
+public enum EnemyType : byte
+{
+    Regular,     // Normal enemy
+    Boss,        // Boss enemy
+}
+
 public static partial class Module
 {
     [Table(Name = "Spawn", Public = true)]
@@ -15,17 +22,19 @@ public static partial class Module
         [PrimaryKey, AutoInc]
         public uint spawn_id;
         public uint route_id;
-        public string enemy; // References Enemy.name
+        public string enemy; // References Enemy.name or Boss.boss_id
         public float x;
         public float y;
         public PlayerState state;
         public FacingDirection facing;
         public float current_hp;
+        public float max_hp; // Max HP (for bosses especially)
         public uint level; // Enemy level for EXP calculation
         public Timestamp last_updated;
         public bool moving_right; // Direction for patrol behavior
         public Identity? aggro_target; // Player being chased (null if not in aggro)
         public Timestamp aggro_start_time; // When aggro started
+        public EnemyType enemy_type; // Regular enemy or boss
     }
     
     [Table(Name = "SpawnRoute", Public = true)]

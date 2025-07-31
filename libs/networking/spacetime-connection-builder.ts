@@ -149,7 +149,7 @@ export class SpacetimeConnectionBuilder {
 
   /**
    * Subscribe to core tables required by multiple systems
-   * This includes Job, PlayerJob, JobAttack, Spawn, Enemy, PlayerLevel, PlayerMessage, Leaderboard, Broadcast, and damage event tables
+   * This includes Job, PlayerJob, JobAttack, Spawn (unified for enemies and bosses), Enemy, Boss tables, PlayerLevel, PlayerMessage, Leaderboard, Broadcast, and damage event tables
    * Note: Player table is handled separately by PeerManager with proximity-based subscriptions
    */
   public subscribeToCoreTables(): SpacetimeConnectionBuilder {
@@ -158,14 +158,15 @@ export class SpacetimeConnectionBuilder {
       'Job', 
       'PlayerJob', 
       'JobAttack',
-      'Spawn',
+      'Spawn',         // Unified table for both enemies and bosses
       'Enemy',
+      'Boss',          // Boss configuration data
       'PlayerDamageEvent',
-      'EnemyDamageEvent',
+      'EnemyDamageEvent', // Handles both enemy and boss damage since using unified DamageEnemy reducer
       'PlayerLevel',  // Configuration table for level requirements
       'PlayerMessage', // Chat messages and emotes
       'Leaderboard',   // Top 10 players leaderboard
-      'Broadcast'      // Server-wide broadcast messages
+      'Broadcast',     // Server-wide broadcast messages
     ];
     return this;
   }

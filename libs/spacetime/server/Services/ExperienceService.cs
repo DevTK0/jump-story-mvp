@@ -15,12 +15,30 @@ public static partial class Module
     /// </summary>
     public static void AwardExperienceForKill(ReducerContext ctx, Spawn deadEnemy)
     {
-        // Get enemy data for base EXP reward
-        var enemy = ctx.Db.Enemy.name.Find(deadEnemy.enemy);
-        if (enemy == null)
+        // Get base EXP reward based on enemy type
+        uint baseExpReward = 0;
+        
+        if (deadEnemy.enemy_type == EnemyType.Boss)
         {
-            Log.Warn($"Cannot award EXP - no enemy found for type: {deadEnemy.enemy}");
-            return;
+            // Look up boss data
+            var boss = ctx.Db.Boss.boss_id.Find(deadEnemy.enemy);
+            if (boss == null)
+            {
+                Log.Warn($"Cannot award EXP - no boss found for type: {deadEnemy.enemy}");
+                return;
+            }
+            baseExpReward = boss.Value.exp_reward;
+        }
+        else
+        {
+            // Look up regular enemy data
+            var enemy = ctx.Db.Enemy.name.Find(deadEnemy.enemy);
+            if (enemy == null)
+            {
+                Log.Warn($"Cannot award EXP - no enemy found for type: {deadEnemy.enemy}");
+                return;
+            }
+            baseExpReward = enemy.Value.exp_reward;
         }
 
         // Calculate damage contributions
@@ -39,7 +57,7 @@ public static partial class Module
 
             // Calculate EXP gain based on contribution
             var expGained = CalculateExpGain(
-                enemy.Value.exp_reward,
+                baseExpReward,
                 contribution.ContributionPercentage
             );
 

@@ -205,8 +205,11 @@ public static partial class Module
                     ExperienceService.AwardExperienceForKill(ctx, enemy);
                     killCount++;
                     
-                    // Check boss triggers
-                    CheckBossTrigger(ctx, enemy.enemy);
+                    // Only check boss triggers for regular enemies
+                    if (enemy.enemy_type == EnemyType.Regular)
+                    {
+                        CheckBossTrigger(ctx, enemy.enemy);
+                    }
                     
                     break; // Don't continue hitting a dead enemy
                 }
@@ -299,23 +302,26 @@ public static partial class Module
         var spawnX = bossRoute.Value.spawn_area.position.x + (bossRoute.Value.spawn_area.size.x / 2);
         var spawnY = bossRoute.Value.spawn_area.position.y + (bossRoute.Value.spawn_area.size.y / 2);
 
-        // Create boss spawn
-        var bossSpawn = new BossSpawn
+        // Create boss spawn using unified Spawn table
+        var bossSpawn = new Spawn
         {
             route_id = bossRoute.Value.route_id,
-            boss_id = bossId,
+            enemy = bossId, // Boss ID goes in enemy field
             x = spawnX,
             y = spawnY,
             state = PlayerState.Idle,
             facing = FacingDirection.Right,
             current_hp = boss.Value.base_health,
             max_hp = boss.Value.base_health,
-            spawn_time = ctx.Timestamp,
+            level = boss.Value.level,
             last_updated = ctx.Timestamp,
-            current_target = null
+            moving_right = true,
+            aggro_target = null,
+            aggro_start_time = ctx.Timestamp,
+            enemy_type = EnemyType.Boss
         };
 
-        ctx.Db.BossSpawn.Insert(bossSpawn);
+        ctx.Db.Spawn.Insert(bossSpawn);
         Log.Info($"Spawned boss '{boss.Value.display_name}' at ({spawnX}, {spawnY}) from trigger");
     }
 

@@ -34,6 +34,7 @@ import {
 } from "@clockworklabs/spacetimedb-sdk";
 import { FacingDirection as __FacingDirection } from "./facing_direction_type";
 import { PlayerState as __PlayerState } from "./player_state_type";
+import { EnemyType as __EnemyType } from "./enemy_type_type";
 
 export type Spawn = {
   spawnId: number,
@@ -44,11 +45,13 @@ export type Spawn = {
   state: __PlayerState,
   facing: __FacingDirection,
   currentHp: number,
+  maxHp: number,
   level: number,
   lastUpdated: Timestamp,
   movingRight: boolean,
   aggroTarget: Identity | undefined,
   aggroStartTime: Timestamp,
+  enemyType: __EnemyType,
 };
 
 /**
@@ -69,11 +72,13 @@ export namespace Spawn {
       new ProductTypeElement("state", __PlayerState.getTypeScriptAlgebraicType()),
       new ProductTypeElement("facing", __FacingDirection.getTypeScriptAlgebraicType()),
       new ProductTypeElement("currentHp", AlgebraicType.createF32Type()),
+      new ProductTypeElement("maxHp", AlgebraicType.createF32Type()),
       new ProductTypeElement("level", AlgebraicType.createU32Type()),
       new ProductTypeElement("lastUpdated", AlgebraicType.createTimestampType()),
       new ProductTypeElement("movingRight", AlgebraicType.createBoolType()),
       new ProductTypeElement("aggroTarget", AlgebraicType.createOptionType(AlgebraicType.createIdentityType())),
       new ProductTypeElement("aggroStartTime", AlgebraicType.createTimestampType()),
+      new ProductTypeElement("enemyType", __EnemyType.getTypeScriptAlgebraicType()),
     ]);
   }
 
