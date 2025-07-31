@@ -34,6 +34,35 @@ public static partial class Module
         return true; // Processed as damaged enemy
     }
 
+    // Helper method to process boss attack recovery
+    private static bool ProcessBossAttackRecovery(ReducerContext ctx, Spawn boss)
+    {
+        // Only process bosses in attack states
+        if (boss.enemy_type != EnemyType.Boss)
+        {
+            return false;
+        }
+
+        if (boss.state != PlayerState.Attack1 && 
+            boss.state != PlayerState.Attack2 && 
+            boss.state != PlayerState.Attack3)
+        {
+            return false;
+        }
+
+        var attackRecoveryTimeAgo = ctx.Timestamp - EnemyConstants.GetAttackRecoveryTimeSpan();
+        if (boss.last_updated < attackRecoveryTimeAgo)
+        {
+            // Return boss to idle state after attack animation completes
+            var idleBoss = CreateEnemyUpdate(boss, boss.x, boss.y, boss.moving_right, 
+                boss.aggro_target, boss.aggro_target.HasValue, ctx.Timestamp, PlayerState.Idle);
+            ctx.Db.Spawn.spawn_id.Update(idleBoss);
+            Log.Info($"Boss {boss.enemy} recovered from {boss.state} to Idle");
+            return true; // Recovery performed
+        }
+        return false; // Boss is attacking but recovery time hasn't elapsed yet
+    }
+
     // Helper method to process aggro detection and validation
     private static (bool hasAggro, bool shouldChase, float targetX, float targetY, Identity? aggroTarget) ProcessAggroDetection(
         ReducerContext ctx, Spawn enemy, Enemy enemyData, float leftBound, float rightBound)
@@ -193,7 +222,7 @@ public static partial class Module
             last_updated = currentTimestamp,
             moving_right = newMovingRight,
             aggro_target = newAggroTarget,
-            aggro_start_time = hasAggro ? originalEnemy.aggro_start_time : currentTimestamp,
+            spawn_time = originalEnemy.spawn_time, // Always preserve spawn time
             enemy_type = originalEnemy.enemy_type
         };
     }
@@ -260,6 +289,9 @@ public static partial class Module
         // Delete all expired dead bodies and their associated damage events
         foreach (var spawnId in enemiesToRemove)
         {
+            // Get the spawn to check if it's a boss
+            var spawn = ctx.Db.Spawn.spawn_id.Find(spawnId);
+            
             // First, delete all damage events for this enemy
             var damageEventsToRemove = new List<uint>();
             foreach (var damageEvent in ctx.Db.EnemyDamageEvent.Iter())
@@ -273,6 +305,27 @@ public static partial class Module
             foreach (var damageEventId in damageEventsToRemove)
             {
                 ctx.Db.EnemyDamageEvent.damage_event_id.Delete(damageEventId);
+            }
+            
+            // If it's a boss, also clean up BossAttackState entries
+            if (spawn != null && spawn.Value.enemy_type == EnemyType.Boss)
+            {
+                var attackStatesToRemove = new List<uint>();
+                foreach (var attackState in ctx.Db.BossAttackState.Iter())
+                {
+                    if (attackState.spawn_id == spawnId)
+                    {
+                        attackStatesToRemove.Add(attackState.spawn_id);
+                    }
+                }
+                foreach (var attackSpawnId in attackStatesToRemove)
+                {
+                    ctx.Db.BossAttackState.spawn_id.Delete(attackSpawnId);
+                }
+                if (attackStatesToRemove.Count > 0)
+                {
+                    Log.Info($"Cleaned up {attackStatesToRemove.Count} BossAttackState entries for dead boss {spawnId}");
+                }
             }
             
             // Then delete the enemy
@@ -386,7 +439,7 @@ public static partial class Module
                         enemy = route.enemy,
                         current_hp = enemyData.Value.health,
                         level = enemyData.Value.level,
-                        aggro_start_time = ctx.Timestamp
+                        spawn_time = ctx.Timestamp
                     };
                     
                     var newEnemy = CreateEnemyUpdate(baseEnemy, spawnPosition.x, spawnPosition.y, true, null, false, ctx.Timestamp, PlayerState.Idle);
@@ -563,13 +616,25 @@ public static partial class Module
         }
 
         const float deltaTime = EnemyConstants.DELTA_TIME;
+        const int BOSS_DESPAWN_MINUTES = 10;
 
-        foreach (var boss in ctx.Db.Spawn.Iter())
+        foreach (var bossEntity in ctx.Db.Spawn.Iter())
         {
             // Only process bosses
-            if (boss.enemy_type != EnemyType.Boss)
+            if (bossEntity.enemy_type != EnemyType.Boss)
             {
                 continue;
+            }
+            
+            var boss = bossEntity; // Create a mutable copy
+
+            // Check if boss should despawn due to timeout
+            var despawnThreshold = ctx.Timestamp - TimeSpan.FromMinutes(BOSS_DESPAWN_MINUTES);
+            if (boss.spawn_time < despawnThreshold)
+            {
+                Log.Info($"Boss {boss.enemy} has been active for more than {BOSS_DESPAWN_MINUTES} minutes, despawning...");
+                CleanupBoss(ctx, boss, "timeout");
+                continue; // Skip further processing
             }
 
             // Handle damaged bosses - recover them after 500ms
@@ -578,7 +643,11 @@ public static partial class Module
                 continue;
             }
 
-            // Only process idle and walking bosses (not damaged or dead)
+            // Handle attack recovery for bosses - recover them after attack animation completes
+            // Note: We don't continue here even if recovery happens, to allow the boss to immediately act after recovery
+            ProcessBossAttackRecovery(ctx, boss);
+
+            // Only process idle and walking bosses (not damaged, dead, or attacking)
             if (boss.state != PlayerState.Idle && boss.state != PlayerState.Walk)
             {
                 continue;
@@ -612,14 +681,33 @@ public static partial class Module
                 // Check if player is in aggro range
                 if (distance <= bossData.Value.aggro_range)
                 {
-                    // Check if we're close enough to stop (attack range used as stopping distance)
-                    if (distance > bossData.Value.attack_range)
+                    // Check if we're close enough to attack
+                    if (distance <= bossData.Value.attack_range)
                     {
-                        // Chase player - boss will damage via hitbox collision
+                        // Within attack range - turn to face player first, then attack
+                        var shouldFaceRight = nearestPlayer.Value.x > boss.x;
+                        if ((shouldFaceRight && boss.facing == FacingDirection.Left) || 
+                            (!shouldFaceRight && boss.facing == FacingDirection.Right))
+                        {
+                            // Boss needs to turn around to face the player
+                            var turnedBoss = CreateEnemyUpdate(boss, boss.x, boss.y, shouldFaceRight, 
+                                boss.aggro_target, true, ctx.Timestamp, boss.state);
+                            ctx.Db.Spawn.spawn_id.Update(turnedBoss);
+                            
+                            Log.Info($"Boss {boss.enemy} turning to face player - New facing: {turnedBoss.facing}");
+                            
+                            // Update the boss reference to the turned version
+                            boss = turnedBoss;
+                        }
+                        
+                        // Now execute attack with boss facing the correct direction
+                        ExecuteBossAttack(ctx, boss, bossData.Value);
+                    }
+                    else
+                    {
+                        // Chase player - too far to attack
                         ExecuteBossMovement(ctx, boss, nearestPlayer.Value.x, deltaTime, bossData.Value.move_speed, leftBound, rightBound, true);
                     }
-                    // If within attack range, don't move but don't change state either
-                    // Boss will damage player through hitbox collision
                 }
                 // If player is outside aggro range, boss returns to idle
                 else if (boss.state != PlayerState.Idle)
@@ -701,5 +789,177 @@ public static partial class Module
         var leftBound = spawnArea.position.x;
         var rightBound = spawnArea.position.x + spawnArea.size.x;
         return (leftBound, rightBound);
+    }
+
+    private static void ExecuteBossAttack(ReducerContext ctx, Spawn boss, Boss bossData)
+    {
+        // 1. Get attack1 data from BossAttack table
+        BossAttack? attack1 = null;
+        foreach (var attack in ctx.Db.BossAttack.Iter())
+        {
+            if (attack.boss_id == boss.enemy && attack.attack_slot == 1)
+            {
+                attack1 = attack;
+                break;
+            }
+        }
+        
+        if (attack1 == null)
+        {
+            Log.Warn($"No attack1 found for boss {boss.enemy}");
+            return;
+        }
+        
+        // 2. Check cooldown using BossAttackState
+        var attackState = ctx.Db.BossAttackState.spawn_id.Find(boss.spawn_id);
+        if (attackState != null)
+        {
+            var cooldownThreshold = attackState.Value.last_used + TimeSpan.FromSeconds(attack1.Value.cooldown);
+            if (ctx.Timestamp < cooldownThreshold)
+            {
+                // Attack is still on cooldown
+                return;
+            }
+        }
+        
+        // 3. Update boss to Attack1 state
+        var attackingBoss = boss with { 
+            state = PlayerState.Attack1, 
+            last_updated = ctx.Timestamp 
+        };
+        ctx.Db.Spawn.spawn_id.Update(attackingBoss);
+        
+        Log.Info($"Boss {boss.enemy} executing attack1 - Position: ({boss.x}, {boss.y}), Facing: {boss.facing}, Range: {attack1.Value.range}");
+        
+        // 4. Find all players in front of the boss within attack range
+        var playersHit = new List<Player>();
+        var totalPlayers = 0;
+        var skippedPlayers = 0;
+        
+        foreach (var player in ctx.Db.Player.Iter())
+        {
+            totalPlayers++;
+            
+            // Skip dead or offline players
+            if (player.current_hp <= 0 || player.state == PlayerState.Dead || !player.is_online)
+            {
+                skippedPlayers++;
+                Log.Info($"Skipping player {player.name} - HP: {player.current_hp}, State: {player.state}, Online: {player.is_online}");
+                continue;
+            }
+            
+            // Calculate distance from boss to player
+            var xDistance = player.x - boss.x;
+            var yDistance = Math.Abs(player.y - boss.y);
+            
+            // Check if player is within vertical range (some leniency for height differences)
+            const float verticalTolerance = 200f; // Increased to handle platform height differences
+            if (yDistance > verticalTolerance)
+            {
+                Log.Info($"Player {player.name} too far vertically - yDistance: {yDistance} > tolerance: {verticalTolerance}");
+                continue;
+            }
+            
+            // Check if player is in front of boss within attack range
+            bool isInFront = false;
+            if (boss.facing == FacingDirection.Right && xDistance > 0 && xDistance <= attack1.Value.range)
+            {
+                isInFront = true;
+                Log.Info($"Player {player.name} is in front (right) - xDistance: {xDistance}, range: {attack1.Value.range}");
+            }
+            else if (boss.facing == FacingDirection.Left && xDistance < 0 && Math.Abs(xDistance) <= attack1.Value.range)
+            {
+                isInFront = true;
+                Log.Info($"Player {player.name} is in front (left) - xDistance: {xDistance}, range: {attack1.Value.range}");
+            }
+            else
+            {
+                Log.Info($"Player {player.name} NOT in range - Position: ({player.x}, {player.y}), xDistance: {xDistance}, yDistance: {yDistance}, Boss facing: {boss.facing}");
+            }
+            
+            if (isInFront)
+            {
+                playersHit.Add(player);
+            }
+        }
+        
+        Log.Info($"Attack detection complete - Total players: {totalPlayers}, Skipped: {skippedPlayers}, Hit: {playersHit.Count}");
+        
+        // 5. Apply damage to each player hit
+        foreach (var player in playersHit)
+        {
+            var currentPlayer = player; // Local copy for multiple hits
+            
+            // Apply multiple hits if specified
+            for (int hit = 0; hit < attack1.Value.hits; hit++)
+            {
+                // Skip if player already died from previous hits
+                if (currentPlayer.current_hp <= 0)
+                {
+                    break;
+                }
+                
+                // Calculate damage
+                var damage = attack1.Value.damage;
+                var newHp = Math.Max(0f, currentPlayer.current_hp - damage);
+                var isDead = newHp <= 0;
+                
+                // Calculate knockback
+                var knockbackDirection = currentPlayer.x > boss.x ? 1 : -1;
+                var knockbackDistance = attack1.Value.knockback;
+                var newX = currentPlayer.x + (knockbackDistance * knockbackDirection);
+                
+                // Update player state
+                var damagedPlayer = currentPlayer with {
+                    current_hp = newHp,
+                    x = newX,
+                    state = isDead ? PlayerState.Dead : PlayerState.Damaged,
+                    last_active = ctx.Timestamp
+                };
+                ctx.Db.Player.identity.Update(damagedPlayer);
+                
+                // Create damage event for client
+                ctx.Db.PlayerDamageEvent.Insert(new PlayerDamageEvent {
+                    player_identity = currentPlayer.identity,
+                    spawn_id = boss.spawn_id,
+                    damage_amount = (uint)damage,
+                    damage_type = DamageType.Normal,
+                    skill_effect = attack1.Value.skill_effect,
+                    timestamp = ctx.Timestamp
+                });
+                
+                // Update local player reference for next hit
+                currentPlayer = damagedPlayer;
+                
+                Log.Info($"Boss {boss.enemy} hit player {currentPlayer.name} for {damage} damage (hit {hit + 1}/{attack1.Value.hits})");
+                
+                // Enter combat for the player
+                if (!isDead)
+                {
+                    CombatService.EnterCombat(ctx, damagedPlayer);
+                }
+            }
+        }
+        
+        // 6. Update or create attack cooldown state
+        if (attackState != null)
+        {
+            ctx.Db.BossAttackState.spawn_id.Update(attackState.Value with { 
+                last_used = ctx.Timestamp 
+            });
+        }
+        else
+        {
+            ctx.Db.BossAttackState.Insert(new BossAttackState {
+                spawn_id = boss.spawn_id,
+                attack_id = attack1.Value.attack_id,
+                last_used = ctx.Timestamp
+            });
+        }
+        
+        if (playersHit.Count > 0)
+        {
+            Log.Info($"Boss {boss.enemy} attack1 hit {playersHit.Count} players");
+        }
     }
 }

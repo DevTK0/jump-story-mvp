@@ -35,15 +35,15 @@ import {
 export type BossAttack = {
   attackId: number,
   bossId: string,
-  attackName: string,
+  attackSlot: number,
   damage: number,
   range: number,
   cooldown: number,
+  knockback: number,
+  hits: number,
   attackType: string,
-  animation: string,
   projectile: string | undefined,
   skillEffect: string | undefined,
-  areaRadius: number | undefined,
 };
 
 /**
@@ -58,15 +58,15 @@ export namespace BossAttack {
     return AlgebraicType.createProductType([
       new ProductTypeElement("attackId", AlgebraicType.createU32Type()),
       new ProductTypeElement("bossId", AlgebraicType.createStringType()),
-      new ProductTypeElement("attackName", AlgebraicType.createStringType()),
+      new ProductTypeElement("attackSlot", AlgebraicType.createU8Type()),
       new ProductTypeElement("damage", AlgebraicType.createF32Type()),
       new ProductTypeElement("range", AlgebraicType.createF32Type()),
       new ProductTypeElement("cooldown", AlgebraicType.createF32Type()),
+      new ProductTypeElement("knockback", AlgebraicType.createU32Type()),
+      new ProductTypeElement("hits", AlgebraicType.createU8Type()),
       new ProductTypeElement("attackType", AlgebraicType.createStringType()),
-      new ProductTypeElement("animation", AlgebraicType.createStringType()),
       new ProductTypeElement("projectile", AlgebraicType.createOptionType(AlgebraicType.createStringType())),
       new ProductTypeElement("skillEffect", AlgebraicType.createOptionType(AlgebraicType.createStringType())),
-      new ProductTypeElement("areaRadius", AlgebraicType.createOptionType(AlgebraicType.createF32Type())),
     ]);
   }
 

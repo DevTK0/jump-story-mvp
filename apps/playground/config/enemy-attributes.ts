@@ -36,7 +36,7 @@ export const enemyAttributes: EnemyAttributes = {
       exp_reward: 25,
       boss_trigger: {
         boss_to_spawn: 'orc-rider',
-        required_kills: 20,
+        required_kills: 1,
       },
     },
     'armored-orc': {
@@ -178,6 +178,17 @@ export const enemyAttributes: EnemyAttributes = {
   },
 };
 
+export interface BossAttack {
+  attackType: 'directional' | 'area' | 'summon';
+  damage: number;
+  cooldown: number;
+  knockback: number;
+  range: number;
+  hits: number;
+  projectile?: string | null;
+  skillEffect?: string;
+}
+
 export interface BossAttribute {
   health: number;
   move_speed: number;
@@ -189,6 +200,11 @@ export interface BossAttribute {
   aggro_range: number;
   level: number;
   exp_reward: number;
+  attacks?: {
+    attack1?: BossAttack;
+    attack2?: BossAttack;
+    attack3?: BossAttack;
+  };
 }
 
 export interface BossAttributes {
@@ -210,6 +226,36 @@ export const bossAttributes: BossAttributes = {
       aggro_range: 500,
       level: 10,
       exp_reward: 1000,
+      attacks: {
+        attack1: {
+          attackType: 'directional' as const,
+          damage: 15,
+          cooldown: 3,
+          knockback: 0,
+          range: 200,
+          hits: 1,
+          projectile: null,
+          skillEffect: 'freeze',
+        },
+        attack2: {
+          attackType: 'area' as const,
+          damage: 15,
+          cooldown: 0.6,
+          knockback: 300,
+          range: 200,
+          hits: 1,
+          skillEffect: 'freeze',
+        },
+        attack3: {
+          attackType: 'summon' as const,
+          damage: 0,
+          cooldown: 0.6,
+          knockback: 300,
+          range: 200,
+          hits: 1,
+          skillEffect: 'freeze',
+        },
+      },
     },
     'elite-orc': {
       health: 2500,
@@ -222,6 +268,37 @@ export const bossAttributes: BossAttributes = {
       aggro_range: 400,
       level: 12,
       exp_reward: 1500,
+      attacks: {
+        attack1: {
+          attackType: 'directional' as const,
+          damage: 20,
+          cooldown: 0.8,
+          knockback: 400,
+          range: 250,
+          hits: 1,
+          projectile: null,
+          skillEffect: 'stun',
+        },
+        attack2: {
+          attackType: 'area' as const,
+          damage: 25,
+          cooldown: 1.2,
+          knockback: 500,
+          range: 300,
+          hits: 1,
+          skillEffect: 'earthquake',
+        },
+        attack3: {
+          attackType: 'directional' as const,
+          damage: 30,
+          cooldown: 2.0,
+          knockback: 600,
+          range: 350,
+          hits: 3,
+          projectile: 'spear',
+          skillEffect: 'bleed',
+        },
+      },
     },
     'greatsword-skeleton': {
       health: 3000,
@@ -234,6 +311,36 @@ export const bossAttributes: BossAttributes = {
       aggro_range: 400,
       level: 15,
       exp_reward: 2000,
+      attacks: {
+        attack1: {
+          attackType: 'directional' as const,
+          damage: 35,
+          cooldown: 1.0,
+          knockback: 500,
+          range: 300,
+          hits: 1,
+          projectile: null,
+          skillEffect: 'slash',
+        },
+        attack2: {
+          attackType: 'area' as const,
+          damage: 40,
+          cooldown: 1.5,
+          knockback: 600,
+          range: 400,
+          hits: 1,
+          skillEffect: 'whirlwind',
+        },
+        attack3: {
+          attackType: 'summon' as const,
+          damage: 0,
+          cooldown: 3.0,
+          knockback: 0,
+          range: 500,
+          hits: 1,
+          skillEffect: 'summon_skeleton',
+        },
+      },
     },
     werewolf: {
       health: 4000,
@@ -246,6 +353,37 @@ export const bossAttributes: BossAttributes = {
       aggro_range: 600,
       level: 18,
       exp_reward: 3000,
+      attacks: {
+        attack1: {
+          attackType: 'directional' as const,
+          damage: 40,
+          cooldown: 0.6,
+          knockback: 400,
+          range: 250,
+          hits: 2,
+          projectile: null,
+          skillEffect: 'claw',
+        },
+        attack2: {
+          attackType: 'directional' as const,
+          damage: 50,
+          cooldown: 1.0,
+          knockback: 600,
+          range: 350,
+          hits: 1,
+          projectile: null,
+          skillEffect: 'howl',
+        },
+        attack3: {
+          attackType: 'area' as const,
+          damage: 60,
+          cooldown: 2.0,
+          knockback: 800,
+          range: 400,
+          hits: 1,
+          skillEffect: 'frenzy',
+        },
+      },
     },
     werebear: {
       health: 5000,
@@ -258,6 +396,37 @@ export const bossAttributes: BossAttributes = {
       aggro_range: 500,
       level: 20,
       exp_reward: 5000,
+      attacks: {
+        attack1: {
+          attackType: 'directional' as const,
+          damage: 50,
+          cooldown: 0.8,
+          knockback: 500,
+          range: 300,
+          hits: 1,
+          projectile: null,
+          skillEffect: 'maul',
+        },
+        attack2: {
+          attackType: 'area' as const,
+          damage: 70,
+          cooldown: 1.5,
+          knockback: 700,
+          range: 450,
+          hits: 1,
+          skillEffect: 'ground_slam',
+        },
+        attack3: {
+          attackType: 'directional' as const,
+          damage: 100,
+          cooldown: 3.0,
+          knockback: 1000,
+          range: 500,
+          hits: 1,
+          projectile: 'boulder',
+          skillEffect: 'stun',
+        },
+      },
     },
   },
 };

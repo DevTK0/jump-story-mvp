@@ -50,7 +50,7 @@ export type Spawn = {
   lastUpdated: Timestamp,
   movingRight: boolean,
   aggroTarget: Identity | undefined,
-  aggroStartTime: Timestamp,
+  spawnTime: Timestamp,
   enemyType: __EnemyType,
 };
 
@@ -77,7 +77,7 @@ export namespace Spawn {
       new ProductTypeElement("lastUpdated", AlgebraicType.createTimestampType()),
       new ProductTypeElement("movingRight", AlgebraicType.createBoolType()),
       new ProductTypeElement("aggroTarget", AlgebraicType.createOptionType(AlgebraicType.createIdentityType())),
-      new ProductTypeElement("aggroStartTime", AlgebraicType.createTimestampType()),
+      new ProductTypeElement("spawnTime", AlgebraicType.createTimestampType()),
       new ProductTypeElement("enemyType", __EnemyType.getTypeScriptAlgebraicType()),
     ]);
   }

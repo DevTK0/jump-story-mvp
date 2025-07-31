@@ -36,15 +36,15 @@ public static partial class Module
         [PrimaryKey, AutoInc]
         public uint attack_id;
         public string boss_id;           // Which boss this attack belongs to
-        public string attack_name;       // Display name of the attack
+        public byte attack_slot;         // 1, 2, or 3 (attack1, attack2, attack3)
         public float damage;             // Base damage
         public float range;              // Attack range
         public float cooldown;           // Seconds between uses
-        public string attack_type;       // "melee", "projectile", "area"
-        public string animation;         // Animation to play
+        public uint knockback;           // Knockback distance
+        public byte hits;                // Number of hits
+        public string attack_type;       // "directional", "area", "summon"
         public string? projectile;       // Projectile sprite (if ranged)
         public string? skill_effect;     // Visual effect on hit
-        public float? area_radius;       // Radius for area attacks
     }
 
     [Table(Name = "BossAttackState", Public = true)]

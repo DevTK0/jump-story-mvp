@@ -186,6 +186,12 @@ public static partial class Module
                 var x = (float)teleportElement.GetProperty("x").GetDouble();
                 var y = (float)teleportElement.GetProperty("y").GetDouble();
                 
+                if (name == null)
+                {
+                    Log.Warn("Skipping teleport location with null name");
+                    continue;
+                }
+                
                 // Insert the teleport location
                 ctx.Db.Teleport.Insert(new Teleport
                 {

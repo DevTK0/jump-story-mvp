@@ -168,7 +168,7 @@ public static partial class Module
                     current_hp = enemyData.Value.health,
                     max_hp = enemyData.Value.health,
                     level = enemyData.Value.level,
-                    aggro_start_time = ctx.Timestamp,
+                    spawn_time = ctx.Timestamp,
                     enemy_type = EnemyType.Regular
                 };
                 

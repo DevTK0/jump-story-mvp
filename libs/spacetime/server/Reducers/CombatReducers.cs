@@ -239,10 +239,10 @@ public static partial class Module
                     {
                         CheckBossTrigger(ctx, enemy.enemy);
                     }
-                    // Reset the specific boss trigger when a boss dies
+                    // Cleanup boss when it dies
                     else if (enemy.enemy_type == EnemyType.Boss)
                     {
-                        ResetBossTrigger(ctx, enemy.enemy);
+                        CleanupBoss(ctx, enemy, "defeated");
                     }
                     
                     break; // Don't continue hitting a dead enemy
@@ -349,7 +349,7 @@ public static partial class Module
             last_updated = ctx.Timestamp,
             moving_right = true,
             aggro_target = null,
-            aggro_start_time = ctx.Timestamp,
+            spawn_time = ctx.Timestamp,
             enemy_type = EnemyType.Boss
         };
 
@@ -377,6 +377,64 @@ public static partial class Module
                 Log.Info($"Reset trigger for {trigger.enemy_type} after boss {bossId} died: {trigger.current_kills} -> 0");
                 break;
             }
+        }
+    }
+
+    private static void CleanupBoss(ReducerContext ctx, Spawn boss, string reason)
+    {
+        // 1. Clean up BossAttackState entries
+        var attackStatesToRemove = new List<uint>();
+        foreach (var attackState in ctx.Db.BossAttackState.Iter())
+        {
+            if (attackState.spawn_id == boss.spawn_id)
+            {
+                attackStatesToRemove.Add(attackState.spawn_id);
+            }
+        }
+        foreach (var spawnId in attackStatesToRemove)
+        {
+            ctx.Db.BossAttackState.spawn_id.Delete(spawnId);
+        }
+        Log.Info($"Cleaned up {attackStatesToRemove.Count} BossAttackState entries for boss {boss.spawn_id}");
+        
+        // 2. Reset boss trigger
+        ResetBossTrigger(ctx, boss.enemy);
+        
+        // 3. Send appropriate broadcast
+        var bossData = ctx.Db.Boss.boss_id.Find(boss.enemy);
+        if (bossData != null)
+        {
+            var message = reason == "defeated" 
+                ? $"{bossData.Value.display_name} has been defeated!"
+                : $"{bossData.Value.display_name} has left the battlefield!";
+            
+            ctx.Db.Broadcast.Insert(new Broadcast {
+                message = message,
+                publish_dt = ctx.Timestamp
+            });
+        }
+        
+        // 4. Delete the boss spawn if despawning due to timeout
+        if (reason == "timeout")
+        {
+            // First, delete all damage events for this boss
+            var damageEventsToRemove = new List<uint>();
+            foreach (var damageEvent in ctx.Db.EnemyDamageEvent.Iter())
+            {
+                if (damageEvent.spawn_id == boss.spawn_id)
+                {
+                    damageEventsToRemove.Add(damageEvent.damage_event_id);
+                }
+            }
+            
+            foreach (var damageEventId in damageEventsToRemove)
+            {
+                ctx.Db.EnemyDamageEvent.damage_event_id.Delete(damageEventId);
+            }
+            
+            // Then delete the boss spawn
+            ctx.Db.Spawn.spawn_id.Delete(boss.spawn_id);
+            Log.Info($"Boss {boss.enemy} despawned due to {reason}");
         }
     }
 

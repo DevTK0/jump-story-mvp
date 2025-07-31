@@ -81,12 +81,24 @@ public static partial class Module
             return;
         }
 
-        // Clear existing bosses first
+        // Clear existing bosses and their attacks first
         var bossesToRemove = new List<string>();
         foreach (var boss in ctx.Db.Boss.Iter())
         {
             bossesToRemove.Add(boss.boss_id);
         }
+        
+        // Clear all boss attacks
+        var attacksToRemove = new List<uint>();
+        foreach (var attack in ctx.Db.BossAttack.Iter())
+        {
+            attacksToRemove.Add(attack.attack_id);
+        }
+        foreach (var attackId in attacksToRemove)
+        {
+            ctx.Db.BossAttack.attack_id.Delete(attackId);
+        }
+        
         foreach (var id in bossesToRemove)
         {
             ctx.Db.Boss.boss_id.Delete(id);
@@ -140,6 +152,28 @@ public static partial class Module
                 ctx.Db.Boss.Insert(boss);
                 count++;
                 Log.Info($"Added boss: {bossId} - {name} (Level {level})");
+                
+                // Check if this boss has attacks defined
+                if (bossData.TryGetProperty("attacks", out var attacksProp))
+                {
+                    // Parse attack1
+                    if (attacksProp.TryGetProperty("attack1", out var attack1))
+                    {
+                        InsertBossAttack(ctx, bossId, 1, attack1);
+                    }
+                    
+                    // Parse attack2
+                    if (attacksProp.TryGetProperty("attack2", out var attack2))
+                    {
+                        InsertBossAttack(ctx, bossId, 2, attack2);
+                    }
+                    
+                    // Parse attack3
+                    if (attacksProp.TryGetProperty("attack3", out var attack3))
+                    {
+                        InsertBossAttack(ctx, bossId, 3, attack3);
+                    }
+                }
             }
 
             Log.Info($"Successfully populated {count} boss configurations");
@@ -299,7 +333,7 @@ public static partial class Module
             last_updated = ctx.Timestamp,
             moving_right = true,
             aggro_target = null,
-            aggro_start_time = ctx.Timestamp,
+            spawn_time = ctx.Timestamp,
             enemy_type = EnemyType.Boss
         };
 
@@ -317,5 +351,50 @@ public static partial class Module
 
     // DamageBoss reducer removed - now handled by unified DamageEnemy reducer which supports both enemies and bosses
 
+    private static void InsertBossAttack(ReducerContext ctx, string bossId, byte attackSlot, JsonElement attackData)
+    {
+        try
+        {
+            var attackType = attackData.GetProperty("attackType").GetString() ?? "directional";
+            var damage = attackData.GetProperty("damage").GetSingle();
+            var cooldown = attackData.GetProperty("cooldown").GetSingle();
+            var knockback = attackData.GetProperty("knockback").GetUInt32();
+            var range = attackData.GetProperty("range").GetSingle();
+            var hits = (byte)attackData.GetProperty("hits").GetInt32();
+            
+            string? projectile = null;
+            if (attackData.TryGetProperty("projectile", out var projectileProp) && projectileProp.ValueKind != JsonValueKind.Null)
+            {
+                projectile = projectileProp.GetString();
+            }
+            
+            string? skillEffect = null;
+            if (attackData.TryGetProperty("skillEffect", out var skillEffectProp))
+            {
+                skillEffect = skillEffectProp.GetString();
+            }
+            
+            var bossAttack = new BossAttack
+            {
+                boss_id = bossId,
+                attack_slot = attackSlot,
+                damage = damage,
+                range = range,
+                cooldown = cooldown,
+                knockback = knockback,
+                hits = hits,
+                attack_type = attackType,
+                projectile = projectile,
+                skill_effect = skillEffect
+            };
+            
+            ctx.Db.BossAttack.Insert(bossAttack);
+            Log.Info($"Added boss attack {attackSlot} for {bossId}: {attackType} damage={damage} range={range}");
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Failed to insert boss attack {attackSlot} for {bossId}: {ex.Message}");
+        }
+    }
 
 }

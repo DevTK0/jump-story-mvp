@@ -33,7 +33,7 @@ public static partial class Module
         public Timestamp last_updated;
         public bool moving_right; // Direction for patrol behavior
         public Identity? aggro_target; // Player being chased (null if not in aggro)
-        public Timestamp aggro_start_time; // When aggro started
+        public Timestamp spawn_time; // When entity spawned
         public EnemyType enemy_type; // Regular enemy or boss
     }
     

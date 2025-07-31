@@ -15,6 +15,7 @@ public static class EnemyConstants
     
     // Recovery and timing constants
     public const int RECOVERY_TIME_MS = 500; // Time in milliseconds for enemy to recover from damaged state
+    public const int ATTACK_RECOVERY_TIME_MS = 1500; // Time in milliseconds for boss to recover from attack state
     public const int CLEANUP_DELAY_SECONDS = 5; // Time to wait before cleaning up dead bodies
     public const float ENEMY_MAX_HP = 100.0f; // Base health for all enemies
     
@@ -27,5 +28,6 @@ public static class EnemyConstants
     
     // Helper methods for time calculations
     public static TimeSpan GetRecoveryTimeSpan() => TimeSpan.FromMilliseconds(RECOVERY_TIME_MS);
+    public static TimeSpan GetAttackRecoveryTimeSpan() => TimeSpan.FromMilliseconds(ATTACK_RECOVERY_TIME_MS);
     public static TimeSpan GetCleanupTimeSpan() => TimeSpan.FromSeconds(CLEANUP_DELAY_SECONDS);
 }
