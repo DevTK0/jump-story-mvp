@@ -240,8 +240,8 @@ export const bossAttributes: BossAttributes = {
         attack2: {
           attackType: 'area' as const,
           damage: 15,
-          cooldown: 0.6,
-          knockback: 300,
+          cooldown: 1,
+          knockback: 0,
           range: 200,
           hits: 1,
           skillEffect: 'freeze',

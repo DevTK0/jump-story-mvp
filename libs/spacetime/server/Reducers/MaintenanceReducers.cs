@@ -712,11 +712,11 @@ public static partial class Module
             // Calculate route boundaries for movement
             var (leftBound, rightBound) = CalculateRouteBounds(route.Value.spawn_area);
 
-            // Get attack1 data early to know the exact range needed
+            // Get attack2 data early to know the exact range needed (testing area attacks)
             BossAttack? attack1 = null;
             foreach (var attack in ctx.Db.BossAttack.Iter())
             {
-                if (attack.boss_id == boss.enemy && attack.attack_slot == 1)
+                if (attack.boss_id == boss.enemy && attack.attack_slot == 2) // Changed to slot 2 for testing
                 {
                     attack1 = attack;
                     break;
@@ -725,7 +725,7 @@ public static partial class Module
             
             if (attack1 == null)
             {
-                Log.Warn($"No attack1 found for boss {boss.enemy}");
+                Log.Warn($"No attack2 found for boss {boss.enemy}");
                 continue;
             }
 
@@ -874,11 +874,11 @@ public static partial class Module
 
     private static void ExecuteBossAttack(ReducerContext ctx, Spawn boss, Boss bossData)
     {
-        // 1. Get attack1 data from BossAttack table
+        // 1. Get attack2 data from BossAttack table (testing area attacks)
         BossAttack? attack1 = null;
         foreach (var attack in ctx.Db.BossAttack.Iter())
         {
-            if (attack.boss_id == boss.enemy && attack.attack_slot == 1)
+            if (attack.boss_id == boss.enemy && attack.attack_slot == 2) // Changed to slot 2 for testing
             {
                 attack1 = attack;
                 break;
@@ -887,7 +887,7 @@ public static partial class Module
         
         if (attack1 == null)
         {
-            Log.Warn($"No attack1 found for boss {boss.enemy}");
+            Log.Warn($"No attack2 found for boss {boss.enemy}");
             return;
         }
         
@@ -903,16 +903,16 @@ public static partial class Module
             }
         }
         
-        // 3. Update boss to Attack1 state
+        // 3. Update boss to Attack2 state (testing area attacks)
         var attackingBoss = boss with { 
-            state = PlayerState.Attack1, 
+            state = PlayerState.Attack2, 
             last_updated = ctx.Timestamp 
         };
         ctx.Db.Spawn.spawn_id.Update(attackingBoss);
         
-        Log.Info($"Boss {boss.enemy} executing attack1 - Position: ({boss.x}, {boss.y}), Facing: {boss.facing}, Range: {attack1.Value.range}");
+        Log.Info($"Boss {boss.enemy} executing attack2 ({attack1.Value.attack_type}) - Position: ({boss.x}, {boss.y}), Facing: {boss.facing}, Range: {attack1.Value.range}");
         
-        // 4. Find all players in front of the boss within attack range
+        // 4. Find all players within attack range (area attack hits all directions)
         var playersHit = new List<Player>();
         var totalPlayers = 0;
         var skippedPlayers = 0;
@@ -941,24 +941,42 @@ public static partial class Module
                 continue;
             }
             
-            // Check if player is in front of boss within attack range
-            bool isInFront = false;
-            if (boss.facing == FacingDirection.Right && xDistance > 0 && xDistance <= attack1.Value.range)
+            // Check if player is within attack range based on attack type
+            bool isInRange = false;
+            
+            if (attack1.Value.attack_type == "area")
             {
-                isInFront = true;
-                Log.Info($"Player {player.name} is in front (right) - xDistance: {xDistance}, range: {attack1.Value.range}");
+                // Area attacks hit all players within range, regardless of direction
+                if (Math.Abs(xDistance) <= attack1.Value.range)
+                {
+                    isInRange = true;
+                    Log.Info($"Player {player.name} in area attack range - xDistance: {Math.Abs(xDistance)}, range: {attack1.Value.range}");
+                }
+                else
+                {
+                    Log.Info($"Player {player.name} NOT in area range - xDistance: {Math.Abs(xDistance)}, range: {attack1.Value.range}");
+                }
             }
-            else if (boss.facing == FacingDirection.Left && xDistance < 0 && Math.Abs(xDistance) <= attack1.Value.range)
+            else // Default to directional for "directional" or any other type
             {
-                isInFront = true;
-                Log.Info($"Player {player.name} is in front (left) - xDistance: {xDistance}, range: {attack1.Value.range}");
-            }
-            else
-            {
-                Log.Info($"Player {player.name} NOT in range - Position: ({player.x}, {player.y}), xDistance: {xDistance}, yDistance: {yDistance}, Boss facing: {boss.facing}");
+                // Directional attacks only hit players in front of the boss
+                if (boss.facing == FacingDirection.Right && xDistance > 0 && xDistance <= attack1.Value.range)
+                {
+                    isInRange = true;
+                    Log.Info($"Player {player.name} is in front (right) - xDistance: {xDistance}, range: {attack1.Value.range}");
+                }
+                else if (boss.facing == FacingDirection.Left && xDistance < 0 && Math.Abs(xDistance) <= attack1.Value.range)
+                {
+                    isInRange = true;
+                    Log.Info($"Player {player.name} is in front (left) - xDistance: {xDistance}, range: {attack1.Value.range}");
+                }
+                else
+                {
+                    Log.Info($"Player {player.name} NOT in directional range - Position: ({player.x}, {player.y}), xDistance: {xDistance}, yDistance: {yDistance}, Boss facing: {boss.facing}");
+                }
             }
             
-            if (isInFront)
+            if (isInRange)
             {
                 playersHit.Add(player);
             }
@@ -1041,7 +1059,7 @@ public static partial class Module
         
         if (playersHit.Count > 0)
         {
-            Log.Info($"Boss {boss.enemy} attack1 hit {playersHit.Count} players");
+            Log.Info($"Boss {boss.enemy} attack2 hit {playersHit.Count} players");
         }
     }
 }
