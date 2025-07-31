@@ -8,6 +8,7 @@ import { DbConnection } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { createLogger, type ModuleLogger } from '@/core/logger';
 import { UIContextService, UIEvents } from '../services/ui-context-service';
+import { onSceneEvent, offSceneEvent } from '@/core/scene';
 
 export class BottomUIBar {
   private scene: Phaser.Scene;
@@ -50,8 +51,11 @@ export class BottomUIBar {
     
     // Subscribe to job data updates
     context.on(UIEvents.PLAYER_JOB_DATA_UPDATED, this.handleJobDataUpdate, this);
-    // Subscribe to teleport data updates
+    // Subscribe to teleport data updates via UIContext (for backward compatibility)
     context.on(UIEvents.TELEPORT_DATA_UPDATED, this.handleTeleportDataUpdate, this);
+    
+    // Subscribe to teleport scene events (new event-driven pattern)
+    onSceneEvent(this.scene, 'teleport:data-updated', this.handleTeleportSceneEvent, this);
     
     // Set up data subscriptions immediately since connection is available
     if (this.dbConnection) {
@@ -157,6 +161,18 @@ export class BottomUIBar {
   
   private handleTeleportDataUpdate(data: { teleportData: Map<string, boolean>; teleportTableData: any[] }): void {
     this.logger.info(`Teleport data updated via context: ${data.teleportData.size} entries, ${data.teleportTableData.length} teleports`);
+  }
+  
+  /**
+   * Handle teleport data updates from scene events (new event-driven pattern)
+   * This receives events from TeleportStoneManager and updates UIContextService
+   */
+  private handleTeleportSceneEvent(data: { unlockStatus: Map<string, boolean>; locations: any[] }): void {
+    this.logger.info(`Teleport data updated via scene event: ${data.unlockStatus.size} entries, ${data.locations.length} teleports`);
+    
+    // Update UIContextService with the teleport data
+    // This ensures any UI components that depend on UIContextService still work
+    UIContextService.getInstance().updateTeleportData(data.unlockStatus, data.locations);
   }
 
   private setupDataSubscriptions(): void {
@@ -379,6 +395,9 @@ export class BottomUIBar {
     const context = UIContextService.getInstance();
     context.off(UIEvents.PLAYER_JOB_DATA_UPDATED, this.handleJobDataUpdate, this);
     context.off(UIEvents.TELEPORT_DATA_UPDATED, this.handleTeleportDataUpdate, this);
+    
+    // Remove scene event listeners
+    offSceneEvent(this.scene, 'teleport:data-updated', this.handleTeleportSceneEvent, this);
 
     this.levelDisplay.destroy();
     this.playerInfo.destroy();

@@ -3,7 +3,7 @@ import { DbConnection, Teleport, PlayerTeleport } from '@/spacetime/client';
 import { TeleportSubscriptionManager } from './managers/teleport-subscription-manager';
 import { TeleportSpriteManager } from './managers/teleport-sprite-manager';
 import { createLogger, type ModuleLogger } from '@/core/logger';
-import { UIContextService } from '@/ui/services/ui-context-service';
+import { emitSceneEvent } from '@/core/scene';
 
 /**
  * Main teleport manager that orchestrates teleport subsystems
@@ -11,6 +11,7 @@ import { UIContextService } from '@/ui/services/ui-context-service';
  */
 export class TeleportStoneManager {
   private logger: ModuleLogger;
+  private scene: Phaser.Scene;
   
   // Subsystem managers
   private subscriptionManager: TeleportSubscriptionManager;
@@ -21,6 +22,7 @@ export class TeleportStoneManager {
   private playerUnlockStatus: Map<string, boolean> = new Map();
 
   constructor(scene: Phaser.Scene) {
+    this.scene = scene;
     this.logger = createLogger('TeleportStoneManager');
     
     // Initialize subsystems
@@ -46,7 +48,7 @@ export class TeleportStoneManager {
   private handleTeleportInsert(teleport: Teleport): void {
     this.teleportLocations.set(teleport.locationName, teleport);
     this.spriteManager.createTeleportStone(teleport.locationName, teleport.x, teleport.y);
-    this.updateUIContextService();
+    this.emitTeleportDataUpdate();
   }
 
   /**
@@ -63,7 +65,7 @@ export class TeleportStoneManager {
     const isUnlocked = this.playerUnlockStatus.get(teleport.locationName) || false;
     this.spriteManager.updateTeleportSprite(teleport.locationName, isUnlocked);
     
-    this.updateUIContextService();
+    this.emitTeleportDataUpdate();
   }
 
   /**
@@ -73,7 +75,7 @@ export class TeleportStoneManager {
     this.teleportLocations.delete(teleport.locationName);
     this.spriteManager.removeTeleportStone(teleport.locationName);
     this.playerUnlockStatus.delete(teleport.locationName);
-    this.updateUIContextService();
+    this.emitTeleportDataUpdate();
   }
 
   /**
@@ -82,7 +84,7 @@ export class TeleportStoneManager {
   private handlePlayerTeleportInsert(playerTeleport: PlayerTeleport): void {
     this.playerUnlockStatus.set(playerTeleport.locationName, playerTeleport.isUnlocked);
     this.spriteManager.updateTeleportSprite(playerTeleport.locationName, playerTeleport.isUnlocked);
-    this.updateUIContextService();
+    this.emitTeleportDataUpdate();
   }
 
   /**
@@ -91,15 +93,27 @@ export class TeleportStoneManager {
   private handlePlayerTeleportUpdate(playerTeleport: PlayerTeleport): void {
     this.playerUnlockStatus.set(playerTeleport.locationName, playerTeleport.isUnlocked);
     this.spriteManager.updateTeleportSprite(playerTeleport.locationName, playerTeleport.isUnlocked);
-    this.updateUIContextService();
+    this.emitTeleportDataUpdate();
   }
 
   /**
-   * Update UIContextService with current teleport data
+   * Emit scene event with current teleport data
+   * This follows the event-driven pattern where game managers emit events
+   * and UI components subscribe when ready
    */
-  private updateUIContextService(): void {
+  private emitTeleportDataUpdate(): void {
     const teleportTableData = Array.from(this.teleportLocations.values());
-    UIContextService.getInstance().updateTeleportData(this.playerUnlockStatus, teleportTableData);
+    
+    // Emit type-safe scene event
+    emitSceneEvent(this.scene, 'teleport:data-updated', {
+      unlockStatus: new Map(this.playerUnlockStatus),
+      locations: teleportTableData
+    });
+    
+    this.logger.debug('Emitted teleport:data-updated event', {
+      unlockCount: this.playerUnlockStatus.size,
+      locationCount: teleportTableData.length
+    });
   }
 
   /**

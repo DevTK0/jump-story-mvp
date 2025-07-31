@@ -65,8 +65,8 @@ function copyRecursiveSync(src: string, dest: string) {
   }
 }
 
-export default defineConfig(({ command }) => ({
-  base: command === 'build' ? '/jump-story-mvp/' : '/',
+export default defineConfig(({ command, mode }) => ({
+  base: command === 'build' && mode !== 'itch' ? '/jump-story-mvp/' : './',
   root: 'apps/playground',
   publicDir: 'public',
   server: {

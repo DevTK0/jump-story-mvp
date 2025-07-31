@@ -5,6 +5,7 @@
  */
 
 import type { Identity } from '@clockworklabs/spacetimedb-sdk';
+import type { Teleport } from '@/spacetime/client';
 
 // Define all scene event types
 export interface SceneEventMap {
@@ -37,6 +38,10 @@ export interface SceneEventMap {
     slotIndex: number;
     skillName: string;
     cooldown: number;
+  };
+  'teleport:data-updated': {
+    unlockStatus: Map<string, boolean>;
+    locations: Teleport[];
   };
   // Add more events here as the game grows
 }
