@@ -417,6 +417,37 @@ export const respawnEffectSprites: Record<string, SpriteDefinition> = {
   },
 };
 
+// Icon sprites for abilities
+export const iconSprites: Record<string, SpriteDefinition> = {
+  heal1: {
+    path: 'assets/spritesheet/icons/heal1.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  heal2: {
+    path: 'assets/spritesheet/icons/heal2.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  heal3: {
+    path: 'assets/spritesheet/icons/heal3.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+};
+
 // Complete sprite configuration
 const spriteConfig: SpriteConfig = {
   sprites: {
@@ -427,6 +458,7 @@ const spriteConfig: SpriteConfig = {
     projectiles: projectileSprites,
     effects: skillEffectSprites,
     respawnEffects: respawnEffectSprites,
+    icons: iconSprites,
   },
 } as const;
 
@@ -439,3 +471,4 @@ export type EnemySpriteKey = keyof typeof enemySprites;
 export type EmoteSpriteKey = keyof typeof emoteSprites;
 export type ProjectileSpriteKey = keyof typeof projectileSprites;
 export type SkillEffectSpriteKey = keyof typeof skillEffectSprites;
+export type IconSpriteKey = keyof typeof iconSprites;

@@ -17,6 +17,7 @@ const sharedAttacks = {
     modifiers: ['sword' as const],
     manaCost: 0,
     ammoCost: 0,
+    icon: 'heal1',
   },
   attack2: {
     attackType: 'standard' as const,
@@ -33,6 +34,7 @@ const sharedAttacks = {
     modifiers: ['sword' as const],
     manaCost: 0,
     ammoCost: 0,
+    icon: 'heal1',
   },
   attack3: {
     attackType: 'standard' as const,
@@ -48,6 +50,7 @@ const sharedAttacks = {
     modifiers: ['bow' as const],
     manaCost: 10,
     ammoCost: 0,
+    icon: 'heal1',
   },
 };
 
@@ -89,6 +92,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         modifiers: ['sword' as const],
         manaCost: 0,
         ammoCost: 0,
+        icon: 'heal1',
       },
       attack2: {
         attackType: 'standard' as const,
@@ -105,6 +109,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         modifiers: ['sword' as const],
         manaCost: 0,
         ammoCost: 0,
+        icon: 'heal2',
       },
       attack3: {
         attackType: 'projectile' as const,
@@ -122,6 +127,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         manaCost: 0,
         ammoCost: 0,
         projectile: 'arrow', // Test projectile for soldier
+        icon: 'heal3',
       },
     },
     passives: {
@@ -204,6 +210,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         manaCost: 0,
         ammoCost: 0,
         skillEffect: 'freeze',
+        icon: 'heal1',
       },
       attack2: {
         attackType: 'standard' as const,
@@ -220,6 +227,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         manaCost: 0,
         ammoCost: 0,
         skillEffect: 'holy',
+        icon: 'heal1',
       },
       attack3: {
         attackType: 'projectile' as const,
@@ -237,6 +245,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         ammoCost: 0,
         projectile: 'fireball', // Using arrow as placeholder for magic missile
         // skillEffect: 'holy', // Explosion effect on hit
+        icon: 'heal1',
       },
     },
     passives: {
@@ -284,6 +293,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         manaCost: 0,
         ammoCost: 0,
         projectile: 'arrow',
+        icon: 'heal1',
       },
       attack2: {
         attackType: 'projectile' as const,
@@ -300,6 +310,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         manaCost: 0,
         ammoCost: 0,
         projectile: 'arrow',
+        icon: 'heal1',
       },
       attack3: {
         attackType: 'projectile' as const,
@@ -316,6 +327,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         manaCost: 0,
         ammoCost: 0,
         projectile: 'arrow',
+        icon: 'heal1',
       },
     },
     passives: {
@@ -424,6 +436,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         ammoCost: 0,
         dashDistance: 150,
         dashSpeed: 400,
+        icon: 'heal1',
       },
       attack3: {
         attackType: 'dash' as const,
@@ -441,6 +454,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         ammoCost: 0,
         dashDistance: 200,
         dashSpeed: 600,
+        icon: 'heal',
       },
     },
     passives: {

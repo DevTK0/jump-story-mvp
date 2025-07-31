@@ -20,6 +20,7 @@ export class CombatSkillSlot {
   private border: Phaser.GameObjects.Rectangle;
   private hotkeyText: Phaser.GameObjects.Text;
   private skillLabel: Phaser.GameObjects.Text;
+  private skillIcon?: Phaser.GameObjects.Sprite;
   private cooldownOverlay?: Phaser.GameObjects.Rectangle;
   
   private logger: ModuleLogger;
@@ -91,7 +92,7 @@ export class CombatSkillSlot {
     this.container.add([
       this.background,
       this.border,
-      this.hotkeyText,
+      // this.hotkeyText, // Hidden - hotkey shown in tooltip only
       this.skillLabel
     ]);
     
@@ -140,7 +141,7 @@ export class CombatSkillSlot {
   private setPlaceholderData(): void {
     const placeholderConfig = COMBAT_SKILL_CONFIG.skills[this.slotIndex as keyof typeof COMBAT_SKILL_CONFIG.skills];
     if (placeholderConfig) {
-      this.hotkeyText.setText(placeholderConfig.hotkey);
+      // this.hotkeyText.setText(placeholderConfig.hotkey); // Hidden - hotkey shown in tooltip only
       this.skillLabel.setText(placeholderConfig.label);
       
       this.skillData = {
@@ -157,19 +158,63 @@ export class CombatSkillSlot {
     this.skillData = skillData;
     
     if (skillData) {
-      this.hotkeyText.setText(skillData.hotkey || '');
-      const label = skillData.id.split('_').pop() || '';
-      this.skillLabel.setText(label);
+      // this.hotkeyText.setText(skillData.hotkey || ''); // Hidden - hotkey shown in tooltip only
+      
+      // Show icon if available, otherwise show label
+      if (skillData.icon) {
+        this.skillLabel.setVisible(false);
+        
+        // Remove existing icon if any
+        if (this.skillIcon) {
+          this.skillIcon.destroy();
+        }
+        
+        // Create new icon sprite
+        this.skillIcon = this.scene.add.sprite(
+          COMBAT_SKILL_CONFIG.slot.width / 2,
+          COMBAT_SKILL_CONFIG.slot.height / 2,
+          skillData.icon
+        );
+        this.skillIcon.setOrigin(0.5, 0.5);
+        
+        // Scale icon to fit nicely in the slot (leaving some padding)
+        // Since the icon is 16x16 and we want it bigger, let's scale it up more
+        const iconScale = (COMBAT_SKILL_CONFIG.slot.width - 8) / 16; // 16x16 icon size with less padding
+        this.skillIcon.setScale(iconScale);
+        
+        this.container.add(this.skillIcon);
+      } else {
+        // No icon, show text label
+        const label = skillData.id.split('_').pop() || '';
+        this.skillLabel.setText(label);
+        this.skillLabel.setVisible(true);
+        
+        if (this.skillIcon) {
+          this.skillIcon.destroy();
+          this.skillIcon = undefined;
+        }
+      }
+      
       this.setDisabled(false);
     } else {
+      // No skill data, show placeholder
       const placeholderConfig = COMBAT_SKILL_CONFIG.skills[this.slotIndex as keyof typeof COMBAT_SKILL_CONFIG.skills];
       if (placeholderConfig) {
-        this.hotkeyText.setText(placeholderConfig.hotkey);
+        // this.hotkeyText.setText(placeholderConfig.hotkey); // Hidden - hotkey shown in tooltip only
         this.skillLabel.setText(placeholderConfig.label);
+        this.skillLabel.setVisible(true);
       } else {
-        this.hotkeyText.setText('');
+        // this.hotkeyText.setText(''); // Hidden - hotkey shown in tooltip only
         this.skillLabel.setText('');
+        this.skillLabel.setVisible(true);
       }
+      
+      // Remove icon if any
+      if (this.skillIcon) {
+        this.skillIcon.destroy();
+        this.skillIcon = undefined;
+      }
+      
       this.setDisabled(true);
     }
   }
@@ -239,6 +284,9 @@ export class CombatSkillSlot {
   
   public destroy(): void {
     this.background.removeAllListeners();
+    if (this.skillIcon) {
+      this.skillIcon.destroy();
+    }
     this.container.destroy();
   }
 }

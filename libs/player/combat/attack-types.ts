@@ -29,6 +29,7 @@ interface BaseAttack {
   ammoCost: number;
   description: string;
   skillEffect?: string; // Optional VFX sprite key for on-hit effects
+  icon?: string; // Optional icon sprite key for UI display
 }
 
 // Melee-specific properties

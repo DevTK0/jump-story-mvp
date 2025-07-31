@@ -153,6 +153,10 @@ export class AssetLoaderService {
     if ((this.spriteConfig.sprites as any).respawnEffects) {
       spriteConfigLoader.loadSpritesForCategory(this.scene, 'respawnEffects');
     }
+    
+    if ((this.spriteConfig.sprites as any).icons) {
+      spriteConfigLoader.loadSpritesForCategory(this.scene, 'icons');
+    }
   }
   
   

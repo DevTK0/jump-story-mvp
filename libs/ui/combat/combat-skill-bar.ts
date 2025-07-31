@@ -109,7 +109,8 @@ export class CombatSkillBar {
           hotkey: hotkeys[index],
           slotType: 'attack',
           cooldown: attack.cooldown,
-          currentCooldown: 0
+          currentCooldown: 0,
+          icon: attack.icon
         });
       }
     });
@@ -168,7 +169,8 @@ export class CombatSkillBar {
         hotkey: hotkeys[index],
         slotType: 'attack',
         cooldown: attack.cooldown,
-        currentCooldown: 0
+        currentCooldown: 0,
+        icon: attack.icon
       });
     });
     

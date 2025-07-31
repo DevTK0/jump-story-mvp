@@ -187,6 +187,7 @@ export interface BossAttack {
   hits: number;
   projectile?: string | null;
   skillEffect?: string;
+  icon?: string;
 }
 
 export interface BossAttribute {
@@ -236,6 +237,7 @@ export const bossAttributes: BossAttributes = {
           hits: 1,
           projectile: null,
           skillEffect: 'freeze',
+          icon: 'heal',
         },
         attack2: {
           attackType: 'area' as const,
@@ -245,6 +247,7 @@ export const bossAttributes: BossAttributes = {
           range: 200,
           hits: 1,
           skillEffect: 'freeze',
+          icon: 'heal',
         },
         attack3: {
           attackType: 'summon' as const,
@@ -254,6 +257,7 @@ export const bossAttributes: BossAttributes = {
           range: 500,
           hits: 1,
           skillEffect: 'freeze',
+          icon: 'heal',
         },
       },
     },
@@ -278,6 +282,7 @@ export const bossAttributes: BossAttributes = {
           hits: 1,
           projectile: null,
           skillEffect: 'stun',
+          icon: 'heal',
         },
         attack2: {
           attackType: 'area' as const,
@@ -287,6 +292,7 @@ export const bossAttributes: BossAttributes = {
           range: 300,
           hits: 1,
           skillEffect: 'earthquake',
+          icon: 'heal',
         },
         attack3: {
           attackType: 'directional' as const,
@@ -297,6 +303,7 @@ export const bossAttributes: BossAttributes = {
           hits: 3,
           projectile: 'spear',
           skillEffect: 'bleed',
+          icon: 'heal',
         },
       },
     },
@@ -321,6 +328,7 @@ export const bossAttributes: BossAttributes = {
           hits: 1,
           projectile: null,
           skillEffect: 'slash',
+          icon: 'heal',
         },
         attack2: {
           attackType: 'area' as const,
@@ -330,6 +338,7 @@ export const bossAttributes: BossAttributes = {
           range: 400,
           hits: 1,
           skillEffect: 'whirlwind',
+          icon: 'heal',
         },
         attack3: {
           attackType: 'summon' as const,
@@ -339,6 +348,7 @@ export const bossAttributes: BossAttributes = {
           range: 500,
           hits: 1,
           skillEffect: 'summon_skeleton',
+          icon: 'heal',
         },
       },
     },
@@ -363,6 +373,7 @@ export const bossAttributes: BossAttributes = {
           hits: 2,
           projectile: null,
           skillEffect: 'claw',
+          icon: 'heal',
         },
         attack2: {
           attackType: 'directional' as const,
@@ -373,6 +384,7 @@ export const bossAttributes: BossAttributes = {
           hits: 1,
           projectile: null,
           skillEffect: 'howl',
+          icon: 'heal',
         },
         attack3: {
           attackType: 'area' as const,
@@ -382,6 +394,7 @@ export const bossAttributes: BossAttributes = {
           range: 400,
           hits: 1,
           skillEffect: 'frenzy',
+          icon: 'heal',
         },
       },
     },

@@ -21,6 +21,7 @@ export interface SpriteConfig {
     jobs?: Record<string, SpriteDefinition>;
     enemies?: Record<string, SpriteDefinition>;
     emotes?: Record<string, SpriteDefinition>;
+    icons?: Record<string, SpriteDefinition>;
     [category: string]: Record<string, SpriteDefinition> | undefined;
   };
 }
