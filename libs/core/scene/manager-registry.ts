@@ -121,6 +121,15 @@ export class ManagerRegistry {
       undefined,
       this.scene
     );
+    
+    // Set up player-boss interaction overlaps for touch damage
+    registry.addOverlap(
+      player,
+      'bosses',
+      interactionCallbacks.onPlayerTouchEnemy as any,
+      undefined,
+      this.scene
+    );
   }
   
   /**
@@ -187,6 +196,7 @@ export class ManagerRegistry {
     // Enemy damage renderer
     this.enemyDamageManager = new EnemyDamageRenderer(this.scene);
     this.enemyDamageManager.setEnemyManager(this.enemyManager);
+    this.enemyDamageManager.setBossManager(this.bossManager);
     this.enemyDamageManager.setPlayerSprite(config.player);
     
     // Player damage renderer
@@ -262,8 +272,11 @@ export class ManagerRegistry {
       // Handle skill effects
       this.skillEffectManager.handleDamageEvent(damageEvent);
       
-      // Handle hit animation
+      // Handle hit animation for regular enemies
       this.enemyManager.playHitAnimation(damageEvent.spawnId);
+      
+      // Handle hit animation for bosses
+      this.bossManager.playHitAnimation(damageEvent.spawnId);
     });
   }
   

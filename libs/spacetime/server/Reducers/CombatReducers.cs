@@ -158,27 +158,56 @@ public static partial class Module
 
                     var oldHp = currentHp;
                     var newHp = Math.Max(0, (float)Math.Floor(currentHp - finalDamage));
-                    var newState = newHp <= 0 ? PlayerState.Dead : PlayerState.Damaged;
                     var wasKilled = newHp <= 0 && oldHp > 0;
 
-                    // Calculate knockback position based on attacker's position and attack's knockback value
-                    var knockbackDistance = jobAttack.Value.knockback;
-                    var knockbackDirection = enemy.x > player.Value.x ? 1 : -1;
-                
-                var newX = enemy.x + (knockbackDistance * knockbackDirection);
-                
-                // Get route boundaries to clamp knockback
-                var route = ctx.Db.SpawnRoute.route_id.Find(enemy.route_id);
-                if (route != null)
-                {
-                    var (leftBound, rightBound) = CalculateRouteBounds(route.Value);
-                    newX = Math.Max(leftBound, Math.Min(rightBound, newX));
-                }
-                
-                var knockbackX = newX;
-                var knockbackY = enemy.y;
+                    // Determine new state based on enemy type and current state
+                    PlayerState newState;
+                    if (newHp <= 0)
+                    {
+                        newState = PlayerState.Dead;
+                    }
+                    else if (enemy.enemy_type == EnemyType.Boss)
+                    {
+                        // Bosses: preserve attack states, don't override with Damaged
+                        if (enemy.state == PlayerState.Attack1 || enemy.state == PlayerState.Attack2 || enemy.state == PlayerState.Attack3)
+                        {
+                            newState = enemy.state; // Keep current attack state
+                        }
+                        else
+                        {
+                            newState = PlayerState.Damaged;
+                        }
+                    }
+                    else
+                    {
+                        // Regular enemies always go to Damaged state
+                        newState = PlayerState.Damaged;
+                    }
 
-                    // Update enemy health, state, and position with knockback
+                    // Calculate knockback for non-boss enemies only
+                    float knockbackX = enemy.x;
+                    float knockbackY = enemy.y;
+                    
+                    if (enemy.enemy_type != EnemyType.Boss)
+                    {
+                        // Apply knockback for regular enemies
+                        var knockbackDistance = jobAttack.Value.knockback;
+                        var knockbackDirection = enemy.x > player.Value.x ? 1 : -1;
+                        var newX = enemy.x + (knockbackDistance * knockbackDirection);
+                        
+                        // Get route boundaries to clamp knockback
+                        var route = ctx.Db.SpawnRoute.route_id.Find(enemy.route_id);
+                        if (route != null)
+                        {
+                            var (leftBound, rightBound) = CalculateRouteBounds(route.Value);
+                            newX = Math.Max(leftBound, Math.Min(rightBound, newX));
+                        }
+                        
+                        knockbackX = newX;
+                    }
+                    // Bosses stay at their current position (no knockback)
+
+                    // Update enemy health, state, and position
                     // Also set aggro target to the attacking player
                     var damagedEnemy = CreateEnemyUpdate(enemy, knockbackX, knockbackY, enemy.moving_right, 
                         ctx.Sender, true, ctx.Timestamp, newState);
@@ -209,6 +238,11 @@ public static partial class Module
                     if (enemy.enemy_type == EnemyType.Regular)
                     {
                         CheckBossTrigger(ctx, enemy.enemy);
+                    }
+                    // Reset the specific boss trigger when a boss dies
+                    else if (enemy.enemy_type == EnemyType.Boss)
+                    {
+                        ResetBossTrigger(ctx, enemy.enemy);
                     }
                     
                     break; // Don't continue hitting a dead enemy
@@ -243,23 +277,11 @@ public static partial class Module
         {
             Log.Info($"Boss trigger met! {enemyType} kills: {updatedTrigger.current_kills}/{updatedTrigger.required_kills}");
             
-            // Spawn the boss
-            SpawnBossFromTrigger(ctx, updatedTrigger.boss_to_spawn);
+            // Spawn the boss (this will handle the announcement if successful)
+            SpawnBossFromTrigger(ctx, updatedTrigger.boss_to_spawn, trigger.Value.required_kills, enemyType);
             
             // Reset the kill count
             updatedTrigger = updatedTrigger with { current_kills = 0 };
-            
-            // Announce boss spawn
-            var boss = ctx.Db.Boss.boss_id.Find(trigger.Value.boss_to_spawn);
-            if (boss != null)
-            {
-                var announcement = new Broadcast
-                {
-                    message = $"A powerful enemy has appeared! {boss.Value.display_name} has been summoned after {trigger.Value.required_kills} {enemyType} kills!",
-                    publish_dt = ctx.Timestamp
-                };
-                ctx.Db.Broadcast.Insert(announcement);
-            }
         }
         
         // Update the trigger
@@ -271,8 +293,18 @@ public static partial class Module
         }
     }
 
-    private static void SpawnBossFromTrigger(ReducerContext ctx, string bossId)
+    private static void SpawnBossFromTrigger(ReducerContext ctx, string bossId, uint requiredKills, string enemyType)
     {
+        // Check if a boss already exists (prevent multiple boss spawns)
+        foreach (var existingSpawn in ctx.Db.Spawn.Iter())
+        {
+            if (existingSpawn.enemy_type == EnemyType.Boss && existingSpawn.state != PlayerState.Dead)
+            {
+                Log.Info($"Boss spawn blocked - another boss is already active: {existingSpawn.enemy}");
+                return;
+            }
+        }
+
         // Get boss data
         var boss = ctx.Db.Boss.boss_id.Find(bossId);
         if (boss == null)
@@ -323,6 +355,29 @@ public static partial class Module
 
         ctx.Db.Spawn.Insert(bossSpawn);
         Log.Info($"Spawned boss '{boss.Value.display_name}' at ({spawnX}, {spawnY}) from trigger");
+        
+        // Announce boss spawn (only after successful spawn)
+        var announcement = new Broadcast
+        {
+            message = $"A powerful enemy has appeared! {boss.Value.display_name} has been summoned after {requiredKills} {enemyType} kills!",
+            publish_dt = ctx.Timestamp
+        };
+        ctx.Db.Broadcast.Insert(announcement);
+    }
+
+    private static void ResetBossTrigger(ReducerContext ctx, string bossId)
+    {
+        // Find the trigger that spawns this boss
+        foreach (var trigger in ctx.Db.BossTrigger.Iter())
+        {
+            if (trigger.boss_to_spawn == bossId && trigger.current_kills > 0)
+            {
+                var resetTrigger = trigger with { current_kills = 0 };
+                ctx.Db.BossTrigger.enemy_type.Update(resetTrigger);
+                Log.Info($"Reset trigger for {trigger.enemy_type} after boss {bossId} died: {trigger.current_kills} -> 0");
+                break;
+            }
+        }
     }
 
 }

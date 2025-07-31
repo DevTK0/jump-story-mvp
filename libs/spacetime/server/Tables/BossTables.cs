@@ -30,23 +30,29 @@ public static partial class Module
         public DbRect spawn_area;        // Where boss can spawn
     }
 
-    // BossDamageEvent table removed - now using unified EnemyDamageEvent table for both enemies and bosses
+    [Table(Name = "BossAttack", Public = true)]
+    public partial struct BossAttack
+    {
+        [PrimaryKey, AutoInc]
+        public uint attack_id;
+        public string boss_id;           // Which boss this attack belongs to
+        public string attack_name;       // Display name of the attack
+        public float damage;             // Base damage
+        public float range;              // Attack range
+        public float cooldown;           // Seconds between uses
+        public string attack_type;       // "melee", "projectile", "area"
+        public string animation;         // Animation to play
+        public string? projectile;       // Projectile sprite (if ranged)
+        public string? skill_effect;     // Visual effect on hit
+        public float? area_radius;       // Radius for area attacks
+    }
 
-    // Timer for boss attack processing
-    // [Table(Name = "boss_attack_timer", Scheduled = nameof(ProcessBossAttacks), ScheduledAt = nameof(scheduled_at))]
-    // public partial struct BossAttackTimer
-    // {
-    //     [PrimaryKey, AutoInc]
-    //     public ulong scheduled_id;
-    //     public ScheduleAt scheduled_at;
-    // }
-
-    // // Timer for boss respawning
-    // [Table(Name = "boss_respawn_timer", Scheduled = nameof(CheckBossRespawns), ScheduledAt = nameof(scheduled_at))]
-    // public partial struct BossRespawnTimer
-    // {
-    //     [PrimaryKey, AutoInc]
-    //     public ulong scheduled_id;
-    //     public ScheduleAt scheduled_at;
-    // }
+    [Table(Name = "BossAttackState", Public = true)]
+    public partial struct BossAttackState
+    {
+        [PrimaryKey]
+        public uint spawn_id;            // Boss spawn instance
+        public uint attack_id;           // Which attack
+        public Timestamp last_used;      // When last used
+    }
 }

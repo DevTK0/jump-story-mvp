@@ -6,6 +6,7 @@
 import Phaser from 'phaser';
 import { EnemyDamageEvent } from '@/spacetime/client';
 import { EnemyManager } from '@/enemy';
+import { BossManager } from '@/enemy';
 import { PeerManager } from '@/peer';
 import {
   DAMAGE_RENDERER_CONFIG,
@@ -27,6 +28,7 @@ interface DamageNumberState {
 export class EnemyDamageRenderer {
   private scene: Phaser.Scene;
   private enemyManager: EnemyManager | null = null;
+  private bossManager: BossManager | null = null;
   private projectileRenderer: ProjectileRenderer;
 
   // Object pooling
@@ -46,6 +48,13 @@ export class EnemyDamageRenderer {
   public setEnemyManager(enemyManager: EnemyManager): void {
     this.enemyManager = enemyManager;
     this.projectileRenderer.setEnemyManager(enemyManager);
+  }
+
+  /**
+   * Set the boss manager reference for positioning
+   */
+  public setBossManager(bossManager: BossManager): void {
+    this.bossManager = bossManager;
   }
 
   /**
@@ -177,20 +186,30 @@ export class EnemyDamageRenderer {
    * Get enemy sprite position for damage number placement
    */
   private getEnemyPosition(spawnId: number): { x: number; y: number } | null {
-    if (!this.enemyManager) return null;
-
-    // Get enemy sprite from enemy manager
-    const enemySprite = this.enemyManager.getEnemySprite(spawnId);
-
-    // Allow damage numbers on dead enemies that are still visible (playing death animation)
-    if (!enemySprite || !enemySprite.visible) {
-      return null;
+    // Check enemy manager first
+    if (this.enemyManager) {
+      const enemySprite = this.enemyManager.getEnemySprite(spawnId);
+      // Allow damage numbers on dead enemies that are still visible (playing death animation)
+      if (enemySprite && enemySprite.visible) {
+        return {
+          x: enemySprite.x,
+          y: enemySprite.y + DAMAGE_RENDERER_CONFIG.display.enemy.baseYOffset,
+        };
+      }
     }
 
-    return {
-      x: enemySprite.x,
-      y: enemySprite.y + DAMAGE_RENDERER_CONFIG.display.enemy.baseYOffset,
-    };
+    // Check boss manager
+    if (this.bossManager) {
+      const bossSprite = this.bossManager.getBossSprite(spawnId);
+      if (bossSprite && bossSprite.visible) {
+        return {
+          x: bossSprite.x,
+          y: bossSprite.y + DAMAGE_RENDERER_CONFIG.display.enemy.baseYOffset,
+        };
+      }
+    }
+
+    return null;
   }
 
   /**

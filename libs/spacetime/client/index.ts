@@ -98,6 +98,8 @@ import { SpawnMissingEnemies } from "./spawn_missing_enemies_reducer.ts";
 export { SpawnMissingEnemies };
 import { TeleportPlayer } from "./teleport_player_reducer.ts";
 export { TeleportPlayer };
+import { UpdateBossActions } from "./update_boss_actions_reducer.ts";
+export { UpdateBossActions };
 import { UpdateEnemyPatrol } from "./update_enemy_patrol_reducer.ts";
 export { UpdateEnemyPatrol };
 import { UpdateLeaderboard } from "./update_leaderboard_reducer.ts";
@@ -112,6 +114,10 @@ export { UpdatePlayerTyping };
 // Import and reexport all table handle types
 import { BossTableHandle } from "./boss_table.ts";
 export { BossTableHandle };
+import { BossAttackTableHandle } from "./boss_attack_table.ts";
+export { BossAttackTableHandle };
+import { BossAttackStateTableHandle } from "./boss_attack_state_table.ts";
+export { BossAttackStateTableHandle };
 import { BossRouteTableHandle } from "./boss_route_table.ts";
 export { BossRouteTableHandle };
 import { BossTriggerTableHandle } from "./boss_trigger_table.ts";
@@ -148,6 +154,8 @@ import { SpawnRouteTableHandle } from "./spawn_route_table.ts";
 export { SpawnRouteTableHandle };
 import { TeleportTableHandle } from "./teleport_table.ts";
 export { TeleportTableHandle };
+import { BossActionTimerTableHandle } from "./boss_action_timer_table.ts";
+export { BossActionTimerTableHandle };
 import { BroadcastCleanupTimerTableHandle } from "./broadcast_cleanup_timer_table.ts";
 export { BroadcastCleanupTimerTableHandle };
 import { CleanupDeadBodiesTimerTableHandle } from "./cleanup_dead_bodies_timer_table.ts";
@@ -170,6 +178,12 @@ import { AttackType } from "./attack_type_type.ts";
 export { AttackType };
 import { Boss } from "./boss_type.ts";
 export { Boss };
+import { BossActionTimer } from "./boss_action_timer_type.ts";
+export { BossActionTimer };
+import { BossAttack } from "./boss_attack_type.ts";
+export { BossAttack };
+import { BossAttackState } from "./boss_attack_state_type.ts";
+export { BossAttackState };
 import { BossRoute } from "./boss_route_type.ts";
 export { BossRoute };
 import { BossTrigger } from "./boss_trigger_type.ts";
@@ -244,6 +258,24 @@ const REMOTE_MODULE = {
       primaryKeyInfo: {
         colName: "bossId",
         colType: Boss.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    BossAttack: {
+      tableName: "BossAttack",
+      rowType: BossAttack.getTypeScriptAlgebraicType(),
+      primaryKey: "attackId",
+      primaryKeyInfo: {
+        colName: "attackId",
+        colType: BossAttack.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    BossAttackState: {
+      tableName: "BossAttackState",
+      rowType: BossAttackState.getTypeScriptAlgebraicType(),
+      primaryKey: "spawnId",
+      primaryKeyInfo: {
+        colName: "spawnId",
+        colType: BossAttackState.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     BossRoute: {
@@ -406,6 +438,15 @@ const REMOTE_MODULE = {
       primaryKeyInfo: {
         colName: "locationName",
         colType: Teleport.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    boss_action_timer: {
+      tableName: "boss_action_timer",
+      rowType: BossActionTimer.getTypeScriptAlgebraicType(),
+      primaryKey: "scheduledId",
+      primaryKeyInfo: {
+        colName: "scheduledId",
+        colType: BossActionTimer.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     broadcast_cleanup_timer: {
@@ -601,6 +642,10 @@ const REMOTE_MODULE = {
       reducerName: "TeleportPlayer",
       argsType: TeleportPlayer.getTypeScriptAlgebraicType(),
     },
+    UpdateBossActions: {
+      reducerName: "UpdateBossActions",
+      argsType: UpdateBossActions.getTypeScriptAlgebraicType(),
+    },
     UpdateEnemyPatrol: {
       reducerName: "UpdateEnemyPatrol",
       argsType: UpdateEnemyPatrol.getTypeScriptAlgebraicType(),
@@ -683,6 +728,7 @@ export type Reducer = never
 | { name: "SpawnBoss", args: SpawnBoss }
 | { name: "SpawnMissingEnemies", args: SpawnMissingEnemies }
 | { name: "TeleportPlayer", args: TeleportPlayer }
+| { name: "UpdateBossActions", args: UpdateBossActions }
 | { name: "UpdateEnemyPatrol", args: UpdateEnemyPatrol }
 | { name: "UpdateLeaderboard", args: UpdateLeaderboard }
 | { name: "UpdatePlayerPosition", args: UpdatePlayerPosition }
@@ -1185,6 +1231,22 @@ export class RemoteReducers {
     this.connection.offReducer("TeleportPlayer", callback);
   }
 
+  updateBossActions(timer: BossActionTimer) {
+    const __args = { timer };
+    let __writer = new BinaryWriter(1024);
+    UpdateBossActions.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("UpdateBossActions", __argsBuffer, this.setCallReducerFlags.updateBossActionsFlags);
+  }
+
+  onUpdateBossActions(callback: (ctx: ReducerEventContext, timer: BossActionTimer) => void) {
+    this.connection.onReducer("UpdateBossActions", callback);
+  }
+
+  removeOnUpdateBossActions(callback: (ctx: ReducerEventContext, timer: BossActionTimer) => void) {
+    this.connection.offReducer("UpdateBossActions", callback);
+  }
+
   updateEnemyPatrol(timer: EnemyPatrolTimer) {
     const __args = { timer };
     let __writer = new BinaryWriter(1024);
@@ -1418,6 +1480,11 @@ export class SetReducerFlags {
     this.teleportPlayerFlags = flags;
   }
 
+  updateBossActionsFlags: CallReducerFlags = 'FullUpdate';
+  updateBossActions(flags: CallReducerFlags) {
+    this.updateBossActionsFlags = flags;
+  }
+
   updateEnemyPatrolFlags: CallReducerFlags = 'FullUpdate';
   updateEnemyPatrol(flags: CallReducerFlags) {
     this.updateEnemyPatrolFlags = flags;
@@ -1450,6 +1517,14 @@ export class RemoteTables {
 
   get boss(): BossTableHandle {
     return new BossTableHandle(this.connection.clientCache.getOrCreateTable<Boss>(REMOTE_MODULE.tables.Boss));
+  }
+
+  get bossAttack(): BossAttackTableHandle {
+    return new BossAttackTableHandle(this.connection.clientCache.getOrCreateTable<BossAttack>(REMOTE_MODULE.tables.BossAttack));
+  }
+
+  get bossAttackState(): BossAttackStateTableHandle {
+    return new BossAttackStateTableHandle(this.connection.clientCache.getOrCreateTable<BossAttackState>(REMOTE_MODULE.tables.BossAttackState));
   }
 
   get bossRoute(): BossRouteTableHandle {
@@ -1522,6 +1597,10 @@ export class RemoteTables {
 
   get teleport(): TeleportTableHandle {
     return new TeleportTableHandle(this.connection.clientCache.getOrCreateTable<Teleport>(REMOTE_MODULE.tables.Teleport));
+  }
+
+  get bossActionTimer(): BossActionTimerTableHandle {
+    return new BossActionTimerTableHandle(this.connection.clientCache.getOrCreateTable<BossActionTimer>(REMOTE_MODULE.tables.boss_action_timer));
   }
 
   get broadcastCleanupTimer(): BroadcastCleanupTimerTableHandle {

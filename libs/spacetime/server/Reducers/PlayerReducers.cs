@@ -52,7 +52,13 @@ public static partial class Module
             scheduled_at = new ScheduleAt.Interval(TimeSpan.FromSeconds(15))
         });
         
-        Log.Info("Initialized dead body cleanup, enemy spawning, enemy patrol, message cleanup, combat timeout, leaderboard update, and broadcast cleanup schedulers");
+        // Schedule boss action updates every 100ms
+        ctx.Db.boss_action_timer.Insert(new BossActionTimer
+        {
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(100))
+        });
+        
+        Log.Info("Initialized dead body cleanup, enemy spawning, enemy patrol, message cleanup, combat timeout, leaderboard update, broadcast cleanup, and boss action schedulers");
     }
 
     // Helper function to populate PlayerJob entries for a new player

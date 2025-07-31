@@ -398,6 +398,12 @@ export class BossManager implements PhysicsEntity {
     return state !== undefined && state.tag !== 'Dead';
   }
 
+  public canBossDamagePlayer(bossSpawnId: number): boolean {
+    const state = this.bossStates.get(bossSpawnId);
+    // Boss can damage player if it's alive (not dead)
+    return state !== undefined && state.tag !== 'Dead';
+  }
+
   public playHitAnimation(bossSpawnId: number): void {
     const stateMachine = this.bossStateMachines.get(bossSpawnId);
     if (stateMachine) {

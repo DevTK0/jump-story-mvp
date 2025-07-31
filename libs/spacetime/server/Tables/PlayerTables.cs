@@ -80,6 +80,14 @@ public static partial class Module
         public ulong scheduled_id;
         public ScheduleAt scheduled_at;
     }
+
+    [Table(Name = "boss_action_timer", Scheduled = nameof(UpdateBossActions), ScheduledAt = nameof(scheduled_at))]
+    public partial struct BossActionTimer
+    {
+        [PrimaryKey, AutoInc]
+        public ulong scheduled_id;
+        public ScheduleAt scheduled_at;
+    }
     
     [Table(Name = "message_cleanup_timer", Scheduled = nameof(CleanupOldMessages), ScheduledAt = nameof(scheduled_at))]
     public partial struct MessageCleanupTimer

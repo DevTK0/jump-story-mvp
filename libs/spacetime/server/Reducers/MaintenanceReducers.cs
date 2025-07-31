@@ -228,7 +228,9 @@ public static partial class Module
 
         if (positionChanged || directionChanged || aggroChanged)
         {
-            var updatedEnemy = CreateEnemyUpdate(enemy, newX, enemy.y, newMovingRight, newAggroTarget, hasAggro, ctx.Timestamp);
+            // Determine new state - Walk if moving, Idle if stationary
+            PlayerState newState = positionChanged ? PlayerState.Walk : PlayerState.Idle;
+            var updatedEnemy = CreateEnemyUpdate(enemy, newX, enemy.y, newMovingRight, newAggroTarget, hasAggro, ctx.Timestamp, newState);
             ctx.Db.Spawn.spawn_id.Update(updatedEnemy);
         }
     }
@@ -418,14 +420,20 @@ public static partial class Module
 
         foreach (var enemy in ctx.Db.Spawn.Iter())
         {
+            // Skip bosses - they have their own update logic
+            if (enemy.enemy_type == EnemyType.Boss)
+            {
+                continue;
+            }
+
             // Handle damaged enemies - recover them after 500ms
             if (ProcessDamagedEnemyRecovery(ctx, enemy))
             {
                 continue;
             }
 
-            // Only process idle enemies
-            if (enemy.state != PlayerState.Idle)
+            // Only process idle and walking enemies (not damaged or dead)
+            if (enemy.state != PlayerState.Idle && enemy.state != PlayerState.Walk)
             {
                 continue;
             }
@@ -543,5 +551,155 @@ public static partial class Module
         {
             Log.Info($"Cleaned up {broadcastsToRemove.Count} old broadcasts");
         }
+    }
+
+    [Reducer]
+    public static void UpdateBossActions(ReducerContext ctx, BossActionTimer timer)
+    {
+        // Skip if no players are connected
+        if (CountPlayers(ctx) == 0)
+        {
+            return;
+        }
+
+        const float deltaTime = EnemyConstants.DELTA_TIME;
+
+        foreach (var boss in ctx.Db.Spawn.Iter())
+        {
+            // Only process bosses
+            if (boss.enemy_type != EnemyType.Boss)
+            {
+                continue;
+            }
+
+            // Handle damaged bosses - recover them after 500ms
+            if (ProcessDamagedEnemyRecovery(ctx, boss))
+            {
+                continue;
+            }
+
+            // Only process idle and walking bosses (not damaged or dead)
+            if (boss.state != PlayerState.Idle && boss.state != PlayerState.Walk)
+            {
+                continue;
+            }
+
+            // Get boss data
+            var bossData = ctx.Db.Boss.boss_id.Find(boss.enemy);
+            if (bossData == null)
+            {
+                Log.Warn($"No boss data found for type: {boss.enemy}");
+                continue;
+            }
+
+            // Get the route for this boss
+            var route = ctx.Db.BossRoute.route_id.Find(boss.route_id);
+            if (route == null)
+            {
+                continue;
+            }
+
+            // Calculate route boundaries for movement
+            var (leftBound, rightBound) = CalculateRouteBounds(route.Value.spawn_area);
+
+            // Find nearest player for targeting
+            var nearestPlayer = FindNearestAlivePlayer(ctx, boss.x, boss.y);
+            
+            if (nearestPlayer != null)
+            {
+                var distance = Math.Abs(nearestPlayer.Value.x - boss.x);
+                
+                // Check if player is in aggro range
+                if (distance <= bossData.Value.aggro_range)
+                {
+                    // Check if we're close enough to stop (attack range used as stopping distance)
+                    if (distance > bossData.Value.attack_range)
+                    {
+                        // Chase player - boss will damage via hitbox collision
+                        ExecuteBossMovement(ctx, boss, nearestPlayer.Value.x, deltaTime, bossData.Value.move_speed, leftBound, rightBound, true);
+                    }
+                    // If within attack range, don't move but don't change state either
+                    // Boss will damage player through hitbox collision
+                }
+                // If player is outside aggro range, boss returns to idle
+                else if (boss.state != PlayerState.Idle)
+                {
+                    // Return to idle state when no threats nearby
+                    var idleBoss = CreateEnemyUpdate(boss, boss.x, boss.y, boss.moving_right, 
+                        null, false, ctx.Timestamp, PlayerState.Idle);
+                    ctx.Db.Spawn.spawn_id.Update(idleBoss);
+                }
+            }
+            else if (boss.state != PlayerState.Idle)
+            {
+                // No players nearby - return to idle if not already
+                var idleBoss = CreateEnemyUpdate(boss, boss.x, boss.y, boss.moving_right, 
+                    null, false, ctx.Timestamp, PlayerState.Idle);
+                ctx.Db.Spawn.spawn_id.Update(idleBoss);
+            }
+        }
+    }
+
+    private static Player? FindNearestAlivePlayer(ReducerContext ctx, float bossX, float bossY)
+    {
+        Player? nearest = null;
+        float nearestDistance = float.MaxValue;
+
+        foreach (var player in ctx.Db.Player.Iter())
+        {
+            if (player.current_hp <= 0 || player.state == PlayerState.Dead || !player.is_online)
+            {
+                continue;
+            }
+
+            var distance = Math.Abs(player.x - bossX);
+            if (distance < nearestDistance)
+            {
+                nearestDistance = distance;
+                nearest = player;
+            }
+        }
+
+        return nearest;
+    }
+
+
+    private static void ExecuteBossMovement(ReducerContext ctx, Spawn boss, float targetX, float deltaTime, float moveSpeed, float leftBound, float rightBound, bool isChasing)
+    {
+        var movement = moveSpeed * deltaTime;
+        float newX = boss.x;
+        bool newMovingRight = boss.moving_right;
+
+        if (targetX > boss.x)
+        {
+            newX = boss.x + movement;
+            newMovingRight = true;
+        }
+        else if (targetX < boss.x)
+        {
+            newX = boss.x - movement;
+            newMovingRight = false;
+        }
+
+        // Clamp to route boundaries
+        newX = Math.Max(leftBound, Math.Min(rightBound, newX));
+
+        // Update boss if position changed
+        if (Math.Abs(newX - boss.x) > 0.01f || newMovingRight != boss.moving_right)
+        {
+            // Set state to Walk when moving
+            PlayerState newState = Math.Abs(newX - boss.x) > 0.01f ? PlayerState.Walk : PlayerState.Idle;
+            var updatedBoss = CreateEnemyUpdate(boss, newX, boss.y, newMovingRight, 
+                isChasing ? boss.aggro_target : null, isChasing, ctx.Timestamp, newState);
+            ctx.Db.Spawn.spawn_id.Update(updatedBoss);
+        }
+    }
+
+
+    private static (float leftBound, float rightBound) CalculateRouteBounds(DbRect spawnArea)
+    {
+        var leftBound = spawnArea.position.x;
+        var rightBound = spawnArea.position.x + spawnArea.size.x;
+        return (leftBound, rightBound);
     }
 }

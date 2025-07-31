@@ -191,19 +191,35 @@ export class InteractionHandler {
         enemy.body?.enable
       );
 
-      // Use centralized validation if enemy manager is available
+      // Check if it's an enemy or boss
+      let spawnId: number | null = null;
+      let canDamagePlayer = false;
+      let entityType: 'enemy' | 'boss' = 'enemy';
+      
+      // Try to resolve as a regular enemy first
       if (this.enemyManager) {
-        const spawnId = this.enemyManager.getEnemyIdFromSprite(enemy);
-        if (spawnId !== null && !this.enemyManager.canEnemyDamagePlayer(spawnId)) {
-          this.logger.debug('Prevented damage from invalid/dead enemy');
-          return;
+        const enemyId = this.enemyManager.getEnemyIdFromSprite(enemy);
+        if (enemyId !== null) {
+          spawnId = enemyId;
+          canDamagePlayer = this.enemyManager.canEnemyDamagePlayer(enemyId);
+          entityType = 'enemy';
         }
-      } else {
-        // Fallback: Check if enemy physics body is disabled (dead enemies have disabled bodies)
-        if (!enemy.body || !enemy.body.enable) {
-          this.logger.debug('Prevented damage from dead enemy (physics check)');
-          return;
+      }
+      
+      // If not an enemy, try to resolve as a boss
+      if (spawnId === null && this.bossManager) {
+        const bossId = this.bossManager.getBossIdFromSprite(enemy);
+        if (bossId !== null) {
+          spawnId = bossId;
+          canDamagePlayer = this.bossManager.canBossDamagePlayer(bossId);
+          entityType = 'boss';
         }
+      }
+      
+      // If we couldn't identify the entity or it can't damage, return
+      if (spawnId === null || !canDamagePlayer) {
+        this.logger.debug(`Prevented damage from invalid/dead ${entityType}`, spawnId);
+        return;
       }
 
       // Calculate knockback direction (away from enemy)
@@ -226,12 +242,9 @@ export class InteractionHandler {
           );
 
           // Call server reducer to damage player
-          if (this.dbConnection && this.dbConnection.reducers && this.enemyManager) {
-            const spawnId = this.enemyManager.getEnemyIdFromSprite(enemy);
-            if (spawnId !== null) {
-              this.logger.debug('📡 Sending damage to server for enemy:', spawnId);
-              this.dbConnection.reducers.playerTakeDamage(spawnId);
-            }
+          if (this.dbConnection && this.dbConnection.reducers) {
+            this.logger.debug(`📡 Sending damage to server for ${entityType}:`, spawnId);
+            this.dbConnection.reducers.playerTakeDamage(spawnId);
           } else {
             this.logger.warn('Database connection not available - cannot damage player');
           }
