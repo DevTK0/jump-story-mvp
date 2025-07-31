@@ -30,6 +30,7 @@ export {
   DeathStateService,
   EnemyDamageRenderer,
   PlayerDamageRenderer,
+  SkillEffectRenderer,
   DAMAGE_RENDERER_CONFIG,
   DAMAGE_COLOR_THEMES,
   getDamageTypeKey,

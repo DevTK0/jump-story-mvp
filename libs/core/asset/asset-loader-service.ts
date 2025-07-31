@@ -73,9 +73,17 @@ export class AssetLoaderService {
         animFactory.registerSpriteAnimations(spriteKey, animations as SpriteAnimationSet);
         animFactory.createSpriteAnimations(spriteKey);
       } else if ('play' in animations) {
-        // Emote or projectile animations - create manually
+        // Emote, projectile, or effect animations - create manually
         const playAnim = animations as { play: AnimationFrameConfig };
-        const animKey = spriteKey.includes('emote') ? `${spriteKey}_anim` : `projectile_${spriteKey}`;
+        let animKey: string;
+        
+        if (spriteKey.includes('emote')) {
+          animKey = `${spriteKey}_anim`;
+        } else if (this.isEffectSprite(spriteKey)) {
+          animKey = `${spriteKey}_play`;
+        } else {
+          animKey = `projectile_${spriteKey}`;
+        }
         
         this.scene.anims.create({
           key: animKey,
@@ -132,8 +140,18 @@ export class AssetLoaderService {
     if ((this.spriteConfig.sprites as any).projectiles) {
       spriteConfigLoader.loadSpritesForCategory(this.scene, 'projectiles');
     }
+    
+    if ((this.spriteConfig.sprites as any).effects) {
+      spriteConfigLoader.loadSpritesForCategory(this.scene, 'effects');
+    }
   }
   
+  
+  private isEffectSprite(spriteKey: string): boolean {
+    // Check if sprite exists in effects category
+    const effects = (this.spriteConfig.sprites as any).effects;
+    return effects && spriteKey in effects;
+  }
   
   private loadEmotes(): void {
     // Get emotes from sprite config (using singleton)

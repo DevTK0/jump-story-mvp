@@ -1,4 +1,4 @@
-import type { Phaser } from 'phaser';
+import Phaser from 'phaser';
 
 /**
  * Interface for validating hit detection

@@ -41,7 +41,7 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
   // Attack state
   private attackCooldowns: Map<number, boolean> = new Map();
   private currentAttackConfig: Attack | null = null;
-  private currentAttackNum: number = 0;
+  // private currentAttackNum: number = 0; // Currently unused but may be needed for debug
   
   // Configuration
   private readonly PROJECTILE_FAN_HALF_ANGLE = 45; // degrees
@@ -227,7 +227,7 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
   private setupAttack(attackNum: number, config: Attack): Phaser.Physics.Arcade.Sprite | null {
     // Track current attack
     this.currentAttackConfig = config;
-    this.currentAttackNum = attackNum;
+    // this.currentAttackNum = attackNum; // Currently unused but may be needed for debug
 
     // Get or create hitbox sprite
     const hitboxSprite = this.hitboxSprites.get(attackNum);
@@ -728,7 +728,7 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
    */
   public resetCurrentAttack(): void {
     this.currentAttackConfig = null;
-    this.currentAttackNum = 0;
+    // this.currentAttackNum = 0; // Currently unused but may be needed for debug
   }
 
   public setPlayerJob(jobName: string, jobConfig: JobConfig): void {

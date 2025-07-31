@@ -5,7 +5,7 @@ import { PeerManager } from '@/peer';
 import { PhysicsSetupCoordinator } from '@/core/physics/physics-setup-coordinator';
 import { MapPhysicsFactory } from '@/core/physics/map-physics-factory';
 import { InteractionHandler } from '@/networking';
-import { EnemyDamageRenderer, PlayerDamageRenderer } from '@/player';
+import { EnemyDamageRenderer, PlayerDamageRenderer, SkillEffectRenderer } from '@/player';
 import { LevelUpAnimationManager, ChatManager } from '@/ui';
 import { Player } from '@/player';
 import { TeleportStoneManager } from '@/teleport/teleport-stone-manager';
@@ -36,6 +36,7 @@ export class ManagerRegistry {
   private interactionManager!: InteractionHandler;
   private enemyDamageManager!: EnemyDamageRenderer;
   private playerDamageManager!: PlayerDamageRenderer;
+  private skillEffectManager!: SkillEffectRenderer;
   private levelUpAnimationManager!: LevelUpAnimationManager;
   private chatManager!: ChatManager;
   private teleportStoneManager!: TeleportStoneManager;
@@ -146,6 +147,7 @@ export class ManagerRegistry {
     // Cleanup in reverse order of creation
     this.chatManager?.destroy();
     this.levelUpAnimationManager?.destroy();
+    this.skillEffectManager?.destroy();
     this.playerDamageManager?.destroy();
     this.enemyDamageManager?.destroy();
     this.teleportStoneManager?.destroy();
@@ -184,6 +186,9 @@ export class ManagerRegistry {
     // Player damage renderer
     this.playerDamageManager = new PlayerDamageRenderer(this.scene);
     this.playerDamageManager.setPlayer(config.player);
+    
+    // Skill effect renderer
+    this.skillEffectManager = new SkillEffectRenderer(this.scene);
   }
   
   private createUIManagers(): void {
@@ -232,6 +237,9 @@ export class ManagerRegistry {
       
       // Connect peer manager to enemy damage renderer for projectile rendering
       this.enemyDamageManager.setPeerManager(this.peerManager);
+      
+      // Initialize skill effect renderer with managers
+      this.skillEffectManager.initialize(this.peerManager, this.enemyManager);
     }
   }
   
@@ -240,6 +248,9 @@ export class ManagerRegistry {
     connection.db.enemyDamageEvent.onInsert((_ctx, damageEvent) => {
       // Handle damage numbers
       this.enemyDamageManager.handleDamageEvent(damageEvent);
+      
+      // Handle skill effects
+      this.skillEffectManager.handleDamageEvent(damageEvent);
       
       // Handle hit animation
       this.enemyManager.playHitAnimation(damageEvent.spawnId);
@@ -270,6 +281,10 @@ export class ManagerRegistry {
   
   getPlayerDamageManager(): PlayerDamageRenderer {
     return this.playerDamageManager;
+  }
+  
+  getSkillEffectManager(): SkillEffectRenderer {
+    return this.skillEffectManager;
   }
   
   getPhysicsManager(): PhysicsSetupCoordinator {

@@ -39,6 +39,7 @@ public static partial class Module
         public float damage_amount;
         public DamageType damage_type;
         public string? projectile; // Projectile sprite key for ranged attacks
+        public string? skill_effect; // VFX to play on enemy when hit
         public Timestamp timestamp;
     }
 
@@ -52,6 +53,7 @@ public static partial class Module
         public float damage_amount;
         public DamageType damage_type;
         public string? projectile; // Projectile sprite key for ranged attacks
+        public string? skill_effect; // VFX to play on player when hit
         public Timestamp timestamp;
     }
 

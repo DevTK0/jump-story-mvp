@@ -28,6 +28,7 @@ interface BaseAttack {
   manaCost: number;
   ammoCost: number;
   description: string;
+  skillEffect?: string; // Optional VFX sprite key for on-hit effects
 }
 
 // Melee-specific properties

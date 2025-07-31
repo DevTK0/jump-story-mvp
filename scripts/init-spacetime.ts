@@ -201,6 +201,7 @@ async function initializeSpacetime() {
         
         // Prepare optional fields based on attack type
         let projectile: string | null = null;
+        let skillEffect: string | null = null;
         let areaRadius: number | null = null;
 
         if (attack.attackType === 'projectile') {
@@ -208,6 +209,9 @@ async function initializeSpacetime() {
         } else if (attack.attackType === 'area') {
           areaRadius = attack.radius || null;
         }
+        
+        // Skill effect can be used with any attack type
+        skillEffect = attack.skillEffect || null;
 
         try {
           await connection.reducers.initializeJobAttack(
@@ -227,6 +231,7 @@ async function initializeSpacetime() {
             attack.ammoCost,
             attack.modifiers.join(','), // Convert array to comma-separated string
             projectile,
+            skillEffect,
             areaRadius
           );
           console.log(`    ✅ Attack ${attack.name} added`);

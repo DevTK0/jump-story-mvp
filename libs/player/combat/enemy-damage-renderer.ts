@@ -28,8 +28,6 @@ export class EnemyDamageRenderer {
   private scene: Phaser.Scene;
   private enemyManager: EnemyManager | null = null;
   private projectileRenderer: ProjectileRenderer;
-  private peerManager: PeerManager | null = null;
-  private localPlayerIdentity: string | null = null;
 
   // Object pooling
   private textPool: Phaser.GameObjects.Text[] = [];
@@ -61,7 +59,6 @@ export class EnemyDamageRenderer {
    * Set the peer manager reference
    */
   public setPeerManager(peerManager: PeerManager): void {
-    this.peerManager = peerManager;
     this.projectileRenderer.setPeerManager(peerManager);
   }
 
@@ -69,7 +66,6 @@ export class EnemyDamageRenderer {
    * Set the local player identity
    */
   public setLocalPlayerIdentity(identity: string): void {
-    this.localPlayerIdentity = identity;
     this.projectileRenderer.setLocalPlayerIdentity(identity);
   }
 

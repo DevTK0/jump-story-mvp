@@ -60,6 +60,9 @@ public static partial class Module
         // Optional field for projectile attacks
         public string? projectile; // Sprite key for projectile visual
         
+        // Optional field for skill visual effects
+        public string? skill_effect; // VFX sprite key for on-hit effects
+        
         // Optional field for area attacks
         public uint? area_radius;
     }

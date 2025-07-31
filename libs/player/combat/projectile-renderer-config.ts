@@ -6,7 +6,7 @@
 export const PROJECTILE_RENDERER_CONFIG = {
   // Movement configuration
   movement: {
-    speed: 400, // pixels per second
+    speed: 75, // pixels per second
     minDuration: 300, // minimum milliseconds for visibility
     minDistance: 10, // distance threshold for completion in pixels
   },

@@ -358,6 +358,42 @@ export const projectileSprites: Record<string, SpriteDefinition> = {
       play: { start: 0, end: 0, frameRate: 1 }, // Static sprite
     },
   },
+  fireball: {
+    path: 'assets/spritesheet/projectiles/fireball.png',
+    frameWidth: 100,
+    frameHeight: 100,
+    animations: {
+      play: { start: 0, end: 6, frameRate: 20 }, // Static sprite
+    },
+  },
+};
+
+// Skill effect sprites
+export const skillEffectSprites: Record<string, SpriteDefinition> = {
+  freeze: {
+    path: 'assets/spritesheet/effects/freeze.png',
+    frameWidth: 100,
+    frameHeight: 100,
+    animations: {
+      play: { start: 0, end: 9, frameRate: 20 }, // Static sprite for now
+    },
+  },
+  heal: {
+    path: 'assets/spritesheet/effects/heal.png',
+    frameWidth: 100,
+    frameHeight: 100,
+    animations: {
+      play: { start: 0, end: 3, frameRate: 20 }, // Static sprite for now
+    },
+  },
+  holy: {
+    path: 'assets/spritesheet/effects/holy.png',
+    frameWidth: 100,
+    frameHeight: 100,
+    animations: {
+      play: { start: 0, end: 4, frameRate: 20 }, // Static sprite for now
+    },
+  },
 };
 
 // Complete sprite configuration
@@ -368,6 +404,7 @@ const spriteConfig: SpriteConfig = {
     emotes: emoteSprites,
     objects: objectSprites,
     projectiles: projectileSprites,
+    effects: skillEffectSprites,
   },
 } as const;
 
@@ -379,3 +416,4 @@ export type JobSpriteKey = keyof typeof jobSprites;
 export type EnemySpriteKey = keyof typeof enemySprites;
 export type EmoteSpriteKey = keyof typeof emoteSprites;
 export type ProjectileSpriteKey = keyof typeof projectileSprites;
+export type SkillEffectSpriteKey = keyof typeof skillEffectSprites;

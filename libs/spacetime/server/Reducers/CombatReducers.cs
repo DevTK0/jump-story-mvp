@@ -193,6 +193,7 @@ public static partial class Module
                     damage_amount = finalDamage,
                     damage_type = damageType,
                     projectile = jobAttack.Value.attack_type == "projectile" ? jobAttack.Value.projectile : null,
+                    skill_effect = jobAttack.Value.skill_effect, // Pass skill effect if present
                     timestamp = ctx.Timestamp
                 });
 

@@ -84,6 +84,7 @@ public static partial class Module
         uint ammoCost,
         string modifiers,
         string? projectile,
+        string? skillEffect,
         uint? areaRadius)
     {
         // Validate admin API key
@@ -135,6 +136,7 @@ public static partial class Module
             ammo_cost = ammoCost,
             modifiers = modifiers,
             projectile = projectile,
+            skill_effect = skillEffect,
             area_radius = areaRadius
         };
 
