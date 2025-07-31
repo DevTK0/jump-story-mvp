@@ -451,40 +451,9 @@ public static partial class Module
                     continue;
                 }
 
-                // Count current alive enemies for this route
-                var currentEnemyCount = 0;
-                foreach (var enemy in ctx.Db.Spawn.Iter())
-                {
-                    if (enemy.route_id == route.route_id && enemy.state != PlayerState.Dead)
-                    {
-                        currentEnemyCount++;
-                    }
-                }
-
-                // Spawn missing enemies to reach max_enemies limit
-                var enemiesToSpawn = route.max_enemies - currentEnemyCount;
-                for (int i = 0; i < enemiesToSpawn; i++)
-                {
-                    var spawnPosition = route.spawn_area.GetRandomPoint(random);
-
-                    var baseEnemy = new Spawn
-                    {
-                        route_id = route.route_id,
-                        enemy = route.enemy,
-                        current_hp = enemyData.Value.health,
-                        level = enemyData.Value.level,
-                        spawn_time = ctx.Timestamp
-                    };
-                    
-                    var newEnemy = CreateEnemyUpdate(baseEnemy, spawnPosition.x, spawnPosition.y, true, null, false, ctx.Timestamp, PlayerState.Idle);
-
-                    ctx.Db.Spawn.Insert(newEnemy);
-                    totalSpawned++;
-                }
-
-                // Always update last spawn time when route is due (regardless of whether enemies spawned)
-                var updatedRoute = route with { last_spawn_time = ctx.Timestamp };
-                ctx.Db.SpawnRoute.route_id.Update(updatedRoute);
+                // Use helper method to spawn enemies
+                var spawned = SpawnEnemiesOnRoute(ctx, route, random, false);
+                totalSpawned += spawned;
             }
         }
 
@@ -712,11 +681,11 @@ public static partial class Module
             // Calculate route boundaries for movement
             var (leftBound, rightBound) = CalculateRouteBounds(route.Value.spawn_area);
 
-            // Get attack2 data early to know the exact range needed (testing area attacks)
+            // Get attack3 data early to know the exact range needed (testing summon attacks)
             BossAttack? attack1 = null;
             foreach (var attack in ctx.Db.BossAttack.Iter())
             {
-                if (attack.boss_id == boss.enemy && attack.attack_slot == 2) // Changed to slot 2 for testing
+                if (attack.boss_id == boss.enemy && attack.attack_slot == 3) // Changed to slot 3 for testing
                 {
                     attack1 = attack;
                     break;
@@ -725,7 +694,7 @@ public static partial class Module
             
             if (attack1 == null)
             {
-                Log.Warn($"No attack2 found for boss {boss.enemy}");
+                Log.Warn($"No attack3 found for boss {boss.enemy}");
                 continue;
             }
 
@@ -824,6 +793,99 @@ public static partial class Module
     }
 
 
+    private static int SpawnEnemiesOnRoute(ReducerContext ctx, SpawnRoute route, Random random, bool forceSummon)
+    {
+        // Get enemy data
+        var enemyData = ctx.Db.Enemy.name.Find(route.enemy);
+        if (enemyData == null)
+        {
+            Log.Warn($"No enemy found for type: {route.enemy}");
+            return 0;
+        }
+        
+        // Count current alive enemies for this route
+        var currentEnemyCount = 0;
+        foreach (var enemy in ctx.Db.Spawn.Iter())
+        {
+            if (enemy.route_id == route.route_id && 
+                enemy.state != PlayerState.Dead &&
+                enemy.enemy_type == EnemyType.Regular) // Don't count bosses
+            {
+                currentEnemyCount++;
+            }
+        }
+        
+        // Calculate how many to spawn
+        var enemiesToSpawn = route.max_enemies - currentEnemyCount;
+        var spawned = 0;
+        
+        for (int i = 0; i < enemiesToSpawn; i++)
+        {
+            var spawnPosition = route.spawn_area.GetRandomPoint(random);
+            
+            var baseEnemy = new Spawn
+            {
+                route_id = route.route_id,
+                enemy = route.enemy,
+                current_hp = enemyData.Value.health,
+                max_hp = enemyData.Value.health,
+                level = enemyData.Value.level,
+                spawn_time = ctx.Timestamp,
+                enemy_type = EnemyType.Regular
+            };
+            
+            var newEnemy = CreateEnemyUpdate(baseEnemy, spawnPosition.x, spawnPosition.y, true, null, false, ctx.Timestamp, PlayerState.Idle);
+            
+            ctx.Db.Spawn.Insert(newEnemy);
+            spawned++;
+        }
+        
+        // Don't update last_spawn_time for summons to avoid interfering with normal spawning
+        if (!forceSummon && spawned > 0)
+        {
+            var updatedRoute = route with { last_spawn_time = ctx.Timestamp };
+            ctx.Db.SpawnRoute.route_id.Update(updatedRoute);
+        }
+        
+        return spawned;
+    }
+
+    private static void ExecuteBossSummon(ReducerContext ctx, Spawn boss, BossAttack summonAttack)
+    {
+        // Find all SpawnRoutes within summon range
+        var routesInRange = new List<SpawnRoute>();
+        
+        foreach (var route in ctx.Db.SpawnRoute.Iter())
+        {
+            // Calculate distance from boss to spawn area center
+            var centerX = route.spawn_area.position.x + (route.spawn_area.size.x / 2);
+            var centerY = route.spawn_area.position.y + (route.spawn_area.size.y / 2);
+            var distance = Math.Sqrt(Math.Pow(centerX - boss.x, 2) + Math.Pow(centerY - boss.y, 2));
+            
+            if (distance <= summonAttack.range)
+            {
+                routesInRange.Add(route);
+                Log.Info($"Found route {route.route_id} with enemy {route.enemy} within summon range (distance: {distance:F1})");
+            }
+        }
+        
+        // Spawn enemies on each route up to max capacity
+        var totalSpawned = 0;
+        var random = new Random();
+        
+        foreach (var route in routesInRange)
+        {
+            var spawned = SpawnEnemiesOnRoute(ctx, route, random, true);
+            totalSpawned += spawned;
+            if (spawned > 0)
+            {
+                Log.Info($"Spawned {spawned} {route.enemy} enemies on route {route.route_id}");
+            }
+        }
+        
+        Log.Info($"Boss {boss.enemy} summoned {totalSpawned} enemies on {routesInRange.Count} routes");
+    }
+
     private static void ExecuteBossMovement(ReducerContext ctx, Spawn boss, float targetX, float deltaTime, float moveSpeed, float leftBound, float rightBound, bool isChasing)
     {
         var movement = moveSpeed * deltaTime;
@@ -874,11 +936,11 @@ public static partial class Module
 
     private static void ExecuteBossAttack(ReducerContext ctx, Spawn boss, Boss bossData)
     {
-        // 1. Get attack2 data from BossAttack table (testing area attacks)
+        // 1. Get attack3 data from BossAttack table (testing summon attacks)
         BossAttack? attack1 = null;
         foreach (var attack in ctx.Db.BossAttack.Iter())
         {
-            if (attack.boss_id == boss.enemy && attack.attack_slot == 2) // Changed to slot 2 for testing
+            if (attack.boss_id == boss.enemy && attack.attack_slot == 3) // Changed to slot 3 for testing
             {
                 attack1 = attack;
                 break;
@@ -887,7 +949,7 @@ public static partial class Module
         
         if (attack1 == null)
         {
-            Log.Warn($"No attack2 found for boss {boss.enemy}");
+            Log.Warn($"No attack3 found for boss {boss.enemy}");
             return;
         }
         
@@ -903,21 +965,29 @@ public static partial class Module
             }
         }
         
-        // 3. Update boss to Attack2 state (testing area attacks)
+        // 3. Update boss to Attack3 state (testing summon attacks)
         var attackingBoss = boss with { 
-            state = PlayerState.Attack2, 
+            state = PlayerState.Attack3, 
             last_updated = ctx.Timestamp 
         };
         ctx.Db.Spawn.spawn_id.Update(attackingBoss);
         
-        Log.Info($"Boss {boss.enemy} executing attack2 ({attack1.Value.attack_type}) - Position: ({boss.x}, {boss.y}), Facing: {boss.facing}, Range: {attack1.Value.range}");
+        Log.Info($"Boss {boss.enemy} executing attack3 ({attack1.Value.attack_type}) - Position: ({boss.x}, {boss.y}), Facing: {boss.facing}, Range: {attack1.Value.range}");
         
-        // 4. Find all players within attack range (area attack hits all directions)
-        var playersHit = new List<Player>();
-        var totalPlayers = 0;
-        var skippedPlayers = 0;
-        
-        foreach (var player in ctx.Db.Player.Iter())
+        // 4. Handle different attack types
+        if (attack1.Value.attack_type == "summon")
+        {
+            // Summon attacks spawn enemies instead of damaging players
+            ExecuteBossSummon(ctx, boss, attack1.Value);
+        }
+        else
+        {
+            // Damage-based attacks (area and directional)
+            var playersHit = new List<Player>();
+            var totalPlayers = 0;
+            var skippedPlayers = 0;
+            
+            foreach (var player in ctx.Db.Player.Iter())
         {
             totalPlayers++;
             
@@ -1057,9 +1127,10 @@ public static partial class Module
             });
         }
         
-        if (playersHit.Count > 0)
-        {
-            Log.Info($"Boss {boss.enemy} attack2 hit {playersHit.Count} players");
-        }
+            if (playersHit.Count > 0)
+            {
+                Log.Info($"Boss {boss.enemy} attack3 hit {playersHit.Count} players");
+            }
+        } // End of damage-based attacks
     }
 }

@@ -251,7 +251,7 @@ export const bossAttributes: BossAttributes = {
           damage: 0,
           cooldown: 0.6,
           knockback: 300,
-          range: 200,
+          range: 500,
           hits: 1,
           skillEffect: 'freeze',
         },
