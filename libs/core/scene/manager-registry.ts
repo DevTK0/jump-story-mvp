@@ -176,8 +176,12 @@ export class ManagerRegistry {
       proximityRadius: PROXIMITY_CONFIG.enemy.defaultRadius,
     });
     
-    // Boss manager (global subscription)
-    this.bossManager = new BossManager(this.scene);
+    // Boss manager with proximity subscriptions
+    this.bossManager = new BossManager(this.scene, {
+      useProximitySubscription: true,
+      proximityRadius: PROXIMITY_CONFIG.boss.defaultRadius,
+      proximityUpdateInterval: PROXIMITY_CONFIG.boss.defaultUpdateInterval,
+    });
     
     // Physics coordinator
     this.physicsManager = new PhysicsSetupCoordinator(this.scene);
@@ -219,6 +223,7 @@ export class ManagerRegistry {
     // Set connections on managers that need them
     this.enemyManager.setDbConnection(connection);
     this.bossManager.setDbConnection(connection);
+    this.bossManager.setLocalPlayerIdentity(identity);
     this.interactionManager.setDbConnection(connection);
     this.chatManager.setDbConnection(connection);
     this.playerDamageManager.setDbConnection(connection);

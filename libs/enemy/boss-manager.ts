@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { DbConnection, Spawn as ServerSpawn, PlayerState, EnemyType } from '@/spacetime/client';
+import { DbConnection, Spawn as ServerSpawn, PlayerState } from '@/spacetime/client';
+import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { createLogger } from '@/core/logger';
 import { ENEMY_CONFIG } from './config/enemy-config';
 import { BossHealthBar } from './ui/boss-health-bar';
@@ -7,14 +8,15 @@ import { EnemyStateMachine } from './state/enemy-state-machine';
 import { bossAttributes } from '../../apps/playground/config/enemy-attributes';
 import type { PhysicsEntity } from '@/core/physics/physics-entity';
 import type { PhysicsRegistry } from '@/core/physics/physics-registry';
+import { BossSubscriptionManager, type BossSubscriptionConfig } from './managers/boss-subscription-manager';
 
 /**
- * Manages boss entities - larger, more powerful enemies with global visibility
+ * Manages boss entities - larger, more powerful enemies
  */
 export class BossManager implements PhysicsEntity {
   private scene: Phaser.Scene;
   private logger = createLogger('BossManager');
-  private dbConnection: DbConnection | null = null;
+  private subscriptionManager: BossSubscriptionManager;
 
   // Boss tracking
   private bosses = new Map<number, Phaser.Physics.Arcade.Sprite>();
@@ -24,100 +26,78 @@ export class BossManager implements PhysicsEntity {
   private bossGroup: Phaser.Physics.Arcade.Group;
   private bossStates = new Map<number, PlayerState>();
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, subscriptionConfig?: Partial<BossSubscriptionConfig>) {
     this.scene = scene;
     this.bossGroup = this.scene.physics.add.group();
+    
+    // Initialize subscription manager with callbacks
+    this.subscriptionManager = new BossSubscriptionManager(
+      scene,
+      {
+        onBossInsert: this.handleBossInsert.bind(this),
+        onBossUpdate: this.handleBossUpdate.bind(this),
+        onBossDelete: this.handleBossDelete.bind(this),
+        onProximityLoad: this.handleProximityLoad.bind(this),
+      },
+      subscriptionConfig
+    );
   }
 
   public setDbConnection(connection: DbConnection): void {
     this.logger.info('Setting database connection');
-    this.dbConnection = connection;
-    
-    // Log connection state
-    if (connection) {
-      this.logger.info('Connection established, checking spawn table for bosses...');
-      try {
-        const allSpawnCount = connection.db.spawn.count();
-        const bossCount = Array.from(connection.db.spawn.iter()).filter(spawn => spawn.enemyType.tag === 'Boss').length;
-        this.logger.info(`Spawn table count: ${allSpawnCount}, Boss count: ${bossCount}`);
-      } catch (error) {
-        this.logger.error('Error accessing spawn table:', error);
-      }
-    }
-    
-    this.subscribeToBosses();
+    this.subscriptionManager.setDbConnection(connection);
+  }
+  
+  public setLocalPlayerIdentity(identity: Identity): void {
+    this.subscriptionManager.setLocalPlayerIdentity(identity);
   }
 
   /**
-   * Subscribe to boss spawn events globally (not proximity-based)
-   * Uses unified Spawn table filtering for boss type
+   * Handle boss insertion from subscription
    */
-  private subscribeToBosses(): void {
-    if (!this.dbConnection) return;
-
-    this.logger.info('Setting up boss subscriptions...');
-
-    // Subscribe to spawn table changes, filtering for bosses
-    const onInsert = (ctx: any, spawn: ServerSpawn) => {
-      if (spawn.enemyType.tag === 'Boss') {
-        this.logger.info('Boss insert event received:', { enemy: spawn.enemy, position: { x: spawn.x, y: spawn.y } });
-        this.handleBossInsert(spawn, ctx);
-      }
-    };
-    const onDelete = (_ctx: any, spawn: ServerSpawn) => {
-      if (spawn.enemyType.tag === 'Boss') {
-        this.logger.info('Boss delete event received:', { enemy: spawn.enemy });
-        this.handleBossDelete(spawn);
-      }
-    };
-    const onUpdate = (_ctx: any, oldSpawn: ServerSpawn, newSpawn: ServerSpawn) => {
-      if (newSpawn.enemyType.tag === 'Boss') {
-        this.logger.info('Boss update event received:', { enemy: newSpawn.enemy, position: { x: newSpawn.x, y: newSpawn.y } });
-        this.handleBossUpdate(oldSpawn, newSpawn);
-      }
-    };
-
-    this.dbConnection.db.spawn.onInsert(onInsert);
-    this.dbConnection.db.spawn.onDelete(onDelete);
-    this.dbConnection.db.spawn.onUpdate(onUpdate);
-
-    // Spawn existing bosses that are already in the database
-    const existingBosses = Array.from(this.dbConnection.db.spawn.iter()).filter(spawn => spawn.enemyType.tag === 'Boss');
-    this.logger.info(`Found ${existingBosses.length} existing bosses in spawn table`);
-    
-    for (const boss of existingBosses) {
-      this.logger.info('Spawning existing boss:', { enemy: boss.enemy, position: { x: boss.x, y: boss.y }, state: boss.state.tag });
-      this.spawnBoss(boss);
-    }
-    
-    // Check again after a delay in case data hasn't synced yet
-    this.scene.time.delayedCall(1000, () => {
-      const delayedBosses = Array.from(this.dbConnection!.db.spawn.iter()).filter(spawn => spawn.enemyType.tag === 'Boss');
-      this.logger.info(`Delayed check: Found ${delayedBosses.length} bosses in spawn table`);
-      
-      // Spawn any bosses we missed
-      for (const boss of delayedBosses) {
-        if (!this.bosses.has(boss.spawnId)) {
-          this.logger.info('Spawning missed boss:', { enemy: boss.enemy, position: { x: boss.x, y: boss.y } });
-          this.spawnBoss(boss);
-        }
-      }
-    });
-  }
-
-  private handleBossInsert(boss: ServerSpawn, reducerEvent: any): void {
-    if (reducerEvent) {
-      this.logger.info('Boss spawned from reducer:', reducerEvent);
-    }
+  private handleBossInsert(boss: ServerSpawn): void {
+    this.logger.info('Boss insert event received:', { enemy: boss.enemy, position: { x: boss.x, y: boss.y } });
     this.spawnBoss(boss);
   }
 
-  private handleBossUpdate(oldBoss: ServerSpawn, newBoss: ServerSpawn): void {
-    this.updateBoss(newBoss);
+  /**
+   * Handle boss update from subscription
+   */
+  private handleBossUpdate(boss: ServerSpawn): void {
+    this.logger.info('Boss update event received:', { enemy: boss.enemy, position: { x: boss.x, y: boss.y } });
+    this.updateBoss(boss);
   }
 
-  private handleBossDelete(boss: ServerSpawn): void {
-    this.despawnBoss(boss.spawnId);
+  /**
+   * Handle boss deletion from subscription
+   */
+  private handleBossDelete(spawnId: number): void {
+    this.logger.info('Boss delete event received:', { spawnId });
+    this.despawnBoss(spawnId);
+  }
+
+  /**
+   * Handle proximity load of multiple bosses
+   */
+  private handleProximityLoad(bosses: ServerSpawn[]): void {
+    const currentBossIds = new Set<number>();
+
+    // Spawn bosses that are within proximity
+    for (const boss of bosses) {
+      currentBossIds.add(boss.spawnId);
+      if (!this.bosses.has(boss.spawnId)) {
+        this.logger.info('Spawning boss from proximity load:', { enemy: boss.enemy, position: { x: boss.x, y: boss.y } });
+        this.spawnBoss(boss);
+      }
+    }
+
+    // Despawn bosses that are out of proximity
+    for (const [spawnId, _sprite] of this.bosses) {
+      if (!currentBossIds.has(spawnId)) {
+        this.logger.info('Despawning boss out of proximity:', { spawnId });
+        this.despawnBoss(spawnId);
+      }
+    }
   }
 
   private spawnBoss(serverBoss: ServerSpawn): void {
@@ -218,49 +198,69 @@ export class BossManager implements PhysicsEntity {
     }
   }
 
-  private createBossHealthBar(serverBoss: ServerSpawn, sprite: Phaser.Physics.Arcade.Sprite): void {
+  private createBossHealthBar(serverBoss: ServerSpawn, _sprite: Phaser.Physics.Arcade.Sprite): void {
     // Get boss name from attributes
     let bossName = serverBoss.enemy;
     const bossConfig = bossAttributes.bosses[serverBoss.enemy];
     if (bossConfig && bossConfig.name) {
       bossName = bossConfig.name;
+    }
+
+    // Convert spawn_time to milliseconds for JavaScript Date
+    // SpacetimeDB Timestamp is an object with __timestamp_micros_since_unix_epoch__ property
+    let spawnTimeMs: number;
+    
+    try {
+      let spawnTimeMicros: number;
+      
+      if (typeof serverBoss.spawnTime === 'object' && serverBoss.spawnTime !== null) {
+        // SpacetimeDB Timestamp has __timestamp_micros_since_unix_epoch__ property (BigInt)
+        const timestamp = serverBoss.spawnTime as any;
+        spawnTimeMicros = Number(timestamp.__timestamp_micros_since_unix_epoch__);
+      } else {
+        spawnTimeMicros = Number(serverBoss.spawnTime);
+      }
+      
+      // Check if conversion resulted in a valid number
+      if (isNaN(spawnTimeMicros) || spawnTimeMicros === 0) {
+        this.logger.warn(`Invalid spawn time for boss, using current time`, {
+          spawnTimeType: typeof serverBoss.spawnTime,
+          spawnTimeMicros
+        });
+        spawnTimeMs = Date.now();
+      } else {
+        spawnTimeMs = spawnTimeMicros / 1000; // Convert microseconds to milliseconds
+        
+        const elapsedMs = Date.now() - spawnTimeMs;
+        const elapsedMinutes = Math.floor(elapsedMs / 60000);
+        const remainingMinutes = 10 - elapsedMinutes;
+        
+        this.logger.info(`Boss spawn time:`, {
+          spawnTimeMs,
+          spawnTimeDate: new Date(spawnTimeMs).toISOString(),
+          elapsedMinutes,
+          remainingMinutes
+        });
+      }
+    } catch (error) {
+      this.logger.error(`Error converting spawn time, using current time:`, error);
+      spawnTimeMs = Date.now();
     }
 
     const healthBar = new BossHealthBar(
       this.scene,
       bossName,
-      serverBoss.maxHp
+      serverBoss.maxHp,
+      spawnTimeMs
     );
 
     healthBar.updateHealth(serverBoss.currentHp);
     this.bossHealthBars.set(serverBoss.spawnId, healthBar);
+    
+    // Show health bar immediately for bosses
+    healthBar.show();
   }
 
-  private createBossNameLabel(serverBoss: ServerSpawn, sprite: Phaser.Physics.Arcade.Sprite): void {
-    // Get boss name from attributes
-    let bossName = serverBoss.enemy;
-    const bossConfig = bossAttributes.bosses[serverBoss.enemy];
-    if (bossConfig && bossConfig.name) {
-      bossName = bossConfig.name;
-    }
-
-    const nameLabel = this.scene.add.text(
-      sprite.x,
-      sprite.y + ENEMY_CONFIG.boss.nameLabel.offsetY,
-      bossName,
-      {
-        fontSize: ENEMY_CONFIG.boss.nameLabel.fontSize,
-        color: ENEMY_CONFIG.boss.nameLabel.color,
-        stroke: ENEMY_CONFIG.boss.nameLabel.stroke,
-        strokeThickness: ENEMY_CONFIG.boss.nameLabel.strokeThickness,
-      }
-    );
-
-    nameLabel.setOrigin(0.5, 0.5);
-    nameLabel.setDepth(ENEMY_CONFIG.boss.nameLabel.depth);
-
-    this.bossNameLabels.set(serverBoss.spawnId, nameLabel);
-  }
 
   private registerBoss(sprite: Phaser.Physics.Arcade.Sprite, serverBoss: ServerSpawn): void {
     this.bossGroup.add(sprite);
@@ -276,15 +276,77 @@ export class BossManager implements PhysicsEntity {
       serverBoss.state
     );
     this.bossStateMachines.set(serverBoss.spawnId, stateMachine);
+
+    // Set up landing detection for screen shake
+    this.setupBossLandingDetection(sprite, serverBoss);
+  }
+
+  private isBossInProximity(serverBoss: ServerSpawn): boolean {
+    // If not using proximity subscription, boss is always "in proximity"
+    if (!this.subscriptionManager || !this.subscriptionManager.isProximityEnabled()) {
+      return true;
+    }
+
+    // Check if boss is within proximity radius of player
+    return this.subscriptionManager.isBossInProximity(serverBoss);
+  }
+
+  private setupBossLandingDetection(sprite: Phaser.Physics.Arcade.Sprite, serverBoss: ServerSpawn): void {
+    // Only set up landing detection if boss is not dead and is spawning in the air
+    if (serverBoss.state.tag === 'Dead' || !sprite.body) return;
+
+    let hasLanded = false;
+    const body = sprite.body as Phaser.Physics.Arcade.Body;
+    
+    // Check if boss starts in the air (has gravity and will fall)
+    if (body.allowGravity && body.velocity.y >= 0) {
+      // Set up physics update to detect landing
+      const checkLanding = () => {
+        if (!hasLanded && body.blocked.down) {
+          hasLanded = true;
+          
+          // Trigger subtle screen shake for boss impact
+          const shakeDuration = 150; // 150ms for subtle effect
+          const shakeIntensity = 0.005; // Very subtle intensity
+          
+          this.scene.cameras.main.shake(shakeDuration, shakeIntensity);
+          this.logger.info(`Boss ${serverBoss.enemy} landed! Triggering screen shake.`);
+          
+          // Remove the update listener after landing
+          this.scene.events.off('update', checkLanding);
+        }
+      };
+      
+      // Add update listener
+      this.scene.events.on('update', checkLanding);
+      
+      // Clean up listener if sprite is destroyed
+      sprite.once('destroy', () => {
+        this.scene.events.off('update', checkLanding);
+      });
+    }
   }
 
   private updateBoss(serverBoss: ServerSpawn): void {
     const sprite = this.bosses.get(serverBoss.spawnId);
     const healthBar = this.bossHealthBars.get(serverBoss.spawnId);
+    
+    // Check if boss is within proximity before spawning
+    const isInProximity = this.isBossInProximity(serverBoss);
 
-    if (!sprite) {
-      // Boss doesn't exist locally - spawn it
+    if (!sprite && isInProximity) {
+      // Boss doesn't exist locally but is within proximity - spawn it
+      this.logger.info(`Boss ${serverBoss.spawnId} entered proximity - spawning`);
       this.spawnBoss(serverBoss);
+      return;
+    }
+    
+    if (!sprite) return;
+    
+    // If boss exists but is out of proximity, despawn it
+    if (!isInProximity) {
+      this.logger.info(`Boss ${serverBoss.spawnId} out of proximity - despawning`);
+      this.despawnBoss(serverBoss.spawnId);
       return;
     }
 
@@ -461,5 +523,6 @@ export class BossManager implements PhysicsEntity {
     this.bossNameLabels.clear(); // Keep the clear for backwards compatibility
     this.bossGroup.destroy();
     this.bossStates.clear();
+    this.subscriptionManager.destroy();
   }
 }

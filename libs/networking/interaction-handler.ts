@@ -76,7 +76,7 @@ export class InteractionHandler {
    * Handle when player's attack hits an enemy
    */
   public handleAttackHitEnemy(
-    enemyManager: InteractionEnemyManager
+    _enemyManager: InteractionEnemyManager
   ): (_hitbox: AttackHitbox, target: EnemySprite) => void {
     return (_hitbox: AttackHitbox, target: EnemySprite) => {
       // Don't allow attacks if player is dead

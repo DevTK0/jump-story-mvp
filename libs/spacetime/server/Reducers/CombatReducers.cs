@@ -353,7 +353,7 @@ public static partial class Module
         // Announce boss spawn (only after successful spawn)
         var announcement = new Broadcast
         {
-            message = $"A powerful enemy has appeared! {boss.Value.display_name} has been summoned after {requiredKills} {enemyType} kills!",
+            message = $"A powerful enemy has appeared! {boss.Value.display_name} has been summoned!",
             publish_dt = ctx.Timestamp
         };
         ctx.Db.Broadcast.Insert(announcement);

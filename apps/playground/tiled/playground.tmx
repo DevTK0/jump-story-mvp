@@ -96,7 +96,7 @@
   </object>
  </objectgroup>
  <objectgroup id="13" name="Bosses">
-  <object id="55" name="Orc Rider Boss" x="128" y="96" width="832" height="352">
+  <object id="55" name="Orc Rider Boss" x="128" y="384" width="832" height="64">
    <properties>
     <property name="enemy" value="orc-rider"/>
     <property name="type" value="boss"/>

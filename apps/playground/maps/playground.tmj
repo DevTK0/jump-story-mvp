@@ -372,7 +372,7 @@
          "name":"Bosses",
          "objects":[
                 {
-                 "height":352,
+                 "height":64,
                  "id":55,
                  "name":"Orc Rider Boss",
                  "properties":[
@@ -391,7 +391,7 @@
                  "visible":true,
                  "width":832,
                  "x":128,
-                 "y":96
+                 "y":384
                 }],
          "opacity":1,
          "type":"objectgroup",

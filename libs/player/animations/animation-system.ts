@@ -336,7 +336,7 @@ export class AnimationSystem implements System {
     }
 
     // Reset player visual state in case of cleanup during effects
-    if (this.player && !this.player.scene.sys.isDestroyed) {
+    if (this.player && this.player.scene) {
       this.player.clearTint();
       this.player.setAlpha(1);
     }

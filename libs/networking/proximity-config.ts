@@ -10,4 +10,8 @@ export const PROXIMITY_CONFIG = {
     defaultRadius: 700,
     defaultUpdateInterval: 1000,
   },
+  boss: {
+    defaultRadius: 400, // Proximity radius for bosses
+    defaultUpdateInterval: 1000,
+  },
 } as const;

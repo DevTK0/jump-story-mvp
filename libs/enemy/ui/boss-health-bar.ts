@@ -2,16 +2,21 @@ import Phaser from 'phaser';
 
 export class BossHealthBar {
   private scene: Phaser.Scene;
-  private container: Phaser.GameObjects.Container;
-  private background: Phaser.GameObjects.Graphics;
-  private healthBar: Phaser.GameObjects.Graphics;
-  private border: Phaser.GameObjects.Graphics;
-  private bossNameText: Phaser.GameObjects.Text;
+  private container!: Phaser.GameObjects.Container;
+  private background!: Phaser.GameObjects.Graphics;
+  private healthBar!: Phaser.GameObjects.Graphics;
+  private border!: Phaser.GameObjects.Graphics;
+  private bossNameText!: Phaser.GameObjects.Text;
+  private timerContainer!: Phaser.GameObjects.Container;
+  private timerBackground!: Phaser.GameObjects.Graphics;
+  private timerText!: Phaser.GameObjects.Text;
 
   private maxHp: number;
   private currentHp: number;
   private bossName: string;
+  private spawnTime: number;
   private isVisible: boolean = false;
+  private timerUpdateInterval?: number;
 
   // Configuration for full-width boss health bar
   private static readonly CONFIG = {
@@ -32,19 +37,34 @@ export class BossHealthBar {
       strokeThickness: 2,
     },
     depth: 1000, // Very high depth to ensure it's on top
+    timer: {
+      height: 30,
+      marginTop: 5, // Space between health bar and timer
+      backgroundColor: 0x000000,
+      textColor: '#FFA500', // Orange color
+      fontSize: '20px',
+      fontFamily: 'Courier New, monospace', // Digital clock font
+      padding: 8,
+      despawnMinutes: 10, // Boss despawns after 10 minutes
+    },
   };
 
-  constructor(scene: Phaser.Scene, bossName: string, maxHp: number) {
+  constructor(scene: Phaser.Scene, bossName: string, maxHp: number, spawnTime: number) {
     this.scene = scene;
     this.bossName = bossName;
     this.maxHp = maxHp;
     this.currentHp = maxHp;
+    this.spawnTime = spawnTime;
 
     this.createHealthBar();
+    this.createTimer();
     this.updatePosition();
     
     // Listen for camera changes to update position
     this.scene.cameras.main.on('followupdate', this.updatePosition, this);
+    
+    // Start timer updates
+    this.startTimerUpdates();
   }
 
   private createHealthBar(): void {
@@ -123,26 +143,118 @@ export class BossHealthBar {
     this.bossNameText.setPosition(0, 0);
   }
 
+  private createTimer(): void {
+    const config = BossHealthBar.CONFIG;
+    
+    // Create timer container
+    this.timerContainer = this.scene.add.container(0, 0);
+    this.timerContainer.setDepth(config.depth);
+    this.timerContainer.setAlpha(0); // Start invisible
+    
+    // Create timer background
+    this.timerBackground = this.scene.add.graphics();
+    
+    // Create timer text
+    this.timerText = this.scene.add.text(0, 0, '00:00', {
+      fontSize: config.timer.fontSize,
+      color: config.timer.textColor,
+      fontFamily: config.timer.fontFamily,
+    });
+    this.timerText.setOrigin(0.5, 0.5);
+    
+    // Add to timer container
+    this.timerContainer.add([this.timerBackground, this.timerText]);
+    
+    this.drawTimer();
+  }
+
+  private drawTimer(): void {
+    const config = BossHealthBar.CONFIG;
+    const timerWidth = 100; // Fixed width for timer display
+    const timerHeight = config.timer.height;
+    const halfWidth = timerWidth / 2;
+    const halfHeight = timerHeight / 2;
+    
+    // Clear timer background
+    this.timerBackground.clear();
+    
+    // Draw timer background (black)
+    this.timerBackground.fillStyle(config.timer.backgroundColor, config.alpha);
+    this.timerBackground.fillRoundedRect(
+      -halfWidth,
+      -halfHeight,
+      timerWidth,
+      timerHeight,
+      config.cornerRadius
+    );
+    
+    // Draw timer border
+    this.timerBackground.lineStyle(config.borderWidth, config.borderColor, config.alpha);
+    this.timerBackground.strokeRoundedRect(
+      -halfWidth,
+      -halfHeight,
+      timerWidth,
+      timerHeight,
+      config.cornerRadius
+    );
+  }
+
+  private updateTimer(): void {
+    if (!this.timerText || !this.isVisible) return;
+    
+    const config = BossHealthBar.CONFIG;
+    const currentTime = Date.now();
+    const elapsedSeconds = Math.floor((currentTime - this.spawnTime) / 1000);
+    const totalSeconds = config.timer.despawnMinutes * 60;
+    const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
+    
+    // Format as MM:SS
+    const minutes = Math.floor(remainingSeconds / 60);
+    const seconds = remainingSeconds % 60;
+    const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    this.timerText.setText(timeString);
+    
+    // Change color to red when time is running out (last minute)
+    if (remainingSeconds <= 60) {
+      this.timerText.setColor('#FF0000');
+    } else {
+      this.timerText.setColor(config.timer.textColor);
+    }
+  }
+
+  private startTimerUpdates(): void {
+    // Update timer every second
+    this.timerUpdateInterval = window.setInterval(() => {
+      this.updateTimer();
+    }, 1000);
+    
+    // Initial update
+    this.updateTimer();
+  }
+
   private updatePosition(): void {
-    if (!this.container) return;
+    if (!this.container || !this.timerContainer) return;
     
     const config = BossHealthBar.CONFIG;
     const camera = this.scene.cameras.main;
     
-    // Position at top of screen, following camera
+    // Position health bar at top of screen
     const x = camera.centerX;
     const y = camera.y + config.marginY + (config.height / 2);
     
     this.container.setPosition(x, y);
+    
+    // Position timer below health bar
+    const timerY = y + (config.height / 2) + config.timer.marginTop + (config.timer.height / 2);
+    this.timerContainer.setPosition(x, timerY);
   }
 
   public updateHealth(newHp: number): void {
     this.currentHp = Math.max(0, Math.min(this.maxHp, newHp));
 
-    // Show health bar when boss takes damage
-    if (newHp < this.maxHp && newHp > 0) {
-      this.show();
-    } else if (newHp <= 0) {
+    // Only hide health bar when boss dies
+    if (newHp <= 0) {
       this.hide();
     }
 
@@ -155,9 +267,9 @@ export class BossHealthBar {
     this.isVisible = true;
     this.updatePosition(); // Ensure correct position
     
-    // Fade in the health bar
+    // Fade in the health bar and timer
     this.scene.tweens.add({
-      targets: this.container,
+      targets: [this.container, this.timerContainer],
       alpha: 1,
       duration: 300,
       ease: 'Power2.easeOut',
@@ -169,9 +281,9 @@ export class BossHealthBar {
 
     this.isVisible = false;
 
-    // Fade out the health bar
+    // Fade out the health bar and timer
     this.scene.tweens.add({
-      targets: this.container,
+      targets: [this.container, this.timerContainer],
       alpha: 0,
       duration: 500,
       ease: 'Power2.easeIn',
@@ -182,8 +294,17 @@ export class BossHealthBar {
     // Remove camera listener
     this.scene.cameras.main.off('followupdate', this.updatePosition, this);
     
+    // Clear timer interval
+    if (this.timerUpdateInterval) {
+      window.clearInterval(this.timerUpdateInterval);
+    }
+    
     if (this.container) {
       this.container.destroy();
+    }
+    
+    if (this.timerContainer) {
+      this.timerContainer.destroy();
     }
   }
 
