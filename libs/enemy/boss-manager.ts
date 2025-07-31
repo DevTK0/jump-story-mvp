@@ -310,6 +310,7 @@ export class BossManager implements PhysicsEntity {
     const currentState = serverBoss.state;
 
     if (previousState?.tag !== currentState.tag) {
+      this.logger.info(`Boss ${serverBoss.enemy} state change: ${previousState?.tag || 'unknown'} -> ${currentState.tag}`);
       this.handleStateChange(serverBoss.spawnId, currentState, serverBoss.enemy);
       this.bossStates.set(serverBoss.spawnId, currentState);
 
@@ -317,11 +318,33 @@ export class BossManager implements PhysicsEntity {
       if (currentState.tag === 'Dead' && healthBar) {
         healthBar.hide();
       }
+    } else {
+      // For attack states, check if animation has stopped playing and restart it
+      // This handles the case where boss stays in attack state while being hit
+      if (currentState.tag === 'Attack1' || currentState.tag === 'Attack2' || currentState.tag === 'Attack3') {
+        const expectedAnim = `${serverBoss.enemy}-${currentState.tag.toLowerCase()}-anim`;
+        if (!sprite.anims.isPlaying || sprite.anims.currentAnim?.key !== expectedAnim) {
+          this.logger.info(`Boss ${serverBoss.enemy} restarting stuck attack animation: ${currentState.tag}`);
+          sprite.play(expectedAnim);
+        }
+      }
     }
 
-    // Handle animation
-    if (currentState.tag === 'Idle') {
-      if (!sprite.anims.isPlaying || sprite.anims.currentAnim?.key !== `${serverBoss.enemy}-idle-anim`) {
+    // Handle animations based on boss state (same logic as regular enemies)
+    if (currentState.tag === 'Walk') {
+      // Boss is in walk state - play walk animation
+      if (
+        !sprite.anims.isPlaying ||
+        sprite.anims.currentAnim?.key !== `${serverBoss.enemy}-walk-anim`
+      ) {
+        sprite.play(`${serverBoss.enemy}-walk-anim`);
+      }
+    } else if (currentState.tag === 'Idle') {
+      // Boss is in idle state - play idle animation
+      if (
+        !sprite.anims.isPlaying ||
+        sprite.anims.currentAnim?.key !== `${serverBoss.enemy}-idle-anim`
+      ) {
         sprite.play(`${serverBoss.enemy}-idle-anim`);
       }
     }

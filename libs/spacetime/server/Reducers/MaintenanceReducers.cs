@@ -50,15 +50,49 @@ public static partial class Module
             return false;
         }
 
-        var attackRecoveryTimeAgo = ctx.Timestamp - EnemyConstants.GetAttackRecoveryTimeSpan();
-        if (boss.last_updated < attackRecoveryTimeAgo)
+        // Use BossAttackState to track attack timing, not last_updated which changes when hit
+        var attackState = ctx.Db.BossAttackState.spawn_id.Find(boss.spawn_id);
+        if (attackState != null)
         {
-            // Return boss to idle state after attack animation completes
+            // Get the specific attack to find its animation duration
+            var attack = ctx.Db.BossAttack.attack_id.Find(attackState.Value.attack_id);
+            if (attack != null)
+            {
+                // Use the specific animation duration for this attack
+                var attackRecoveryThreshold = attackState.Value.last_used + TimeSpan.FromMilliseconds(attack.Value.animation_duration);
+                if (ctx.Timestamp > attackRecoveryThreshold)
+                {
+                    // Return boss to idle state after attack animation completes
+                    var idleBoss = CreateEnemyUpdate(boss, boss.x, boss.y, boss.moving_right, 
+                        boss.aggro_target, boss.aggro_target.HasValue, ctx.Timestamp, PlayerState.Idle);
+                    ctx.Db.Spawn.spawn_id.Update(idleBoss);
+                    Log.Info($"Boss {boss.enemy} recovered from {boss.state} to Idle after {attack.Value.animation_duration}ms");
+                    return true; // Recovery performed
+                }
+            }
+            else
+            {
+                // Attack not found, use default recovery time
+                var attackRecoveryThreshold = attackState.Value.last_used + EnemyConstants.GetAttackRecoveryTimeSpan();
+                if (ctx.Timestamp > attackRecoveryThreshold)
+                {
+                    // Return boss to idle state after attack animation completes
+                    var idleBoss = CreateEnemyUpdate(boss, boss.x, boss.y, boss.moving_right, 
+                        boss.aggro_target, boss.aggro_target.HasValue, ctx.Timestamp, PlayerState.Idle);
+                    ctx.Db.Spawn.spawn_id.Update(idleBoss);
+                    Log.Info($"Boss {boss.enemy} recovered from {boss.state} to Idle (using default time)");
+                    return true; // Recovery performed
+                }
+            }
+        }
+        else
+        {
+            // No attack state found but boss is in attack animation - force recovery
+            Log.Warn($"Boss {boss.enemy} in attack state but no BossAttackState found, forcing recovery");
             var idleBoss = CreateEnemyUpdate(boss, boss.x, boss.y, boss.moving_right, 
                 boss.aggro_target, boss.aggro_target.HasValue, ctx.Timestamp, PlayerState.Idle);
             ctx.Db.Spawn.spawn_id.Update(idleBoss);
-            Log.Info($"Boss {boss.enemy} recovered from {boss.state} to Idle");
-            return true; // Recovery performed
+            return true;
         }
         return false; // Boss is attacking but recovery time hasn't elapsed yet
     }
@@ -637,21 +671,28 @@ public static partial class Module
                 continue; // Skip further processing
             }
 
-            // Handle damaged bosses - recover them after 500ms
-            if (ProcessDamagedEnemyRecovery(ctx, boss))
-            {
-                continue;
-            }
-
             // Handle attack recovery for bosses - recover them after attack animation completes
-            // Note: We don't continue here even if recovery happens, to allow the boss to immediately act after recovery
-            ProcessBossAttackRecovery(ctx, boss);
+            var wasRecovering = ProcessBossAttackRecovery(ctx, boss);
+            if (wasRecovering)
+            {
+                Log.Info($"Boss {boss.enemy} recovered from attack state, can now act again");
+            }
 
-            // Only process idle and walking bosses (not damaged, dead, or attacking)
-            if (boss.state != PlayerState.Idle && boss.state != PlayerState.Walk)
+            // Skip dead bosses
+            if (boss.state == PlayerState.Dead)
             {
                 continue;
             }
+
+            // Log current boss state for debugging
+            Log.Info($"Boss {boss.enemy} update - State: {boss.state}, Position: ({boss.x}, {boss.y}), Facing: {boss.facing}");
+
+            // Bosses can continue their AI logic even while in attack animations
+            // This allows them to move, track players, and chain attacks for more aggressive behavior
+            // The attack cooldown system prevents attack spam
+
+            // Bosses no longer use Damaged state - they maintain their current state when hit
+            // This prevents the stun-lock issue where bosses get stuck in Damaged->Idle cycles
 
             // Get boss data
             var bossData = ctx.Db.Boss.boss_id.Find(boss.enemy);
@@ -671,19 +712,42 @@ public static partial class Module
             // Calculate route boundaries for movement
             var (leftBound, rightBound) = CalculateRouteBounds(route.Value.spawn_area);
 
+            // Get attack1 data early to know the exact range needed
+            BossAttack? attack1 = null;
+            foreach (var attack in ctx.Db.BossAttack.Iter())
+            {
+                if (attack.boss_id == boss.enemy && attack.attack_slot == 1)
+                {
+                    attack1 = attack;
+                    break;
+                }
+            }
+            
+            if (attack1 == null)
+            {
+                Log.Warn($"No attack1 found for boss {boss.enemy}");
+                continue;
+            }
+
             // Find nearest player for targeting
             var nearestPlayer = FindNearestAlivePlayer(ctx, boss.x, boss.y);
             
             if (nearestPlayer != null)
             {
                 var distance = Math.Abs(nearestPlayer.Value.x - boss.x);
+                Log.Info($"Boss {boss.enemy} found player at distance {distance}, aggro range: {bossData.Value.aggro_range}");
                 
                 // Check if player is in aggro range
                 if (distance <= bossData.Value.aggro_range)
                 {
-                    // Check if we're close enough to attack
-                    if (distance <= bossData.Value.attack_range)
+                    // Use attack1's specific range, not the generic attack_range
+                    var attackRange = attack1.Value.range;
+                    Log.Info($"Boss {boss.enemy} player in aggro range. Attack range: {attackRange}, Current distance: {distance}");
+                    
+                    // Check if we're close enough to use attack1
+                    if (distance <= attackRange)
                     {
+                        Log.Info($"Boss {boss.enemy} in attack range! Attempting to attack...");
                         // Within attack range - turn to face player first, then attack
                         var shouldFaceRight = nearestPlayer.Value.x > boss.x;
                         if ((shouldFaceRight && boss.facing == FacingDirection.Left) || 
@@ -705,8 +769,16 @@ public static partial class Module
                     }
                     else
                     {
-                        // Chase player - too far to attack
-                        ExecuteBossMovement(ctx, boss, nearestPlayer.Value.x, deltaTime, bossData.Value.move_speed, leftBound, rightBound, true);
+                        // Chase player to get within attack1 range
+                        // Calculate optimal position: just within attack range (90% of max range for safety)
+                        var optimalDistance = attackRange * 0.9f;
+                        var targetX = nearestPlayer.Value.x > boss.x 
+                            ? nearestPlayer.Value.x - optimalDistance 
+                            : nearestPlayer.Value.x + optimalDistance;
+                        
+                        ExecuteBossMovement(ctx, boss, targetX, deltaTime, bossData.Value.move_speed, leftBound, rightBound, true);
+                        
+                        Log.Info($"Boss {boss.enemy} chasing to optimal attack distance. Current: {distance}, Target: {optimalDistance}, Attack range: {attackRange}");
                     }
                 }
                 // If player is outside aggro range, boss returns to idle
@@ -772,14 +844,23 @@ public static partial class Module
         // Clamp to route boundaries
         newX = Math.Max(leftBound, Math.Min(rightBound, newX));
 
-        // Update boss if position changed
-        if (Math.Abs(newX - boss.x) > 0.01f || newMovingRight != boss.moving_right)
+        var positionDiff = Math.Abs(newX - boss.x);
+        Log.Info($"Boss {boss.enemy} movement - Target: {targetX}, Current: {boss.x}, New: {newX}, Diff: {positionDiff}, Speed: {moveSpeed}, DeltaTime: {deltaTime}, Movement: {movement}");
+
+        // Update boss if position changed or direction changed
+        if (positionDiff > 0.01f || newMovingRight != boss.moving_right)
         {
-            // Set state to Walk when moving
-            PlayerState newState = Math.Abs(newX - boss.x) > 0.01f ? PlayerState.Walk : PlayerState.Idle;
+            // Set state to Walk when moving (use smaller threshold for walk detection)
+            PlayerState newState = positionDiff > 0.001f ? PlayerState.Walk : PlayerState.Idle;
             var updatedBoss = CreateEnemyUpdate(boss, newX, boss.y, newMovingRight, 
                 isChasing ? boss.aggro_target : null, isChasing, ctx.Timestamp, newState);
             ctx.Db.Spawn.spawn_id.Update(updatedBoss);
+            
+            Log.Info($"Boss {boss.enemy} state updated to {newState} - Position changed by {positionDiff}");
+        }
+        else
+        {
+            Log.Info($"Boss {boss.enemy} no update needed - Position diff: {positionDiff}, Direction change: {newMovingRight != boss.moving_right}");
         }
     }
 
@@ -817,7 +898,7 @@ public static partial class Module
             var cooldownThreshold = attackState.Value.last_used + TimeSpan.FromSeconds(attack1.Value.cooldown);
             if (ctx.Timestamp < cooldownThreshold)
             {
-                // Attack is still on cooldown
+                Log.Info($"Boss {boss.enemy} attack still on cooldown");
                 return;
             }
         }
@@ -925,6 +1006,7 @@ public static partial class Module
                     damage_amount = (uint)damage,
                     damage_type = DamageType.Normal,
                     skill_effect = attack1.Value.skill_effect,
+                    damage_source = "server_attack", // Need Phase 2 effects
                     timestamp = ctx.Timestamp
                 });
                 

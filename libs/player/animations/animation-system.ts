@@ -239,7 +239,9 @@ export class AnimationSystem implements System {
     const flashInterval = setInterval(() => {
       if (flashCount >= maxFlashes || !this.isInvulnerable) {
         clearInterval(flashInterval);
+        // Ensure player is fully visible when flashing ends
         this.player.clearTint();
+        this.player.setAlpha(1);
         return;
       }
 
@@ -248,6 +250,7 @@ export class AnimationSystem implements System {
         this.player.setTint(0xffffff); // Normal
         this.player.setAlpha(0.5); // Semi-transparent
       } else {
+        this.player.clearTint(); // Remove tint
         this.player.setAlpha(1); // Fully visible
       }
 
@@ -257,6 +260,16 @@ export class AnimationSystem implements System {
 
   public isPlayerInvulnerable(): boolean {
     return this.isInvulnerable;
+  }
+
+  /**
+   * Reset player visual state (useful for fixing transparency bugs)
+   */
+  public resetPlayerVisualState(): void {
+    this.player.clearTint();
+    this.player.setAlpha(1);
+    this.isInvulnerable = false;
+    this.isPlayingDamagedAnimation = false;
   }
 
   /**
@@ -304,11 +317,15 @@ export class AnimationSystem implements System {
     try {
       await this.delay(PLAYER_ANIMATION_TIMINGS.INVULNERABILITY_DURATION);
       this.isInvulnerable = false;
-      this.player.clearTint(); // Remove flashing effect
+      // Ensure player is fully visible and normal when invulnerability ends
+      this.player.clearTint();
+      this.player.setAlpha(1);
     } catch (error) {
       this.logger.warn('Invulnerability end interrupted:', error);
       this.isInvulnerable = false;
+      // Ensure player is fully visible even if interrupted
       this.player.clearTint();
+      this.player.setAlpha(1);
     }
   }
 
@@ -317,6 +334,16 @@ export class AnimationSystem implements System {
     if (this.invulnerabilityTimer) {
       clearTimeout(this.invulnerabilityTimer);
     }
+
+    // Reset player visual state in case of cleanup during effects
+    if (this.player && !this.player.scene.sys.isDestroyed) {
+      this.player.clearTint();
+      this.player.setAlpha(1);
+    }
+
+    // Reset state flags
+    this.isInvulnerable = false;
+    this.isPlayingDamagedAnimation = false;
 
     // Scene events are automatically cleaned up when scene is destroyed
     // Animations remain in scene and are cleaned up when scene is destroyed

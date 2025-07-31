@@ -374,6 +374,13 @@ public static partial class Module
                 skillEffect = skillEffectProp.GetString();
             }
             
+            // Get animation duration from config if provided, otherwise use default
+            int animationDuration = 1500; // Default 1.5 seconds (matching EnemyConstants.ATTACK_RECOVERY_TIME_MS)
+            if (attackData.TryGetProperty("animationDuration", out var animDurationProp))
+            {
+                animationDuration = animDurationProp.GetInt32();
+            }
+            
             var bossAttack = new BossAttack
             {
                 boss_id = bossId,
@@ -385,11 +392,12 @@ public static partial class Module
                 hits = hits,
                 attack_type = attackType,
                 projectile = projectile,
-                skill_effect = skillEffect
+                skill_effect = skillEffect,
+                animation_duration = animationDuration
             };
             
             ctx.Db.BossAttack.Insert(bossAttack);
-            Log.Info($"Added boss attack {attackSlot} for {bossId}: {attackType} damage={damage} range={range}");
+            Log.Info($"Added boss attack {attackSlot} for {bossId}: {attackType} damage={damage} range={range} duration={animationDuration}ms");
         }
         catch (Exception ex)
         {

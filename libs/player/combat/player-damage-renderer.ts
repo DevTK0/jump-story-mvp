@@ -126,6 +126,12 @@ export class PlayerDamageRenderer {
    * Handle incoming damage event
    */
   public handleDamageEvent(damageEvent: PlayerDamageEvent): void {
+    console.log('🎯 PlayerDamageRenderer: Received damage event', {
+      damageSource: damageEvent.damageSource,
+      damageAmount: damageEvent.damageAmount,
+      spawnId: damageEvent.spawnId
+    });
+
     if (!this.player) {
       console.warn('PlayerDamageRenderer: Player not set');
       return;
@@ -133,8 +139,13 @@ export class PlayerDamageRenderer {
 
     // Validate event is not stale
     if (this.isEventStale(damageEvent)) {
+      console.log('❌ PlayerDamageRenderer: Event is stale, ignoring');
       return;
     }
+
+    // Apply knockback effect
+    console.log('🚀 PlayerDamageRenderer: Calling applyKnockbackEffect');
+    this.applyKnockbackEffect(damageEvent);
 
     // Check if we're at max concurrent numbers
     if (
@@ -148,6 +159,79 @@ export class PlayerDamageRenderer {
     }
 
     this.createDamageNumber(damageEvent);
+  }
+
+  /**
+   * Apply knockback effect and hit animation based on damage event
+   */
+  private applyKnockbackEffect(damageEvent: PlayerDamageEvent): void {
+    console.log('⚡ applyKnockbackEffect called with damageSource:', damageEvent.damageSource);
+    
+    if (!this.player || !this.dbConnection) {
+      console.log('❌ Missing player or dbConnection:', { player: !!this.player, dbConnection: !!this.dbConnection });
+      return;
+    }
+
+    // Only apply knockback/invul effects for server-generated damage
+    // Client collision damage (Phase 1) already handled these effects
+    if (damageEvent.damageSource !== "server_attack") {
+      console.log('🚫 Skipping effects for damageSource:', damageEvent.damageSource);
+      return; // Skip effects for client collision damage
+    }
+
+    console.log('✅ Proceeding with server attack effects');
+
+    // Get damage source position to determine knockback direction
+    const damageSourcePosition = this.getDamageSourcePosition(damageEvent);
+    
+    let knockbackDirection = { x: -1, y: 0 }; // Default fallback
+    
+    if (damageSourcePosition) {
+      // Calculate knockback direction (away from damage source)
+      const directionX = this.player.x > damageSourcePosition.x ? 1 : -1;
+      knockbackDirection = { x: directionX, y: 0 };
+    } else {
+      // Fallback: apply default knockback away from player's facing direction
+      const directionX = this.player.facingDirection === 1 ? -1 : 1;
+      knockbackDirection = { x: directionX, y: 0 };
+    }
+
+    // Use the existing animation system to play damaged animation with knockback and flashing
+    console.log('🎬 Getting animation system...');
+    const animationSystem = this.player.getSystem('animations') as any;
+    console.log('🎬 Animation system found:', !!animationSystem);
+    
+    if (animationSystem && animationSystem.playDamagedAnimation) {
+      console.log('🎬 Calling playDamagedAnimation with direction:', knockbackDirection);
+      const result = animationSystem.playDamagedAnimation(knockbackDirection);
+      console.log('🎬 playDamagedAnimation result:', result);
+    } else {
+      console.warn('PlayerDamageRenderer: Animation system not found, cannot apply damage effects');
+      console.log('🎬 Debug info:', { 
+        animationSystem: !!animationSystem, 
+        hasMethod: animationSystem ? 'playDamagedAnimation' in animationSystem : false,
+        availableMethods: animationSystem ? Object.getOwnPropertyNames(Object.getPrototypeOf(animationSystem)) : []
+      });
+    }
+  }
+
+  /**
+   * Get the position of the damage source (enemy that caused the damage)
+   */
+  private getDamageSourcePosition(damageEvent: PlayerDamageEvent): { x: number; y: number } | null {
+    if (!this.dbConnection) return null;
+
+    try {
+      // Find the spawn that caused the damage
+      const damageSource = this.dbConnection.db.spawn.spawnId.find(damageEvent.spawnId);
+      if (damageSource) {
+        return { x: damageSource.x, y: damageSource.y };
+      }
+    } catch (error) {
+      console.warn('Failed to get damage source position:', error);
+    }
+
+    return null;
   }
 
   /**

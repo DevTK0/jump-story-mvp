@@ -54,6 +54,7 @@ public static partial class Module
         public DamageType damage_type;
         public string? projectile; // Projectile sprite key for ranged attacks
         public string? skill_effect; // VFX to play on player when hit
+        public string damage_source; // "client_collision" or "server_attack"
         public Timestamp timestamp;
     }
 

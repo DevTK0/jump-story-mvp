@@ -41,7 +41,7 @@ const sharedAttacks = {
     damage: 15,
     cooldown: 0.5,
     critChance: 1,
-    knockback: 8,
+    knockback: 0,
     range: 500,
     hits: 1,
     targets: 1,

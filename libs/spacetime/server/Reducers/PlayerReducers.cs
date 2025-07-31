@@ -466,6 +466,7 @@ public static partial class Module
             spawn_id = spawnId,
             damage_amount = finalDamage,
             damage_type = damageType,
+            damage_source = "client_collision", // Phase 1 already handled effects
             timestamp = ctx.Timestamp
         });
 

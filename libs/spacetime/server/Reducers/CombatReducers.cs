@@ -168,15 +168,9 @@ public static partial class Module
                     }
                     else if (enemy.enemy_type == EnemyType.Boss)
                     {
-                        // Bosses: preserve attack states, don't override with Damaged
-                        if (enemy.state == PlayerState.Attack1 || enemy.state == PlayerState.Attack2 || enemy.state == PlayerState.Attack3)
-                        {
-                            newState = enemy.state; // Keep current attack state
-                        }
-                        else
-                        {
-                            newState = PlayerState.Damaged;
-                        }
+                        // Bosses: NEVER enter Damaged state - they keep their current state
+                        // This prevents stun-locking where bosses get stuck in Damaged->Idle loops
+                        newState = enemy.state; // Always keep current state (Idle, Walk, or Attack)
                     }
                     else
                     {

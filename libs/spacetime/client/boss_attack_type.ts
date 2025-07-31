@@ -44,6 +44,7 @@ export type BossAttack = {
   attackType: string,
   projectile: string | undefined,
   skillEffect: string | undefined,
+  animationDuration: number,
 };
 
 /**
@@ -67,6 +68,7 @@ export namespace BossAttack {
       new ProductTypeElement("attackType", AlgebraicType.createStringType()),
       new ProductTypeElement("projectile", AlgebraicType.createOptionType(AlgebraicType.createStringType())),
       new ProductTypeElement("skillEffect", AlgebraicType.createOptionType(AlgebraicType.createStringType())),
+      new ProductTypeElement("animationDuration", AlgebraicType.createI32Type()),
     ]);
   }
 

@@ -45,6 +45,7 @@ public static partial class Module
         public string attack_type;       // "directional", "area", "summon"
         public string? projectile;       // Projectile sprite (if ranged)
         public string? skill_effect;     // Visual effect on hit
+        public int animation_duration;   // Animation duration in milliseconds
     }
 
     [Table(Name = "BossAttackState", Public = true)]

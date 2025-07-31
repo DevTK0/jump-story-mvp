@@ -136,6 +136,15 @@ export class EnemySpawnManager {
       sprite.setTint(0x666666);
       sprite.setAlpha(0.8);
       sprite.setDepth(ENEMY_CONFIG.display.deadDepth);
+    } else {
+      // Play idle animation for alive enemies
+      const idleAnimKey = `${enemyType}-idle-anim`;
+      if (sprite.anims && sprite.anims.exists(idleAnimKey)) {
+        sprite.play(idleAnimKey);
+      } else {
+        // Set a default frame if animation doesn't exist
+        sprite.setFrame(0);
+      }
     }
   }
 

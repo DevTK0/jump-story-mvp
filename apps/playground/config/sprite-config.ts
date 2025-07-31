@@ -201,8 +201,9 @@ export const enemySprites = {
     animations: {
       idle: { start: 0, end: 5, frameRate: 8 },
       walk: { start: 11, end: 18, frameRate: 10 },
-      attack1: { start: 22, end: 23, frameRate: 15 },
-      attack2: { start: 33, end: 32, frameRate: 15 },
+      attack1: { start: 22, end: 29, frameRate: 15 },
+      attack2: { start: 33, end: 41, frameRate: 15 },
+      attack3: { start: 44, end: 54, frameRate: 15 },
       damaged: { start: 66, end: 69, frameRate: 15 },
       death: { start: 77, end: 80, frameRate: 12 },
     },

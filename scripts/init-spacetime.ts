@@ -23,6 +23,7 @@ import * as dotenv from 'dotenv';
 import { jobAttributes } from '../apps/playground/config/job-attributes';
 import { playerLevelingCurve } from '../apps/playground/config/player-level';
 import { enemyAttributes, bossAttributes } from '../apps/playground/config/enemy-attributes';
+import { calculateBossAnimationDurations, logBossAnimationDurations } from './calculate-boss-animation-durations';
 
 // Load environment variables
 dotenv.config();
@@ -134,11 +135,34 @@ async function initializeSpacetime() {
     
     console.log('Populating boss configurations...');
     
-    // Populate boss config from TypeScript config
-    const bossConfigContent = JSON.stringify(bossAttributes);
+    // Calculate animation durations for all boss attacks
+    const bossAnimationDurations = calculateBossAnimationDurations();
+    logBossAnimationDurations(bossAnimationDurations);
+    
+    // Create a modified boss config that includes animation durations
+    const bossConfigWithDurations = JSON.parse(JSON.stringify(bossAttributes));
+    
+    // Add animation durations to each boss attack
+    for (const [bossId, durations] of Object.entries(bossAnimationDurations)) {
+      if (bossConfigWithDurations.bosses[bossId]?.attacks) {
+        const attacks = bossConfigWithDurations.bosses[bossId].attacks;
+        if (attacks.attack1 && durations.attack1) {
+          attacks.attack1.animationDuration = durations.attack1;
+        }
+        if (attacks.attack2 && durations.attack2) {
+          attacks.attack2.animationDuration = durations.attack2;
+        }
+        if (attacks.attack3 && durations.attack3) {
+          attacks.attack3.animationDuration = durations.attack3;
+        }
+      }
+    }
+    
+    // Populate boss config with calculated animation durations
+    const bossConfigContent = JSON.stringify(bossConfigWithDurations);
     await connection.reducers.populateBoss(adminApiKey, bossConfigContent);
     
-    console.log('✅ Boss configurations populated!');
+    console.log('✅ Boss configurations populated with calculated animation durations!');
 
     console.log('Populating player leveling curve...');
 

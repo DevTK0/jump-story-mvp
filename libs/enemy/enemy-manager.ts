@@ -187,8 +187,17 @@ export class EnemyManager implements PhysicsEntity {
       }
     }
 
-    // Handle movement animation for idle enemies (patrol movement)
-    if (currentState.tag === 'Idle') {
+    // Handle animations based on enemy state
+    if (currentState.tag === 'Walk') {
+      // Enemy is in walk state - play walk animation
+      if (
+        !sprite.anims.isPlaying ||
+        sprite.anims.currentAnim?.key !== `${serverEnemy.enemy}-walk-anim`
+      ) {
+        sprite.play(`${serverEnemy.enemy}-walk-anim`);
+      }
+    } else if (currentState.tag === 'Idle') {
+      // Enemy is in idle state - but check if actually moving (for backward compatibility)
       const isMoving = this.movementManager.isEnemyMoving(
         serverEnemy.spawnId,
         previousX,
@@ -196,7 +205,7 @@ export class EnemyManager implements PhysicsEntity {
       );
 
       if (isMoving) {
-        // Enemy is moving - play walk animation
+        // Enemy is moving but server hasn't updated to walk state yet - play walk animation
         if (
           !sprite.anims.isPlaying ||
           sprite.anims.currentAnim?.key !== `${serverEnemy.enemy}-walk-anim`

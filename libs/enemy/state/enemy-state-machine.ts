@@ -98,7 +98,7 @@ export class EnemyIdleState extends EnemyState {
   }
 
   protected getAllowedTransitions(): string[] {
-    return ['Walk', 'Damaged', 'Dead'];
+    return ['Walk', 'Attack1', 'Attack2', 'Attack3', 'Damaged', 'Dead'];
   }
 }
 
@@ -107,9 +107,15 @@ export class EnemyIdleState extends EnemyState {
  */
 export class EnemyWalkState extends EnemyState {
   onEnter(_previousState?: EnemyState): void {
-    // Currently using idle animation as fallback
-    // TODO: Add walk animation when available
-    this.sprite.play(`${this.enemy}-idle-anim`);
+    // Try to play walk animation, fallback to idle if not available
+    const walkAnimKey = `${this.enemy}-walk-anim`;
+    
+    if (this.sprite.anims && this.sprite.anims.exists(walkAnimKey)) {
+      this.sprite.play(walkAnimKey);
+    } else {
+      // Fallback to idle animation
+      this.sprite.play(`${this.enemy}-idle-anim`);
+    }
   }
 
   onExit(_nextState?: EnemyState): void {
@@ -129,7 +135,7 @@ export class EnemyWalkState extends EnemyState {
   }
 
   protected getAllowedTransitions(): string[] {
-    return ['Idle', 'Damaged', 'Dead'];
+    return ['Idle', 'Attack1', 'Attack2', 'Attack3', 'Damaged', 'Dead'];
   }
 }
 
@@ -178,6 +184,141 @@ export class EnemyDamagedState extends EnemyState {
 
   protected getAllowedTransitions(): string[] {
     return ['Idle', 'Dead'];
+  }
+}
+
+/**
+ * Attack1 state - enemy is performing attack1
+ */
+export class EnemyAttack1State extends EnemyState {
+  private animationCompleteListener?: Function;
+
+  onEnter(_previousState?: EnemyState): void {
+    this.sprite.play(`${this.enemy}-attack1-anim`);
+
+    // Set up animation complete listener
+    this.animationCompleteListener = (animation: Phaser.Animations.Animation) => {
+      if (animation.key === `${this.enemy}-attack1-anim`) {
+        // Animation finished - for bosses, this is just visual
+        // Server will handle state transitions
+      }
+    };
+
+    this.sprite.on('animationcomplete', this.animationCompleteListener);
+  }
+
+  onExit(_nextState?: EnemyState): void {
+    // Clean up animation listener
+    if (this.animationCompleteListener) {
+      this.sprite.off('animationcomplete', this.animationCompleteListener);
+      this.animationCompleteListener = undefined;
+    }
+  }
+
+  update(_time: number, _delta: number): void {
+    // Attack state managed by server
+  }
+
+  getDbState(): DbPlayerState {
+    return { tag: 'Attack1' };
+  }
+
+  getName(): string {
+    return 'Attack1';
+  }
+
+  protected getAllowedTransitions(): string[] {
+    return ['Idle', 'Walk', 'Damaged', 'Dead'];
+  }
+}
+
+/**
+ * Attack2 state - enemy is performing attack2
+ */
+export class EnemyAttack2State extends EnemyState {
+  private animationCompleteListener?: Function;
+
+  onEnter(_previousState?: EnemyState): void {
+    this.sprite.play(`${this.enemy}-attack2-anim`);
+
+    // Set up animation complete listener
+    this.animationCompleteListener = (animation: Phaser.Animations.Animation) => {
+      if (animation.key === `${this.enemy}-attack2-anim`) {
+        // Animation finished - for bosses, this is just visual
+        // Server will handle state transitions
+      }
+    };
+
+    this.sprite.on('animationcomplete', this.animationCompleteListener);
+  }
+
+  onExit(_nextState?: EnemyState): void {
+    // Clean up animation listener
+    if (this.animationCompleteListener) {
+      this.sprite.off('animationcomplete', this.animationCompleteListener);
+      this.animationCompleteListener = undefined;
+    }
+  }
+
+  update(_time: number, _delta: number): void {
+    // Attack state managed by server
+  }
+
+  getDbState(): DbPlayerState {
+    return { tag: 'Attack2' };
+  }
+
+  getName(): string {
+    return 'Attack2';
+  }
+
+  protected getAllowedTransitions(): string[] {
+    return ['Idle', 'Walk', 'Damaged', 'Dead'];
+  }
+}
+
+/**
+ * Attack3 state - enemy is performing attack3
+ */
+export class EnemyAttack3State extends EnemyState {
+  private animationCompleteListener?: Function;
+
+  onEnter(_previousState?: EnemyState): void {
+    this.sprite.play(`${this.enemy}-attack3-anim`);
+
+    // Set up animation complete listener
+    this.animationCompleteListener = (animation: Phaser.Animations.Animation) => {
+      if (animation.key === `${this.enemy}-attack3-anim`) {
+        // Animation finished - for bosses, this is just visual
+        // Server will handle state transitions
+      }
+    };
+
+    this.sprite.on('animationcomplete', this.animationCompleteListener);
+  }
+
+  onExit(_nextState?: EnemyState): void {
+    // Clean up animation listener
+    if (this.animationCompleteListener) {
+      this.sprite.off('animationcomplete', this.animationCompleteListener);
+      this.animationCompleteListener = undefined;
+    }
+  }
+
+  update(_time: number, _delta: number): void {
+    // Attack state managed by server
+  }
+
+  getDbState(): DbPlayerState {
+    return { tag: 'Attack3' };
+  }
+
+  getName(): string {
+    return 'Attack3';
+  }
+
+  protected getAllowedTransitions(): string[] {
+    return ['Idle', 'Walk', 'Damaged', 'Dead'];
   }
 }
 
@@ -312,6 +453,9 @@ export class EnemyStateMachine {
     // Create all possible states
     this.states.set('Idle', new EnemyIdleState(this.spawnId, this.sprite, this.enemy, this));
     this.states.set('Walk', new EnemyWalkState(this.spawnId, this.sprite, this.enemy, this));
+    this.states.set('Attack1', new EnemyAttack1State(this.spawnId, this.sprite, this.enemy, this));
+    this.states.set('Attack2', new EnemyAttack2State(this.spawnId, this.sprite, this.enemy, this));
+    this.states.set('Attack3', new EnemyAttack3State(this.spawnId, this.sprite, this.enemy, this));
     this.states.set(
       'Damaged',
       new EnemyDamagedState(this.spawnId, this.sprite, this.enemy, this)
@@ -417,6 +561,12 @@ export class EnemyStateMachine {
         return 'Idle';
       case 'Walk':
         return 'Walk';
+      case 'Attack1':
+        return 'Attack1';
+      case 'Attack2':
+        return 'Attack2';
+      case 'Attack3':
+        return 'Attack3';
       case 'Damaged':
         return 'Damaged';
       case 'Dead':

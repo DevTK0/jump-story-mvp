@@ -230,7 +230,7 @@ export const bossAttributes: BossAttributes = {
         attack1: {
           attackType: 'directional' as const,
           damage: 15,
-          cooldown: 3,
+          cooldown: 1.5,
           knockback: 0,
           range: 200,
           hits: 1,
