@@ -22,7 +22,7 @@ import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import * as dotenv from 'dotenv';
 import { jobAttributes } from '../apps/playground/config/job-attributes';
 import { playerLevelingCurve } from '../apps/playground/config/player-level';
-import { enemyAttributes } from '../apps/playground/config/enemy-attributes';
+import { enemyAttributes, bossAttributes } from '../apps/playground/config/enemy-attributes';
 
 // Load environment variables
 dotenv.config();
@@ -131,6 +131,14 @@ async function initializeSpacetime() {
     await connection.reducers.populateEnemy(adminApiKey, enemyConfigContent);
 
     console.log('✅ Enemy configurations populated!');
+    
+    console.log('Populating boss configurations...');
+    
+    // Populate boss config from TypeScript config
+    const bossConfigContent = JSON.stringify(bossAttributes);
+    await connection.reducers.populateBoss(adminApiKey, bossConfigContent);
+    
+    console.log('✅ Boss configurations populated!');
 
     console.log('Populating player leveling curve...');
 
@@ -146,6 +154,21 @@ async function initializeSpacetime() {
     await connection.reducers.initializeEnemyRoutes(adminApiKey, tilemapContent);
 
     console.log('✅ Enemy routes initialized successfully!');
+    
+    console.log('Initializing boss routes...');
+    
+    // Initialize boss routes from tilemap
+    await connection.reducers.initializeBossRoutes(adminApiKey, tilemapContent);
+    
+    console.log('✅ Boss routes initialized successfully!');
+    
+    console.log('Populating boss triggers from config...');
+    
+    // Populate boss triggers from enemy config
+    await connection.reducers.populateBossTriggers(adminApiKey, enemyConfigContent);
+    
+    console.log('✅ Boss triggers populated successfully!');
+    
     console.log('🐺 Spawning initial enemies for all routes...');
 
     // Spawn initial enemies to populate the world
@@ -322,6 +345,7 @@ async function initializeSpacetime() {
     console.log('✅ Enemy routes with per-route spawn intervals configured!');
     console.log(`✅ ${routeCount} spawn areas ready with individual timing!`);
     console.log('🐺 Initial enemy population spawned!');
+    console.log('👹 Boss configurations, routes, and triggers initialized!');
     console.log(`🎮 Job configurations populated! (${jobCount} jobs)`);
     if (teleportCount > 0) {
       console.log(`🌟 Teleport locations initialized! (${teleportCount} teleports)`);

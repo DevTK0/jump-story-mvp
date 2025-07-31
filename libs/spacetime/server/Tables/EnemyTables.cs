@@ -54,4 +54,15 @@ public static partial class Module
         public float attack_range;   // Distance from which enemy can attack
         public float aggro_range;    // Distance at which enemy detects and pursues players
     }
+    
+    [Table(Name = "BossTrigger", Public = true)]
+    public partial struct BossTrigger
+    {
+        [PrimaryKey]
+        public string enemy_type;     // Enemy type to track kills for (e.g., "orc")
+        public string boss_to_spawn;  // Boss type to spawn (e.g., "orc-rider")
+        public uint current_kills;    // Current kill count
+        public uint required_kills;   // Number of kills required to spawn boss
+        public bool active;           // Whether this trigger is currently active
+    }
 }

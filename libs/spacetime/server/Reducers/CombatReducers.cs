@@ -204,6 +204,10 @@ public static partial class Module
                 {
                     ExperienceService.AwardExperienceForKill(ctx, enemy);
                     killCount++;
+                    
+                    // Check boss triggers
+                    CheckBossTrigger(ctx, enemy.enemy);
+                    
                     break; // Don't continue hitting a dead enemy
                 }
 
@@ -217,6 +221,102 @@ public static partial class Module
         Log.Info($"Player {ctx.Sender} used attack {attackSlot} ({jobAttack.Value.name}) at {ctx.Timestamp}");
 
         Log.Info($"Player {ctx.Sender} attack hit {damageCount} enemies, killed {killCount}");
+    }
+
+    private static void CheckBossTrigger(ReducerContext ctx, string enemyType)
+    {
+        // Check if there's a boss trigger for this enemy type
+        var trigger = ctx.Db.BossTrigger.enemy_type.Find(enemyType);
+        if (trigger == null || !trigger.Value.active)
+        {
+            return;
+        }
+
+        // Increment kill count
+        var updatedTrigger = trigger.Value with { current_kills = trigger.Value.current_kills + 1 };
+        
+        // Check if we've reached the required kills
+        if (updatedTrigger.current_kills >= updatedTrigger.required_kills)
+        {
+            Log.Info($"Boss trigger met! {enemyType} kills: {updatedTrigger.current_kills}/{updatedTrigger.required_kills}");
+            
+            // Spawn the boss
+            SpawnBossFromTrigger(ctx, updatedTrigger.boss_to_spawn);
+            
+            // Reset the kill count
+            updatedTrigger = updatedTrigger with { current_kills = 0 };
+            
+            // Announce boss spawn
+            var boss = ctx.Db.Boss.boss_id.Find(trigger.Value.boss_to_spawn);
+            if (boss != null)
+            {
+                var announcement = new Broadcast
+                {
+                    message = $"A powerful enemy has appeared! {boss.Value.display_name} has been summoned after {trigger.Value.required_kills} {enemyType} kills!",
+                    publish_dt = ctx.Timestamp
+                };
+                ctx.Db.Broadcast.Insert(announcement);
+            }
+        }
+        
+        // Update the trigger
+        ctx.Db.BossTrigger.enemy_type.Update(updatedTrigger);
+        
+        if (updatedTrigger.current_kills % 5 == 0 && updatedTrigger.current_kills > 0)
+        {
+            Log.Info($"Boss trigger progress: {enemyType} kills: {updatedTrigger.current_kills}/{updatedTrigger.required_kills}");
+        }
+    }
+
+    private static void SpawnBossFromTrigger(ReducerContext ctx, string bossId)
+    {
+        // Get boss data
+        var boss = ctx.Db.Boss.boss_id.Find(bossId);
+        if (boss == null)
+        {
+            Log.Error($"Boss type '{bossId}' not found for trigger spawn");
+            return;
+        }
+
+        // Find the boss route
+        BossRoute? bossRoute = null;
+        foreach (var route in ctx.Db.BossRoute.Iter())
+        {
+            if (route.boss_id == bossId)
+            {
+                bossRoute = route;
+                break;
+            }
+        }
+
+        if (bossRoute == null)
+        {
+            Log.Warn($"No route found for boss '{bossId}', cannot spawn from trigger");
+            return;
+        }
+
+        // Calculate spawn position within the boss spawn area
+        var spawnX = bossRoute.Value.spawn_area.position.x + (bossRoute.Value.spawn_area.size.x / 2);
+        var spawnY = bossRoute.Value.spawn_area.position.y + (bossRoute.Value.spawn_area.size.y / 2);
+
+        // Create boss spawn
+        var bossSpawn = new BossSpawn
+        {
+            route_id = bossRoute.Value.route_id,
+            boss_id = bossId,
+            x = spawnX,
+            y = spawnY,
+            state = PlayerState.Idle,
+            facing = FacingDirection.Right,
+            current_hp = boss.Value.base_health,
+            max_hp = boss.Value.base_health,
+            spawn_time = ctx.Timestamp,
+            last_updated = ctx.Timestamp,
+            current_target = null
+        };
+
+        ctx.Db.BossSpawn.Insert(bossSpawn);
+        Log.Info($"Spawned boss '{boss.Value.display_name}' at ({spawnX}, {spawnY}) from trigger");
     }
 
 }
