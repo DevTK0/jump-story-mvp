@@ -3,6 +3,7 @@ import type { EnemyDamageEvent } from '@/spacetime/client';
 import type { PeerManager } from '@/peer';
 import type { EnemyManager } from '@/enemy';
 import { createLogger } from '@/core/logger';
+import { skillEffectSprites } from '../../../apps/playground/config/sprite-config';
 
 const logger = createLogger('SkillEffectRenderer');
 
@@ -53,7 +54,12 @@ export class SkillEffectRenderer {
 
     // Configure effect visual properties
     effect.setDepth(150); // Above enemies and projectiles
-    effect.setScale(2); // Match game scale
+    
+    // Use scale from sprite config if available
+    const effectName = effectKey.replace('skillEffects_', '');
+    const spriteConfig = skillEffectSprites[effectName];
+    const scale = spriteConfig?.scale || 2;
+    effect.setScale(scale);
 
     // Generate unique key for tracking
     const effectId = `${effectKey}_${Date.now()}_${Math.random()}`;

@@ -13,6 +13,8 @@ import {
   getDamageStyle,
 } from './damage-renderer-config';
 import { DbConnection } from '@/spacetime/client';
+import { PeerManager } from '@/peer';
+import { skillEffectSprites } from '../../../apps/playground/config/sprite-config';
 
 interface PlayerDamageState {
   text: Phaser.GameObjects.Text;
@@ -22,14 +24,24 @@ interface PlayerDamageState {
   damageEvent: PlayerDamageEvent;
 }
 
+interface SkillEffectState {
+  sprite: Phaser.GameObjects.Sprite;
+  targetSprite: Phaser.GameObjects.Sprite;
+  updateEvent: Phaser.Time.TimerEvent;
+}
+
 export class PlayerDamageRenderer {
   private scene: Phaser.Scene;
   private player: Player | null = null;
   private dbConnection: DbConnection | null = null;
+  private peerManager: PeerManager | null = null;
 
   // Object pooling
   private textPool: Phaser.GameObjects.Text[] = [];
   private activeNumbers: PlayerDamageState[] = [];
+  
+  // Skill effects tracking
+  private activeSkillEffects: Map<string, SkillEffectState> = new Map();
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -41,6 +53,13 @@ export class PlayerDamageRenderer {
    */
   public setPlayer(player: Player): void {
     this.player = player;
+  }
+
+  /**
+   * Set peer manager for accessing peer sprites
+   */
+  public setPeerManager(peerManager: PeerManager): void {
+    this.peerManager = peerManager;
   }
 
   /**
@@ -57,15 +76,9 @@ export class PlayerDamageRenderer {
   private setupDamageEventSubscription(): void {
     if (!this.dbConnection) return;
 
-    // Subscribe to player damage events from the database
+    // Subscribe to ALL player damage events from the database
     this.dbConnection.db.playerDamageEvent.onInsert((_ctx, damageEvent) => {
-      // Only show damage for the local player
-      if (
-        this.dbConnection &&
-        damageEvent.playerIdentity.toHexString() === this.dbConnection.identity?.toHexString()
-      ) {
-        this.handleDamageEvent(damageEvent);
-      }
+      this.handleDamageEvent(damageEvent);
     });
   }
 
@@ -129,11 +142,15 @@ export class PlayerDamageRenderer {
     console.log('🎯 PlayerDamageRenderer: Received damage event', {
       damageSource: damageEvent.damageSource,
       damageAmount: damageEvent.damageAmount,
-      spawnId: damageEvent.spawnId
+      spawnId: damageEvent.spawnId,
+      skillEffect: damageEvent.skillEffect,
+      playerIdentity: damageEvent.playerIdentity.toHexString()
     });
 
-    if (!this.player) {
-      console.warn('PlayerDamageRenderer: Player not set');
+    // Get the target sprite (local player or peer)
+    const targetSprite = this.getTargetSprite(damageEvent.playerIdentity.toHexString());
+    if (!targetSprite) {
+      console.warn('PlayerDamageRenderer: Target player sprite not found');
       return;
     }
 
@@ -143,22 +160,34 @@ export class PlayerDamageRenderer {
       return;
     }
 
-    // Apply knockback effect
-    console.log('🚀 PlayerDamageRenderer: Calling applyKnockbackEffect');
-    this.applyKnockbackEffect(damageEvent);
-
-    // Check if we're at max concurrent numbers
-    if (
-      this.activeNumbers.length >= DAMAGE_RENDERER_CONFIG.performance.player.maxConcurrentNumbers
-    ) {
-      // Remove oldest
-      const oldest = this.activeNumbers.shift();
-      if (oldest) {
-        this.cleanupDamageNumber(oldest);
-      }
+    // Apply knockback effect only for local player
+    if (this.dbConnection && 
+        damageEvent.playerIdentity.toHexString() === this.dbConnection.identity?.toHexString()) {
+      console.log('🚀 PlayerDamageRenderer: Calling applyKnockbackEffect');
+      this.applyKnockbackEffect(damageEvent);
     }
 
-    this.createDamageNumber(damageEvent);
+    // Render damage numbers only for local player
+    if (this.dbConnection && 
+        damageEvent.playerIdentity.toHexString() === this.dbConnection.identity?.toHexString()) {
+      // Check if we're at max concurrent numbers
+      if (
+        this.activeNumbers.length >= DAMAGE_RENDERER_CONFIG.performance.player.maxConcurrentNumbers
+      ) {
+        // Remove oldest
+        const oldest = this.activeNumbers.shift();
+        if (oldest) {
+          this.cleanupDamageNumber(oldest);
+        }
+      }
+
+      this.createDamageNumber(damageEvent);
+    }
+    
+    // Render skill effect if present
+    if (damageEvent.skillEffect) {
+      this.createPlayerSkillEffect(damageEvent.skillEffect, targetSprite);
+    }
   }
 
   /**
@@ -453,9 +482,118 @@ export class PlayerDamageRenderer {
 
     // Clean up pool
     this.textPool.forEach((text) => text.destroy());
+    
+    // Clean up skill effects
+    this.activeSkillEffects.forEach((effectState) => {
+      effectState.updateEvent.destroy();
+      effectState.sprite.destroy();
+    });
 
     // Clear collections
     this.activeNumbers.length = 0;
     this.textPool.length = 0;
+    this.activeSkillEffects.clear();
+  }
+
+  /**
+   * Get the target sprite for damage rendering (local player or peer)
+   */
+  private getTargetSprite(playerIdentityHex: string): Phaser.GameObjects.Sprite | null {
+    // Check if it's the local player
+    if (this.dbConnection && 
+        playerIdentityHex === this.dbConnection.identity?.toHexString()) {
+      return this.player;
+    }
+    
+    // Otherwise, try to get peer sprite
+    if (this.peerManager) {
+      return this.peerManager.getPeerSprite(playerIdentityHex);
+    }
+    
+    return null;
+  }
+
+  /**
+   * Create and play skill effect on the target player/peer
+   */
+  private createPlayerSkillEffect(effectKey: string, targetSprite: Phaser.GameObjects.Sprite): void {
+    // Create effect sprite at target position
+    const effect = this.scene.add.sprite(
+      targetSprite.x,
+      targetSprite.y,
+      effectKey
+    );
+
+    // Configure effect visual properties
+    effect.setDepth(targetSprite.depth + 100);
+    
+    // Use scale from sprite config if available
+    const spriteConfig = skillEffectSprites[effectKey];
+    const scale = spriteConfig?.scale || 2;
+    effect.setScale(scale);
+
+    // Start position update timer to follow player
+    const updateEvent = this.scene.time.addEvent({
+      delay: 16, // ~60fps
+      callback: () => {
+        if (targetSprite && targetSprite.active) {
+          effect.setPosition(targetSprite.x, targetSprite.y);
+        } else {
+          // Clean up if target is no longer active (dead)
+          this.cleanupSkillEffect(effectId);
+        }
+      },
+      loop: true
+    });
+
+    // Generate unique key for tracking
+    const effectId = `${effectKey}_${Date.now()}_${Math.random()}`;
+    this.activeSkillEffects.set(effectId, {
+      sprite: effect,
+      targetSprite: targetSprite,
+      updateEvent: updateEvent
+    });
+
+    // Try to play animation
+    const animKey = `${effectKey}_play`;
+    if (this.scene.anims.exists(animKey)) {
+      // Play the animation with repeat: 0 to ensure it plays once
+      effect.play({ key: animKey, repeat: 0 });
+      
+      // Clean up after animation completes
+      effect.on('animationcomplete', () => {
+        this.cleanupSkillEffect(effectId);
+      });
+      
+      // Fallback cleanup in case animationcomplete doesn't fire
+      const animDuration = effect.anims.currentAnim?.duration || 600;
+      this.scene.time.delayedCall(animDuration + 100, () => {
+        if (this.activeSkillEffects.has(effectId)) {
+          this.cleanupSkillEffect(effectId);
+        }
+      });
+    } else {
+      // If no animation, clean up after a delay
+      this.scene.time.delayedCall(600, () => {
+        this.cleanupSkillEffect(effectId);
+      });
+    }
+
+    console.log('PlayerDamageRenderer: Created skill effect', { 
+      effectKey, 
+      targetIdentity: targetSprite === this.player ? 'local' : 'peer' 
+    });
+  }
+
+  /**
+   * Clean up a skill effect
+   */
+  private cleanupSkillEffect(effectId: string): void {
+    const effectState = this.activeSkillEffects.get(effectId);
+    if (effectState) {
+      effectState.updateEvent.destroy();
+      effectState.sprite.destroy();
+      this.activeSkillEffects.delete(effectId);
+    }
   }
 }

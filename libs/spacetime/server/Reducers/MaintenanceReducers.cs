@@ -51,15 +51,27 @@ public static partial class Module
         }
 
         // Use BossAttackState to track attack timing, not last_updated which changes when hit
-        var attackState = ctx.Db.BossAttackState.spawn_id.Find(boss.spawn_id);
+        // Find the most recent attack state for this boss
+        BossAttackState? attackState = null;
+        foreach (var state in ctx.Db.BossAttackState.Iter())
+        {
+            if (state.spawn_id == boss.spawn_id)
+            {
+                if (attackState == null || state.last_used > attackState.Value.last_used)
+                {
+                    attackState = state;
+                }
+            }
+        }
         if (attackState != null)
         {
             // Get the specific attack to find its animation duration
             var attack = ctx.Db.BossAttack.attack_id.Find(attackState.Value.attack_id);
             if (attack != null)
             {
-                // Use the specific animation duration for this attack
-                var attackRecoveryThreshold = attackState.Value.last_used + TimeSpan.FromMilliseconds(attack.Value.animation_duration);
+                // Use the specific animation duration for this attack (minimum 100ms)
+                var animDuration = Math.Max(100, attack.Value.animation_duration);
+                var attackRecoveryThreshold = attackState.Value.last_used + TimeSpan.FromMilliseconds(animDuration);
                 if (ctx.Timestamp > attackRecoveryThreshold)
                 {
                     // Return boss to idle state after attack animation completes
@@ -349,12 +361,12 @@ public static partial class Module
                 {
                     if (attackState.spawn_id == spawnId)
                     {
-                        attackStatesToRemove.Add(attackState.spawn_id);
+                        attackStatesToRemove.Add(attackState.state_id);
                     }
                 }
-                foreach (var attackSpawnId in attackStatesToRemove)
+                foreach (var stateId in attackStatesToRemove)
                 {
-                    ctx.Db.BossAttackState.spawn_id.Delete(attackSpawnId);
+                    ctx.Db.BossAttackState.state_id.Delete(stateId);
                 }
                 if (attackStatesToRemove.Count > 0)
                 {
@@ -652,13 +664,20 @@ public static partial class Module
             {
                 continue;
             }
+            
+            // Skip bosses that are still in attack animation
+            if (boss.state == PlayerState.Attack1 || boss.state == PlayerState.Attack2 || boss.state == PlayerState.Attack3)
+            {
+                Log.Info($"Boss {boss.enemy} still in attack animation {boss.state}, skipping AI");
+                continue;
+            }
 
             // Log current boss state for debugging
             Log.Info($"Boss {boss.enemy} update - State: {boss.state}, Position: ({boss.x}, {boss.y}), Facing: {boss.facing}");
 
-            // Bosses can continue their AI logic even while in attack animations
-            // This allows them to move, track players, and chain attacks for more aggressive behavior
-            // The attack cooldown system prevents attack spam
+            // Boss AI logic only runs when not in attack animations
+            // This ensures bosses respect their animation durations
+            // The attack cooldown system prevents attack spam after animations complete
 
             // Bosses no longer use Damaged state - they maintain their current state when hit
             // This prevents the stun-lock issue where bosses get stuck in Damaged->Idle cycles
@@ -681,42 +700,110 @@ public static partial class Module
             // Calculate route boundaries for movement
             var (leftBound, rightBound) = CalculateRouteBounds(route.Value.spawn_area);
 
-            // Get attack3 data early to know the exact range needed (testing summon attacks)
-            BossAttack? attack1 = null;
+            // Get all attacks for this boss
+            var bossAttacks = new List<BossAttack>();
             foreach (var attack in ctx.Db.BossAttack.Iter())
             {
-                if (attack.boss_id == boss.enemy && attack.attack_slot == 3) // Changed to slot 3 for testing
+                if (attack.boss_id == boss.enemy)
                 {
-                    attack1 = attack;
-                    break;
+                    bossAttacks.Add(attack);
                 }
             }
             
-            if (attack1 == null)
+            if (bossAttacks.Count == 0)
             {
-                Log.Warn($"No attack3 found for boss {boss.enemy}");
+                Log.Warn($"No attacks found for boss {boss.enemy}");
                 continue;
             }
-
-            // Find nearest player for targeting
-            var nearestPlayer = FindNearestAlivePlayer(ctx, boss.x, boss.y);
             
-            if (nearestPlayer != null)
+            // Try to select an attack that's not on cooldown
+            var random = new Random();
+            var availableAttacks = new List<BossAttack>();
+            
+            // Get all attack states for this boss
+            var attackStates = new Dictionary<uint, BossAttackState>();
+            foreach (var state in ctx.Db.BossAttackState.Iter())
             {
-                var distance = Math.Abs(nearestPlayer.Value.x - boss.x);
-                Log.Info($"Boss {boss.enemy} found player at distance {distance}, aggro range: {bossData.Value.aggro_range}");
-                
-                // Check if player is in aggro range
-                if (distance <= bossData.Value.aggro_range)
+                if (state.spawn_id == boss.spawn_id)
                 {
-                    // Use attack1's specific range, not the generic attack_range
-                    var attackRange = attack1.Value.range;
-                    Log.Info($"Boss {boss.enemy} player in aggro range. Attack range: {attackRange}, Current distance: {distance}");
+                    attackStates[state.attack_id] = state;
+                }
+            }
+            
+            // Check which attacks are available (not on cooldown)
+            foreach (var attack in bossAttacks)
+            {
+                bool isAvailable = true;
+                if (attackStates.TryGetValue(attack.attack_id, out var attackState))
+                {
+                    var cooldownThreshold = attackState.last_used + TimeSpan.FromSeconds(attack.cooldown);
+                    if (ctx.Timestamp < cooldownThreshold)
+                    {
+                        isAvailable = false;
+                        Log.Info($"Boss {boss.enemy} attack {attack.attack_slot} (ID: {attack.attack_id}) on cooldown for {attack.cooldown}s");
+                    }
+                }
+                
+                if (isAvailable)
+                {
+                    availableAttacks.Add(attack);
+                    Log.Info($"Boss {boss.enemy} attack {attack.attack_slot} (ID: {attack.attack_id}) is available - cooldown: {attack.cooldown}s");
+                }
+            }
+            
+            // If no attacks are available, skip this frame
+            if (availableAttacks.Count == 0)
+            {
+                Log.Info($"Boss {boss.enemy} all attacks on cooldown");
+                // Continue with movement but no attack
+                var fallbackAttack = bossAttacks[0]; // Use first attack for range calculation
+                
+                // Process movement without attacking
+                var (hasAggro2, shouldChase2, targetX2, targetY2, newAggroTarget2) = ProcessBossAggroDetection(ctx, boss, bossData.Value, leftBound, rightBound);
+                var movement2 = bossData.Value.move_speed * deltaTime;
+                float newX2;
+                bool newMovingRight2;
+                
+                if (shouldChase2 && hasAggro2)
+                {
+                    (newX2, newMovingRight2) = CalculateChaseMovement(boss, targetX2, targetY2, movement2, leftBound, rightBound);
+                }
+                else if (bossData.Value.ai_behavior == AiBehavior.Patrol && !hasAggro2)
+                {
+                    (newX2, newMovingRight2) = CalculatePatrolMovement(boss, movement2, leftBound, rightBound);
+                }
+                else
+                {
+                    (newX2, newMovingRight2) = (boss.x, boss.moving_right);
+                }
+                
+                UpdateEnemyIfChanged(ctx, boss, newX2, newMovingRight2, newAggroTarget2, hasAggro2);
+                continue;
+            }
+            
+            // Randomly select from available attacks
+            var selectedAttack = availableAttacks[random.Next(availableAttacks.Count)];
+            var attack1 = selectedAttack;
+
+            // Process aggro detection and validation (same as regular enemies)
+            var (hasAggro, shouldChase, targetX, targetY, newAggroTarget) = ProcessBossAggroDetection(ctx, boss, bossData.Value, leftBound, rightBound);
+            
+            // Calculate new position based on behavior
+            var movement = bossData.Value.move_speed * deltaTime;
+            float newX;
+            bool newMovingRight;
+            
+            if (shouldChase && hasAggro)
+            {
+                // Check if we're close enough to attack
+                var nearestPlayer = newAggroTarget.HasValue ? ctx.Db.Player.identity.Find(newAggroTarget.Value) : null;
+                if (nearestPlayer != null)
+                {
+                    var distance = Math.Abs(nearestPlayer.Value.x - boss.x);
+                    var attackRange = attack1.range;
                     
-                    // Check if we're close enough to use attack1
                     if (distance <= attackRange)
                     {
-                        Log.Info($"Boss {boss.enemy} in attack range! Attempting to attack...");
                         // Within attack range - turn to face player first, then attack
                         var shouldFaceRight = nearestPlayer.Value.x > boss.x;
                         if ((shouldFaceRight && boss.facing == FacingDirection.Left) || 
@@ -726,46 +813,31 @@ public static partial class Module
                             var turnedBoss = CreateEnemyUpdate(boss, boss.x, boss.y, shouldFaceRight, 
                                 boss.aggro_target, true, ctx.Timestamp, boss.state);
                             ctx.Db.Spawn.spawn_id.Update(turnedBoss);
-                            
-                            Log.Info($"Boss {boss.enemy} turning to face player - New facing: {turnedBoss.facing}");
-                            
-                            // Update the boss reference to the turned version
                             boss = turnedBoss;
                         }
                         
                         // Now execute attack with boss facing the correct direction
-                        ExecuteBossAttack(ctx, boss, bossData.Value);
-                    }
-                    else
-                    {
-                        // Chase player to get within attack1 range
-                        // Calculate optimal position: just within attack range (90% of max range for safety)
-                        var optimalDistance = attackRange * 0.9f;
-                        var targetX = nearestPlayer.Value.x > boss.x 
-                            ? nearestPlayer.Value.x - optimalDistance 
-                            : nearestPlayer.Value.x + optimalDistance;
-                        
-                        ExecuteBossMovement(ctx, boss, targetX, deltaTime, bossData.Value.move_speed, leftBound, rightBound, true);
-                        
-                        Log.Info($"Boss {boss.enemy} chasing to optimal attack distance. Current: {distance}, Target: {optimalDistance}, Attack range: {attackRange}");
+                        ExecuteBossAttack(ctx, boss, bossData.Value, attack1);
+                        continue; // Skip movement this frame since we're attacking
                     }
                 }
-                // If player is outside aggro range, boss returns to idle
-                else if (boss.state != PlayerState.Idle)
-                {
-                    // Return to idle state when no threats nearby
-                    var idleBoss = CreateEnemyUpdate(boss, boss.x, boss.y, boss.moving_right, 
-                        null, false, ctx.Timestamp, PlayerState.Idle);
-                    ctx.Db.Spawn.spawn_id.Update(idleBoss);
-                }
+                
+                // Chase behavior - same as regular enemies
+                (newX, newMovingRight) = CalculateChaseMovement(boss, targetX, targetY, movement, leftBound, rightBound);
             }
-            else if (boss.state != PlayerState.Idle)
+            else if (bossData.Value.ai_behavior == AiBehavior.Patrol && !hasAggro)
             {
-                // No players nearby - return to idle if not already
-                var idleBoss = CreateEnemyUpdate(boss, boss.x, boss.y, boss.moving_right, 
-                    null, false, ctx.Timestamp, PlayerState.Idle);
-                ctx.Db.Spawn.spawn_id.Update(idleBoss);
+                // Patrol behavior - same as regular enemies
+                (newX, newMovingRight) = CalculatePatrolMovement(boss, movement, leftBound, rightBound);
             }
+            else
+            {
+                // Idle - no movement
+                (newX, newMovingRight) = (boss.x, boss.moving_right);
+            }
+            
+            // Update boss if any values changed
+            UpdateEnemyIfChanged(ctx, boss, newX, newMovingRight, newAggroTarget, hasAggro);
         }
     }
 
@@ -790,6 +862,74 @@ public static partial class Module
         }
 
         return nearest;
+    }
+    
+    // Helper method to process boss aggro detection (similar to regular enemies but uses Boss data)
+    private static (bool hasAggro, bool shouldChase, float targetX, float targetY, Identity? aggroTarget) ProcessBossAggroDetection(
+        ReducerContext ctx, Spawn boss, Boss bossData, float leftBound, float rightBound)
+    {
+        var hasAggro = boss.aggro_target.HasValue;
+        var shouldChase = false;
+        var targetX = boss.x;
+        var targetY = boss.y;
+        var newAggroTarget = boss.aggro_target;
+        
+        if (hasAggro)
+        {
+            // Check if aggro target still exists and is in range
+            var aggroPlayer = boss.aggro_target.HasValue ? ctx.Db.Player.identity.Find(boss.aggro_target.Value) : null;
+            if (aggroPlayer != null)
+            {
+                // Maintain aggro if player is within leash distance
+                if (IsPlayerInLeashRange(aggroPlayer.Value.x, aggroPlayer.Value.y, boss.x, boss.y))
+                {
+                    shouldChase = true;
+                    targetX = aggroPlayer.Value.x;
+                    targetY = aggroPlayer.Value.y;
+                }
+                else
+                {
+                    // Player left leash range - clear aggro
+                    hasAggro = false;
+                    newAggroTarget = null;
+                }
+            }
+            else
+            {
+                // Target player disconnected - clear aggro
+                hasAggro = false;
+                newAggroTarget = null;
+            }
+        }
+        else if (bossData.ai_behavior == AiBehavior.Aggressive)
+        {
+            // Check for nearby players within aggro range
+            foreach (var player in ctx.Db.Player.Iter())
+            {
+                // Skip dead players
+                if (player.current_hp <= 0 || player.state == PlayerState.Dead || !player.is_online)
+                    continue;
+                
+                // Calculate distance to player
+                var distance = Math.Sqrt(
+                    Math.Pow(player.x - boss.x, 2) + 
+                    Math.Pow(player.y - boss.y, 2)
+                );
+                
+                // Check if player is within aggro range
+                if (distance <= bossData.aggro_range)
+                {
+                    hasAggro = true;
+                    shouldChase = true;
+                    newAggroTarget = player.identity;
+                    targetX = player.x;
+                    targetY = player.y;
+                    break; // Aggro on first valid target found
+                }
+            }
+        }
+        
+        return (hasAggro, shouldChase, targetX, targetY, newAggroTarget);
     }
 
 
@@ -934,51 +1074,54 @@ public static partial class Module
         return (leftBound, rightBound);
     }
 
-    private static void ExecuteBossAttack(ReducerContext ctx, Spawn boss, Boss bossData)
+    private static void ExecuteBossAttack(ReducerContext ctx, Spawn boss, Boss bossData, BossAttack selectedAttack)
     {
-        // 1. Get attack3 data from BossAttack table (testing summon attacks)
-        BossAttack? attack1 = null;
-        foreach (var attack in ctx.Db.BossAttack.Iter())
+        // Use the provided selected attack
+        var attack1 = selectedAttack;
+        
+        // 2. Check cooldown using BossAttackState for this specific attack
+        BossAttackState? attackState = null;
+        foreach (var state in ctx.Db.BossAttackState.Iter())
         {
-            if (attack.boss_id == boss.enemy && attack.attack_slot == 3) // Changed to slot 3 for testing
+            if (state.spawn_id == boss.spawn_id && state.attack_id == attack1.attack_id)
             {
-                attack1 = attack;
+                attackState = state;
                 break;
             }
         }
         
-        if (attack1 == null)
-        {
-            Log.Warn($"No attack3 found for boss {boss.enemy}");
-            return;
-        }
-        
-        // 2. Check cooldown using BossAttackState
-        var attackState = ctx.Db.BossAttackState.spawn_id.Find(boss.spawn_id);
         if (attackState != null)
         {
-            var cooldownThreshold = attackState.Value.last_used + TimeSpan.FromSeconds(attack1.Value.cooldown);
+            var cooldownThreshold = attackState.Value.last_used + TimeSpan.FromSeconds(attack1.cooldown);
             if (ctx.Timestamp < cooldownThreshold)
             {
-                Log.Info($"Boss {boss.enemy} attack still on cooldown");
+                Log.Info($"Boss {boss.enemy} attack {attack1.attack_slot} still on cooldown");
                 return;
             }
         }
         
-        // 3. Update boss to Attack3 state (testing summon attacks)
+        // 3. Update boss to appropriate attack state based on selected attack
+        var bossAttackState = attack1.attack_slot switch
+        {
+            1 => PlayerState.Attack1,
+            2 => PlayerState.Attack2,
+            3 => PlayerState.Attack3,
+            _ => PlayerState.Attack1
+        };
+        
         var attackingBoss = boss with { 
-            state = PlayerState.Attack3, 
+            state = bossAttackState, 
             last_updated = ctx.Timestamp 
         };
         ctx.Db.Spawn.spawn_id.Update(attackingBoss);
         
-        Log.Info($"Boss {boss.enemy} executing attack3 ({attack1.Value.attack_type}) - Position: ({boss.x}, {boss.y}), Facing: {boss.facing}, Range: {attack1.Value.range}");
+        Log.Info($"Boss {boss.enemy} executing attack{attack1.attack_slot} ({attack1.attack_type}) - Position: ({boss.x}, {boss.y}), Facing: {boss.facing}, Range: {attack1.range}");
         
         // 4. Handle different attack types
-        if (attack1.Value.attack_type == "summon")
+        if (attack1.attack_type == "summon")
         {
             // Summon attacks spawn enemies instead of damaging players
-            ExecuteBossSummon(ctx, boss, attack1.Value);
+            ExecuteBossSummon(ctx, boss, attack1);
         }
         else
         {
@@ -1014,31 +1157,31 @@ public static partial class Module
             // Check if player is within attack range based on attack type
             bool isInRange = false;
             
-            if (attack1.Value.attack_type == "area")
+            if (attack1.attack_type == "area")
             {
                 // Area attacks hit all players within range, regardless of direction
-                if (Math.Abs(xDistance) <= attack1.Value.range)
+                if (Math.Abs(xDistance) <= attack1.range)
                 {
                     isInRange = true;
-                    Log.Info($"Player {player.name} in area attack range - xDistance: {Math.Abs(xDistance)}, range: {attack1.Value.range}");
+                    Log.Info($"Player {player.name} in area attack range - xDistance: {Math.Abs(xDistance)}, range: {attack1.range}");
                 }
                 else
                 {
-                    Log.Info($"Player {player.name} NOT in area range - xDistance: {Math.Abs(xDistance)}, range: {attack1.Value.range}");
+                    Log.Info($"Player {player.name} NOT in area range - xDistance: {Math.Abs(xDistance)}, range: {attack1.range}");
                 }
             }
             else // Default to directional for "directional" or any other type
             {
                 // Directional attacks only hit players in front of the boss
-                if (boss.facing == FacingDirection.Right && xDistance > 0 && xDistance <= attack1.Value.range)
+                if (boss.facing == FacingDirection.Right && xDistance > 0 && xDistance <= attack1.range)
                 {
                     isInRange = true;
-                    Log.Info($"Player {player.name} is in front (right) - xDistance: {xDistance}, range: {attack1.Value.range}");
+                    Log.Info($"Player {player.name} is in front (right) - xDistance: {xDistance}, range: {attack1.range}");
                 }
-                else if (boss.facing == FacingDirection.Left && xDistance < 0 && Math.Abs(xDistance) <= attack1.Value.range)
+                else if (boss.facing == FacingDirection.Left && xDistance < 0 && Math.Abs(xDistance) <= attack1.range)
                 {
                     isInRange = true;
-                    Log.Info($"Player {player.name} is in front (left) - xDistance: {xDistance}, range: {attack1.Value.range}");
+                    Log.Info($"Player {player.name} is in front (left) - xDistance: {xDistance}, range: {attack1.range}");
                 }
                 else
                 {
@@ -1060,7 +1203,7 @@ public static partial class Module
             var currentPlayer = player; // Local copy for multiple hits
             
             // Apply multiple hits if specified
-            for (int hit = 0; hit < attack1.Value.hits; hit++)
+            for (int hit = 0; hit < attack1.hits; hit++)
             {
                 // Skip if player already died from previous hits
                 if (currentPlayer.current_hp <= 0)
@@ -1069,13 +1212,13 @@ public static partial class Module
                 }
                 
                 // Calculate damage
-                var damage = attack1.Value.damage;
+                var damage = attack1.damage;
                 var newHp = Math.Max(0f, currentPlayer.current_hp - damage);
                 var isDead = newHp <= 0;
                 
                 // Calculate knockback
                 var knockbackDirection = currentPlayer.x > boss.x ? 1 : -1;
-                var knockbackDistance = attack1.Value.knockback;
+                var knockbackDistance = attack1.knockback;
                 var newX = currentPlayer.x + (knockbackDistance * knockbackDirection);
                 
                 // Update player state
@@ -1093,7 +1236,7 @@ public static partial class Module
                     spawn_id = boss.spawn_id,
                     damage_amount = (uint)damage,
                     damage_type = DamageType.Normal,
-                    skill_effect = attack1.Value.skill_effect,
+                    skill_effect = attack1.skill_effect,
                     damage_source = "server_attack", // Need Phase 2 effects
                     timestamp = ctx.Timestamp
                 });
@@ -1101,7 +1244,7 @@ public static partial class Module
                 // Update local player reference for next hit
                 currentPlayer = damagedPlayer;
                 
-                Log.Info($"Boss {boss.enemy} hit player {currentPlayer.name} for {damage} damage (hit {hit + 1}/{attack1.Value.hits})");
+                Log.Info($"Boss {boss.enemy} hit player {currentPlayer.name} for {damage} damage (hit {hit + 1}/{attack1.hits})");
                 
                 // Enter combat for the player
                 if (!isDead)
@@ -1111,26 +1254,28 @@ public static partial class Module
             }
         }
         
-        // 6. Update or create attack cooldown state
-        if (attackState != null)
-        {
-            ctx.Db.BossAttackState.spawn_id.Update(attackState.Value with { 
-                last_used = ctx.Timestamp 
-            });
-        }
-        else
-        {
-            ctx.Db.BossAttackState.Insert(new BossAttackState {
-                spawn_id = boss.spawn_id,
-                attack_id = attack1.Value.attack_id,
-                last_used = ctx.Timestamp
-            });
-        }
-        
             if (playersHit.Count > 0)
             {
                 Log.Info($"Boss {boss.enemy} attack3 hit {playersHit.Count} players");
             }
         } // End of damage-based attacks
+        
+        // 6. Update or create attack cooldown state (applies to ALL attack types)
+        if (attackState != null)
+        {
+            ctx.Db.BossAttackState.state_id.Update(attackState.Value with { 
+                last_used = ctx.Timestamp 
+            });
+            Log.Info($"Updated cooldown for boss {boss.enemy} attack {attack1.attack_slot} (ID: {attack1.attack_id}) - cooldown: {attack1.cooldown}s");
+        }
+        else
+        {
+            ctx.Db.BossAttackState.Insert(new BossAttackState {
+                spawn_id = boss.spawn_id,
+                attack_id = attack1.attack_id,
+                last_used = ctx.Timestamp
+            });
+            Log.Info($"Created new cooldown for boss {boss.enemy} attack {attack1.attack_slot} (ID: {attack1.attack_id}) - cooldown: {attack1.cooldown}s");
+        }
     }
 }

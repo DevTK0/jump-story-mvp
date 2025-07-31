@@ -85,6 +85,11 @@ export class AssetLoaderService {
           animKey = `projectile_${spriteKey}`;
         }
         
+        // Check if this is a respawn effect or skill effect (shouldn't loop)
+        const isRespawnEffect = (this.spriteConfig.sprites as any).respawnEffects?.[spriteKey];
+        const isSkillEffect = (this.spriteConfig.sprites as any).skillEffects?.[spriteKey];
+        const shouldLoop = !isRespawnEffect && !isSkillEffect;
+        
         this.scene.anims.create({
           key: animKey,
           frames: this.scene.anims.generateFrameNumbers(spriteKey, {
@@ -92,7 +97,7 @@ export class AssetLoaderService {
             end: playAnim.play.end,
           }),
           frameRate: playAnim.play.frameRate,
-          repeat: -1, // Loop forever
+          repeat: shouldLoop ? -1 : 0, // Only loop projectiles and other continuous effects
         });
       }
     });
@@ -144,13 +149,18 @@ export class AssetLoaderService {
     if ((this.spriteConfig.sprites as any).effects) {
       spriteConfigLoader.loadSpritesForCategory(this.scene, 'effects');
     }
+    
+    if ((this.spriteConfig.sprites as any).respawnEffects) {
+      spriteConfigLoader.loadSpritesForCategory(this.scene, 'respawnEffects');
+    }
   }
   
   
   private isEffectSprite(spriteKey: string): boolean {
-    // Check if sprite exists in effects category
+    // Check if sprite exists in effects or respawnEffects category
     const effects = (this.spriteConfig.sprites as any).effects;
-    return effects && spriteKey in effects;
+    const respawnEffects = (this.spriteConfig.sprites as any).respawnEffects;
+    return (effects && spriteKey in effects) || (respawnEffects && spriteKey in respawnEffects);
   }
   
   private loadEmotes(): void {

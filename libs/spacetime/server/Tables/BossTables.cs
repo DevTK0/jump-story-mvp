@@ -51,7 +51,8 @@ public static partial class Module
     [Table(Name = "BossAttackState", Public = true)]
     public partial struct BossAttackState
     {
-        [PrimaryKey]
+        [PrimaryKey, AutoInc]
+        public uint state_id;            // Unique state ID
         public uint spawn_id;            // Boss spawn instance
         public uint attack_id;           // Which attack
         public Timestamp last_used;      // When last used

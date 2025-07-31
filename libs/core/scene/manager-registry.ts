@@ -5,7 +5,7 @@ import { PeerManager } from '@/peer';
 import { PhysicsSetupCoordinator } from '@/core/physics/physics-setup-coordinator';
 import { MapPhysicsFactory } from '@/core/physics/map-physics-factory';
 import { InteractionHandler } from '@/networking';
-import { EnemyDamageRenderer, PlayerDamageRenderer, SkillEffectRenderer } from '@/player';
+import { EnemyDamageRenderer, PlayerDamageRenderer, SkillEffectRenderer, RespawnEffectRenderer } from '@/player';
 import { LevelUpAnimationManager, ChatManager } from '@/ui';
 import { Player } from '@/player';
 import { TeleportStoneManager } from '@/teleport/teleport-stone-manager';
@@ -38,6 +38,7 @@ export class ManagerRegistry {
   private enemyDamageManager!: EnemyDamageRenderer;
   private playerDamageManager!: PlayerDamageRenderer;
   private skillEffectManager!: SkillEffectRenderer;
+  private respawnEffectManager!: RespawnEffectRenderer;
   private levelUpAnimationManager!: LevelUpAnimationManager;
   private chatManager!: ChatManager;
   private teleportStoneManager!: TeleportStoneManager;
@@ -159,6 +160,7 @@ export class ManagerRegistry {
     this.chatManager?.destroy();
     this.levelUpAnimationManager?.destroy();
     this.skillEffectManager?.destroy();
+    this.respawnEffectManager?.destroy();
     this.playerDamageManager?.destroy();
     this.enemyDamageManager?.destroy();
     this.teleportStoneManager?.destroy();
@@ -209,6 +211,9 @@ export class ManagerRegistry {
     
     // Skill effect renderer
     this.skillEffectManager = new SkillEffectRenderer(this.scene);
+    
+    // Respawn effect renderer
+    this.respawnEffectManager = new RespawnEffectRenderer(this.scene, config.player);
   }
   
   private createUIManagers(): void {
@@ -237,6 +242,9 @@ export class ManagerRegistry {
     });
     this.peerManager.setLocalPlayerIdentity(identity);
     this.peerManager.setDbConnection(connection);
+    
+    // Set peer manager on player damage renderer for skill effects
+    this.playerDamageManager.setPeerManager(this.peerManager);
     
     // Initialize level up manager with identity
     this.levelUpAnimationManager.initialize(connection, identity);
@@ -317,6 +325,10 @@ export class ManagerRegistry {
   
   getSkillEffectManager(): SkillEffectRenderer {
     return this.skillEffectManager;
+  }
+  
+  getRespawnEffectManager(): RespawnEffectRenderer {
+    return this.respawnEffectManager;
   }
   
   getPhysicsManager(): PhysicsSetupCoordinator {

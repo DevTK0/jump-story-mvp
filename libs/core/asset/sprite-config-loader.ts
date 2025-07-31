@@ -13,6 +13,7 @@ export interface SpriteDefinition {
   frameWidth: number;
   frameHeight: number;
   animations: FlexibleAnimationSet;
+  scale?: number; // Optional scale for the sprite
 }
 
 export interface SpriteConfig {

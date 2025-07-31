@@ -1,0 +1,1 @@
+export { RespawnEffectRenderer } from './respawn-effect-renderer';

@@ -339,6 +339,7 @@ export const projectileSprites: Record<string, SpriteDefinition> = {
     path: 'assets/spritesheet/projectiles/Arrow01(32x32).png',
     frameWidth: 32,
     frameHeight: 32,
+    scale: 2, // Scale arrows to 64x64
     animations: {
       play: { start: 0, end: 0, frameRate: 1 }, // Static sprite
     },
@@ -347,6 +348,7 @@ export const projectileSprites: Record<string, SpriteDefinition> = {
     path: 'assets/spritesheet/projectiles/Arrow02(32x32).png',
     frameWidth: 32,
     frameHeight: 32,
+    scale: 2, // Scale arrows to 64x64
     animations: {
       play: { start: 0, end: 0, frameRate: 1 }, // Static sprite
     },
@@ -355,6 +357,7 @@ export const projectileSprites: Record<string, SpriteDefinition> = {
     path: 'assets/spritesheet/projectiles/Arrow03(32x32).png',
     frameWidth: 32,
     frameHeight: 32,
+    scale: 2, // Scale arrows to 64x64
     animations: {
       play: { start: 0, end: 0, frameRate: 1 }, // Static sprite
     },
@@ -363,6 +366,7 @@ export const projectileSprites: Record<string, SpriteDefinition> = {
     path: 'assets/spritesheet/projectiles/fireball.png',
     frameWidth: 100,
     frameHeight: 100,
+    scale: 1.5, // Slightly smaller scale for fireballs
     animations: {
       play: { start: 0, end: 6, frameRate: 20 }, // Static sprite
     },
@@ -375,6 +379,7 @@ export const skillEffectSprites: Record<string, SpriteDefinition> = {
     path: 'assets/spritesheet/effects/freeze.png',
     frameWidth: 100,
     frameHeight: 100,
+    scale: 2, // Default scale for skill effects
     animations: {
       play: { start: 0, end: 9, frameRate: 20 }, // Static sprite for now
     },
@@ -383,6 +388,7 @@ export const skillEffectSprites: Record<string, SpriteDefinition> = {
     path: 'assets/spritesheet/effects/heal.png',
     frameWidth: 100,
     frameHeight: 100,
+    scale: 2, // Default scale for skill effects
     animations: {
       play: { start: 0, end: 3, frameRate: 20 }, // Static sprite for now
     },
@@ -391,8 +397,22 @@ export const skillEffectSprites: Record<string, SpriteDefinition> = {
     path: 'assets/spritesheet/effects/holy.png',
     frameWidth: 100,
     frameHeight: 100,
+    scale: 2, // Default scale for skill effects
     animations: {
       play: { start: 0, end: 4, frameRate: 20 }, // Static sprite for now
+    },
+  },
+};
+
+// Respawn effect sprites
+export const respawnEffectSprites: Record<string, SpriteDefinition> = {
+  respawn: {
+    path: 'assets/spritesheet/effects/Haste.png',
+    frameWidth: 32,
+    frameHeight: 32,
+    scale: 3, // Scale up to 96x96 for visibility
+    animations: {
+      play: { start: 23, end: 0, frameRate: 20 }, // 24 frames total (6x4 grid)
     },
   },
 };
@@ -406,6 +426,7 @@ const spriteConfig: SpriteConfig = {
     objects: objectSprites,
     projectiles: projectileSprites,
     effects: skillEffectSprites,
+    respawnEffects: respawnEffectSprites,
   },
 } as const;
 

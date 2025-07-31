@@ -99,6 +99,9 @@ export class DeathMonitor implements System {
         // Player respawned
         this.isDead = false;
         this.player.transitionToState('Idle');
+        
+        // Play respawn effect if available
+        this.playRespawnEffect();
         break;
 
       case 'none':
@@ -113,6 +116,35 @@ export class DeathMonitor implements System {
 
   public isPlayerDead(): boolean {
     return this.isDead;
+  }
+
+  /**
+   * Play respawn visual effect
+   */
+  private playRespawnEffect(): void {
+    try {
+      console.log('[DeathMonitor] Attempting to play respawn effect');
+      
+      // Access the scene through the player's sprite properties
+      const scene = this.player.scene as any;
+      
+      // Check if the scene has an initializer (PlaygroundScene pattern)
+      if (scene.initializer) {
+        const systems = scene.initializer.getSystems();
+        const respawnEffectManager = systems.managers?.getRespawnEffectManager();
+        
+        if (respawnEffectManager) {
+          console.log('[DeathMonitor] Found respawn effect manager, playing effect');
+          respawnEffectManager.playRespawnEffect();
+        } else {
+          console.warn('[DeathMonitor] Respawn effect manager not found');
+        }
+      } else {
+        console.warn('[DeathMonitor] Scene initializer not found');
+      }
+    } catch (error) {
+      console.warn('[DeathMonitor] Failed to play respawn effect:', error);
+    }
   }
 
   /**

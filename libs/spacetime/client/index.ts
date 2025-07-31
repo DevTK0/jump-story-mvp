@@ -272,9 +272,9 @@ const REMOTE_MODULE = {
     BossAttackState: {
       tableName: "BossAttackState",
       rowType: BossAttackState.getTypeScriptAlgebraicType(),
-      primaryKey: "spawnId",
+      primaryKey: "stateId",
       primaryKeyInfo: {
-        colName: "spawnId",
+        colName: "stateId",
         colType: BossAttackState.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },

@@ -8,6 +8,7 @@ import { EnemyDamageEvent } from '@/spacetime/client';
 import { EnemyManager } from '@/enemy';
 import { PeerManager } from '@/peer';
 import { PROJECTILE_RENDERER_CONFIG } from './projectile-renderer-config';
+import { projectileSprites } from '../../../apps/playground/config/sprite-config';
 
 interface ProjectileState {
   sprite: Phaser.GameObjects.Sprite;
@@ -89,7 +90,11 @@ export class ProjectileRenderer {
     );
 
     projectileSprite.setDepth(PROJECTILE_RENDERER_CONFIG.visual.depth);
-    projectileSprite.setScale(PROJECTILE_RENDERER_CONFIG.visual.scale);
+    
+    // Use scale from sprite config if available
+    const projectileConfig = projectileSprites[damageEvent.projectile];
+    const scale = projectileConfig?.scale || PROJECTILE_RENDERER_CONFIG.visual.scale;
+    projectileSprite.setScale(scale);
     
     // Try to play animation if it exists, otherwise just use the sprite
     const animKey = `projectile_${damageEvent.projectile}`;

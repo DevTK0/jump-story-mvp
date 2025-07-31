@@ -38,6 +38,9 @@ export {
   getDamageStyle,
 } from './combat';
 
+// Effects
+export { RespawnEffectRenderer } from './effects';
+
 // Player services
 export { PlayerQueryService } from './services/player-query-service';
 export { CombatValidationService } from './services/combat-validation-service';

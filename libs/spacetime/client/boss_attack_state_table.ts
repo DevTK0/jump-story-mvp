@@ -60,22 +60,22 @@ export class BossAttackStateTableHandle {
     return this.tableCache.iter();
   }
   /**
-   * Access to the `spawnId` unique index on the table `BossAttackState`,
+   * Access to the `stateId` unique index on the table `BossAttackState`,
    * which allows point queries on the field of the same name
-   * via the [`BossAttackStateSpawnIdUnique.find`] method.
+   * via the [`BossAttackStateStateIdUnique.find`] method.
    *
    * Users are encouraged not to explicitly reference this type,
    * but to directly chain method calls,
-   * like `ctx.db.bossAttackState.spawnId().find(...)`.
+   * like `ctx.db.bossAttackState.stateId().find(...)`.
    *
-   * Get a handle on the `spawnId` unique index on the table `BossAttackState`.
+   * Get a handle on the `stateId` unique index on the table `BossAttackState`.
    */
-  spawnId = {
-    // Find the subscribed row whose `spawnId` column value is equal to `col_val`,
+  stateId = {
+    // Find the subscribed row whose `stateId` column value is equal to `col_val`,
     // if such a row is present in the client cache.
     find: (col_val: number): BossAttackState | undefined => {
       for (let row of this.tableCache.iter()) {
-        if (deepEqual(row.spawnId, col_val)) {
+        if (deepEqual(row.stateId, col_val)) {
           return row;
         }
       }

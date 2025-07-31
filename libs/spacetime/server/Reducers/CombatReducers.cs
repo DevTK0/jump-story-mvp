@@ -382,12 +382,12 @@ public static partial class Module
         {
             if (attackState.spawn_id == boss.spawn_id)
             {
-                attackStatesToRemove.Add(attackState.spawn_id);
+                attackStatesToRemove.Add(attackState.state_id);
             }
         }
-        foreach (var spawnId in attackStatesToRemove)
+        foreach (var stateId in attackStatesToRemove)
         {
-            ctx.Db.BossAttackState.spawn_id.Delete(spawnId);
+            ctx.Db.BossAttackState.state_id.Delete(stateId);
         }
         Log.Info($"Cleaned up {attackStatesToRemove.Count} BossAttackState entries for boss {boss.spawn_id}");
         

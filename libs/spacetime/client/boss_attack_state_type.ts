@@ -33,6 +33,7 @@ import {
   type SubscriptionEventContextInterface,
 } from "@clockworklabs/spacetimedb-sdk";
 export type BossAttackState = {
+  stateId: number,
   spawnId: number,
   attackId: number,
   lastUsed: Timestamp,
@@ -48,6 +49,7 @@ export namespace BossAttackState {
   */
   export function getTypeScriptAlgebraicType(): AlgebraicType {
     return AlgebraicType.createProductType([
+      new ProductTypeElement("stateId", AlgebraicType.createU32Type()),
       new ProductTypeElement("spawnId", AlgebraicType.createU32Type()),
       new ProductTypeElement("attackId", AlgebraicType.createU32Type()),
       new ProductTypeElement("lastUsed", AlgebraicType.createTimestampType()),
