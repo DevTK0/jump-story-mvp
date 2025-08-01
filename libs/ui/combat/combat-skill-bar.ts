@@ -19,6 +19,7 @@ export class CombatSkillBar {
   private skillCooldowns: Map<number, { startTime: number; duration: number }> = new Map();
   
   constructor(scene: Phaser.Scene) {
+    console.log('[CombatSkillBar] Constructor called');
     this.scene = scene;
     this.logger = createLogger('CombatSkillBar');
     
@@ -26,8 +27,16 @@ export class CombatSkillBar {
     this.tooltip = CombatSkillTooltip.getInstance(scene);
     
     // Get database connection
-    const context = UIContextService.getInstance();
-    this.dbConnection = context.getDbConnection();
+    console.log('[CombatSkillBar] Getting UIContextService instance...');
+    let context;
+    try {
+      context = UIContextService.getInstance();
+      this.dbConnection = context.getDbConnection();
+      console.log('[CombatSkillBar] Got connection:', !!this.dbConnection);
+    } catch (error) {
+      console.error('[CombatSkillBar] Error getting UIContextService:', error);
+      return;
+    }
     
     // Create main container
     this.createContainer();

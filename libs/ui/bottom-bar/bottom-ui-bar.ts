@@ -34,13 +34,25 @@ export class BottomUIBar {
   private jobTableData: any[] = [];
 
   constructor(scene: Phaser.Scene) {
+    console.log('[BottomUIBar] Constructor called');
     this.scene = scene;
     
     // Get data from context service
-    const context = UIContextService.getInstance();
-    const identity = context.getPlayerIdentity();
+    console.log('[BottomUIBar] Getting UIContextService instance...');
+    let context;
+    let identity;
+    
+    try {
+      context = UIContextService.getInstance();
+      console.log('[BottomUIBar] Got context, getting player identity...');
+      identity = context.getPlayerIdentity();
+    } catch (error) {
+      console.error('[BottomUIBar] Error getting UIContextService or identity:', error);
+      return;
+    }
     
     if (!identity) {
+      console.log('[BottomUIBar] No identity available, will wait...');
       this.logger.debug('Player identity not available in UIContextService, waiting...');
       // Create minimal UI that will be updated when identity is available
       this.createContainer();
@@ -48,6 +60,8 @@ export class BottomUIBar {
       this.waitForIdentity();
       return;
     }
+    
+    console.log('[BottomUIBar] Identity available, proceeding with full initialization');
     
     this.playerIdentity = identity;
     this.dbConnection = context.getDbConnection();
@@ -398,14 +412,17 @@ export class BottomUIBar {
   }
 
   private waitForIdentity(): void {
+    console.log('[BottomUIBar] waitForIdentity started');
     const context = UIContextService.getInstance();
     
     // Check periodically for identity
     const checkInterval = this.scene.time.addEvent({
       delay: 100,
       callback: () => {
+        console.log('[BottomUIBar] Checking for identity...');
         const identity = context.getPlayerIdentity();
         if (identity) {
+          console.log('[BottomUIBar] Identity found, initializing full UI');
           this.logger.debug('Player identity now available, initializing UI');
           this.playerIdentity = identity;
           this.dbConnection = context.getDbConnection();

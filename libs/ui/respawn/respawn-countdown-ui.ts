@@ -27,17 +27,31 @@ export class RespawnCountdownUI {
   private updateInterval?: number;
 
   constructor(scene: Phaser.Scene) {
+    console.log('[RespawnCountdownUI] Constructor called');
     this.scene = scene;
     
     // Get data from context service
-    const context = UIContextService.getInstance();
-    const identity = context.getPlayerIdentity();
+    console.log('[RespawnCountdownUI] Getting UIContextService instance...');
+    let context;
+    let identity;
+    
+    try {
+      context = UIContextService.getInstance();
+      console.log('[RespawnCountdownUI] Got context, getting player identity...');
+      identity = context.getPlayerIdentity();
+    } catch (error) {
+      console.error('[RespawnCountdownUI] Error getting UIContextService or identity:', error);
+      return;
+    }
     
     if (!identity) {
+      console.log('[RespawnCountdownUI] No identity available, will wait...');
       this.logger.debug('Player identity not available yet, waiting...');
       this.waitForIdentity();
       return;
     }
+    
+    console.log('[RespawnCountdownUI] Identity available, proceeding with full initialization');
     
     this.playerIdentity = identity;
     this.dbConnection = context.getDbConnection();
