@@ -3,6 +3,8 @@ import { Player } from '../player';
 import type { System } from '@/core/types';
 import { PlayerQueryService } from '../services/player-query-service';
 import { DeathStateService } from './death-state-service';
+import { emitSceneEvent } from '@/core/scene/scene-events';
+import { createLogger, type ModuleLogger } from '@/core/logger';
 
 /**
  * Monitors player health and manages death state transitions
@@ -13,17 +15,19 @@ export class DeathMonitor implements System {
   private isDead: boolean = false;
   private playerQueryService: PlayerQueryService | null = null;
   private deathStateService: DeathStateService;
+  private logger: ModuleLogger;
 
   constructor(player: Player) {
     this.player = player;
     this.deathStateService = new DeathStateService(player);
+    this.logger = createLogger('DeathMonitor');
   }
 
   public setDbConnection(connection: DbConnection): void {
     this.dbConnection = connection;
     this.playerQueryService = PlayerQueryService.getInstance();
     if (!this.playerQueryService) {
-      console.error('❌ DeathMonitor: PlayerQueryService singleton not available');
+      this.logger.error('DeathMonitor: PlayerQueryService singleton not available');
       return;
     }
 
@@ -93,12 +97,22 @@ export class DeathMonitor implements System {
         // Player died - all death actions have the same effect
         this.isDead = true;
         this.player.transitionToState('Dead');
+        
+        // Emit death event for audio system
+        emitSceneEvent(this.player.scene, 'player:died', {
+          position: { x: this.player.x, y: this.player.y }
+        });
         break;
 
       case 'respawn':
         // Player respawned
         this.isDead = false;
         this.player.transitionToState('Idle');
+        
+        // Emit respawn event for audio system
+        emitSceneEvent(this.player.scene, 'player:respawned', {
+          position: { x: this.player.x, y: this.player.y }
+        });
         
         // Play respawn effect if available
         this.playRespawnEffect();
@@ -123,7 +137,7 @@ export class DeathMonitor implements System {
    */
   private playRespawnEffect(): void {
     try {
-      console.log('[DeathMonitor] Attempting to play respawn effect');
+      this.logger.debug('Attempting to play respawn effect');
       
       // Access the scene through the player's sprite properties
       const scene = this.player.scene as any;
@@ -134,16 +148,16 @@ export class DeathMonitor implements System {
         const respawnEffectManager = systems.managers?.getRespawnEffectManager();
         
         if (respawnEffectManager) {
-          console.log('[DeathMonitor] Found respawn effect manager, playing effect');
+          this.logger.debug('Found respawn effect manager, playing effect');
           respawnEffectManager.playRespawnEffect();
         } else {
-          console.warn('[DeathMonitor] Respawn effect manager not found');
+          this.logger.warn('Respawn effect manager not found');
         }
       } else {
-        console.warn('[DeathMonitor] Scene initializer not found');
+        this.logger.warn('Scene initializer not found');
       }
     } catch (error) {
-      console.warn('[DeathMonitor] Failed to play respawn effect:', error);
+      this.logger.warn('Failed to play respawn effect:', error);
     }
   }
 

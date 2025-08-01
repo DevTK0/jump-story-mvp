@@ -13,6 +13,10 @@ export interface EnemyAttribute {
     boss_to_spawn: string;
     required_kills: number;
   };
+  audio?: {
+    on_damaged?: string;
+    on_death?: string;
+  };
 }
 
 export interface EnemyAttributes {
@@ -37,6 +41,10 @@ export const enemyAttributes: EnemyAttributes = {
       boss_trigger: {
         boss_to_spawn: 'orc-rider',
         required_kills: 1,
+      },
+      audio: {
+        on_damaged: 'enemyHit',
+        on_death: 'enemyDeath',
       },
     },
     'armored-orc': {
@@ -206,6 +214,13 @@ export interface BossAttribute {
     attack2?: BossAttack;
     attack3?: BossAttack;
   };
+  audio?: {
+    on_damaged?: string;
+    on_death?: string;
+    attack1?: string;
+    attack2?: string;
+    attack3?: string;
+  };
 }
 
 export interface BossAttributes {
@@ -227,6 +242,13 @@ export const bossAttributes: BossAttributes = {
       aggro_range: 500,
       level: 10,
       exp_reward: 1000,
+      audio: {
+        on_damaged: 'bossHit',
+        on_death: 'bossDeath',
+        attack1: 'bossAttack1',
+        attack2: 'bossAttack2',
+        attack3: 'bossAttack3',
+      },
       attacks: {
         attack1: {
           attackType: 'directional' as const,
@@ -272,6 +294,13 @@ export const bossAttributes: BossAttributes = {
       aggro_range: 400,
       level: 12,
       exp_reward: 1500,
+      audio: {
+        on_damaged: 'bossHit',
+        on_death: 'bossDeath',
+        attack1: 'bossAttack1',
+        attack2: 'bossAttack2',
+        attack3: 'bossAttack3',
+      },
       attacks: {
         attack1: {
           attackType: 'directional' as const,
@@ -318,6 +347,13 @@ export const bossAttributes: BossAttributes = {
       aggro_range: 400,
       level: 15,
       exp_reward: 2000,
+      audio: {
+        on_damaged: 'bossHit',
+        on_death: 'bossDeath',
+        attack1: 'bossAttack1',
+        attack2: 'bossAttack2',
+        attack3: 'bossAttack3',
+      },
       attacks: {
         attack1: {
           attackType: 'directional' as const,
@@ -363,6 +399,13 @@ export const bossAttributes: BossAttributes = {
       aggro_range: 600,
       level: 18,
       exp_reward: 3000,
+      audio: {
+        on_damaged: 'bossHit',
+        on_death: 'bossDeath',
+        attack1: 'bossAttack1',
+        attack2: 'bossAttack2',
+        attack3: 'bossAttack3',
+      },
       attacks: {
         attack1: {
           attackType: 'directional' as const,
@@ -409,6 +452,13 @@ export const bossAttributes: BossAttributes = {
       aggro_range: 500,
       level: 20,
       exp_reward: 5000,
+      audio: {
+        on_damaged: 'bossHit',
+        on_death: 'bossDeath',
+        attack1: 'bossAttack1',
+        attack2: 'bossAttack2',
+        attack3: 'bossAttack3',
+      },
       attacks: {
         attack1: {
           attackType: 'directional' as const,

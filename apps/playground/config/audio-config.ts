@@ -9,17 +9,22 @@ export const skillEffectAudio: Record<string, AudioDefinition> = {
     volume: 0.5,
     loop: false,
   },
-  // Add more skill sounds here as needed
-  // skill2: { path: 'assets/audio/skills/skill2.mp3', volume: 0.5 },
-  // skill3: { path: 'assets/audio/skills/skill3.mp3', volume: 0.5 },
 };
 
 /**
  * UI sound effects
  */
-export const uiAudio: Record<string, AudioDefinition> = {
-  // buttonClick: { path: 'assets/audio/ui/button_click.mp3', volume: 0.3 },
-  // menuOpen: { path: 'assets/audio/ui/menu_open.mp3', volume: 0.4 },
+export const uiAudio: Record<string, AudioDefinition> = {};
+
+/**
+ * Player event sound effects
+ */
+export const playerAudio: Record<string, AudioDefinition> = {
+  death: { path: 'assets/audio/skills/skill1.mp3', volume: 0.4, loop: false },
+  respawn: { path: 'assets/audio/skills/skill1.mp3', volume: 0.5, loop: false },
+  classChange: { path: 'assets/audio/skills/skill1.mp3', volume: 0.6, loop: false },
+  jump: { path: 'assets/audio/skills/skill1.mp3', volume: 0.3, loop: false },
+  teleportUnlock: { path: 'assets/audio/skills/skill1.mp3', volume: 0.7, loop: false },
 };
 
 /**
@@ -31,13 +36,28 @@ export const musicAudio: Record<string, AudioDefinition> = {
 };
 
 /**
+ * Enemy sound effects
+ */
+export const enemyAudio: Record<string, AudioDefinition> = {
+  enemyHit: { path: 'assets/audio/skills/enemy-hit.mp3', volume: 0.3, loop: false },
+  enemyDeath: { path: 'assets/audio/skills/enemy-death.mp3', volume: 0.4, loop: false },
+  bossHit: { path: 'assets/audio/skills/boss-hit.mp3', volume: 0.35, loop: false },
+  bossDeath: { path: 'assets/audio/skills/boss-death.mp3', volume: 0.5, loop: false },
+  bossAttack1: { path: 'assets/audio/skills/boss-attack.mp3', volume: 0.5, loop: false },
+  bossAttack2: { path: 'assets/audio/skills/boss-attack.mp3', volume: 0.5, loop: false },
+  bossAttack3: { path: 'assets/audio/skills/boss-attack.mp3', volume: 0.5, loop: false },
+};
+
+/**
  * Complete audio configuration
  */
 const audioConfig: AudioConfig = {
   audio: {
     skills: skillEffectAudio,
     ui: uiAudio,
+    player: playerAudio,
     music: musicAudio,
+    enemies: enemyAudio,
   },
 } as const;
 
@@ -47,4 +67,5 @@ export default audioConfig;
 // Type exports for better type inference
 export type SkillEffectAudioKey = keyof typeof skillEffectAudio;
 export type UIAudioKey = keyof typeof uiAudio;
+export type PlayerAudioKey = keyof typeof playerAudio;
 export type MusicAudioKey = keyof typeof musicAudio;

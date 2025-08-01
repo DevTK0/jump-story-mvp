@@ -44,6 +44,10 @@ export interface SceneEventMap {
     unlockStatus: Map<string, boolean>;
     locations: Teleport[];
   };
+  'teleport:unlocked': {
+    locationId: string;
+    locationName: string;
+  };
   'boss:spawned': {
     enemy: string;
     spawnId: number;
@@ -52,6 +56,16 @@ export interface SceneEventMap {
   };
   'boss:despawned': {
     spawnId: number;
+  };
+  'player:jumped': {
+    position: { x: number; y: number };
+  };
+  'player:respawned': {
+    position: { x: number; y: number };
+  };
+  'player:class-changed': {
+    oldClass: string;
+    newClass: string;
   };
   // Add more events here as the game grows
 }

@@ -10,6 +10,7 @@ import { FacingDirection } from '@/spacetime/client';
 import { createLogger } from '@/core/logger';
 import { stateValidator } from '@/core/state-validator';
 import { MovementStateTracker } from './movement-state-tracker';
+import { emitSceneEvent } from '@/core/scene/scene-events';
 
 export class MovementSystem extends BaseDebugRenderer implements System, IDebuggable {
   private player: Player;
@@ -107,6 +108,11 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
 
   private jump(): void {
     this.player.body.setVelocityY(-this.player.getJumpSpeed());
+    
+    // Emit jump event for audio system
+    emitSceneEvent(this.player.scene, 'player:jumped', {
+      position: { x: this.player.x, y: this.player.y }
+    });
   }
 
   private handleDoubleJump(): void {
@@ -121,6 +127,11 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
     ) {
       this.player.body.setVelocityY(-this.player.getJumpSpeed());
       this.stateTracker.setHasUsedDoubleJump(true);
+      
+      // Emit jump event for audio system (double jump)
+      emitSceneEvent(this.player.scene, 'player:jumped', {
+        position: { x: this.player.x, y: this.player.y }
+      });
     }
 
     // Reset double jump when landing

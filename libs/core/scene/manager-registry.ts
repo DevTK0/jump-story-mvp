@@ -7,15 +7,17 @@ import { MapPhysicsFactory } from '@/core/physics/map-physics-factory';
 import { InteractionHandler } from '@/networking';
 import { EnemyDamageRenderer, PlayerDamageRenderer, SkillEffectRenderer, RespawnEffectRenderer } from '@/player';
 import { LevelUpAnimationManager, ChatManager } from '@/ui';
-import { Player } from '@/player';
 import { SkillAudioService } from '@/player/services/skill-audio-service';
 import { MusicManagerService } from '@/player/services/music-manager-service';
+import { PlayerEventAudioService } from '@/player/services/player-event-audio-service';
+import { EnemyAudioService } from '@/enemy/services/enemy-audio-service';
 import { TeleportStoneManager } from '@/teleport/teleport-stone-manager';
 import type { MapData } from '../asset/map-loader';
 import { DbConnection } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { PROXIMITY_CONFIG } from '@/networking/proximity-config';
 import { CAMERA_CONFIG } from '../camera-config';
+import type { Player } from '@/player';
 
 export interface ManagerInitConfig {
   mapData: MapData;
@@ -46,6 +48,8 @@ export class ManagerRegistry {
   private teleportStoneManager!: TeleportStoneManager;
   private skillAudioService!: SkillAudioService;
   private musicManagerService!: MusicManagerService;
+  private playerEventAudioService!: PlayerEventAudioService;
+  private enemyAudioService!: EnemyAudioService;
   
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -160,7 +164,15 @@ export class ManagerRegistry {
   destroy(): void {
     this.logger.info('Destroying managers...');
     
+    // Remove registry event listeners
+    this.scene.registry.events.off('enemy:spawned');
+    this.scene.registry.events.off('enemy:despawned');
+    this.scene.registry.events.off('enemy:died');
+    this.scene.registry.events.off('boss:attack');
+    
     // Cleanup in reverse order of creation
+    this.enemyAudioService?.destroy();
+    this.playerEventAudioService?.destroy();
     this.musicManagerService?.destroy();
     this.skillAudioService?.destroy();
     this.chatManager?.destroy();
@@ -234,6 +246,12 @@ export class ManagerRegistry {
     
     // Music manager service
     this.musicManagerService = new MusicManagerService(this.scene);
+    
+    // Player event audio service
+    this.playerEventAudioService = new PlayerEventAudioService(this.scene);
+    
+    // Enemy audio service
+    this.enemyAudioService = new EnemyAudioService(this.scene);
   }
   
   private setupDatabaseConnections(connection: DbConnection, identity: Identity): void {
@@ -289,6 +307,30 @@ export class ManagerRegistry {
       // Initialize skill effect renderer with managers
       this.skillEffectManager.initialize(this.peerManager, this.enemyManager);
     }
+    
+    // Connect enemy audio service with managers
+    this.enemyAudioService.setEnemyManager(this.enemyManager);
+    this.enemyAudioService.setBossManager(this.bossManager);
+    
+    // Listen for enemy spawn events to register with audio service
+    this.scene.registry.events.on('enemy:spawned', (spawnId: number, enemyType: string) => {
+      this.enemyAudioService.registerEnemySpawn(spawnId, enemyType);
+    });
+    
+    // Listen for enemy despawn events
+    this.scene.registry.events.on('enemy:despawned', (spawnId: number) => {
+      this.enemyAudioService.unregisterEnemy(spawnId);
+    });
+    
+    // Listen for enemy death events
+    this.scene.registry.events.on('enemy:died', (spawnId: number) => {
+      this.enemyAudioService.playEnemyDeathSound(spawnId);
+    });
+    
+    // Listen for boss attack events
+    this.scene.registry.events.on('boss:attack', (spawnId: number, attackNumber: 1 | 2 | 3) => {
+      this.enemyAudioService.playBossAttackSound(spawnId, attackNumber);
+    });
   }
   
   private setupDamageEventSubscription(connection: DbConnection): void {
@@ -305,6 +347,9 @@ export class ManagerRegistry {
       
       // Handle hit animation for bosses
       this.bossManager.playHitAnimation(damageEvent.spawnId);
+      
+      // Handle damage sound
+      this.enemyAudioService.playEnemyDamageSound(damageEvent.spawnId);
     });
   }
   
@@ -356,5 +401,9 @@ export class ManagerRegistry {
   
   getTeleportStoneManager(): TeleportStoneManager {
     return this.teleportStoneManager;
+  }
+  
+  getPlayerEventAudioService(): PlayerEventAudioService {
+    return this.playerEventAudioService;
   }
 }

@@ -8,6 +8,7 @@ import { Player } from '../player';
 import { PlayerQueryService } from '../services/player-query-service';
 import { PositionReconciliationService } from '../movement/position-reconciliation-service';
 import { PLAYER_CONFIG } from '../config';
+import { emitSceneEvent } from '@/core/scene/scene-events';
 
 export interface SyncConfig {
   positionThreshold: number;
@@ -107,6 +108,7 @@ export class SyncManager {
   }
 
   private handleJobChange(newJob: string): void {
+    const oldJob = this.currentPlayerJob;
     this.currentPlayerJob = newJob;
 
     // Update player texture/sprite
@@ -117,6 +119,12 @@ export class SyncManager {
     if (this.player.scene.anims.exists(animKey)) {
       this.player.play(animKey);
     }
+    
+    // Emit scene event for audio system
+    emitSceneEvent(this.player.scene, 'player:class-changed', {
+      oldClass: oldJob,
+      newClass: newJob
+    });
 
     // Emit event for other systems to handle job change
     this.player.emit('jobChanged', newJob);

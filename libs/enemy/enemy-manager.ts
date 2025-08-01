@@ -118,6 +118,9 @@ export class EnemyManager implements PhysicsEntity {
     
     // Mark enemy as spawned in registry for proximity buffer zone
     this.scene.registry.set(`enemy_spawned_${serverEnemy.spawnId}`, true);
+    
+    // Emit spawn event for audio service
+    this.scene.registry.events.emit('enemy:spawned', serverEnemy.spawnId, serverEnemy.enemy);
 
     // Register movement interpolation callback
     this.movementManager.registerInterpolationCallback(serverEnemy.spawnId, (x: number) => {
@@ -143,6 +146,9 @@ export class EnemyManager implements PhysicsEntity {
     
     // Clear spawned flag from registry
     this.scene.registry.remove(`enemy_spawned_${spawnId}`);
+    
+    // Emit despawn event for audio service
+    this.scene.registry.events.emit('enemy:despawned', spawnId);
 
     // Despawn the enemy
     this.spawnManager.despawnEnemy(spawnId);
@@ -184,6 +190,8 @@ export class EnemyManager implements PhysicsEntity {
       // Hide health bar when enemy dies
       if (currentState.tag === 'Dead' && healthBar) {
         healthBar.hide();
+        // Emit death event for audio service
+        this.scene.registry.events.emit('enemy:died', serverEnemy.spawnId);
       }
     }
 

@@ -84,6 +84,15 @@ export class TeleportStoneManager {
   private handlePlayerTeleportInsert(playerTeleport: PlayerTeleport): void {
     this.playerUnlockStatus.set(playerTeleport.locationName, playerTeleport.isUnlocked);
     this.spriteManager.updateTeleportSprite(playerTeleport.locationName, playerTeleport.isUnlocked);
+    
+    // Emit unlock event if this is an unlock
+    if (playerTeleport.isUnlocked) {
+      emitSceneEvent(this.scene, 'teleport:unlocked', {
+        locationId: playerTeleport.locationName,
+        locationName: playerTeleport.locationName
+      });
+    }
+    
     this.emitTeleportDataUpdate();
   }
 
@@ -91,8 +100,18 @@ export class TeleportStoneManager {
    * Handle player teleport unlock status update
    */
   private handlePlayerTeleportUpdate(playerTeleport: PlayerTeleport): void {
+    const wasUnlocked = this.playerUnlockStatus.get(playerTeleport.locationName) || false;
     this.playerUnlockStatus.set(playerTeleport.locationName, playerTeleport.isUnlocked);
     this.spriteManager.updateTeleportSprite(playerTeleport.locationName, playerTeleport.isUnlocked);
+    
+    // Emit unlock event if status changed from locked to unlocked
+    if (!wasUnlocked && playerTeleport.isUnlocked) {
+      emitSceneEvent(this.scene, 'teleport:unlocked', {
+        locationId: playerTeleport.locationName,
+        locationName: playerTeleport.locationName
+      });
+    }
+    
     this.emitTeleportDataUpdate();
   }
 

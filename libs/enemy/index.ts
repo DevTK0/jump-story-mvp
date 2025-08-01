@@ -4,6 +4,7 @@ export { EnemyManager } from './enemy-manager';
 export { BossManager } from './boss-manager';
 export type { EnemySubscriptionConfig } from './managers/enemy-subscription-manager';
 export { EnemyStateManager, type EnemyStateService } from './state/enemy-state-service';
+export { EnemyAudioService } from './services/enemy-audio-service';
 export {
   EnemyStateMachine,
   EnemyState,

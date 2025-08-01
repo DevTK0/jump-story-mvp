@@ -129,6 +129,9 @@ export class BossManager implements PhysicsEntity {
     this.registerBoss(sprite, serverBoss);
 
     this.logger.info(`Boss spawn completed: ${serverBoss.enemy} at (${serverBoss.x}, ${serverBoss.y}), visible: ${sprite.visible}`);
+    
+    // Emit spawn event for audio service
+    this.scene.registry.events.emit('enemy:spawned', serverBoss.spawnId, serverBoss.enemy);
   }
 
   private createBossSprite(serverBoss: ServerSpawn): Phaser.Physics.Arcade.Sprite {
@@ -390,6 +393,8 @@ export class BossManager implements PhysicsEntity {
       // Hide health bar when boss dies
       if (currentState.tag === 'Dead' && healthBar) {
         healthBar.hide();
+        // Emit death event for audio service
+        this.scene.registry.events.emit('enemy:died', serverBoss.spawnId);
       }
     } else {
       // For attack states, check if animation has stopped playing and restart it
@@ -428,6 +433,15 @@ export class BossManager implements PhysicsEntity {
     if (stateMachine) {
       stateMachine.handleServerStateChange(newState);
     }
+    
+    // Emit attack events for audio service
+    if (newState.tag === 'Attack1') {
+      this.scene.registry.events.emit('boss:attack', bossSpawnId, 1);
+    } else if (newState.tag === 'Attack2') {
+      this.scene.registry.events.emit('boss:attack', bossSpawnId, 2);
+    } else if (newState.tag === 'Attack3') {
+      this.scene.registry.events.emit('boss:attack', bossSpawnId, 3);
+    }
   }
 
   private despawnBoss(bossSpawnId: number): void {
@@ -440,6 +454,9 @@ export class BossManager implements PhysicsEntity {
       if (sprite.body) {
         sprite.body.enable = false;
       }
+      
+      // Emit despawn event for audio service
+      this.scene.registry.events.emit('enemy:despawned', bossSpawnId);
 
       // Fade out boss
       this.scene.tweens.add({
