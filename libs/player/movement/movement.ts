@@ -108,11 +108,19 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
 
   private jump(): void {
     this.player.body.setVelocityY(-this.player.getJumpSpeed());
+
+    // Move player a tinyyyy bit in the direction they're facing\
+    this.addTinyXVelocityWhileJumping();
     
     // Emit jump event for audio system
     emitSceneEvent(this.player.scene, 'player:jumped', {
       position: { x: this.player.x, y: this.player.y }
     });
+  }
+
+  private addTinyXVelocityWhileJumping () {
+    const horizontalDir = this.inputSystem.getHorizontalDirection();
+    this.player.body.setVelocityX(horizontalDir);
   }
 
   private handleDoubleJump(): void {
