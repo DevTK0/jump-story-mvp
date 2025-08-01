@@ -5,7 +5,11 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "spacetime:start": "spacetime start",
+    "spacetime:publish": "cd libs/spacetime/server && spacetime publish -s local jump-story",
+    "start": "npm run spacetime:publish && npm run init:local && vite",
     "dev": "vite",
+    "dev:cloud": "VITE_SPACETIME_TARGET=cloud vite",
     "build": "vite build",
     "build:itch": "VITE_SPACETIME_TARGET=cloud vite build --mode itch",
     "preview": "vite preview",
@@ -49,6 +53,7 @@
     "@testing-library/dom": "^10.4.1",
     "@types/node": "^24.0.8",
     "@vitest/ui": "^3.2.4",
+    "concurrently": "^9.2.0",
     "jsdom": "^26.1.0",
     "oxlint": "^1.8.0",
     "prettier": "^3.6.2",
@@ -56,5 +61,8 @@
     "typescript": "^5.8.3",
     "vite": "^7.0.0",
     "vitest": "^3.2.4"
+  },
+  "overrides": {
+    "dotenv": "^17.2.0"
   }
 }
