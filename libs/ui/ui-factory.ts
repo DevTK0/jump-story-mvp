@@ -17,6 +17,7 @@ import { LeaderboardDialog } from './menus/leaderboard-dialog';
 import { AttackInfoMenu } from './menus/attack-info-menu';
 import { PassiveInfoMenu } from './menus/passive-info-menu';
 import { jobAttributes } from '../../apps/playground/config/job-attributes';
+import type { Player } from '@/spacetime/client';
 
 // Re-export UICreateConfig from UIContextService to maintain compatibility
 export type { UICreateConfig };
@@ -89,7 +90,10 @@ export class UIFactory {
     this.setupKeyboardShortcuts(config);
     
     // Check if player has default name and show name change dialog
-    this.checkAndShowNameChangeDialog(config);
+    // Only if player data is available
+    if (config.player) {
+      this.checkAndShowNameChangeDialog(config);
+    }
     
     this.logger.info('Game UI created successfully');
   }
@@ -131,6 +135,30 @@ export class UIFactory {
     if (this.combatSkillBar) {
       this.combatSkillBar.update();
     }
+  }
+  
+  /**
+   * Update UI with player data when it becomes available
+   */
+  updatePlayerData(player: Player): void {
+    this.logger.info('Updating UI with player data', {
+      playerName: player.name,
+      playerId: player.playerId
+    });
+    
+    // Get the current config from UIContextService
+    const contextService = UIContextService.getInstance();
+    const connection = contextService.getDbConnection();
+    const identity = contextService.getPlayerIdentity();
+    
+    if (!connection || !identity) {
+      this.logger.error('Cannot update player data: missing connection or identity');
+      return;
+    }
+    
+    // Check if player has default name and show name change dialog
+    const config: UICreateConfig = { connection, identity, player };
+    this.checkAndShowNameChangeDialog(config);
   }
   
   /**

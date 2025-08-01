@@ -8,7 +8,7 @@ import type { SkillData } from '../combat/combat-skill-slot';
 export interface UICreateConfig {
   connection: DbConnection;
   identity: Identity;
-  player: Player;
+  player?: Player;
 }
 
 export enum UIEvents {

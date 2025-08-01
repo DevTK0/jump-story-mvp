@@ -349,7 +349,18 @@ export class SceneInitializer {
     
     if (connection && identity) {
       console.log('[SceneInitializer] Both connection and identity available, proceeding...');
-      // Get the player data from SpacetimeDB
+      
+      // Create UI without waiting for player data
+      this.uiFactory.createGameUI({
+        connection,
+        identity,
+        // player parameter is now optional
+      });
+      
+      // Store UIFactory reference for PlayerQueryService to access
+      this.scene.data.set('uiFactory', this.uiFactory);
+      
+      // Try to get player data and update UI if available
       const { PlayerQueryService } = await import('@/player/services/player-query-service');
       const playerQueryService = PlayerQueryService.getInstance();
       const playerData = playerQueryService?.findCurrentPlayer();
@@ -357,14 +368,10 @@ export class SceneInitializer {
       console.log('[SceneInitializer] Player data available:', !!playerData);
       
       if (playerData) {
-        console.log('[SceneInitializer] Creating game UI with player data');
-        this.uiFactory.createGameUI({
-          connection,
-          identity,
-          player: playerData,
-        });
+        console.log('[SceneInitializer] Updating UI with player data');
+        this.uiFactory.updatePlayerData(playerData);
       } else {
-        this.logger.warn('No player data found in SpacetimeDB, UI creation may fail');
+        this.logger.info('Player data not yet available, will update when subscription completes');
       }
     }
   }

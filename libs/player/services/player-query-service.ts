@@ -72,6 +72,7 @@ export class PlayerQueryService {
         .onApplied(() => {
           this.logger.info('Player-specific subscription applied');
           this.updateCurrentPlayerFromSubscription();
+          this.notifyUIOfPlayerData();
         })
         .subscribe([query]);
 
@@ -107,6 +108,7 @@ export class PlayerQueryService {
       if (newPlayer.identity.toHexString() === myIdentityHex) {
         // Current player updated via targeted subscription
         this.currentPlayerData = newPlayer;
+        this.notifyUIOfPlayerData();
       }
     });
 
@@ -114,6 +116,7 @@ export class PlayerQueryService {
       if (insertedPlayer.identity.toHexString() === myIdentityHex) {
         // Current player inserted via targeted subscription
         this.currentPlayerData = insertedPlayer;
+        this.notifyUIOfPlayerData();
       }
     });
 
@@ -142,6 +145,7 @@ export class PlayerQueryService {
         newPlayer.identity.toHexString() === this.dbConnection.identity.toHexString()
       ) {
         this.currentPlayerData = newPlayer;
+        this.notifyUIOfPlayerData();
       }
     });
 
@@ -151,6 +155,7 @@ export class PlayerQueryService {
         insertedPlayer.identity.toHexString() === this.dbConnection.identity.toHexString()
       ) {
         this.currentPlayerData = insertedPlayer;
+        this.notifyUIOfPlayerData();
       }
     });
 
@@ -259,6 +264,40 @@ export class PlayerQueryService {
   public getCurrentPlayerMana(): number | null {
     const player = this.findCurrentPlayer();
     return player ? player.currentMana : null;
+  }
+
+  /**
+   * Notify UI when player data becomes available
+   * This is called when the subscription is applied and when player data is updated
+   */
+  private notifyUIOfPlayerData(): void {
+    if (!this.currentPlayerData) {
+      return;
+    }
+
+    // Get the UIFactory instance from the current scene
+    const game = (window as any).game as Phaser.Game | undefined;
+    if (!game) {
+      this.logger.warn('No game instance found, cannot update UI');
+      return;
+    }
+
+    const scene = game.scene.getScenes(true)[0]; // Get active scene
+    if (!scene || !scene.data) {
+      this.logger.warn('No active scene found, cannot update UI');
+      return;
+    }
+
+    const uiFactory = scene.data.get('uiFactory');
+    if (!uiFactory) {
+      // UI may not be initialized yet, which is fine
+      this.logger.debug('UIFactory not found in scene data, UI may not be initialized yet');
+      return;
+    }
+
+    // Update UI with player data
+    this.logger.info('Updating UIFactory with player data from subscription');
+    uiFactory.updatePlayerData(this.currentPlayerData);
   }
 
   /**
