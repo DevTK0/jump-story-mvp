@@ -38,18 +38,7 @@ export class BottomUIBar {
     
     // Get data from context service
     const context = UIContextService.getInstance();
-    const identity = context.getPlayerIdentity();
-    
-    if (!identity) {
-      this.logger.debug('Player identity not available in UIContextService, waiting...');
-      // Create minimal UI that will be updated when identity is available
-      this.createContainer();
-      // Wait for identity to be set
-      this.waitForIdentity();
-      return;
-    }
-    
-    this.playerIdentity = identity;
+    this.playerIdentity = context.getPlayerIdentity()!;
     this.dbConnection = context.getDbConnection();
 
     this.createContainer();
@@ -397,42 +386,6 @@ export class BottomUIBar {
     this.positionComponents();
   }
 
-  private waitForIdentity(): void {
-    const context = UIContextService.getInstance();
-    
-    // Check periodically for identity
-    const checkInterval = this.scene.time.addEvent({
-      delay: 100,
-      callback: () => {
-        const identity = context.getPlayerIdentity();
-        if (identity) {
-          this.logger.debug('Player identity now available, initializing UI');
-          this.playerIdentity = identity;
-          this.dbConnection = context.getDbConnection();
-          
-          // Create the rest of the UI
-          this.createBackground();
-          this.createComponents();
-          this.positionComponents();
-          
-          // Set up event listeners
-          this.scene.scale.on('resize', this.onResize, this);
-          context.on(UIEvents.PLAYER_JOB_DATA_UPDATED, this.handleJobDataUpdate, this);
-          context.on(UIEvents.TELEPORT_DATA_UPDATED, this.handleTeleportDataUpdate, this);
-          onSceneEvent(this.scene, 'teleport:data-updated', this.handleTeleportSceneEvent, this);
-          
-          // Set up data subscriptions
-          if (this.dbConnection) {
-            this.setupDataSubscriptions();
-          }
-          
-          // Stop checking
-          checkInterval.remove();
-        }
-      },
-      loop: true
-    });
-  }
   
   public destroy(): void {
     // Remove resize listener

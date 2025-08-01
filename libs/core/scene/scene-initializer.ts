@@ -346,33 +346,7 @@ export class SceneInitializer {
           player: playerData,
         });
       } else {
-        this.logger.debug('No player data found in SpacetimeDB, retrying...');
-        
-        // Retry periodically until player data is available
-        let retryCount = 0;
-        const maxRetries = 50; // 5 seconds max
-        
-        const retryInterval = this.scene.time.addEvent({
-          delay: 100,
-          callback: () => {
-            retryCount++;
-            const playerData = playerQueryService?.findCurrentPlayer();
-            
-            if (playerData) {
-              this.logger.debug('Player data now available, creating UI');
-              this.uiFactory.createGameUI({
-                connection,
-                identity,
-                player: playerData,
-              });
-              retryInterval.remove();
-            } else if (retryCount >= maxRetries) {
-              this.logger.error('Failed to find player data after 5 seconds');
-              retryInterval.remove();
-            }
-          },
-          loop: true
-        });
+        this.logger.warn('No player data found in SpacetimeDB, UI creation may fail');
       }
     }
   }
