@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="1" nextlayerid="14" nextobjectid="57">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="1" nextlayerid="14" nextobjectid="59">
  <editorsettings>
   <export target="../maps/playground.tmj" format="json"/>
  </editorsettings>
@@ -12,6 +12,7 @@
  <objectgroup id="2" name="Ground">
   <object id="2" x="96" y="448" width="864" height="128"/>
   <object id="30" x="96" y="160" width="32" height="288"/>
+  <object id="58" x="960" y="160" width="32" height="288"/>
  </objectgroup>
  <objectgroup id="11" name="Enemies">
   <object id="32" name="orc 1" x="128" y="416" width="832" height="32">

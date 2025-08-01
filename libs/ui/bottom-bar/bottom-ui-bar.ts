@@ -3,7 +3,7 @@ import { BOTTOM_UI_CONFIG } from './bottom-ui-config';
 import { PlayerLevelSquare } from './components/player-level-square';
 import { PlayerInfoDisplay } from './components/player-info-display';
 import { CompactStatBar } from './components/compact-stat-bar';
-import { MenuButton } from './components/menu-button';
+// import { MenuButton } from './components/menu-button'; // Removed - not usable with large world bounds
 import { DbConnection } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { createLogger, type ModuleLogger } from '@/core/logger';
@@ -22,7 +22,7 @@ export class BottomUIBar {
   private hpBar!: CompactStatBar;
   private mpBar!: CompactStatBar;
   private expBar!: CompactStatBar;
-  private menuButton!: MenuButton;
+  // private menuButton!: MenuButton; // Removed - not usable with large world bounds
 
   // Data
   private playerIdentity: Identity;
@@ -101,8 +101,8 @@ export class BottomUIBar {
     this.mpBar = new CompactStatBar(this.scene, 'mp');
     this.expBar = new CompactStatBar(this.scene, 'exp');
 
-    // Create menu button - no need to set identity, it will get from context
-    this.menuButton = new MenuButton(this.scene, 'MENU');
+    // Menu button removed - not usable with large world bounds
+    // this.menuButton = new MenuButton(this.scene, 'MENU');
 
     // Add all components to container
     this.container.add([
@@ -111,7 +111,7 @@ export class BottomUIBar {
       this.hpBar.getContainer(),
       this.mpBar.getContainer(),
       this.expBar.getContainer(),
-      this.menuButton.getContainer(),
+      // this.menuButton.getContainer(), // Removed
     ]);
   }
 
@@ -128,13 +128,13 @@ export class BottomUIBar {
     const infoX = layout.levelMarginLeft + 60 + layout.playerInfoMarginLeft;
     this.playerInfo.setPosition(infoX, centerY - 10);
 
-    // Position menu button
-    const menuX = camera.width - BOTTOM_UI_CONFIG.menuButton.width - layout.menuButtonMarginRight;
-    this.menuButton.setPosition(menuX, centerY - 15);
+    // Menu button removed - adjust stat bar positioning
+    // const menuX = camera.width - BOTTOM_UI_CONFIG.menuButton.width - layout.menuButtonMarginRight;
+    // this.menuButton.setPosition(menuX, centerY - 15);
 
     // Calculate available space for centering stat bars
     const leftBoundary = infoX + this.playerInfo.getWidth() + layout.statBarsMarginLeft;
-    const rightBoundary = menuX - layout.statBarsMarginLeft;
+    const rightBoundary = camera.width - layout.statBarsMarginLeft - 50; // Use right edge with margin
     const availableWidth = rightBoundary - leftBoundary;
 
     // Calculate total width needed for all bars
@@ -404,7 +404,7 @@ export class BottomUIBar {
     this.hpBar.destroy();
     this.mpBar.destroy();
     this.expBar.destroy();
-    this.menuButton.destroy();
+    // this.menuButton.destroy(); // Removed
     this.container.destroy();
   }
 }

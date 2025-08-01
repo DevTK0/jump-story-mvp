@@ -20,6 +20,10 @@ export class ClassSelectionMenu {
   private logger: ModuleLogger = createLogger('ClassSelectionMenu');
 
   private isVisible: boolean = false;
+  
+  public get visible(): boolean {
+    return this.isVisible;
+  }
   private _dbConnection: DbConnection | null = null;
 
   // Available jobs loaded from job-attributes
@@ -29,6 +33,8 @@ export class ClassSelectionMenu {
   private playerJobUnlockStatus: Map<string, boolean> = new Map();
   // Job table data
   private jobTableData: any[] = [];
+  // Keyboard handlers for cleanup
+  private keyboardHandlers: { event: string; handler: () => void }[] = [];
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -52,11 +58,36 @@ export class ClassSelectionMenu {
     this.hide(); // Start hidden
 
     // Setup escape key to close
-    this.scene.input.keyboard?.on('keydown-ESC', () => {
+    const escHandler = () => {
       if (this.isVisible) {
         this.hide();
       }
+    };
+    this.scene.input.keyboard?.on('keydown-ESC', escHandler);
+    this.keyboardHandlers.push({ event: 'keydown-ESC', handler: escHandler });
+    
+    // Setup number keys 1-9 to select jobs
+    // Try using Phaser key codes
+    const keyCodes = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
+    
+    keyCodes.forEach((keyCode, index) => {
+      const numberKey = index + 1;
+      const handler = () => {
+        this.logger.info(`Number key ${numberKey} pressed, isVisible: ${this.isVisible}`);
+        if (this.isVisible) {
+          this.selectJobByNumber(numberKey);
+        }
+      };
+      
+      const keyName = `keydown-${keyCode}`;
+      this.logger.info(`Setting up handler for ${keyName}`);
+      
+      this.scene.input.keyboard?.on(keyName, handler);
+      this.keyboardHandlers.push({ event: keyName, handler });
     });
+    
+    // Log that keyboard handlers are set up
+    this.logger.info('Keyboard handlers set up for ClassSelectionMenu');
   }
 
   private createUI(): void {
@@ -94,25 +125,18 @@ export class ClassSelectionMenu {
     });
     title.setOrigin(0.5, 0.5);
 
-    // Create close button
-    const closeButton = this.scene.add.text(
-      centerX + menuWidth / 2 - 20,
-      centerY - menuHeight / 2 + 20,
-      'X',
-      {
-        fontSize: '20px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-      }
-    );
-    closeButton.setOrigin(0.5, 0.5);
-    closeButton.setInteractive({ useHandCursor: true });
-    closeButton.on('pointerover', () => closeButton.setColor('#ff6666'));
-    closeButton.on('pointerout', () => closeButton.setColor('#ffffff'));
-    closeButton.on('pointerdown', () => this.hide());
+    // Close button removed - use J hotkey or ESC to close
+    
+    // Create instruction text
+    const instruction = this.scene.add.text(centerX, centerY - menuHeight / 2 + 80, 'Use number keys 1-9 to select a job', {
+      fontSize: '16px',
+      color: '#cccccc',
+      fontStyle: 'italic',
+    });
+    instruction.setOrigin(0.5, 0.5);
 
     // Add all to container
-    this.container.add([overlay, this.background, title, closeButton]);
+    this.container.add([overlay, this.background, title, instruction]);
 
     // Create class options
     this.createClassOptions(centerX, centerY, menuWidth, menuHeight);
@@ -175,7 +199,7 @@ export class ClassSelectionMenu {
     const startX = centerX - totalWidth / 2 + gridSize / 2;
     const startY = centerY - totalHeight / 2 + gridSize / 2 - 20; // Offset up a bit
 
-    this.classes.forEach((classOption) => {
+    this.classes.forEach((classOption, index) => {
       const x = startX + classOption.position.col * (gridSize + padding);
       const y = startY + classOption.position.row * (gridSize + padding);
 
@@ -188,6 +212,18 @@ export class ClassSelectionMenu {
         classOption.unlocked ? 0x3a3a3a : 0x2a2a2a
       );
       spriteBg.setStrokeStyle(2, classOption.unlocked ? 0x5a5a5a : 0x3a3a3a);
+      
+      // Add number indicator in top-left corner
+      const numberKey = index + 1; // 1-based indexing for display
+      const numberBg = this.scene.add.circle(x - gridSize/2 + 15, y - gridSize/2 + 15, 12, 0x4a4a4a);
+      numberBg.setStrokeStyle(1, 0x6a6a6a);
+      
+      const numberText = this.scene.add.text(x - gridSize/2 + 15, y - gridSize/2 + 15, numberKey.toString(), {
+        fontSize: '14px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+      });
+      numberText.setOrigin(0.5, 0.5);
 
       // Validate texture exists at runtime
       if (!this.scene.textures.exists(classOption.spriteKey)) {
@@ -258,10 +294,35 @@ export class ClassSelectionMenu {
         });
       }
 
-      this.container.add([spriteBg, sprite, className]);
+      this.container.add([spriteBg, numberBg, numberText, sprite, className]);
     });
   }
 
+  private selectJobByNumber(numberKey: number): void {
+    this.logger.info(`selectJobByNumber called with key: ${numberKey}`);
+    
+    // Convert 1-based number to 0-based index
+    const index = numberKey - 1;
+    
+    this.logger.info(`Total classes: ${this.classes.length}, index: ${index}`);
+    
+    // Check if index is valid
+    if (index >= 0 && index < this.classes.length) {
+      const classOption = this.classes[index];
+      this.logger.info(`Found class option: ${classOption.name}, unlocked: ${classOption.unlocked}`);
+      
+      // Only select if unlocked
+      if (classOption.unlocked) {
+        this.logger.info(`Selecting class: ${classOption.name}`);
+        this.selectClass(classOption);
+      } else {
+        this.logger.info(`Job ${classOption.name} is locked`);
+      }
+    } else {
+      this.logger.warn(`Invalid job index: ${index}`);
+    }
+  }
+  
   private selectClass(classOption: ClassOption): void {
     this.logger.info(`Selected class: ${classOption.name}`);
 
@@ -281,8 +342,10 @@ export class ClassSelectionMenu {
   }
 
   public show(): void {
+    this.logger.info('Showing ClassSelectionMenu');
     this.container.setVisible(true);
     this.isVisible = true;
+    this.logger.info(`ClassSelectionMenu visible: ${this.isVisible}, keyboard available: ${!!this.scene.input.keyboard}`);
 
     // Use pre-loaded job data to refresh the display
     this.updateJobUnlockStates();
@@ -311,6 +374,12 @@ export class ClassSelectionMenu {
     // Unsubscribe from context events
     const context = UIContextService.getInstance();
     context.off(UIEvents.PLAYER_JOB_DATA_UPDATED, this.handleJobDataUpdate, this);
+    
+    // Remove keyboard handlers
+    this.keyboardHandlers.forEach(({ event, handler }) => {
+      this.scene.input.keyboard?.off(event, handler);
+    });
+    this.keyboardHandlers = [];
 
     this.container.destroy();
   }

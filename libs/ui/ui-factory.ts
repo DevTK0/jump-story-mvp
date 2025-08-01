@@ -11,6 +11,12 @@ import { UIContextService, type UICreateConfig } from './services/ui-context-ser
 import { NameChangeDialog } from './menus/name-change-dialog';
 import { BroadcastDisplay } from './broadcast/broadcast-display';
 import { RespawnCountdownUI } from './respawn/respawn-countdown-ui';
+import { ClassSelectionMenu } from './menus/class-selection-menu';
+import { TeleportSelectionMenu } from './menus/teleport-selection-menu';
+import { LeaderboardDialog } from './menus/leaderboard-dialog';
+import { AttackInfoMenu } from './menus/attack-info-menu';
+import { PassiveInfoMenu } from './menus/passive-info-menu';
+import { jobAttributes } from '../../apps/playground/config/job-attributes';
 
 // Re-export UICreateConfig from UIContextService to maintain compatibility
 export type { UICreateConfig };
@@ -30,6 +36,12 @@ export class UIFactory {
   private performanceMetrics?: PerformanceMetrics;
   private broadcastDisplay?: BroadcastDisplay;
   private respawnCountdownUI?: RespawnCountdownUI;
+  private classSelectionMenu?: ClassSelectionMenu;
+  private nameChangeDialog?: NameChangeDialog;
+  private teleportSelectionMenu?: TeleportSelectionMenu;
+  private leaderboardDialog?: LeaderboardDialog;
+  private attackInfoMenu?: AttackInfoMenu;
+  private passiveInfoMenu?: PassiveInfoMenu;
   
   // Keyboard shortcuts
   private keyboardHandlers: Map<string, () => void> = new Map();
@@ -52,6 +64,7 @@ export class UIFactory {
     // Initialize DbMetricsTracker singleton
     DbMetricsTracker.getInstance().initialize(config.connection);
     this.logger.debug('DbMetricsTracker initialized');
+    
     
     // Create player stats UI
     this.createPlayerStatsUI(config);
@@ -133,6 +146,12 @@ export class UIFactory {
     this.performanceMetrics?.destroy();
     this.broadcastDisplay?.destroy();
     this.respawnCountdownUI?.destroy();
+    this.classSelectionMenu?.destroy();
+    this.nameChangeDialog?.destroy();
+    this.teleportSelectionMenu?.destroy();
+    this.leaderboardDialog?.destroy();
+    this.attackInfoMenu?.destroy();
+    this.passiveInfoMenu?.destroy();
     
     // Destroy UIContextService if it was initialized
     if (UIContextService.isInitialized()) {
@@ -200,6 +219,45 @@ export class UIFactory {
     this.registerKeyboardShortcut('U', () => {
       this.testLevelUpAnimation(config);
     });
+    
+    // Job menu hotkey (J key)
+    this.registerKeyboardShortcut('J', () => {
+      this.openJobMenu();
+    });
+    
+    // Name change hotkey (N key)
+    this.registerKeyboardShortcut('N', () => {
+      this.openNameChangeDialog();
+    });
+    
+    // Teleport menu hotkey (T key)
+    this.registerKeyboardShortcut('T', () => {
+      this.openTeleportMenu();
+    });
+    
+    // Leaderboard hotkey (L key)
+    this.registerKeyboardShortcut('L', () => {
+      this.openLeaderboard();
+    });
+    
+    // Attack info hotkey (A key)
+    this.registerKeyboardShortcut('A', () => {
+      this.openAttackInfo();
+    });
+    
+    // Passive info hotkey (P key)
+    this.registerKeyboardShortcut('P', () => {
+      this.openPassiveInfo();
+    });
+    
+    // Number keys 1-9 to directly change jobs
+    const keyCodes = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
+    keyCodes.forEach((keyCode, index) => {
+      const jobNumber = index + 1;
+      this.registerKeyboardShortcut(keyCode, () => {
+        this.quickChangeJob(jobNumber);
+      });
+    });
   }
   
   private registerKeyboardShortcut(key: string, handler: () => void): void {
@@ -226,6 +284,172 @@ export class UIFactory {
       }
       // Trigger level up animation
       levelUpManager.triggerLevelUpAnimation(config.identity, currentLevel + 1);
+    }
+  }
+  
+  private openJobMenu(): void {
+    // Check if player is in combat first
+    const context = UIContextService.getInstance();
+    const connection = context.getDbConnection();
+    const identity = context.getPlayerIdentity();
+    
+    if (connection && identity) {
+      for (const player of connection.db.player.iter()) {
+        if (player.identity.toHexString() === identity.toHexString()) {
+          if (player.inCombat === true) {
+            this.logger.warn('Cannot change jobs while in combat');
+            return;
+          }
+          break;
+        }
+      }
+    }
+    
+    // Toggle the class selection menu
+    if (!this.classSelectionMenu) {
+      this.classSelectionMenu = new ClassSelectionMenu(this.scene);
+    }
+    
+    // Toggle visibility
+    if (this.classSelectionMenu.visible) {
+      this.classSelectionMenu.hide();
+    } else {
+      this.classSelectionMenu.show();
+    }
+  }
+  
+  private openNameChangeDialog(): void {
+    // Toggle the name change dialog
+    if (!this.nameChangeDialog) {
+      this.nameChangeDialog = new NameChangeDialog(this.scene);
+    }
+    
+    // Toggle visibility
+    if (this.nameChangeDialog.visible) {
+      this.nameChangeDialog.hide();
+    } else {
+      this.nameChangeDialog.show();
+    }
+  }
+  
+  private openTeleportMenu(): void {
+    // Toggle the teleport selection menu
+    if (!this.teleportSelectionMenu) {
+      this.teleportSelectionMenu = new TeleportSelectionMenu(this.scene);
+    }
+    
+    // Toggle visibility
+    if (this.teleportSelectionMenu.visible) {
+      this.teleportSelectionMenu.hide();
+    } else {
+      this.teleportSelectionMenu.show();
+    }
+  }
+  
+  private openLeaderboard(): void {
+    // Toggle the leaderboard dialog
+    if (!this.leaderboardDialog) {
+      this.leaderboardDialog = new LeaderboardDialog(this.scene);
+    }
+    
+    // Toggle visibility
+    if (this.leaderboardDialog.visible) {
+      this.leaderboardDialog.hide();
+    } else {
+      this.leaderboardDialog.show();
+    }
+  }
+  
+  private openAttackInfo(): void {
+    // Toggle the attack info menu
+    if (!this.attackInfoMenu) {
+      this.attackInfoMenu = new AttackInfoMenu(this.scene);
+    }
+    
+    // Hide passive menu if open
+    if (this.passiveInfoMenu?.visible) {
+      this.passiveInfoMenu.hide();
+    }
+    
+    // Toggle visibility
+    if (this.attackInfoMenu.visible) {
+      this.attackInfoMenu.hide();
+    } else {
+      this.attackInfoMenu.show();
+    }
+  }
+  
+  private openPassiveInfo(): void {
+    // Toggle the passive info menu
+    if (!this.passiveInfoMenu) {
+      this.passiveInfoMenu = new PassiveInfoMenu(this.scene);
+    }
+    
+    // Hide attack menu if open
+    if (this.attackInfoMenu?.visible) {
+      this.attackInfoMenu.hide();
+    }
+    
+    // Toggle visibility
+    if (this.passiveInfoMenu.visible) {
+      this.passiveInfoMenu.hide();
+    } else {
+      this.passiveInfoMenu.show();
+    }
+  }
+  
+  private quickChangeJob(jobNumber: number): void {
+    // Check if any menu is open
+    if (this.classSelectionMenu?.visible || 
+        this.teleportSelectionMenu?.visible || 
+        this.leaderboardDialog?.visible ||
+        this.attackInfoMenu?.visible ||
+        this.passiveInfoMenu?.visible ||
+        this.nameChangeDialog?.visible) {
+        // Don't switch jobs if any menu is open
+        return;
+    }
+    
+    // Check if player is in combat first
+    const context = UIContextService.getInstance();
+    const connection = context.getDbConnection();
+    const identity = context.getPlayerIdentity();
+    
+    if (!connection || !identity) {
+      this.logger.warn('No connection or identity for job change');
+      return;
+    }
+    
+    // Check combat state
+    for (const player of connection.db.player.iter()) {
+      if (player.identity.toHexString() === identity.toHexString()) {
+        if (player.inCombat === true) {
+          this.logger.warn('Cannot change jobs while in combat');
+          return;
+        }
+        break;
+      }
+    }
+    
+    // Get job list in order
+    const jobList = Object.entries(jobAttributes);
+    const index = jobNumber - 1;
+    
+    if (index >= 0 && index < jobList.length) {
+      const [jobId, jobConfig] = jobList[index];
+      
+      // Check if job is unlocked
+      const jobData = context.getJobData();
+      const isUnlocked = jobData.jobData.get(jobId) || false;
+      
+      if (isUnlocked) {
+        this.logger.info(`Quick changing to job: ${jobConfig.displayName}`);
+        connection.reducers.changeJob(jobId);
+      } else {
+        this.logger.info(`Job ${jobConfig.displayName} is locked`);
+      }
+    } else {
+      this.logger.warn(`Invalid job number: ${jobNumber}`);
     }
   }
   

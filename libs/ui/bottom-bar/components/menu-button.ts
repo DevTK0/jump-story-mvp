@@ -17,6 +17,7 @@ export class MenuButton {
     this.scene = scene;
     this.container = this.scene.add.container(0, 0);
 
+    this.createHitArea();
     this.createButton(label);
     this.setupInteraction();
 
@@ -28,6 +29,10 @@ export class MenuButton {
     // Subscribe to job data updates from context
     const context = UIContextService.getInstance();
     context.on(UIEvents.PLAYER_JOB_DATA_UPDATED, this.handleJobDataUpdate, this);
+  }
+
+  private createHitArea(): void {
+    // Placeholder - not using hit area for now
   }
 
   private createButton(label: string): void {
@@ -62,15 +67,11 @@ export class MenuButton {
   private setupInteraction(): void {
     const config = BOTTOM_UI_CONFIG.menuButton;
 
-    // Make container interactive with proper hit area
-    // this.container.setSize(config.width, config.height);
+    // Revert to container interaction for now
     this.container.setInteractive(
       new Phaser.Geom.Rectangle(0, 0, config.width, config.height),
       Phaser.Geom.Rectangle.Contains
     );
-    if (this.container.input) {
-      this.container.input.cursor = 'pointer';
-    }
 
     // Hover effects
     this.container.on('pointerover', () => {

@@ -3,14 +3,29 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "playground.tmx",
+    "activeFile": "",
     "expandedProjectPaths": [
         "."
     ],
+    "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
         "": {
             "scaleInDock": 1,
             "scaleInEditor": 1
+        },
+        "/Users/terence/Development/games/jump-story-mvp/apps/GMTK/tiled/loop-story.tmx": {
+            "scale": 0.5603515625,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 511.28616242593245,
+                "y": 512.1784593935168
+            }
+        },
+        "/Users/terence/Development/games/jump-story-mvp/apps/GMTK/tiled/loop-story.tmx#TX Tileset Ground": {
+            "scaleInDock": 1
+        },
+        "/Users/terence/Development/games/jump-story-mvp/apps/GMTK/tiled/loop-story.tmx#TX Village Props": {
+            "scaleInDock": 1
         },
         "/Users/terence/Development/games/jump-story-mvp/src/assets/tileset/TX Tileset Ground.tsx": {
             "scaleInDock": 1,
@@ -37,11 +52,14 @@
             "scaleInEditor": 1
         },
         "playground.tmx": {
+            "expandedObjectLayers": [
+                13
+            ],
             "scale": 0.7958,
-            "selectedLayer": 2,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 473.73711987936673,
-                "y": 271.42498115104297
+                "x": 783.4883136466449,
+                "y": 303.4682080924856
             }
         },
         "playground.tmx#TX Tileset Ground": {
@@ -58,11 +76,11 @@
     "map.lastUsedExportFilter": "JSON map files (*.tmj *.json)",
     "map.lastUsedFormat": "tmx",
     "openFiles": [
-        "playground.tmx"
     ],
     "project": "untitled.tiled-project",
     "recentFiles": [
         "playground.tmx",
+        "/Users/terence/Development/games/jump-story-mvp/apps/GMTK/tiled/loop-story.tmx",
         "/Users/terence/Development/games/jump-story-mvp/src/assets/tileset/TX Village Props.tsx",
         "/Users/terence/Development/games/jump-story-mvp/src/assets/tileset/TX Tileset Ground.tsx",
         "map1.tmx"

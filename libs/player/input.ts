@@ -21,7 +21,7 @@ export class InputSystem implements System {
       attack2: false,
       attack3: false,
       respawn: false,
-      teleport: false,
+      teleport: false, // T key now opens teleport menu
       instakill: false,
     };
 
@@ -65,7 +65,7 @@ export class InputSystem implements System {
       attack2: keys.c.isDown,
       attack3: keys.v.isDown,
       respawn: keys.r.isDown,
-      teleport: keys.t?.isDown || false,
+      teleport: false, // T key now opens teleport menu
       instakill: keys.e?.isDown || false,
     };
 

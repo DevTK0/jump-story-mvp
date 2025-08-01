@@ -18,6 +18,10 @@ export class TeleportSelectionMenu {
   private logger: ModuleLogger = createLogger('TeleportSelectionMenu');
 
   private isVisible: boolean = false;
+  
+  public get visible(): boolean {
+    return this.isVisible;
+  }
   private _dbConnection: DbConnection | null = null;
 
   // Available teleport locations
@@ -27,6 +31,8 @@ export class TeleportSelectionMenu {
   private playerTeleportUnlockStatus: Map<string, boolean> = new Map();
   // Teleport table data
   private teleportTableData: any[] = [];
+  // Keyboard handlers for cleanup
+  private keyboardHandlers: { event: string; handler: () => void }[] = [];
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -50,11 +56,35 @@ export class TeleportSelectionMenu {
     this.hide(); // Start hidden
 
     // Setup escape key to close
-    this.scene.input.keyboard?.on('keydown-ESC', () => {
+    const escHandler = () => {
       if (this.isVisible) {
         this.hide();
       }
+    };
+    this.scene.input.keyboard?.on('keydown-ESC', escHandler);
+    this.keyboardHandlers.push({ event: 'keydown-ESC', handler: escHandler });
+    
+    // Setup number keys 1-9 to select teleports
+    const keyCodes = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
+    
+    keyCodes.forEach((keyCode, index) => {
+      const numberKey = index + 1;
+      const handler = () => {
+        this.logger.info(`Number key ${numberKey} pressed, isVisible: ${this.isVisible}`);
+        if (this.isVisible) {
+          this.selectTeleportByNumber(numberKey);
+        }
+      };
+      
+      const keyName = `keydown-${keyCode}`;
+      this.logger.info(`Setting up handler for ${keyName}`);
+      
+      this.scene.input.keyboard?.on(keyName, handler);
+      this.keyboardHandlers.push({ event: keyName, handler });
     });
+    
+    // Log that keyboard handlers are set up
+    this.logger.info('Keyboard handlers set up for TeleportSelectionMenu');
   }
 
   private createUI(): void {
@@ -92,25 +122,18 @@ export class TeleportSelectionMenu {
     });
     title.setOrigin(0.5, 0.5);
 
-    // Create close button
-    const closeButton = this.scene.add.text(
-      centerX + menuWidth / 2 - 20,
-      centerY - menuHeight / 2 + 20,
-      'X',
-      {
-        fontSize: '20px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-      }
-    );
-    closeButton.setOrigin(0.5, 0.5);
-    closeButton.setInteractive({ useHandCursor: true });
-    closeButton.on('pointerover', () => closeButton.setColor('#ff6666'));
-    closeButton.on('pointerout', () => closeButton.setColor('#ffffff'));
-    closeButton.on('pointerdown', () => this.hide());
+    // Close button removed - use T hotkey or ESC to close
+    
+    // Create instruction text
+    const instruction = this.scene.add.text(centerX, centerY - menuHeight / 2 + 80, 'Use number keys 1-9 to select a teleport location', {
+      fontSize: '16px',
+      color: '#cccccc',
+      fontStyle: 'italic',
+    });
+    instruction.setOrigin(0.5, 0.5);
 
     // Add all to container
-    this.container.add([overlay, this.background, title, closeButton]);
+    this.container.add([overlay, this.background, title, instruction]);
 
     // Create teleport options
     this.createTeleportOptions(centerX, centerY, menuWidth, menuHeight);
@@ -156,7 +179,7 @@ export class TeleportSelectionMenu {
     const startX = centerX - totalWidth / 2 + gridSize / 2;
     const startY = centerY - totalHeight / 2 + gridSize / 2 - 20; // Offset up a bit
 
-    this.teleportOptions.forEach((teleportOption) => {
+    this.teleportOptions.forEach((teleportOption, index) => {
       const x = startX + teleportOption.position.col * (gridSize + padding);
       const y = startY + teleportOption.position.row * (gridSize + padding);
 
@@ -169,6 +192,18 @@ export class TeleportSelectionMenu {
         teleportOption.unlocked ? 0x3a3a3a : 0x2a2a2a
       );
       spriteBg.setStrokeStyle(2, teleportOption.unlocked ? 0x5a5a5a : 0x3a3a3a);
+      
+      // Add number indicator in top-left corner
+      const numberKey = index + 1; // 1-based indexing for display
+      const numberBg = this.scene.add.circle(x - gridSize/2 + 15, y - gridSize/2 + 15, 12, 0x4a4a4a);
+      numberBg.setStrokeStyle(1, 0x6a6a6a);
+      
+      const numberText = this.scene.add.text(x - gridSize/2 + 15, y - gridSize/2 + 15, numberKey.toString(), {
+        fontSize: '14px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+      });
+      numberText.setOrigin(0.5, 0.5);
 
       // Create teleport stone sprite
       const sprite = this.scene.add.sprite(x, y, 'teleport-stone');
@@ -225,8 +260,33 @@ export class TeleportSelectionMenu {
         });
       }
 
-      this.container.add([spriteBg, sprite, locationName]);
+      this.container.add([spriteBg, numberBg, numberText, sprite, locationName]);
     });
+  }
+
+  private selectTeleportByNumber(numberKey: number): void {
+    this.logger.info(`selectTeleportByNumber called with key: ${numberKey}`);
+    
+    // Convert 1-based number to 0-based index
+    const index = numberKey - 1;
+    
+    this.logger.info(`Total teleports: ${this.teleportOptions.length}, index: ${index}`);
+    
+    // Check if index is valid
+    if (index >= 0 && index < this.teleportOptions.length) {
+      const teleportOption = this.teleportOptions[index];
+      this.logger.info(`Found teleport option: ${teleportOption.locationName}, unlocked: ${teleportOption.unlocked}`);
+      
+      // Only select if unlocked
+      if (teleportOption.unlocked) {
+        this.logger.info(`Selecting teleport: ${teleportOption.locationName}`);
+        this.selectTeleport(teleportOption);
+      } else {
+        this.logger.info(`Teleport ${teleportOption.locationName} is locked`);
+      }
+    } else {
+      this.logger.warn(`Invalid teleport index: ${index}`);
+    }
   }
 
   private selectTeleport(teleportOption: TeleportOption): void {
@@ -320,6 +380,12 @@ export class TeleportSelectionMenu {
     // Unsubscribe from context events
     const context = UIContextService.getInstance();
     context.off(UIEvents.TELEPORT_DATA_UPDATED, this.handleTeleportDataUpdate, this);
+    
+    // Remove keyboard handlers
+    this.keyboardHandlers.forEach(({ event, handler }) => {
+      this.scene.input.keyboard?.off(event, handler);
+    });
+    this.keyboardHandlers = [];
 
     this.container.destroy();
   }
@@ -337,7 +403,7 @@ export class TeleportSelectionMenu {
     // Remove existing teleport option elements
     const elementsToRemove: Phaser.GameObjects.GameObject[] = [];
     this.container.list.forEach((child) => {
-      // Keep the overlay, background, title, and close button (first 4 elements)
+      // Keep the overlay, background, title, and instruction (first 4 elements)
       if (this.container.list.indexOf(child) > 3) {
         elementsToRemove.push(child);
       }

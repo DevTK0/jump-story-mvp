@@ -172,7 +172,6 @@ export class RespawnCountdownUI {
     }
   }
 
-
   public destroy(): void {
     if (this.updateInterval) {
       window.clearInterval(this.updateInterval);

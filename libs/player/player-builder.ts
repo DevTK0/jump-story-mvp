@@ -6,7 +6,7 @@ import { CombatSystemEnhanced } from './combat/combat-enhanced';
 import { AnimationSystem } from './animations';
 import { RespawnSystem } from './state/respawn-system';
 import { SyncSystem } from './sync/sync-system';
-import { TeleportEffect } from '../effects';
+// import { TeleportEffect } from '../effects'; // T key now opens teleport menu
 import { DebugSystem } from '@/debug/debug-system';
 import { DeathMonitor } from './combat/death-monitor';
 import jobAttributesConfig from '../../apps/playground/config/job-attributes';
@@ -201,9 +201,9 @@ export class PlayerBuilder {
     const respawnSystem = new RespawnSystem(player);
     systems.set('respawn', respawnSystem);
 
-    // Create teleport effect (always enabled for testing reconciliation)
-    const teleportEffect = new TeleportEffect(player);
-    systems.set('teleport', teleportEffect);
+    // Teleport effect removed - T key now opens teleport menu
+    // const teleportEffect = new TeleportEffect(player);
+    // systems.set('teleport', teleportEffect);
 
     // Register all created systems with the player
     for (const [name, system] of systems.entries()) {

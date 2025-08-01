@@ -11,6 +11,10 @@ export class LeaderboardDialog {
   private logger: ModuleLogger = createLogger('LeaderboardDialog');
 
   private isVisible: boolean = false;
+  
+  public get visible(): boolean {
+    return this.isVisible;
+  }
   private _dbConnection: DbConnection | null = null;
   private leaderboardData: Leaderboard[] = [];
 
@@ -77,25 +81,10 @@ export class LeaderboardDialog {
     });
     subtitle.setOrigin(0.5, 0.5);
 
-    // Create close button
-    const closeButton = this.scene.add.text(
-      centerX + menuWidth / 2 - 20,
-      centerY - menuHeight / 2 + 20,
-      'X',
-      {
-        fontSize: '20px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-      }
-    );
-    closeButton.setOrigin(0.5, 0.5);
-    closeButton.setInteractive({ useHandCursor: true });
-    closeButton.on('pointerover', () => closeButton.setColor('#ff6666'));
-    closeButton.on('pointerout', () => closeButton.setColor('#ffffff'));
-    closeButton.on('pointerdown', () => this.hide());
+    // Close button removed - use L hotkey or ESC to close
 
     // Add all to container
-    this.container.add([overlay, this.background, title, subtitle, closeButton]);
+    this.container.add([overlay, this.background, title, subtitle]);
 
     // Create leaderboard entries
     this.createLeaderboardEntries(centerX, centerY, menuWidth, menuHeight);

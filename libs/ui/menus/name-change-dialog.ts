@@ -10,6 +10,10 @@ export class NameChangeDialog {
   private logger: ModuleLogger = createLogger('NameChangeDialog');
   
   private isVisible: boolean = false;
+  
+  public get visible(): boolean {
+    return this.isVisible;
+  }
   private _dbConnection: DbConnection | null = null;
   private inputElement: HTMLInputElement | null = null;
   private errorText: Phaser.GameObjects.Text | null = null;
@@ -74,22 +78,7 @@ export class NameChangeDialog {
     });
     instruction.setOrigin(0.5, 0.5);
     
-    // Create close button
-    const closeButton = this.scene.add.text(
-      centerX + menuWidth / 2 - 20,
-      centerY - menuHeight / 2 + 20,
-      'X',
-      {
-        fontSize: '20px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-      }
-    );
-    closeButton.setOrigin(0.5, 0.5);
-    closeButton.setInteractive({ useHandCursor: true });
-    closeButton.on('pointerover', () => closeButton.setColor('#ff6666'));
-    closeButton.on('pointerout', () => closeButton.setColor('#ffffff'));
-    closeButton.on('pointerdown', () => this.hide());
+    // Close button removed - use N hotkey or ESC to close
     
     // Create submit button
     const submitButton = this.scene.add.rectangle(centerX, centerY + 60, 120, 40, 0x4a4a4a);
@@ -128,7 +117,6 @@ export class NameChangeDialog {
       this.background, 
       title, 
       instruction,
-      closeButton,
       submitButton,
       submitText,
       this.errorText

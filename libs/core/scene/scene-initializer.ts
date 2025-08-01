@@ -201,13 +201,20 @@ export class SceneInitializer {
       this.scene.data.set('sceneConfig', this.config);
     }
     
-    // Remove world bounds - allow infinite movement
-    // const mapWidth = mapData.tilemap.widthInPixels;
-    // const mapHeight = mapData.tilemap.heightInPixels;
-    // this.scene.physics.world.setBounds(0, 0, mapWidth, mapHeight);
+    // 20x world bounds for infinite tilemap support, centered around the tilemap
+    const mapWidth = mapData.tilemap.widthInPixels;
+    const mapHeight = mapData.tilemap.heightInPixels;
     
-    // Remove camera bounds - allow camera to follow player anywhere
-    // this.scene.cameras.main.setBounds(0, 0, mapWidth, mapHeight);
+    // Center the bounds so you can go in negative directions
+    const boundsWidth = mapWidth * 20;
+    const boundsHeight = mapHeight * 20;
+    const offsetX = -(boundsWidth - mapWidth) / 2;
+    const offsetY = -(boundsHeight - mapHeight) / 2;
+    
+    this.scene.physics.world.setBounds(offsetX, offsetY, boundsWidth, boundsHeight);
+    
+    // Set camera bounds
+    this.scene.cameras.main.setBounds(offsetX, offsetY, boundsWidth, boundsHeight);
   }
   
   private async initializeDatabase(): Promise<void> {
@@ -276,7 +283,7 @@ export class SceneInitializer {
     // Import and apply player config
     const { PLAYER_CONFIG } = await import('@/player/config');
     player.setScale(PLAYER_CONFIG.movement.scale);
-    player.body.setCollideWorldBounds(false); // Allow player to move beyond world bounds
+    player.body.setCollideWorldBounds(true); // Keep player within world bounds
     player.body.setSize(
       PLAYER_CONFIG.movement.hitboxWidth,
       PLAYER_CONFIG.movement.hitboxHeight
