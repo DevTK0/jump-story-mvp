@@ -55,11 +55,18 @@ export class UIFactory {
    * Create all game UI components
    */
   createGameUI(config: UICreateConfig): void {
+    console.log('[UIFactory] createGameUI called', {
+      hasConnection: !!config.connection,
+      hasIdentity: !!config.identity,
+      hasPlayer: !!config.player
+    });
     this.logger.info('Creating game UI...');
     
     // Initialize UIContextService first
+    console.log('[UIFactory] Initializing UIContextService...');
     UIContextService.initialize(this.scene, config);
     this.logger.debug('UIContextService initialized');
+    console.log('[UIFactory] UIContextService initialized successfully');
     
     // Initialize DbMetricsTracker singleton
     DbMetricsTracker.getInstance().initialize(config.connection);
@@ -162,11 +169,22 @@ export class UIFactory {
   // Private creation methods
   
   private createPlayerStatsUI(_config: UICreateConfig): void {
+    console.log('[UIFactory] Creating player stats UI...');
     // Create the new bottom UI bar - no need to pass identity or connection
-    this.bottomUIBar = new BottomUIBar(this.scene);
+    try {
+      this.bottomUIBar = new BottomUIBar(this.scene);
+      console.log('[UIFactory] BottomUIBar created successfully');
+    } catch (error) {
+      console.error('[UIFactory] Failed to create BottomUIBar:', error);
+    }
     
     // Create combat skill bar
-    this.combatSkillBar = new CombatSkillBar(this.scene);
+    try {
+      this.combatSkillBar = new CombatSkillBar(this.scene);
+      console.log('[UIFactory] CombatSkillBar created successfully');
+    } catch (error) {
+      console.error('[UIFactory] Failed to create CombatSkillBar:', error);
+    }
     
     // Keep the old stats UI but hide it (for backward compatibility)
     this.playerStatsUI = new PlayerStatsUI(this.scene);
@@ -209,9 +227,15 @@ export class UIFactory {
   }
   
   private createRespawnCountdownUI(): void {
+    console.log('[UIFactory] Creating respawn countdown UI...');
     // Create respawn countdown UI
-    this.respawnCountdownUI = new RespawnCountdownUI(this.scene);
-    this.logger.debug('RespawnCountdownUI created');
+    try {
+      this.respawnCountdownUI = new RespawnCountdownUI(this.scene);
+      this.logger.debug('RespawnCountdownUI created');
+      console.log('[UIFactory] RespawnCountdownUI created successfully');
+    } catch (error) {
+      console.error('[UIFactory] Failed to create RespawnCountdownUI:', error);
+    }
   }
   
   private setupKeyboardShortcuts(config: UICreateConfig): void {

@@ -110,8 +110,6 @@ export class Player extends Phaser.GameObjects.Sprite implements PhysicsEntity {
   }
 
   public update(time: number, delta: number): void {
-    if (!this.playerState.isAlive) return;
-
     // Update state machine
     this.stateMachine.update(time, delta);
 
@@ -178,6 +176,11 @@ export class Player extends Phaser.GameObjects.Sprite implements PhysicsEntity {
     return this.playerState.isAlive;
   }
 
+  public set isAlive (value: boolean) {
+    logger.info('[player] set isAlive', value);
+    this.playerState.isAlive = value;
+  }
+
   // State machine methods
   public getStateMachine(): PlayerStateMachine {
     return this.stateMachine;
@@ -188,6 +191,7 @@ export class Player extends Phaser.GameObjects.Sprite implements PhysicsEntity {
   }
 
   public transitionToState(stateName: string): boolean {
+    logger.info('[player][transitionToState] stateName', stateName);
     return this.stateMachine.transitionTo(stateName);
   }
 

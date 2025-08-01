@@ -1,3 +1,6 @@
+import { createLogger, type ModuleLogger } from '@/core/logger';
+import { PLAYER_CONFIG } from './config';
+
 // Main player class
 export { Player, type PlayerConfig } from './player';
 
@@ -37,6 +40,22 @@ export {
   getDamageDisplayText,
   getDamageStyle,
 } from './combat';
+
+interface Position {
+  x: number
+  y: number
+}
+
+declare global {
+  var logger: ModuleLogger;
+  var _defaultPosition: Position
+}
+
+globalThis.logger = createLogger('Global');
+globalThis._defaultPosition = {
+  x: PLAYER_CONFIG.respawn.spawnPosition.x,
+  y: PLAYER_CONFIG.respawn.spawnPosition.y
+};
 
 // Effects
 export { RespawnEffectRenderer } from './effects';

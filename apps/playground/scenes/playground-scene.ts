@@ -10,8 +10,8 @@ import audioConfig from '../config/audio-config';
 const sceneConfig: SceneConfig = {
   key: 'playground',
   player: {
-    spawnX: 1000,
-    spawnY: 0,
+    spawnX: _defaultPosition.x,
+    spawnY: _defaultPosition.y,
     texture: 'soldier',
   },
   database: {

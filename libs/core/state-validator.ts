@@ -47,6 +47,7 @@ export class StateValidator {
   public canPlayerPerformAction(
     action: 'attack' | 'move' | 'jump' | 'respawn' | 'climb'
   ): StateValidationResult {
+    logger.info('[StateValidator][canPlayerPerformAction] Action', action);
     const isDead = this.isCurrentPlayerDead();
 
     if (isDead) {
@@ -61,6 +62,7 @@ export class StateValidator {
 
     // Alive players can't respawn
     if (action === 'respawn') {
+      logger.info('[StateValidator][canPlayerPerformAction] Unable to respawn');
       return {
         isValid: false,
         reason: 'Player must be dead to respawn',

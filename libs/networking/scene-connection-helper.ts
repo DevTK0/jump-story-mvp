@@ -4,7 +4,7 @@ import { SpacetimeConnectionBuilder } from './spacetime-connection-builder';
 import { SpacetimeConnector } from './spacetime-connector';
 import { DbConnection } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
-import { Player, PlayerQueryService, CombatValidationService } from '@/player';
+import { Player, PlayerQueryService, CombatValidationService, DeathMonitor } from '@/player';
 import { ErrorBoundary, NetworkError } from '@/core/error';
 
 export interface ConnectionConfig {
@@ -126,7 +126,7 @@ export class SceneConnectionHelper {
       respawnSystem.setDbConnection(connection);
     }
 
-    const deathMonitor = player.getSystem('deathMonitor') as any;
+    const deathMonitor = player.getSystem<DeathMonitor>('deathMonitor');
     if (deathMonitor && deathMonitor.setDbConnection) {
       deathMonitor.setDbConnection(connection);
     }
