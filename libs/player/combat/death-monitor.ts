@@ -16,11 +16,16 @@ export class DeathMonitor implements System {
   private deathStateService: DeathStateService;
   private logger: ModuleLogger;
 
+  // private isDead: boolean = false;
+
   private get isDead (): boolean {
     return !this.player.isAlive;
   }
   private set isDead (value: boolean) {
     this.player.isAlive = !value;
+    if (!this.player.isAlive) {
+      this.player.setPlayerState({ health: 0 });
+    }
   }
 
   constructor(player: Player) {
@@ -57,11 +62,16 @@ export class DeathMonitor implements System {
 
       // Check initial state using PlayerQueryService
       if (this.playerQueryService) {
-        this.isDead = this.playerQueryService.isCurrentPlayerDead();
+        const isCurrentPlayerDead = this.playerQueryService.isCurrentPlayerDead();
 
         // If player is already dead on connection, transition to dead state
-        if (this.isDead && !this.player.getStateMachine().isInState('Dead')) {
-          this.player.transitionToState('Dead');
+        if (isCurrentPlayerDead && !this.player.getStateMachine().isInState('Dead')) {
+          // this.player.transitionToState('Dead');
+          this.handlePlayerUpdate(
+            this.player.getPlayerState().health,
+            0,
+            'Dead'
+          );
         }
       }
     }
@@ -71,7 +81,7 @@ export class DeathMonitor implements System {
     oldHp: number,
     newHp: number,
     serverState: string,
-    _newPlayer: ServerPlayer
+    _newPlayer?: ServerPlayer
   ): void {
     // Player HP changed
     console.log('[DeathMonitor][handlePlayerUpdate]', { oldHp, newHp, serverState, _newPlayer });
@@ -97,7 +107,7 @@ export class DeathMonitor implements System {
     action: 'die' | 'respawn' | 'force_dead' | 'sync_dead' | 'none',
     _reason: string
   ): void {
-    console.log('[DeathMonitor][executeStateAction]', { action, _reason });
+    logger.info('[DeathMonitor][executeStateAction]', { action, _reason });
     switch (action) {
       case 'die':
       case 'force_dead':

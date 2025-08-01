@@ -293,6 +293,7 @@ export class SceneInitializer {
     // Connect player to database if available
     const connection = this.connectionHelper.getConnection();
     if (connection) {
+      this.logger.info('[SceneInitializer] DB connection established');
       this.connectionHelper.setupPlayerSystems(player, connection);
     }
   }
