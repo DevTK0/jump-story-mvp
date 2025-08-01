@@ -18,7 +18,7 @@ export class CombatSkillSlot {
   private container: Phaser.GameObjects.Container;
   private background: Phaser.GameObjects.Rectangle;
   private border: Phaser.GameObjects.Rectangle;
-  private hotkeyText: Phaser.GameObjects.Text;
+  // private hotkeyText: Phaser.GameObjects.Text; // Hidden - hotkeys shown in tooltip only
   private skillLabel: Phaser.GameObjects.Text;
   private skillIcon?: Phaser.GameObjects.Sprite;
   private cooldownOverlay?: Phaser.GameObjects.Rectangle;
@@ -66,16 +66,8 @@ export class CombatSkillSlot {
     this.border.setStrokeStyle(config.borderWidth, config.borderColor);
     this.border.setFillStyle(0, 0);
     
-    this.hotkeyText = this.scene.add.text(
-      COMBAT_SKILL_CONFIG.hotkey.offsetX,
-      COMBAT_SKILL_CONFIG.hotkey.offsetY,
-      '',
-      {
-        fontSize: COMBAT_SKILL_CONFIG.hotkey.fontSize,
-        fontFamily: COMBAT_SKILL_CONFIG.hotkey.fontFamily,
-        color: COMBAT_SKILL_CONFIG.hotkey.fontColor,
-      }
-    );
+    // Hotkey text creation removed - hotkeys shown in tooltip only
+    // this.hotkeyText = this.scene.add.text(...);
     
     this.skillLabel = this.scene.add.text(
       config.width / 2,

@@ -8,6 +8,7 @@ import { DebugSceneExtension } from '@/debug/debug-scene-extension';
 import { Player } from '@/player';
 import type { MapData } from '../asset/map-loader';
 import type { SpriteConfig } from '../asset/sprite-config-loader';
+import type { AudioConfig } from '../asset/audio-config-loader';
 
 export interface SceneConfig {
   key: string;
@@ -28,6 +29,7 @@ export interface SceneConfig {
     metrics?: boolean;  // Show performance metrics
   };
   sprites?: SpriteConfig;  // Optional sprite configuration
+  audio?: AudioConfig;  // Optional audio configuration
 }
 
 export interface InitializedSystems {
@@ -64,7 +66,7 @@ export class SceneInitializer {
     if (!config.sprites) {
       throw new Error('Sprite configuration is required in SceneConfig');
     }
-    this.assetLoader = new AssetLoaderService(scene, config.sprites);
+    this.assetLoader = new AssetLoaderService(scene, config.sprites, config.audio);
   }
   
   /**

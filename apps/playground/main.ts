@@ -31,6 +31,9 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
       debug: true,
     },
   },
+  audio: {
+    disableWebAudio: false,
+  },
 };
 
 // Create and start the game

@@ -38,10 +38,20 @@ export interface SceneEventMap {
     slotIndex: number;
     skillName: string;
     cooldown: number;
+    audio?: string;
   };
   'teleport:data-updated': {
     unlockStatus: Map<string, boolean>;
     locations: Teleport[];
+  };
+  'boss:spawned': {
+    enemy: string;
+    spawnId: number;
+    x: number;
+    y: number;
+  };
+  'boss:despawned': {
+    spawnId: number;
   };
   // Add more events here as the game grows
 }

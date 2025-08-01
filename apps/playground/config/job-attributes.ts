@@ -18,6 +18,7 @@ const sharedAttacks = {
     manaCost: 0,
     ammoCost: 0,
     icon: 'heal1',
+    audio: 'skill1',
   },
   attack2: {
     attackType: 'standard' as const,
@@ -35,6 +36,7 @@ const sharedAttacks = {
     manaCost: 0,
     ammoCost: 0,
     icon: 'heal1',
+    audio: 'skill1',
   },
   attack3: {
     attackType: 'standard' as const,
@@ -51,6 +53,7 @@ const sharedAttacks = {
     manaCost: 10,
     ammoCost: 0,
     icon: 'heal1',
+    audio: 'skill1',
   },
 };
 
@@ -93,6 +96,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         manaCost: 0,
         ammoCost: 0,
         icon: 'heal1',
+        audio: 'skill1',
       },
       attack2: {
         attackType: 'standard' as const,
@@ -110,6 +114,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         manaCost: 0,
         ammoCost: 0,
         icon: 'heal2',
+        audio: 'skill1',
       },
       attack3: {
         attackType: 'projectile' as const,
@@ -128,6 +133,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         ammoCost: 0,
         projectile: 'arrow', // Test projectile for soldier
         icon: 'heal3',
+        audio: 'skill1',
       },
     },
     passives: {
@@ -211,6 +217,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         ammoCost: 0,
         skillEffect: 'freeze',
         icon: 'heal1',
+        audio: 'skill1',
       },
       attack2: {
         attackType: 'standard' as const,
@@ -228,6 +235,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         ammoCost: 0,
         skillEffect: 'holy',
         icon: 'heal1',
+        audio: 'skill1',
       },
       attack3: {
         attackType: 'projectile' as const,
@@ -246,6 +254,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         projectile: 'fireball', // Using arrow as placeholder for magic missile
         // skillEffect: 'holy', // Explosion effect on hit
         icon: 'heal1',
+        audio: 'skill1',
       },
     },
     passives: {
@@ -294,6 +303,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         ammoCost: 0,
         projectile: 'arrow',
         icon: 'heal1',
+        audio: 'skill1',
       },
       attack2: {
         attackType: 'projectile' as const,
@@ -311,6 +321,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         ammoCost: 0,
         projectile: 'arrow',
         icon: 'heal1',
+        audio: 'skill1',
       },
       attack3: {
         attackType: 'projectile' as const,
@@ -328,6 +339,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         ammoCost: 0,
         projectile: 'arrow',
         icon: 'heal1',
+        audio: 'skill1',
       },
     },
     passives: {
@@ -437,6 +449,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         dashDistance: 150,
         dashSpeed: 400,
         icon: 'heal1',
+        audio: 'skill1',
       },
       attack3: {
         attackType: 'dash' as const,

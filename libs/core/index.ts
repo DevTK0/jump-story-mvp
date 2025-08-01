@@ -15,3 +15,6 @@ export * from './scene';
 // Configuration
 export * from './display-config';
 export * from './camera-config';
+
+// Audio management
+export * from './audio';

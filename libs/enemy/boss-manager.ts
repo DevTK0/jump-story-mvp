@@ -58,6 +58,14 @@ export class BossManager implements PhysicsEntity {
   private handleBossInsert(boss: ServerSpawn): void {
     this.logger.info('Boss insert event received:', { enemy: boss.enemy, position: { x: boss.x, y: boss.y } });
     this.spawnBoss(boss);
+    
+    // Emit boss spawn event
+    this.scene.events.emit('boss:spawned', {
+      enemy: boss.enemy,
+      spawnId: boss.spawnId,
+      x: boss.x,
+      y: boss.y
+    });
   }
 
   /**
@@ -74,6 +82,9 @@ export class BossManager implements PhysicsEntity {
   private handleBossDelete(spawnId: number): void {
     this.logger.info('Boss delete event received:', { spawnId });
     this.despawnBoss(spawnId);
+    
+    // Emit boss despawn event
+    this.scene.events.emit('boss:despawned', { spawnId });
   }
 
   /**

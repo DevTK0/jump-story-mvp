@@ -256,7 +256,8 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     emitSceneEvent(this.scene, 'skill:activated', {
       slotIndex: attackNum - 1, // Convert 1-3 to 0-2 for UI
       skillName: config.name,
-      cooldown: config.cooldown
+      cooldown: config.cooldown,
+      audio: config.audio
     });
 
     return hitboxSprite;

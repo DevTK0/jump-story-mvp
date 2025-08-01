@@ -8,6 +8,8 @@ import { InteractionHandler } from '@/networking';
 import { EnemyDamageRenderer, PlayerDamageRenderer, SkillEffectRenderer, RespawnEffectRenderer } from '@/player';
 import { LevelUpAnimationManager, ChatManager } from '@/ui';
 import { Player } from '@/player';
+import { SkillAudioService } from '@/player/services/skill-audio-service';
+import { MusicManagerService } from '@/player/services/music-manager-service';
 import { TeleportStoneManager } from '@/teleport/teleport-stone-manager';
 import type { MapData } from '../asset/map-loader';
 import { DbConnection } from '@/spacetime/client';
@@ -42,6 +44,8 @@ export class ManagerRegistry {
   private levelUpAnimationManager!: LevelUpAnimationManager;
   private chatManager!: ChatManager;
   private teleportStoneManager!: TeleportStoneManager;
+  private skillAudioService!: SkillAudioService;
+  private musicManagerService!: MusicManagerService;
   
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -157,6 +161,8 @@ export class ManagerRegistry {
     this.logger.info('Destroying managers...');
     
     // Cleanup in reverse order of creation
+    this.musicManagerService?.destroy();
+    this.skillAudioService?.destroy();
     this.chatManager?.destroy();
     this.levelUpAnimationManager?.destroy();
     this.skillEffectManager?.destroy();
@@ -222,6 +228,12 @@ export class ManagerRegistry {
     
     // Chat manager
     this.chatManager = new ChatManager(this.scene);
+    
+    // Skill audio service
+    this.skillAudioService = new SkillAudioService(this.scene);
+    
+    // Music manager service
+    this.musicManagerService = new MusicManagerService(this.scene);
   }
   
   private setupDatabaseConnections(connection: DbConnection, identity: Identity): void {
@@ -251,6 +263,9 @@ export class ManagerRegistry {
     
     // Pass identity to enemy damage manager for projectile rendering
     this.enemyDamageManager.setLocalPlayerIdentity(identity.toHexString());
+    
+    // Initialize music manager service with connection
+    this.musicManagerService.initialize(connection);
     
     // Setup damage event subscriptions
     this.setupDamageEventSubscription(connection);

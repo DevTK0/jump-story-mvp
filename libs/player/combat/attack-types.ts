@@ -30,6 +30,7 @@ interface BaseAttack {
   description: string;
   skillEffect?: string; // Optional VFX sprite key for on-hit effects
   icon?: string; // Optional icon sprite key for UI display
+  audio?: string; // Optional audio file for skill sound effect
 }
 
 // Melee-specific properties

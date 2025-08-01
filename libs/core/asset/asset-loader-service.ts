@@ -3,6 +3,7 @@ import { createLogger, type ModuleLogger } from '../logger';
 import { MapLoader, type MapData } from './map-loader';
 import { AnimationFactory, type AnimationFrameConfig, type SpriteAnimationSet } from '../animations';
 import { spriteConfigLoader, type SpriteConfig } from './sprite-config-loader';
+import { audioConfigLoader, type AudioConfig } from './audio-config-loader';
 import { AssetResolver } from './asset-resolver';
 import { ErrorBoundary, AssetError } from '../error';
 
@@ -15,13 +16,20 @@ export class AssetLoaderService {
   private mapLoader: MapLoader;
   private errorBoundary: ErrorBoundary;
   private spriteConfig: SpriteConfig;
+  private audioConfig?: AudioConfig;
   
-  constructor(scene: Phaser.Scene, spriteConfig: SpriteConfig) {
+  constructor(scene: Phaser.Scene, spriteConfig: SpriteConfig, audioConfig?: AudioConfig) {
     this.scene = scene;
     this.logger = createLogger('AssetLoaderService');
     this.mapLoader = new MapLoader(scene);
     this.errorBoundary = ErrorBoundary.getInstance();
     this.spriteConfig = spriteConfig;
+    this.audioConfig = audioConfig;
+    
+    // Set audio config in loader if provided
+    if (audioConfig) {
+      audioConfigLoader.setConfig(audioConfig);
+    }
   }
   
   /**
@@ -157,6 +165,27 @@ export class AssetLoaderService {
     if ((this.spriteConfig.sprites as any).icons) {
       spriteConfigLoader.loadSpritesForCategory(this.scene, 'icons');
     }
+    
+    // Load audio assets
+    this.loadAudioAssets();
+  }
+  
+  private loadAudioAssets(): void {
+    if (!this.audioConfig) {
+      this.logger.debug('No audio configuration provided, skipping audio loading');
+      return;
+    }
+
+    this.logger.debug('Loading audio assets from configuration...');
+    
+    // Load each category of audio
+    Object.keys(this.audioConfig.audio).forEach(category => {
+      if (this.audioConfig?.audio[category]) {
+        audioConfigLoader.loadAudioForCategory(this.scene, category);
+      }
+    });
+    
+    this.logger.info('Audio assets queued for loading');
   }
   
   

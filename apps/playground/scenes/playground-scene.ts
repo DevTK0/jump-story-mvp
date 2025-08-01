@@ -4,6 +4,7 @@ import type { IDebuggable } from '@/debug/debug-interfaces';
 import { DebugState } from '@/debug/debug-state';
 import { ContextMenuExtension } from '@/core/scene/extensions/context-menu-extension';
 import spriteConfig from '../config/sprite-config';
+import audioConfig from '../config/audio-config';
 
 // Scene configuration
 const sceneConfig: SceneConfig = {
@@ -25,6 +26,7 @@ const sceneConfig: SceneConfig = {
     metrics: true, // Show performance metrics
   },
   sprites: spriteConfig, // Pass sprite configuration
+  audio: audioConfig, // Pass audio configuration
 };
 
 /**
