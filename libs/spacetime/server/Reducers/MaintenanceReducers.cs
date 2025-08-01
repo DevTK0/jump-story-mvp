@@ -124,9 +124,9 @@ public static partial class Module
         {
             // Check if aggro target still exists and is in range
             var aggroPlayer = enemy.aggro_target.HasValue ? ctx.Db.Player.identity.Find(enemy.aggro_target.Value) : null;
-            if (aggroPlayer != null)
+            if (aggroPlayer != null && aggroPlayer.Value.current_hp > 0 && aggroPlayer.Value.state != PlayerState.Dead)
             {
-                // Maintain aggro if player is within leash distance
+                // Maintain aggro if player is alive and within leash distance
                 if (IsPlayerInLeashRange(aggroPlayer.Value.x, aggroPlayer.Value.y, enemy.x, enemy.y))
                 {
                     shouldChase = true;
@@ -142,7 +142,7 @@ public static partial class Module
             }
             else
             {
-                // Target player disconnected - clear aggro
+                // Target player disconnected or died - clear aggro
                 hasAggro = false;
                 newAggroTarget = null;
             }
@@ -878,9 +878,9 @@ public static partial class Module
         {
             // Check if aggro target still exists and is in range
             var aggroPlayer = boss.aggro_target.HasValue ? ctx.Db.Player.identity.Find(boss.aggro_target.Value) : null;
-            if (aggroPlayer != null)
+            if (aggroPlayer != null && aggroPlayer.Value.current_hp > 0 && aggroPlayer.Value.state != PlayerState.Dead)
             {
-                // Maintain aggro if player is within leash distance
+                // Maintain aggro if player is alive and within leash distance
                 if (IsPlayerInLeashRange(aggroPlayer.Value.x, aggroPlayer.Value.y, boss.x, boss.y))
                 {
                     shouldChase = true;
@@ -896,7 +896,7 @@ public static partial class Module
             }
             else
             {
-                // Target player disconnected - clear aggro
+                // Target player disconnected or died - clear aggro
                 hasAggro = false;
                 newAggroTarget = null;
             }

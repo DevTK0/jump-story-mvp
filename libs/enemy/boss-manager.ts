@@ -5,10 +5,13 @@ import { createLogger } from '@/core/logger';
 import { ENEMY_CONFIG } from './config/enemy-config';
 import { BossHealthBar } from './ui/boss-health-bar';
 import { EnemyStateMachine } from './state/enemy-state-machine';
-import { bossAttributes } from '../../apps/playground/config/enemy-attributes';
+import { bossAttributes, HITBOX_SIZES } from '../../apps/playground/config/enemy-attributes';
 import type { PhysicsEntity } from '@/core/physics/physics-entity';
 import type { PhysicsRegistry } from '@/core/physics/physics-registry';
-import { BossSubscriptionManager, type BossSubscriptionConfig } from './managers/boss-subscription-manager';
+import {
+  BossSubscriptionManager,
+  type BossSubscriptionConfig,
+} from './managers/boss-subscription-manager';
 
 /**
  * Manages boss entities - larger, more powerful enemies
@@ -29,7 +32,7 @@ export class BossManager implements PhysicsEntity {
   constructor(scene: Phaser.Scene, subscriptionConfig?: Partial<BossSubscriptionConfig>) {
     this.scene = scene;
     this.bossGroup = this.scene.physics.add.group();
-    
+
     // Initialize subscription manager with callbacks
     this.subscriptionManager = new BossSubscriptionManager(
       scene,
@@ -47,7 +50,7 @@ export class BossManager implements PhysicsEntity {
     this.logger.info('Setting database connection');
     this.subscriptionManager.setDbConnection(connection);
   }
-  
+
   public setLocalPlayerIdentity(identity: Identity): void {
     this.subscriptionManager.setLocalPlayerIdentity(identity);
   }
@@ -56,15 +59,18 @@ export class BossManager implements PhysicsEntity {
    * Handle boss insertion from subscription
    */
   private handleBossInsert(boss: ServerSpawn): void {
-    this.logger.info('Boss insert event received:', { enemy: boss.enemy, position: { x: boss.x, y: boss.y } });
+    this.logger.info('Boss insert event received:', {
+      enemy: boss.enemy,
+      position: { x: boss.x, y: boss.y },
+    });
     this.spawnBoss(boss);
-    
+
     // Emit boss spawn event
     this.scene.events.emit('boss:spawned', {
       enemy: boss.enemy,
       spawnId: boss.spawnId,
       x: boss.x,
-      y: boss.y
+      y: boss.y,
     });
   }
 
@@ -72,7 +78,10 @@ export class BossManager implements PhysicsEntity {
    * Handle boss update from subscription
    */
   private handleBossUpdate(boss: ServerSpawn): void {
-    this.logger.info('Boss update event received:', { enemy: boss.enemy, position: { x: boss.x, y: boss.y } });
+    this.logger.info('Boss update event received:', {
+      enemy: boss.enemy,
+      position: { x: boss.x, y: boss.y },
+    });
     this.updateBoss(boss);
   }
 
@@ -82,7 +91,7 @@ export class BossManager implements PhysicsEntity {
   private handleBossDelete(spawnId: number): void {
     this.logger.info('Boss delete event received:', { spawnId });
     this.despawnBoss(spawnId);
-    
+
     // Emit boss despawn event
     this.scene.events.emit('boss:despawned', { spawnId });
   }
@@ -97,7 +106,10 @@ export class BossManager implements PhysicsEntity {
     for (const boss of bosses) {
       currentBossIds.add(boss.spawnId);
       if (!this.bosses.has(boss.spawnId)) {
-        this.logger.info('Spawning boss from proximity load:', { enemy: boss.enemy, position: { x: boss.x, y: boss.y } });
+        this.logger.info('Spawning boss from proximity load:', {
+          enemy: boss.enemy,
+          position: { x: boss.x, y: boss.y },
+        });
         this.spawnBoss(boss);
       }
     }
@@ -112,24 +124,30 @@ export class BossManager implements PhysicsEntity {
   }
 
   private spawnBoss(serverBoss: ServerSpawn): void {
-    this.logger.info(`Starting to spawn boss: ${serverBoss.enemy} at (${serverBoss.x}, ${serverBoss.y}), state: ${serverBoss.state.tag}`);
-    
+    this.logger.info(
+      `Starting to spawn boss: ${serverBoss.enemy} at (${serverBoss.x}, ${serverBoss.y}), state: ${serverBoss.state.tag}`
+    );
+
     const sprite = this.createBossSprite(serverBoss);
     const isDead = serverBoss.state.tag === 'Dead';
 
     this.configureBossSprite(sprite, serverBoss);
     this.logger.info(`Boss sprite configured - scale: ${sprite.scale}, depth: ${sprite.depth}`);
-    
+
     this.initializeBossAnimation(sprite, serverBoss.enemy, isDead);
-    this.logger.info(`Boss animation initialized - isDead: ${isDead}, playing: ${sprite.anims?.isPlaying}, current anim: ${sprite.anims?.currentAnim?.key}`);
-    
-    this.configureBossPhysics(sprite, isDead);
+    this.logger.info(
+      `Boss animation initialized - isDead: ${isDead}, playing: ${sprite.anims?.isPlaying}, current anim: ${sprite.anims?.currentAnim?.key}`
+    );
+
+    this.configureBossPhysics(sprite, serverBoss.enemy, isDead);
     this.createBossHealthBar(serverBoss, sprite);
     // Note: Boss name is now shown in the full-width health bar, no separate name label needed
     this.registerBoss(sprite, serverBoss);
 
-    this.logger.info(`Boss spawn completed: ${serverBoss.enemy} at (${serverBoss.x}, ${serverBoss.y}), visible: ${sprite.visible}`);
-    
+    this.logger.info(
+      `Boss spawn completed: ${serverBoss.enemy} at (${serverBoss.x}, ${serverBoss.y}), visible: ${sprite.visible}`
+    );
+
     // Emit spawn event for audio service
     this.scene.registry.events.emit('enemy:spawned', serverBoss.spawnId, serverBoss.enemy);
   }
@@ -143,11 +161,11 @@ export class BossManager implements PhysicsEntity {
   private configureBossSprite(sprite: Phaser.Physics.Arcade.Sprite, serverBoss: ServerSpawn): void {
     const { display } = ENEMY_CONFIG.boss;
     sprite.setOrigin(display.origin.x, display.origin.y);
-    sprite.setScale(display.scale); // Larger scale for bosses
+    sprite.setScale(display.scale);
     sprite.setDepth(display.depth);
     sprite.clearTint();
     sprite.setBlendMode(Phaser.BlendModes.NORMAL);
-    
+
     // Set initial facing direction
     if (serverBoss.facing.tag === 'Left') {
       sprite.setFlipX(true);
@@ -187,22 +205,35 @@ export class BossManager implements PhysicsEntity {
     }
   }
 
-  private configureBossPhysics(sprite: Phaser.Physics.Arcade.Sprite, isDead: boolean): void {
+  private configureBossPhysics(
+    sprite: Phaser.Physics.Arcade.Sprite,
+    bossType: string,
+    isDead: boolean
+  ): void {
     if (!sprite.body) return;
 
     const body = sprite.body as Phaser.Physics.Arcade.Body;
+
+    // Get hitbox size from boss attributes or use default
+    const bossConfig = bossAttributes.bosses[bossType];
+    const hitboxSize = bossConfig?.hitbox_size || 'boss_medium';
+    const dimensions = HITBOX_SIZES[hitboxSize];
+
+    body.setSize(dimensions.width, dimensions.height);
     
-    // Use same hitbox size as regular enemies (10x10) despite larger visual scale
-    // This ensures consistent physics behavior
-    body.setSize(10, 10);
+    // Center the hitbox by default, then apply user offset
+    const centerOffsetX = (sprite.width - dimensions.width) / 2;
+    const centerOffsetY = (sprite.height - dimensions.height) / 2;
     
-    // Don't set offset - let Phaser handle it based on origin
-    // This matches how regular enemies work
+    const userOffsetX = bossConfig?.hitbox_offset?.x ?? 0;
+    const userOffsetY = bossConfig?.hitbox_offset?.y ?? 0;
     
+    body.setOffset(centerOffsetX + userOffsetX, centerOffsetY + userOffsetY);
+
     body.setCollideWorldBounds(true);
     body.setImmovable(false); // Allow physics movement
     body.setVelocity(0, 0);
-    
+
     // Enable gravity so boss falls to ground
     body.setGravityY(300); // Match enemy gravity
     body.setAllowGravity(true);
@@ -212,7 +243,10 @@ export class BossManager implements PhysicsEntity {
     }
   }
 
-  private createBossHealthBar(serverBoss: ServerSpawn, _sprite: Phaser.Physics.Arcade.Sprite): void {
+  private createBossHealthBar(
+    serverBoss: ServerSpawn,
+    _sprite: Phaser.Physics.Arcade.Sprite
+  ): void {
     // Get boss name from attributes
     let bossName = serverBoss.enemy;
     const bossConfig = bossAttributes.bosses[serverBoss.enemy];
@@ -223,10 +257,10 @@ export class BossManager implements PhysicsEntity {
     // Convert spawn_time to milliseconds for JavaScript Date
     // SpacetimeDB Timestamp is an object with __timestamp_micros_since_unix_epoch__ property
     let spawnTimeMs: number;
-    
+
     try {
       let spawnTimeMicros: number;
-      
+
       if (typeof serverBoss.spawnTime === 'object' && serverBoss.spawnTime !== null) {
         // SpacetimeDB Timestamp has __timestamp_micros_since_unix_epoch__ property (BigInt)
         const timestamp = serverBoss.spawnTime as any;
@@ -234,26 +268,26 @@ export class BossManager implements PhysicsEntity {
       } else {
         spawnTimeMicros = Number(serverBoss.spawnTime);
       }
-      
+
       // Check if conversion resulted in a valid number
       if (isNaN(spawnTimeMicros) || spawnTimeMicros === 0) {
         this.logger.warn(`Invalid spawn time for boss, using current time`, {
           spawnTimeType: typeof serverBoss.spawnTime,
-          spawnTimeMicros
+          spawnTimeMicros,
         });
         spawnTimeMs = Date.now();
       } else {
         spawnTimeMs = spawnTimeMicros / 1000; // Convert microseconds to milliseconds
-        
+
         const elapsedMs = Date.now() - spawnTimeMs;
         const elapsedMinutes = Math.floor(elapsedMs / 60000);
         const remainingMinutes = 10 - elapsedMinutes;
-        
+
         this.logger.info(`Boss spawn time:`, {
           spawnTimeMs,
           spawnTimeDate: new Date(spawnTimeMs).toISOString(),
           elapsedMinutes,
-          remainingMinutes
+          remainingMinutes,
         });
       }
     } catch (error) {
@@ -261,20 +295,14 @@ export class BossManager implements PhysicsEntity {
       spawnTimeMs = Date.now();
     }
 
-    const healthBar = new BossHealthBar(
-      this.scene,
-      bossName,
-      serverBoss.maxHp,
-      spawnTimeMs
-    );
+    const healthBar = new BossHealthBar(this.scene, bossName, serverBoss.maxHp, spawnTimeMs);
 
     healthBar.updateHealth(serverBoss.currentHp);
     this.bossHealthBars.set(serverBoss.spawnId, healthBar);
-    
+
     // Show health bar immediately for bosses
     healthBar.show();
   }
-
 
   private registerBoss(sprite: Phaser.Physics.Arcade.Sprite, serverBoss: ServerSpawn): void {
     this.bossGroup.add(sprite);
@@ -305,35 +333,38 @@ export class BossManager implements PhysicsEntity {
     return this.subscriptionManager.isBossInProximity(serverBoss);
   }
 
-  private setupBossLandingDetection(sprite: Phaser.Physics.Arcade.Sprite, serverBoss: ServerSpawn): void {
+  private setupBossLandingDetection(
+    sprite: Phaser.Physics.Arcade.Sprite,
+    serverBoss: ServerSpawn
+  ): void {
     // Only set up landing detection if boss is not dead and is spawning in the air
     if (serverBoss.state.tag === 'Dead' || !sprite.body) return;
 
     let hasLanded = false;
     const body = sprite.body as Phaser.Physics.Arcade.Body;
-    
+
     // Check if boss starts in the air (has gravity and will fall)
     if (body.allowGravity && body.velocity.y >= 0) {
       // Set up physics update to detect landing
       const checkLanding = () => {
         if (!hasLanded && body.blocked.down) {
           hasLanded = true;
-          
+
           // Trigger subtle screen shake for boss impact
           const shakeDuration = 150; // 150ms for subtle effect
           const shakeIntensity = 0.005; // Very subtle intensity
-          
+
           this.scene.cameras.main.shake(shakeDuration, shakeIntensity);
           this.logger.info(`Boss ${serverBoss.enemy} landed! Triggering screen shake.`);
-          
+
           // Remove the update listener after landing
           this.scene.events.off('update', checkLanding);
         }
       };
-      
+
       // Add update listener
       this.scene.events.on('update', checkLanding);
-      
+
       // Clean up listener if sprite is destroyed
       sprite.once('destroy', () => {
         this.scene.events.off('update', checkLanding);
@@ -344,7 +375,7 @@ export class BossManager implements PhysicsEntity {
   private updateBoss(serverBoss: ServerSpawn): void {
     const sprite = this.bosses.get(serverBoss.spawnId);
     const healthBar = this.bossHealthBars.get(serverBoss.spawnId);
-    
+
     // Check if boss is within proximity before spawning
     const isInProximity = this.isBossInProximity(serverBoss);
 
@@ -354,9 +385,9 @@ export class BossManager implements PhysicsEntity {
       this.spawnBoss(serverBoss);
       return;
     }
-    
+
     if (!sprite) return;
-    
+
     // If boss exists but is out of proximity, despawn it
     if (!isInProximity) {
       this.logger.info(`Boss ${serverBoss.spawnId} out of proximity - despawning`);
@@ -366,14 +397,14 @@ export class BossManager implements PhysicsEntity {
 
     // Update only x position - let physics handle y
     sprite.x = serverBoss.x;
-    
+
     // Update sprite facing based on server data
     if (serverBoss.facing.tag === 'Left') {
       sprite.setFlipX(true);
     } else if (serverBoss.facing.tag === 'Right') {
       sprite.setFlipX(false);
     }
-    
+
     // Update health bar (no position update needed for full-width bar)
     if (healthBar) {
       healthBar.updateHealth(serverBoss.currentHp);
@@ -386,7 +417,9 @@ export class BossManager implements PhysicsEntity {
     const currentState = serverBoss.state;
 
     if (previousState?.tag !== currentState.tag) {
-      this.logger.info(`Boss ${serverBoss.enemy} state change: ${previousState?.tag || 'unknown'} -> ${currentState.tag}`);
+      this.logger.info(
+        `Boss ${serverBoss.enemy} state change: ${previousState?.tag || 'unknown'} -> ${currentState.tag}`
+      );
       this.handleStateChange(serverBoss.spawnId, currentState, serverBoss.enemy);
       this.bossStates.set(serverBoss.spawnId, currentState);
 
@@ -399,10 +432,16 @@ export class BossManager implements PhysicsEntity {
     } else {
       // For attack states, check if animation has stopped playing and restart it
       // This handles the case where boss stays in attack state while being hit
-      if (currentState.tag === 'Attack1' || currentState.tag === 'Attack2' || currentState.tag === 'Attack3') {
+      if (
+        currentState.tag === 'Attack1' ||
+        currentState.tag === 'Attack2' ||
+        currentState.tag === 'Attack3'
+      ) {
         const expectedAnim = `${serverBoss.enemy}-${currentState.tag.toLowerCase()}-anim`;
         if (!sprite.anims.isPlaying || sprite.anims.currentAnim?.key !== expectedAnim) {
-          this.logger.info(`Boss ${serverBoss.enemy} restarting stuck attack animation: ${currentState.tag}`);
+          this.logger.info(
+            `Boss ${serverBoss.enemy} restarting stuck attack animation: ${currentState.tag}`
+          );
           sprite.play(expectedAnim);
         }
       }
@@ -433,7 +472,7 @@ export class BossManager implements PhysicsEntity {
     if (stateMachine) {
       stateMachine.handleServerStateChange(newState);
     }
-    
+
     // Emit attack events for audio service
     if (newState.tag === 'Attack1') {
       this.scene.registry.events.emit('boss:attack', bossSpawnId, 1);
@@ -454,7 +493,7 @@ export class BossManager implements PhysicsEntity {
       if (sprite.body) {
         sprite.body.enable = false;
       }
-      
+
       // Emit despawn event for audio service
       this.scene.registry.events.emit('enemy:despawned', bossSpawnId);
 
@@ -531,13 +570,18 @@ export class BossManager implements PhysicsEntity {
   // PhysicsEntity implementation
   public setupPhysics(registry: PhysicsRegistry): void {
     const bossGroup = this.getBossGroup();
-    
+
     // Register boss group with registry
     registry.registerGroup('bosses', bossGroup);
-    
+
     // Set up boss collisions
     registry.addGroupCollider('bosses', 'ground');
-    registry.addGroupCollider('bosses', 'platforms', undefined, registry.createOneWayPlatformCallback());
+    registry.addGroupCollider(
+      'bosses',
+      'platforms',
+      undefined,
+      registry.createOneWayPlatformCallback()
+    );
     registry.addGroupCollider('bosses', 'boundaries');
   }
 

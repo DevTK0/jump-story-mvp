@@ -1,3 +1,15 @@
+// Hitbox size definitions
+export type HitboxSize = 'small' | 'medium' | 'large';
+export type BossHitboxSize = 'boss_medium' | 'boss_large';
+
+export const HITBOX_SIZES = {
+  small: { width: 8, height: 8 },
+  medium: { width: 12, height: 12 },
+  large: { width: 16, height: 16 },
+  boss_medium: { width: 20, height: 20 },
+  boss_large: { width: 24, height: 24 },
+} as const;
+
 export interface EnemyAttribute {
   health: number;
   move_speed: number;
@@ -9,6 +21,8 @@ export interface EnemyAttribute {
   aggro_range: number;
   level: number;
   exp_reward: number;
+  hitbox_size?: HitboxSize; // Optional with 'medium' as default
+  hitbox_offset?: { x: number; y: number }; // Optional offset for physics body positioning
   boss_trigger?: {
     boss_to_spawn: string;
     required_kills: number;
@@ -38,6 +52,7 @@ export const enemyAttributes: EnemyAttributes = {
       aggro_range: 150,
       level: 1,
       exp_reward: 25,
+      hitbox_size: 'medium',
       boss_trigger: {
         boss_to_spawn: 'orc-rider',
         required_kills: 1,
@@ -58,6 +73,7 @@ export const enemyAttributes: EnemyAttributes = {
       aggro_range: 200,
       level: 3,
       exp_reward: 50,
+      hitbox_size: 'medium',
     },
     'elite-orc': {
       health: 250,
@@ -70,6 +86,7 @@ export const enemyAttributes: EnemyAttributes = {
       aggro_range: 250,
       level: 5,
       exp_reward: 100,
+      hitbox_size: 'large',
       boss_trigger: {
         boss_to_spawn: 'elite-orc',
         required_kills: 1000000,
@@ -86,6 +103,7 @@ export const enemyAttributes: EnemyAttributes = {
       aggro_range: 300,
       level: 4,
       exp_reward: 75,
+      hitbox_size: 'large',
     },
     skeleton: {
       health: 80,
@@ -98,6 +116,7 @@ export const enemyAttributes: EnemyAttributes = {
       aggro_range: 150,
       level: 1,
       exp_reward: 20,
+      hitbox_size: 'small',
     },
     'armored-skeleton': {
       health: 120,
@@ -110,6 +129,7 @@ export const enemyAttributes: EnemyAttributes = {
       aggro_range: 180,
       level: 2,
       exp_reward: 40,
+      hitbox_size: 'medium',
     },
     'skeleton-archer': {
       health: 60,
@@ -122,6 +142,7 @@ export const enemyAttributes: EnemyAttributes = {
       aggro_range: 250,
       level: 2,
       exp_reward: 35,
+      hitbox_size: 'small',
     },
     'greatsword-skeleton': {
       health: 180,
@@ -134,6 +155,7 @@ export const enemyAttributes: EnemyAttributes = {
       aggro_range: 200,
       level: 4,
       exp_reward: 80,
+      hitbox_size: 'large',
       boss_trigger: {
         boss_to_spawn: 'greatsword-skeleton',
         required_kills: 1000000,
@@ -150,6 +172,7 @@ export const enemyAttributes: EnemyAttributes = {
       aggro_range: 100,
       level: 1,
       exp_reward: 10,
+      hitbox_size: 'small',
     },
     werewolf: {
       health: 300,
@@ -162,6 +185,7 @@ export const enemyAttributes: EnemyAttributes = {
       aggro_range: 300,
       level: 6,
       exp_reward: 150,
+      hitbox_size: 'large',
       boss_trigger: {
         boss_to_spawn: 'werewolf',
         required_kills: 1000000,
@@ -178,6 +202,7 @@ export const enemyAttributes: EnemyAttributes = {
       aggro_range: 250,
       level: 7,
       exp_reward: 200,
+      hitbox_size: 'large',
       boss_trigger: {
         boss_to_spawn: 'werebear',
         required_kills: 1000000,
@@ -209,6 +234,8 @@ export interface BossAttribute {
   aggro_range: number;
   level: number;
   exp_reward: number;
+  hitbox_size?: BossHitboxSize; // Optional with 'boss_medium' as default
+  hitbox_offset?: { x: number; y: number }; // Optional offset for physics body positioning
   attacks?: {
     attack1?: BossAttack;
     attack2?: BossAttack;
@@ -242,6 +269,8 @@ export const bossAttributes: BossAttributes = {
       aggro_range: 500,
       level: 10,
       exp_reward: 1000,
+      hitbox_size: 'boss_large',
+      hitbox_offset: { x: 0, y: -5 }, // Offset from centered position
       audio: {
         on_damaged: 'bossHit',
         on_death: 'bossDeath',
@@ -294,6 +323,8 @@ export const bossAttributes: BossAttributes = {
       aggro_range: 400,
       level: 12,
       exp_reward: 1500,
+      hitbox_size: 'boss_medium',
+      hitbox_offset: { x: 0, y: 20 }, // Offset from centered position
       audio: {
         on_damaged: 'bossHit',
         on_death: 'bossDeath',
@@ -347,6 +378,8 @@ export const bossAttributes: BossAttributes = {
       aggro_range: 400,
       level: 15,
       exp_reward: 2000,
+      hitbox_size: 'boss_large',
+      hitbox_offset: { x: 0, y: 20 }, // Offset from centered position
       audio: {
         on_damaged: 'bossHit',
         on_death: 'bossDeath',
@@ -399,6 +432,8 @@ export const bossAttributes: BossAttributes = {
       aggro_range: 600,
       level: 18,
       exp_reward: 3000,
+      hitbox_size: 'boss_large',
+      hitbox_offset: { x: 0, y: 20 }, // Offset from centered position
       audio: {
         on_damaged: 'bossHit',
         on_death: 'bossDeath',
@@ -452,6 +487,8 @@ export const bossAttributes: BossAttributes = {
       aggro_range: 500,
       level: 20,
       exp_reward: 5000,
+      hitbox_size: 'boss_large',
+      hitbox_offset: { x: 0, y: 20 }, // Offset from centered position
       audio: {
         on_damaged: 'bossHit',
         on_death: 'bossDeath',

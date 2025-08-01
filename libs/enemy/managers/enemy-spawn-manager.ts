@@ -3,7 +3,7 @@ import type { Spawn as ServerEnemy, DbConnection } from '@/spacetime/client';
 import { ENEMY_CONFIG } from '../config/enemy-config';
 import { EnemyHealthBar } from '../ui/enemy-health-bar';
 import { EnemyStateMachine } from '../state/enemy-state-machine';
-import { enemyAttributes } from '../../../apps/playground/config/enemy-attributes';
+import { enemyAttributes, HITBOX_SIZES } from '../../../apps/playground/config/enemy-attributes';
 
 /**
  * Handles enemy spawning, despawning, and lifecycle management
@@ -35,7 +35,7 @@ export class EnemySpawnManager {
 
     this.configureEnemySprite(sprite);
     this.initializeEnemyAnimation(sprite, serverEnemy.enemy, isDead);
-    this.configureEnemyPhysics(sprite, isDead);
+    this.configureEnemyPhysics(sprite, serverEnemy.enemy, isDead);
     this.createHealthBar(serverEnemy, sprite);
     this.createNameLabel(serverEnemy, sprite);
     this.registerEnemy(sprite, serverEnemy);
@@ -151,13 +151,19 @@ export class EnemySpawnManager {
   /**
    * Configure physics body for collision detection and behavior
    */
-  private configureEnemyPhysics(sprite: Phaser.Physics.Arcade.Sprite, isDead: boolean): void {
+  private configureEnemyPhysics(sprite: Phaser.Physics.Arcade.Sprite, enemyType: string, isDead: boolean): void {
     if (!sprite.body) return;
 
     const { physics } = ENEMY_CONFIG;
     const body = sprite.body as Phaser.Physics.Arcade.Body;
 
-    body.setSize(physics.hitboxWidth, physics.hitboxHeight);
+    // Get hitbox size from enemy attributes or use default
+    const enemyConfig = enemyAttributes.enemies[enemyType];
+    const hitboxSize = enemyConfig?.hitbox_size || 'medium';
+    const dimensions = HITBOX_SIZES[hitboxSize];
+
+    body.setSize(dimensions.width, dimensions.height);
+    
     body.setCollideWorldBounds(true);
     body.setImmovable(true); // Won't be pushed around by collisions
     body.setVelocity(physics.velocity.x, physics.velocity.y);
