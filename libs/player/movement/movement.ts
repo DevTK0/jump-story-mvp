@@ -84,6 +84,12 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
 
       // Double jump
       this.handleDoubleJump();
+
+      // Sliding on wall
+      const onWall = body.onWall();
+      if (onWall) {
+        body.setVelocityX(horizontalDir * 10);
+      }
     }
 
     // Sample trajectory only if shadow effect is explicitly enabled
