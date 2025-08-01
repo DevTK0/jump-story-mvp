@@ -12,10 +12,16 @@ import { createLogger, type ModuleLogger } from '@/core/logger';
 export class DeathMonitor implements System {
   private player: Player;
   private dbConnection: DbConnection | null = null;
-  private isDead: boolean = false;
   private playerQueryService: PlayerQueryService | null = null;
   private deathStateService: DeathStateService;
   private logger: ModuleLogger;
+
+  private get isDead (): boolean {
+    return !this.player.isAlive;
+  }
+  private set isDead (value: boolean) {
+    this.player.isAlive = !value;
+  }
 
   constructor(player: Player) {
     this.player = player;
@@ -68,6 +74,7 @@ export class DeathMonitor implements System {
     _newPlayer: ServerPlayer
   ): void {
     // Player HP changed
+    console.log('[DeathMonitor][handlePlayerUpdate]', { oldHp, newHp, serverState, _newPlayer });
 
     // Use death state service to determine what action to take
     const stateAction = this.deathStateService.determineStateAction(
@@ -90,6 +97,7 @@ export class DeathMonitor implements System {
     action: 'die' | 'respawn' | 'force_dead' | 'sync_dead' | 'none',
     _reason: string
   ): void {
+    console.log('[DeathMonitor][executeStateAction]', { action, _reason });
     switch (action) {
       case 'die':
       case 'force_dead':

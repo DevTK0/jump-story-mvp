@@ -318,9 +318,13 @@ export class ClimbingSystem extends BaseDebugRenderer implements System, IDebugg
     }
   }
 
-  private checkClimbingStart(): void {
+  private get isPlayerUnableToClimb(): boolean {
     // Don't start climbing if disabled (e.g., during damaged state) or if dead
-    if (this.climbingDisabled || !this.player.isAlive) {
+    return this.climbingDisabled || !this.player.isAlive;
+  }
+
+  private checkClimbingStart(): void {
+    if (this.isPlayerUnableToClimb) {
       return;
     }
 
@@ -357,6 +361,12 @@ export class ClimbingSystem extends BaseDebugRenderer implements System, IDebugg
 
   private updateClimbingMovement(): void {
     if (!this.player.isClimbing) return;
+
+    // If player is suddenly unable to climb while 
+    if (this.isPlayerUnableToClimb) {
+      this.forceExitClimbing();
+      return;
+    }
 
     const currentArea = this.collision.getCurrentClimbeableArea();
     if (!currentArea) {
@@ -429,8 +439,9 @@ export class ClimbingSystem extends BaseDebugRenderer implements System, IDebugg
 
   }
 
-  private exitClimbing(): void {
-    if (!this.player.isClimbing) return;
+  // Forced forces the checks to skip and forcefully exits
+  private exitClimbing(forced?: boolean): void {
+    if (!this.player.isClimbing && !forced) return;
 
     this.player.setPlayerState({ isClimbing: false });
     this.physics.disableClimbingPhysics();
@@ -447,7 +458,7 @@ export class ClimbingSystem extends BaseDebugRenderer implements System, IDebugg
   }
 
   public forceExitClimbing(): void {
-    this.exitClimbing();
+    this.exitClimbing(true);
   }
 
   public setClimbingDisabled(disabled: boolean): void {
