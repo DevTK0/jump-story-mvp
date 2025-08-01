@@ -56,6 +56,9 @@ export type Player = {
   lastCombatTime: Timestamp,
   isOnline: boolean,
   banStatus: boolean,
+  deathX: number,
+  deathY: number,
+  respawnAvailableAt: Timestamp,
 };
 
 /**
@@ -88,6 +91,9 @@ export namespace Player {
       new ProductTypeElement("lastCombatTime", AlgebraicType.createTimestampType()),
       new ProductTypeElement("isOnline", AlgebraicType.createBoolType()),
       new ProductTypeElement("banStatus", AlgebraicType.createBoolType()),
+      new ProductTypeElement("deathX", AlgebraicType.createF32Type()),
+      new ProductTypeElement("deathY", AlgebraicType.createF32Type()),
+      new ProductTypeElement("respawnAvailableAt", AlgebraicType.createTimestampType()),
     ]);
   }
 

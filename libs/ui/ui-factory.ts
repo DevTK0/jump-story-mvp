@@ -10,6 +10,7 @@ import { UI_CONFIG } from './ui-config';
 import { UIContextService, type UICreateConfig } from './services/ui-context-service';
 import { NameChangeDialog } from './menus/name-change-dialog';
 import { BroadcastDisplay } from './broadcast/broadcast-display';
+import { RespawnCountdownUI } from './respawn/respawn-countdown-ui';
 
 // Re-export UICreateConfig from UIContextService to maintain compatibility
 export type { UICreateConfig };
@@ -28,6 +29,7 @@ export class UIFactory {
   private fpsCounter?: FPSCounter;
   private performanceMetrics?: PerformanceMetrics;
   private broadcastDisplay?: BroadcastDisplay;
+  private respawnCountdownUI?: RespawnCountdownUI;
   
   // Keyboard shortcuts
   private keyboardHandlers: Map<string, () => void> = new Map();
@@ -59,6 +61,9 @@ export class UIFactory {
     
     // Create broadcast display
     this.createBroadcastDisplay(config);
+    
+    // Create respawn countdown UI
+    this.createRespawnCountdownUI();
     
     // Setup keyboard shortcuts
     this.setupKeyboardShortcuts(config);
@@ -127,6 +132,7 @@ export class UIFactory {
     this.fpsCounter?.destroy();
     this.performanceMetrics?.destroy();
     this.broadcastDisplay?.destroy();
+    this.respawnCountdownUI?.destroy();
     
     // Destroy UIContextService if it was initialized
     if (UIContextService.isInitialized()) {
@@ -181,6 +187,12 @@ export class UIFactory {
       this.broadcastDisplay = new BroadcastDisplay(this.scene, config.connection);
       this.logger.debug('BroadcastDisplay created');
     }
+  }
+  
+  private createRespawnCountdownUI(): void {
+    // Create respawn countdown UI
+    this.respawnCountdownUI = new RespawnCountdownUI(this.scene);
+    this.logger.debug('RespawnCountdownUI created');
   }
   
   private setupKeyboardShortcuts(config: UICreateConfig): void {

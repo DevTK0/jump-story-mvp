@@ -444,7 +444,6 @@ public static partial class Module
         ctx.Db.Player.identity.Update(updatedPlayer);
         
         // Enter combat state
-        Log.Info($"[COMBAT DEBUG] Calling EnterCombat for player {ctx.Sender} after taking damage");
         CombatService.EnterCombat(ctx, updatedPlayer);
         
         // Get the latest player data after combat state update
@@ -472,10 +471,28 @@ public static partial class Module
 
         Log.Info($"Player {ctx.Sender} took {finalDamage} damage from enemy {spawnId}. HP: {player.Value.current_hp} -> {newHp}");
 
-        // If player died, log it
+        // If player died, store death location and calculate respawn timer
         if (newState == PlayerState.Dead)
         {
             Log.Info($"Player {ctx.Sender} died!");
+            
+            // Store death location and calculate respawn timer
+            var deadPlayer = ctx.Db.Player.identity.Find(ctx.Sender);
+            if (deadPlayer != null)
+            {
+                // Calculate respawn timer: level seconds
+                var respawnDelay = TimeSpan.FromSeconds(deadPlayer.Value.level);
+                var respawnAvailableAt = ctx.Timestamp + respawnDelay;
+                
+                ctx.Db.Player.identity.Update(deadPlayer.Value with
+                {
+                    death_x = deadPlayer.Value.x,
+                    death_y = deadPlayer.Value.y,
+                    respawn_available_at = respawnAvailableAt
+                });
+                
+                Log.Info($"Player {ctx.Sender} death location stored at ({deadPlayer.Value.x}, {deadPlayer.Value.y}). Respawn available at: {respawnAvailableAt}");
+            }
         }
     }
 
@@ -502,6 +519,13 @@ public static partial class Module
             Log.Info($"Player {ctx.Sender} is not dead (HP: {player.Value.current_hp}, State: {player.Value.state}), cannot respawn");
             return;
         }
+        
+        // Check respawn timer
+        if (player.Value.respawn_available_at > ctx.Timestamp)
+        {
+            Log.Info($"Player {ctx.Sender} must wait before respawning. Timer expires at: {player.Value.respawn_available_at}");
+            return;
+        }
 
         // Restore player to full health and set to idle state at spawn position
         float maxHp, maxMana;
@@ -521,14 +545,15 @@ public static partial class Module
             maxMana = PlayerConstants.CalculateMaxMana(player.Value.level);
         }
         
-        // First update HP and position
+        // First update HP and position (use death location)
         var respawnedPlayer = player.Value with
         {
             current_hp = maxHp,
             current_mana = maxMana,
-            x = PlayerConstants.SPAWN_POSITION_X,
-            y = PlayerConstants.SPAWN_POSITION_Y,
-            last_active = ctx.Timestamp
+            x = player.Value.death_x,  // Respawn at death location
+            y = player.Value.death_y,
+            last_active = ctx.Timestamp,
+            respawn_available_at = ctx.Timestamp  // Clear respawn timer by setting to current time
         };
         ctx.Db.Player.identity.Update(respawnedPlayer);
         
@@ -539,7 +564,7 @@ public static partial class Module
             Log.Warn($"Failed to transition respawned player to Idle state: {stateResult.Reason}");
         }
 
-        Log.Info($"Player {ctx.Sender} respawned with {maxHp} HP at position ({PlayerConstants.SPAWN_POSITION_X}, {PlayerConstants.SPAWN_POSITION_Y})");
+        Log.Info($"Player {ctx.Sender} respawned with {maxHp} HP at death location ({player.Value.death_x}, {player.Value.death_y})");
     }
 
 

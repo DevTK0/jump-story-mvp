@@ -432,7 +432,6 @@ public static partial class Module
             routeCount++;
         }
         
-        Log.Info($"Debug info - Players: {playerCount}, Enemies: {enemyCount}, Routes: {routeCount}");
     }
 
     [Reducer]
@@ -1228,6 +1227,22 @@ public static partial class Module
                     state = isDead ? PlayerState.Dead : PlayerState.Damaged,
                     last_active = ctx.Timestamp
                 };
+                
+                // If player died, store death location and calculate respawn timer
+                if (isDead)
+                {
+                    var respawnDelay = TimeSpan.FromSeconds(currentPlayer.level);
+                    var respawnAvailableAt = ctx.Timestamp + respawnDelay;
+                    
+                    damagedPlayer = damagedPlayer with {
+                        death_x = newX, // Use knockback position as death location
+                        death_y = currentPlayer.y,
+                        respawn_available_at = respawnAvailableAt
+                    };
+                    
+                    Log.Info($"Player {currentPlayer.name} death location stored at ({newX}, {currentPlayer.y}). Respawn available at: {respawnAvailableAt}");
+                }
+                
                 ctx.Db.Player.identity.Update(damagedPlayer);
                 
                 // Create damage event for client

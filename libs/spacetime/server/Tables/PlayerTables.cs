@@ -27,6 +27,11 @@ public static partial class Module
         public Timestamp last_combat_time; // When player last entered combat or attacked/was attacked
         public bool is_online; // Whether player is currently online
         public bool ban_status; // Whether player is banned from the game
+        
+        // Death and respawn
+        public float death_x;
+        public float death_y;
+        public Timestamp respawn_available_at;
     }
 
     [Table(Name = "EnemyDamageEvent", Public = true)]
