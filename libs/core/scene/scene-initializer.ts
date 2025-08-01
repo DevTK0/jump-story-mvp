@@ -201,13 +201,13 @@ export class SceneInitializer {
       this.scene.data.set('sceneConfig', this.config);
     }
     
-    // Setup world bounds
-    const mapWidth = mapData.tilemap.widthInPixels;
-    const mapHeight = mapData.tilemap.heightInPixels;
-    this.scene.physics.world.setBounds(0, 0, mapWidth, mapHeight);
+    // Remove world bounds - allow infinite movement
+    // const mapWidth = mapData.tilemap.widthInPixels;
+    // const mapHeight = mapData.tilemap.heightInPixels;
+    // this.scene.physics.world.setBounds(0, 0, mapWidth, mapHeight);
     
-    // Setup camera bounds
-    this.scene.cameras.main.setBounds(0, 0, mapWidth, mapHeight);
+    // Remove camera bounds - allow camera to follow player anywhere
+    // this.scene.cameras.main.setBounds(0, 0, mapWidth, mapHeight);
   }
   
   private async initializeDatabase(): Promise<void> {
@@ -276,7 +276,7 @@ export class SceneInitializer {
     // Import and apply player config
     const { PLAYER_CONFIG } = await import('@/player/config');
     player.setScale(PLAYER_CONFIG.movement.scale);
-    player.body.setCollideWorldBounds(true);
+    player.body.setCollideWorldBounds(false); // Allow player to move beyond world bounds
     player.body.setSize(
       PLAYER_CONFIG.movement.hitboxWidth,
       PLAYER_CONFIG.movement.hitboxHeight
@@ -346,7 +346,33 @@ export class SceneInitializer {
           player: playerData,
         });
       } else {
-        this.logger.warn('No player data found in SpacetimeDB, UI creation may fail');
+        this.logger.debug('No player data found in SpacetimeDB, retrying...');
+        
+        // Retry periodically until player data is available
+        let retryCount = 0;
+        const maxRetries = 50; // 5 seconds max
+        
+        const retryInterval = this.scene.time.addEvent({
+          delay: 100,
+          callback: () => {
+            retryCount++;
+            const playerData = playerQueryService?.findCurrentPlayer();
+            
+            if (playerData) {
+              this.logger.debug('Player data now available, creating UI');
+              this.uiFactory.createGameUI({
+                connection,
+                identity,
+                player: playerData,
+              });
+              retryInterval.remove();
+            } else if (retryCount >= maxRetries) {
+              this.logger.error('Failed to find player data after 5 seconds');
+              retryInterval.remove();
+            }
+          },
+          loop: true
+        });
       }
     }
   }

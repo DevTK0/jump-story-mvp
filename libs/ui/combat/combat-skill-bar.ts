@@ -73,7 +73,7 @@ export class CombatSkillBar {
     const dbConnection = context.getDbConnection();
     
     if (!identity || !dbConnection) {
-      this.logger.warn('No identity or connection available, using default skills');
+      this.logger.debug('No identity or connection available, using default skills');
       this.initializeDefaultSkills();
       return;
     }

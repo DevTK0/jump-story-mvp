@@ -31,7 +31,15 @@ export class RespawnCountdownUI {
     
     // Get data from context service
     const context = UIContextService.getInstance();
-    this.playerIdentity = context.getPlayerIdentity()!;
+    const identity = context.getPlayerIdentity();
+    
+    if (!identity) {
+      this.logger.debug('Player identity not available yet, waiting...');
+      this.waitForIdentity();
+      return;
+    }
+    
+    this.playerIdentity = identity;
     this.dbConnection = context.getDbConnection();
     
     this.logger.debug('Initializing RespawnCountdownUI');
@@ -172,10 +180,40 @@ export class RespawnCountdownUI {
     }
   }
 
+  private waitForIdentity(): void {
+    const context = UIContextService.getInstance();
+    
+    // Check periodically for identity
+    const checkInterval = this.scene.time.addEvent({
+      delay: 100,
+      callback: () => {
+        const identity = context.getPlayerIdentity();
+        if (identity) {
+          this.logger.debug('Player identity now available, initializing RespawnCountdownUI');
+          this.playerIdentity = identity;
+          this.dbConnection = context.getDbConnection();
+          
+          // Create UI and setup listeners
+          this.createUI();
+          
+          if (this.dbConnection) {
+            this.setupDataListener();
+          }
+          
+          // Stop checking
+          checkInterval.remove();
+        }
+      },
+      loop: true
+    });
+  }
+
   public destroy(): void {
     if (this.updateInterval) {
       window.clearInterval(this.updateInterval);
     }
-    this.container.destroy();
+    if (this.container) {
+      this.container.destroy();
+    }
   }
 }
