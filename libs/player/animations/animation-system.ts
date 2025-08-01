@@ -69,10 +69,6 @@ export class AnimationSystem implements System {
   }
 
   update(_time: number, _delta: number): void {
-    if (!this.player.isAlive) {
-      return;
-    }
-
     // Check if player is dead
     const stateMachine = this.player.getStateMachine();
     if (stateMachine.isInState('Dead')) {

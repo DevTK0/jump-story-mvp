@@ -34,6 +34,7 @@ export class BottomUIBar {
   private jobTableData: any[] = [];
 
   constructor(scene: Phaser.Scene) {
+    console.log('[BottomUIBar] Constructor called');
     this.scene = scene;
     
     // Get data from context service

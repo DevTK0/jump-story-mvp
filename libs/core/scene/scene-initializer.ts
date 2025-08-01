@@ -116,7 +116,9 @@ export class SceneInitializer {
       await this.initializeManagers();
       
       // Stage 6: Setup UI
+      console.log('[SceneInitializer] Starting Stage 6: UI initialization');
       await this.initializeUI();
+      console.log('[SceneInitializer] Stage 6 complete');
       
       // Stage 7: Configure physics
       await this.initializePhysics();
@@ -291,6 +293,7 @@ export class SceneInitializer {
     // Connect player to database if available
     const connection = this.connectionHelper.getConnection();
     if (connection) {
+      this.logger.info('[SceneInitializer] DB connection established');
       this.connectionHelper.setupPlayerSystems(player, connection);
     }
   }
@@ -324,6 +327,7 @@ export class SceneInitializer {
   }
   
   private async initializeUI(): Promise<void> {
+    console.log('[SceneInitializer] initializeUI called');
     this.logger.debug('Initializing UI...');
     
     this.uiFactory = new UIFactory(this.scene);
@@ -333,13 +337,20 @@ export class SceneInitializer {
     const connection = this.connectionHelper.getConnection();
     const identity = this.connectionHelper.getIdentity();
     
+    console.log('[SceneInitializer] Connection available:', !!connection);
+    console.log('[SceneInitializer] Identity available:', !!identity);
+    
     if (connection && identity) {
+      console.log('[SceneInitializer] Both connection and identity available, proceeding...');
       // Get the player data from SpacetimeDB
       const { PlayerQueryService } = await import('@/player/services/player-query-service');
       const playerQueryService = PlayerQueryService.getInstance();
       const playerData = playerQueryService?.findCurrentPlayer();
       
+      console.log('[SceneInitializer] Player data available:', !!playerData);
+      
       if (playerData) {
+        console.log('[SceneInitializer] Creating game UI with player data');
         this.uiFactory.createGameUI({
           connection,
           identity,

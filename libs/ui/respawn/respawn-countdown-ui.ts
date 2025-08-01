@@ -27,6 +27,7 @@ export class RespawnCountdownUI {
   private updateInterval?: number;
 
   constructor(scene: Phaser.Scene) {
+    console.log('[RespawnCountdownUI] Constructor called');
     this.scene = scene;
     
     // Get data from context service
