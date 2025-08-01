@@ -345,6 +345,9 @@ export class ManagerRegistry {
       // Handle hit animation for regular enemies
       this.enemyManager.playHitAnimation(damageEvent.spawnId);
       
+      // Mark enemy as attacked to show name
+      this.enemyManager.markEnemyAsAttacked(damageEvent.spawnId);
+      
       // Handle hit animation for bosses
       this.bossManager.playHitAnimation(damageEvent.spawnId);
       

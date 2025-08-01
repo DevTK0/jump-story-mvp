@@ -227,6 +227,7 @@ export class EnemySpawnManager {
     
     nameLabel.setOrigin(0.5, 0.5);
     nameLabel.setDepth(ENEMY_CONFIG.nameLabel.depth);
+    nameLabel.setVisible(false); // Start invisible until attacked
     
     this.enemyNameLabels.set(serverEnemy.spawnId, nameLabel);
   }
@@ -264,6 +265,20 @@ export class EnemySpawnManager {
   
   public getNameLabel(spawnId: number): Phaser.GameObjects.Text | undefined {
     return this.enemyNameLabels.get(spawnId);
+  }
+
+  public showNameLabel(spawnId: number): void {
+    const nameLabel = this.enemyNameLabels.get(spawnId);
+    if (nameLabel) {
+      nameLabel.setVisible(true);
+    }
+  }
+
+  public showHealthBar(spawnId: number): void {
+    const healthBar = this.enemyHealthBars.get(spawnId);
+    if (healthBar) {
+      healthBar.show();
+    }
   }
 
   public getStateMachine(spawnId: number): EnemyStateMachine | undefined {

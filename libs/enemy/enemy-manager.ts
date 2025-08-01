@@ -29,6 +29,7 @@ export class EnemyManager implements PhysicsEntity {
   // State tracking
   private enemyStates = new Map<number, PlayerState>();
   private enemyTypes = new Map<number, string>();
+  private attackedEnemies = new Set<number>(); // Track which enemies have been attacked
 
   constructor(scene: Phaser.Scene, subscriptionConfig?: Partial<EnemySubscriptionConfig>) {
     this.scene = scene;
@@ -119,6 +120,12 @@ export class EnemyManager implements PhysicsEntity {
     // Mark enemy as spawned in registry for proximity buffer zone
     this.scene.registry.set(`enemy_spawned_${serverEnemy.spawnId}`, true);
     
+    // Check if this enemy was already attacked (handle race condition)
+    if (this.attackedEnemies.has(serverEnemy.spawnId)) {
+      this.spawnManager.showNameLabel(serverEnemy.spawnId);
+      this.spawnManager.showHealthBar(serverEnemy.spawnId);
+    }
+    
     // Emit spawn event for audio service
     this.scene.registry.events.emit('enemy:spawned', serverEnemy.spawnId, serverEnemy.enemy);
 
@@ -143,6 +150,7 @@ export class EnemyManager implements PhysicsEntity {
     // Clean up state tracking
     this.enemyStates.delete(spawnId);
     this.enemyTypes.delete(spawnId);
+    this.attackedEnemies.delete(spawnId); // Clear attacked state for respawn
     
     // Clear spawned flag from registry
     this.scene.registry.remove(`enemy_spawned_${spawnId}`);
@@ -248,6 +256,14 @@ export class EnemyManager implements PhysicsEntity {
     const stateMachine = this.spawnManager.getStateMachine(spawnId);
     if (stateMachine) {
       stateMachine.playHitAnimation();
+    }
+  }
+
+  public markEnemyAsAttacked(spawnId: number): void {
+    if (!this.attackedEnemies.has(spawnId)) {
+      this.attackedEnemies.add(spawnId);
+      this.spawnManager.showNameLabel(spawnId);
+      this.spawnManager.showHealthBar(spawnId);
     }
   }
 

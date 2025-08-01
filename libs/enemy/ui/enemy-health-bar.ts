@@ -86,10 +86,8 @@ export class EnemyHealthBar {
   public updateHealth(newHp: number): void {
     this.currentHp = Math.max(0, Math.min(this.maxHp, newHp));
 
-    // Only show health bar if enemy took damage and isn't dead
-    if (newHp < this.maxHp && newHp > 0) {
-      this.show();
-    } else if (newHp <= 0) {
+    // Hide health bar if enemy is dead
+    if (newHp <= 0) {
       this.hide();
     }
 
