@@ -214,7 +214,7 @@ async function initializeSpacetime() {
       jobCount++;
       
       try {
-        // Initialize the job with base stats and resistances
+        // Initialize the job with base stats
         console.log(`    Sending jobKey: "${jobKey}", adminKey: "${adminApiKey}"`);
         await connection.reducers.initializeJob(
           adminApiKey,
@@ -225,14 +225,6 @@ async function initializeSpacetime() {
           jobConfig.baseStats.mana,
           jobConfig.baseStats.hpRecovery,
           jobConfig.baseStats.manaRecovery,
-          jobConfig.baseStats.resistances.sword,
-          jobConfig.baseStats.resistances.axe,
-          jobConfig.baseStats.resistances.bow,
-          jobConfig.baseStats.resistances.spear,
-          jobConfig.baseStats.resistances.dark,
-          jobConfig.baseStats.resistances.spike,
-          jobConfig.baseStats.resistances.claw,
-          jobConfig.baseStats.resistances.greatsword,
           jobConfig.unlockLevel
         );
         console.log(`    ✅ Job ${jobKey} initialized`);
@@ -275,8 +267,6 @@ async function initializeSpacetime() {
             attack.hits,
             attack.targets,
             attack.manaCost,
-            attack.ammoCost,
-            attack.modifiers.join(','), // Convert array to comma-separated string
             attack.manaLeech || 0, // Default to 0 if not specified
             attack.hpLeech || 0, // Default to 0 if not specified
             projectile,
@@ -291,26 +281,7 @@ async function initializeSpacetime() {
         attackSlot++;
       }
 
-      // Initialize passives for this job
-      let passiveSlot = 1;
-      const passives = jobConfig.passives as Record<string, any>;
-      for (const [_passiveKey, passive] of Object.entries(passives)) {
-        console.log(`    Adding passive: ${passive.name}`);
-        
-        try {
-          await connection.reducers.initializeJobPassive(
-            adminApiKey,
-            jobKey,
-            passiveSlot,
-            passive.name
-          );
-          console.log(`    ✅ Passive ${passive.name} added`);
-        } catch (error) {
-          console.error(`    ❌ Failed to add passive ${passive.name}:`, (error as Error).message);
-        }
-        
-        passiveSlot++;
-      }
+      // Passives have been removed from the game
     }
 
     console.log(`✅ Job configurations initialized successfully! (${jobCount} jobs)`);

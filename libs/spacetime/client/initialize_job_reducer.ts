@@ -42,14 +42,6 @@ export type InitializeJob = {
   mana: number,
   hpRecovery: number,
   manaRecovery: number,
-  resSword: number,
-  resAxe: number,
-  resBow: number,
-  resSpear: number,
-  resDark: number,
-  resSpike: number,
-  resClaw: number,
-  resGreatsword: number,
   unlockLevel: number,
 };
 
@@ -71,14 +63,6 @@ export namespace InitializeJob {
       new ProductTypeElement("mana", AlgebraicType.createU32Type()),
       new ProductTypeElement("hpRecovery", AlgebraicType.createF32Type()),
       new ProductTypeElement("manaRecovery", AlgebraicType.createF32Type()),
-      new ProductTypeElement("resSword", AlgebraicType.createI32Type()),
-      new ProductTypeElement("resAxe", AlgebraicType.createI32Type()),
-      new ProductTypeElement("resBow", AlgebraicType.createI32Type()),
-      new ProductTypeElement("resSpear", AlgebraicType.createI32Type()),
-      new ProductTypeElement("resDark", AlgebraicType.createI32Type()),
-      new ProductTypeElement("resSpike", AlgebraicType.createI32Type()),
-      new ProductTypeElement("resClaw", AlgebraicType.createI32Type()),
-      new ProductTypeElement("resGreatsword", AlgebraicType.createI32Type()),
       new ProductTypeElement("unlockLevel", AlgebraicType.createU32Type()),
     ]);
   }

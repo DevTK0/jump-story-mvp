@@ -2,18 +2,6 @@
  * Type-safe attack configuration system using discriminated unions
  */
 
-// Valid attack modifiers
-export type AttackModifier =
-  | 'sword'
-  | 'axe'
-  | 'bow'
-  | 'spear'
-  | 'dark'
-  | 'spike'
-  | 'claw'
-  | 'greatsword'
-  | 'holy';
-
 // Base attack properties shared by all attack types
 interface BaseAttack {
   name: string;
@@ -24,9 +12,7 @@ interface BaseAttack {
   hits: number;
   range: number;
   targets: number;
-  modifiers: AttackModifier[];
   manaCost: number;
-  ammoCost: number;
   manaLeech?: number; // Optional: Mana restored per enemy hit
   hpLeech?: number; // Optional: HP restored per enemy hit
   description: string;
@@ -72,12 +58,6 @@ export interface HealAttack extends BaseAttack {
 // Discriminated union - TypeScript will enforce correct fields based on attackType
 export type Attack = StandardAttack | ProjectileAttack | AreaAttack | DashAttack | HealAttack | StationaryAttack;
 
-// Passive ability interface
-export interface Passive {
-  name: string;
-  description?: string;
-}
-
 // Type guards for runtime checking
 export function isStandardAttack(attack: Attack): attack is StandardAttack {
   return attack.attackType === 'standard';
@@ -102,18 +82,6 @@ export function isHealAttack(attack: Attack): attack is HealAttack {
   return attack.attackType === 'heal';
 }
 
-// Resistance values for different damage types
-export interface Resistances {
-  sword: number;
-  axe: number;
-  bow: number;
-  spear: number;
-  dark: number;
-  spike: number;
-  claw: number;
-  greatsword: number;
-}
-
 // Example job configuration with type safety
 export interface JobConfig {
   displayName: string;
@@ -125,7 +93,6 @@ export interface JobConfig {
     mana: number;
     hpRecovery: number;
     manaRecovery: number;
-    resistances: Resistances;
     knockbackImmune?: boolean; // Optional: Makes the job immune to knockback
     doubleJump?: boolean; // Optional: Allows job to double jump
   };
@@ -133,11 +100,6 @@ export interface JobConfig {
     attack1: Attack;
     attack2: Attack;
     attack3: Attack;
-  };
-  passives: {
-    passive1?: Passive;
-    passive2?: Passive;
-    passive3?: Passive;
   };
 }
 

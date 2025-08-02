@@ -10,7 +10,7 @@ export interface SkillData {
   cooldown?: number;
   currentCooldown?: number;
   icon?: string;
-  slotType: 'attack' | 'passive';
+  slotType: 'attack';
 }
 
 export class CombatSkillSlot {
@@ -135,14 +135,19 @@ export class CombatSkillSlot {
     const placeholderConfig = COMBAT_SKILL_CONFIG.skills[this.slotIndex as keyof typeof COMBAT_SKILL_CONFIG.skills];
     if (placeholderConfig) {
       // this.hotkeyText.setText(placeholderConfig.hotkey); // Hidden - hotkey shown in tooltip only
-      this.skillLabel.setText(placeholderConfig.label);
+      // Only show label for attack slots, not passive slots
+      if (placeholderConfig.slotType === 'attack') {
+        this.skillLabel.setText(placeholderConfig.label);
+      } else {
+        this.skillLabel.setText('');
+      }
       
       this.skillData = {
         id: `skill_${placeholderConfig.label}`,
         name: `Skill ${placeholderConfig.label}`,
         description: `This is a placeholder description for ${placeholderConfig.label}`,
         hotkey: placeholderConfig.hotkey,
-        slotType: placeholderConfig.slotType as 'attack' | 'passive',
+        slotType: placeholderConfig.slotType as 'attack',
       };
     }
   }
@@ -196,7 +201,12 @@ export class CombatSkillSlot {
       const placeholderConfig = COMBAT_SKILL_CONFIG.skills[this.slotIndex as keyof typeof COMBAT_SKILL_CONFIG.skills];
       if (placeholderConfig) {
         // this.hotkeyText.setText(placeholderConfig.hotkey); // Hidden - hotkey shown in tooltip only
-        this.skillLabel.setText(placeholderConfig.label);
+        // Only show label for attack slots, not passive slots
+        if (placeholderConfig.slotType === 'attack') {
+          this.skillLabel.setText(placeholderConfig.label);
+        } else {
+          this.skillLabel.setText('');
+        }
         this.skillLabel.setVisible(true);
       } else {
         // this.hotkeyText.setText(''); // Hidden - hotkey shown in tooltip only

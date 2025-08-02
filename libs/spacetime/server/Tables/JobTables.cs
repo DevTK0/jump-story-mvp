@@ -2,7 +2,7 @@ using SpacetimeDB;
 
 public static partial class Module
 {
-    // Main Job table storing base stats and resistances
+    // Main Job table storing base stats
     [Table(Name = "Job", Public = true)]
     public partial struct Job
     {
@@ -19,16 +19,6 @@ public static partial class Module
         public uint mana;
         public float hp_recovery;
         public float mana_recovery;
-        
-        // Resistances
-        public int res_sword;
-        public int res_axe;
-        public int res_bow;
-        public int res_spear;
-        public int res_dark;
-        public int res_spike;
-        public int res_claw;
-        public int res_greatsword;
         
         // Level required to unlock this job (0 = unlocked by default)
         public uint unlock_level;
@@ -54,8 +44,6 @@ public static partial class Module
         public byte hits;
         public byte targets;
         public uint mana_cost;
-        public uint ammo_cost;
-        public string modifiers; // comma-separated, e.g., "sword,greatsword"
         public uint mana_leech; // Mana restored per enemy hit by this attack
         public uint hp_leech; // HP restored per enemy hit by this attack
         
@@ -67,18 +55,5 @@ public static partial class Module
         
         // Optional field for area attacks
         public uint? area_radius;
-    }
-
-    // JobPassive table storing passive abilities
-    [Table(Name = "JobPassive", Public = true)]
-    public partial struct JobPassive
-    {
-        [PrimaryKey]
-        [AutoInc]
-        public uint passive_id;
-        
-        public uint job_id; // Foreign key to Job
-        public byte passive_slot; // 1 for now, but extensible
-        public string name;
     }
 }

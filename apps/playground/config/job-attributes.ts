@@ -14,9 +14,7 @@ const sharedAttacks = {
     range: 50,
     hits: 1,
     targets: 5,
-    modifiers: ['sword' as const],
     manaCost: 0,
-    ammoCost: 0,
     manaLeech: 3, // Default mana leech for basic attack
     hpLeech: 2, // Default HP leech for basic attack
     icon: 'heal1',
@@ -34,9 +32,7 @@ const sharedAttacks = {
     range: 75,
     hits: 1,
     targets: 6,
-    modifiers: ['sword' as const],
     manaCost: 0,
-    ammoCost: 0,
     icon: 'heal1',
     audio: 'p_att_phys',
   },
@@ -51,9 +47,7 @@ const sharedAttacks = {
     range: 500,
     hits: 1,
     targets: 1,
-    modifiers: ['bow' as const],
     manaCost: 10,
-    ammoCost: 0,
     icon: 'heal1',
     audio: 'p_att_phys',
   },
@@ -70,16 +64,6 @@ export const jobAttributes: Record<string, JobConfig> = {
       mana: 30,
       hpRecovery: 1,
       manaRecovery: 0.5,
-      resistances: {
-        sword: 5,
-        axe: 0,
-        bow: -5,
-        spear: -5,
-        dark: 0,
-        spike: -5,
-        claw: -10,
-        greatsword: 10,
-      },
     },
     attacks: {
       attack1: {
@@ -94,9 +78,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         range: 50,
         hits: 1,
         targets: 5,
-        modifiers: ['sword' as const],
         manaCost: 0,
-        ammoCost: 0,
         manaLeech: 3, // Moderate mana leech for soldier
         hpLeech: 3, // Higher HP leech for tank class
         icon: 'heal1',
@@ -114,9 +96,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         range: 75,
         hits: 1,
         targets: 6,
-        modifiers: ['sword' as const],
         manaCost: 10,
-        ammoCost: 0,
         icon: 'heal2',
         audio: 'p_att_phys',
       },
@@ -132,24 +112,10 @@ export const jobAttributes: Record<string, JobConfig> = {
         range: 500,
         hits: 1,
         targets: 1,
-        modifiers: ['sword' as const],
         manaCost: 0,
-        ammoCost: 0,
         projectile: 'arrow', // Test projectile for soldier
         icon: 'heal3',
         audio: 'p_att_phys',
-      },
-    },
-    passives: {
-      passive1: {
-        name: 'Combat Training',
-        description:
-          'Years of military discipline grant +10% attack speed and +5% damage reduction.',
-      },
-      passive2: {
-        name: 'Combat Training',
-        description:
-          'Years of military discipline grant +10% attack speed and +5% damage reduction.',
       },
     },
   },
@@ -164,25 +130,8 @@ export const jobAttributes: Record<string, JobConfig> = {
       hpRecovery: 1.5,
       manaRecovery: 0.3,
       knockbackImmune: true, // immune to knockback
-      resistances: {
-        sword: 20,
-        axe: 15,
-        bow: 5,
-        spear: 10,
-        dark: 10,
-        spike: 15,
-        claw: 10,
-        greatsword: 25,
-      },
     },
     attacks: sharedAttacks,
-    passives: {
-      passive1: {
-        name: 'Shield Wall',
-        description:
-          'Heavy armor training provides +25% damage reduction and immunity to knockback.',
-      },
-    },
   },
   wizard: {
     displayName: 'Wizard',
@@ -194,16 +143,6 @@ export const jobAttributes: Record<string, JobConfig> = {
       mana: 100,
       hpRecovery: 0.5,
       manaRecovery: 2,
-      resistances: {
-        sword: -10,
-        axe: -10,
-        bow: 0,
-        spear: -5,
-        dark: 20,
-        spike: -15,
-        claw: -15,
-        greatsword: -5,
-      },
     },
     attacks: {
       attack1: {
@@ -217,9 +156,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         range: 200,
         hits: 1,
         targets: 3,
-        modifiers: ['dark' as const],
         manaCost: 0,
-        ammoCost: 0,
         manaLeech: 1, // Low mana leech for wizard, relies on high mana regen
         hpLeech: 1, // Very low HP leech for magic users
         skillEffect: 'freeze',
@@ -239,9 +176,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         effectSprite: 'holy',
         hits: 1,
         targets: 8,
-        modifiers: ['dark' as const],
         manaCost: 0,
-        ammoCost: 0,
         skillEffect: 'holy',
         icon: 'heal1',
         audio: 'p_att_phys',
@@ -257,19 +192,11 @@ export const jobAttributes: Record<string, JobConfig> = {
         range: 400,
         hits: 2,
         targets: 1,
-        modifiers: ['dark' as const],
         manaCost: 0,
-        ammoCost: 0,
         projectile: 'fireball', // Using arrow as placeholder for magic missile
         // skillEffect: 'holy', // Explosion effect on hit
         icon: 'heal1',
         audio: 'p_att_phys',
-      },
-    },
-    passives: {
-      passive1: {
-        name: 'Arcane Power',
-        description: 'Mystical knowledge grants +50% mana regeneration and +20% spell damage.',
       },
     },
   },
@@ -284,16 +211,6 @@ export const jobAttributes: Record<string, JobConfig> = {
       hpRecovery: 0.8,
       manaRecovery: 0.8,
       doubleJump: true,
-      resistances: {
-        sword: -5,
-        axe: -5,
-        bow: 15,
-        spear: 0,
-        dark: 5,
-        spike: -10,
-        claw: -10,
-        greatsword: 0,
-      },
     },
     attacks: {
       attack1: {
@@ -308,9 +225,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         range: 300,
         hits: 1,
         targets: 1,
-        modifiers: ['bow' as const],
         manaCost: 0,
-        ammoCost: 0,
         manaLeech: 2, // Low mana leech for ranged combat
         hpLeech: 1, // Low HP leech for ranged classes
         projectile: 'arrow',
@@ -328,9 +243,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         range: 400,
         hits: 1,
         targets: 3,
-        modifiers: ['bow' as const],
         manaCost: 0,
-        ammoCost: 0,
         projectile: 'arrow',
         icon: 'heal1',
         audio: 'p_att_phys',
@@ -346,18 +259,10 @@ export const jobAttributes: Record<string, JobConfig> = {
         range: 350,
         hits: 3,
         targets: 5,
-        modifiers: ['bow' as const],
         manaCost: 0,
-        ammoCost: 0,
         projectile: 'arrow',
         icon: 'heal1',
         audio: 'p_att_phys',
-      },
-    },
-    passives: {
-      passive1: {
-        name: 'Eagle Eye',
-        description: 'Keen vision increases attack range by +30% and critical hit chance by +15%.',
       },
     },
   },
@@ -372,25 +277,8 @@ export const jobAttributes: Record<string, JobConfig> = {
       hpRecovery: 1.2,
       manaRecovery: 0.4,
       knockbackImmune: true, // immune to knockback
-      resistances: {
-        sword: 10,
-        axe: 25,
-        bow: 0,
-        spear: 5,
-        dark: 0,
-        spike: 10,
-        claw: 5,
-        greatsword: 20,
-      },
     },
     attacks: sharedAttacks,
-    passives: {
-      passive1: {
-        name: 'Heavy Armor',
-        description:
-          'Reinforced plating grants +20% damage reduction but reduces movement speed by -10%.',
-      },
-    },
   },
   'knight-templar': {
     displayName: 'Knight Templar',
@@ -403,16 +291,6 @@ export const jobAttributes: Record<string, JobConfig> = {
       hpRecovery: 2,
       manaRecovery: 1,
       knockbackImmune: true, // immune to knockback
-      resistances: {
-        sword: 15,
-        axe: 10,
-        bow: 10,
-        spear: 10,
-        dark: -20,
-        spike: 15,
-        claw: 10,
-        greatsword: 20,
-      },
     },
     attacks: {
       ...sharedAttacks,
@@ -431,19 +309,10 @@ export const jobAttributes: Record<string, JobConfig> = {
         range: 200,
         hits: 2,
         targets: 3,
-        modifiers: ['spear' as const],
         manaCost: 0,
-        ammoCost: 0,
         dashDistance: 1000,
         dashSpeed: 1000,
         icon: 'heal',
-      },
-    },
-    passives: {
-      passive1: {
-        name: 'Divine Protection',
-        description:
-          'Holy blessing provides +30% resistance to dark magic and +2 HP regeneration per second.',
       },
     },
   },
@@ -458,16 +327,6 @@ export const jobAttributes: Record<string, JobConfig> = {
       hpRecovery: 1,
       manaRecovery: 0.7,
       knockbackImmune: true, // immune to knockback
-      resistances: {
-        sword: 5,
-        axe: 0,
-        bow: -5,
-        spear: 20,
-        dark: 0,
-        spike: -5,
-        claw: -5,
-        greatsword: 10,
-      },
     },
     attacks: {
       attack1: {
@@ -485,9 +344,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         range: 100,
         hits: 1,
         targets: 10,
-        modifiers: ['spear' as const],
         manaCost: 0,
-        ammoCost: 0,
         dashDistance: 300,
         dashSpeed: 800,
         icon: 'heal1',
@@ -504,22 +361,10 @@ export const jobAttributes: Record<string, JobConfig> = {
         range: 100,
         hits: 2,
         targets: 10,
-        modifiers: ['spear' as const],
         manaCost: 0,
-        ammoCost: 0,
         dashDistance: 1000,
         dashSpeed: 1000,
         icon: 'heal',
-      },
-    },
-    passives: {
-      passive1: {
-        name: 'Reach Advantage',
-        description: 'Spear mastery extends attack range by +40% and enables dash attacks.',
-      },
-      passive2: {
-        name: 'Steadfast Stance',
-        description: 'Complete immunity to knockback effects, allowing uninterrupted combat.',
       },
     },
   },
@@ -533,16 +378,6 @@ export const jobAttributes: Record<string, JobConfig> = {
       mana: 120,
       hpRecovery: 1.5,
       manaRecovery: 2.5,
-      resistances: {
-        sword: -15,
-        axe: -15,
-        bow: -5,
-        spear: -10,
-        dark: -30,
-        spike: -20,
-        claw: -20,
-        greatsword: -10,
-      },
     },
     attacks: {
       attack1: sharedAttacks.attack1,
@@ -557,20 +392,12 @@ export const jobAttributes: Record<string, JobConfig> = {
         range: 200,
         hits: 1,
         targets: 3, // Can heal up to 3 party members
-        modifiers: [],
         manaCost: 20,
-        ammoCost: 0,
         skillEffect: 'freeze',
         icon: 'heal2',
         audio: 'p_att_heal',
       },
       attack3: sharedAttacks.attack3,
-    },
-    passives: {
-      passive1: {
-        name: 'Blessed Recovery',
-        description: 'Divine favor grants +100% health regeneration and heals nearby allies.',
-      },
     },
   },
   swordsman: {
@@ -584,25 +411,8 @@ export const jobAttributes: Record<string, JobConfig> = {
       hpRecovery: 1,
       manaRecovery: 0.6,
       doubleJump: true,
-      resistances: {
-        sword: 15,
-        axe: 0,
-        bow: -5,
-        spear: 0,
-        dark: 0,
-        spike: -5,
-        claw: -5,
-        greatsword: 10,
-      },
     },
     attacks: sharedAttacks,
-    passives: {
-      passive1: {
-        name: 'Sword Mastery',
-        description:
-          'Expert swordsmanship increases attack speed by +15% and parry chance by +10%.',
-      },
-    },
   },
 };
 

@@ -117,21 +117,7 @@ export class CombatSkillBar {
       }
     });
     
-    const passives = jobConfig.passives || {};
-    const passiveKeys = Object.keys(passives);
-    
-    passiveKeys.forEach((key, index) => {
-      if (index < 3) {
-        const passive = (passives as any)[key];
-        skills.set(index + 3, {
-          id: `${key}_P${index + 1}`,
-          name: passive.name,
-          description: passive.description || 'No description available.',
-          slotType: 'passive'
-        });
-      }
-    });
-    
+    // Only ensure attack slots are filled, no passives
     for (let i = 0; i < 3; i++) {
       if (!skills.has(i)) {
         skills.set(i, {
@@ -175,19 +161,6 @@ export class CombatSkillBar {
         icon: attack.icon
       });
     });
-    
-    // Add default passive only if it exists
-    if (defaultJob.passives && defaultJob.passives.passive1) {
-      const passive = defaultJob.passives.passive1;
-      skills.set(3, {
-        id: 'passive1_P1',
-        name: passive.name,
-        description: passive.description || 'No description available.',
-        slotType: 'passive'
-      });
-    }
-    
-    // Don't fill remaining passive slots - let them be empty
     
     UIContextService.getInstance().updateSkillData(skills);
     this.handleSkillDataUpdate({ skillData: skills });

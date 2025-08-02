@@ -3,7 +3,7 @@ using System.Linq;
 
 public static partial class Module
 {
-    // Initialize a job with its base stats and resistances
+    // Initialize a job with its base stats
     [Reducer]
     public static void InitializeJob(
         ReducerContext ctx,
@@ -15,14 +15,6 @@ public static partial class Module
         uint mana,
         float hpRecovery,
         float manaRecovery,
-        int resSword,
-        int resAxe,
-        int resBow,
-        int resSpear,
-        int resDark,
-        int resSpike,
-        int resClaw,
-        int resGreatsword,
         uint unlockLevel)
     {
         // Validate admin API key
@@ -49,14 +41,6 @@ public static partial class Module
             mana = mana,
             hp_recovery = hpRecovery,
             mana_recovery = manaRecovery,
-            res_sword = resSword,
-            res_axe = resAxe,
-            res_bow = resBow,
-            res_spear = resSpear,
-            res_dark = resDark,
-            res_spike = resSpike,
-            res_claw = resClaw,
-            res_greatsword = resGreatsword,
             unlock_level = unlockLevel
         };
 
@@ -81,8 +65,6 @@ public static partial class Module
         byte hits,
         byte targets,
         uint manaCost,
-        uint ammoCost,
-        string modifiers,
         uint manaLeech,
         uint hpLeech,
         string? projectile,
@@ -135,8 +117,6 @@ public static partial class Module
             hits = hits,
             targets = targets,
             mana_cost = manaCost,
-            ammo_cost = ammoCost,
-            modifiers = modifiers,
             mana_leech = manaLeech,
             hp_leech = hpLeech,
             projectile = projectile,
@@ -146,58 +126,6 @@ public static partial class Module
 
         ctx.Db.JobAttack.Insert(attack);
         Log.Info($"Initialized attack '{name}' for job {jobKey}");
-    }
-
-    // Initialize a passive for a job
-    [Reducer]
-    public static void InitializeJobPassive(
-        ReducerContext ctx,
-        string adminApiKey,
-        string jobKey,
-        byte passiveSlot,
-        string name)
-    {
-        // Validate admin API key
-        if (!AdminConstants.IsValidAdminKey(adminApiKey))
-        {
-            Log.Warn($"Unauthorized attempt to initialize job passive from {ctx.Sender}");
-            return;
-        }
-        // Find the job
-        var job = ctx.Db.Job.job_key.Find(jobKey);
-        if (job == null)
-        {
-            Log.Error($"Job {jobKey} not found when adding passive");
-            return;
-        }
-
-        // Check if passive already exists for this job and slot
-        JobPassive? existingPassive = null;
-        foreach (var p in ctx.Db.JobPassive.Iter())
-        {
-            if (p.job_id == job.Value.job_id && p.passive_slot == passiveSlot)
-            {
-                existingPassive = p;
-                break;
-            }
-        }
-            
-        if (existingPassive != null)
-        {
-            Log.Info($"Passive slot {passiveSlot} for job {jobKey} already exists, skipping");
-            return;
-        }
-
-        // Insert new passive
-        var passive = new JobPassive
-        {
-            job_id = job.Value.job_id,
-            passive_slot = passiveSlot,
-            name = name
-        };
-
-        ctx.Db.JobPassive.Insert(passive);
-        Log.Info($"Initialized passive '{name}' for job {jobKey}");
     }
 
     // Clear all job data (useful for development/testing)
@@ -210,12 +138,6 @@ public static partial class Module
             Log.Warn($"Unauthorized attempt to clear job data from {ctx.Sender}");
             return;
         }
-        // Delete all passives first (foreign key constraint)
-        foreach (var passive in ctx.Db.JobPassive.Iter())
-        {
-            ctx.Db.JobPassive.passive_id.Delete(passive.passive_id);
-        }
-
         // Delete all attacks
         foreach (var attack in ctx.Db.JobAttack.Iter())
         {

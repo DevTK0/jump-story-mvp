@@ -74,8 +74,6 @@ import { InitializeJob } from "./initialize_job_reducer.ts";
 export { InitializeJob };
 import { InitializeJobAttack } from "./initialize_job_attack_reducer.ts";
 export { InitializeJobAttack };
-import { InitializeJobPassive } from "./initialize_job_passive_reducer.ts";
-export { InitializeJobPassive };
 import { InitializeTeleports } from "./initialize_teleports_reducer.ts";
 export { InitializeTeleports };
 import { InstakillPlayer } from "./instakill_player_reducer.ts";
@@ -150,8 +148,6 @@ import { JobTableHandle } from "./job_table.ts";
 export { JobTableHandle };
 import { JobAttackTableHandle } from "./job_attack_table.ts";
 export { JobAttackTableHandle };
-import { JobPassiveTableHandle } from "./job_passive_table.ts";
-export { JobPassiveTableHandle };
 import { LeaderboardTableHandle } from "./leaderboard_table.ts";
 export { LeaderboardTableHandle };
 import { PartyTableHandle } from "./party_table.ts";
@@ -244,8 +240,6 @@ import { Job } from "./job_type.ts";
 export { Job };
 import { JobAttack } from "./job_attack_type.ts";
 export { JobAttack };
-import { JobPassive } from "./job_passive_type.ts";
-export { JobPassive };
 import { Leaderboard } from "./leaderboard_type.ts";
 export { Leaderboard };
 import { LeaderboardUpdateTimer } from "./leaderboard_update_timer_type.ts";
@@ -377,15 +371,6 @@ const REMOTE_MODULE = {
       primaryKeyInfo: {
         colName: "attackId",
         colType: JobAttack.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
-      },
-    },
-    JobPassive: {
-      tableName: "JobPassive",
-      rowType: JobPassive.getTypeScriptAlgebraicType(),
-      primaryKey: "passiveId",
-      primaryKeyInfo: {
-        colName: "passiveId",
-        colType: JobPassive.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     Leaderboard: {
@@ -677,10 +662,6 @@ const REMOTE_MODULE = {
       reducerName: "InitializeJobAttack",
       argsType: InitializeJobAttack.getTypeScriptAlgebraicType(),
     },
-    InitializeJobPassive: {
-      reducerName: "InitializeJobPassive",
-      argsType: InitializeJobPassive.getTypeScriptAlgebraicType(),
-    },
     InitializeTeleports: {
       reducerName: "InitializeTeleports",
       argsType: InitializeTeleports.getTypeScriptAlgebraicType(),
@@ -835,7 +816,6 @@ export type Reducer = never
 | { name: "InitializeEnemyRoutes", args: InitializeEnemyRoutes }
 | { name: "InitializeJob", args: InitializeJob }
 | { name: "InitializeJobAttack", args: InitializeJobAttack }
-| { name: "InitializeJobPassive", args: InitializeJobPassive }
 | { name: "InitializeTeleports", args: InitializeTeleports }
 | { name: "InstakillPlayer", args: InstakillPlayer }
 | { name: "InviteToParty", args: InviteToParty }
@@ -1139,52 +1119,36 @@ export class RemoteReducers {
     this.connection.offReducer("InitializeEnemyRoutes", callback);
   }
 
-  initializeJob(adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, resSword: number, resAxe: number, resBow: number, resSpear: number, resDark: number, resSpike: number, resClaw: number, resGreatsword: number, unlockLevel: number) {
-    const __args = { adminApiKey, jobKey, displayName, health, moveSpeed, mana, hpRecovery, manaRecovery, resSword, resAxe, resBow, resSpear, resDark, resSpike, resClaw, resGreatsword, unlockLevel };
+  initializeJob(adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, unlockLevel: number) {
+    const __args = { adminApiKey, jobKey, displayName, health, moveSpeed, mana, hpRecovery, manaRecovery, unlockLevel };
     let __writer = new BinaryWriter(1024);
     InitializeJob.getTypeScriptAlgebraicType().serialize(__writer, __args);
     let __argsBuffer = __writer.getBuffer();
     this.connection.callReducer("InitializeJob", __argsBuffer, this.setCallReducerFlags.initializeJobFlags);
   }
 
-  onInitializeJob(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, resSword: number, resAxe: number, resBow: number, resSpear: number, resDark: number, resSpike: number, resClaw: number, resGreatsword: number, unlockLevel: number) => void) {
+  onInitializeJob(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, unlockLevel: number) => void) {
     this.connection.onReducer("InitializeJob", callback);
   }
 
-  removeOnInitializeJob(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, resSword: number, resAxe: number, resBow: number, resSpear: number, resDark: number, resSpike: number, resClaw: number, resGreatsword: number, unlockLevel: number) => void) {
+  removeOnInitializeJob(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, unlockLevel: number) => void) {
     this.connection.offReducer("InitializeJob", callback);
   }
 
-  initializeJobAttack(adminApiKey: string, jobKey: string, attackSlot: number, attackType: string, name: string, damage: number, cooldown: number, critChance: number, knockback: number, range: number, hits: number, targets: number, manaCost: number, ammoCost: number, modifiers: string, manaLeech: number, hpLeech: number, projectile: string | undefined, skillEffect: string | undefined, areaRadius: number | undefined) {
-    const __args = { adminApiKey, jobKey, attackSlot, attackType, name, damage, cooldown, critChance, knockback, range, hits, targets, manaCost, ammoCost, modifiers, manaLeech, hpLeech, projectile, skillEffect, areaRadius };
+  initializeJobAttack(adminApiKey: string, jobKey: string, attackSlot: number, attackType: string, name: string, damage: number, cooldown: number, critChance: number, knockback: number, range: number, hits: number, targets: number, manaCost: number, manaLeech: number, hpLeech: number, projectile: string | undefined, skillEffect: string | undefined, areaRadius: number | undefined) {
+    const __args = { adminApiKey, jobKey, attackSlot, attackType, name, damage, cooldown, critChance, knockback, range, hits, targets, manaCost, manaLeech, hpLeech, projectile, skillEffect, areaRadius };
     let __writer = new BinaryWriter(1024);
     InitializeJobAttack.getTypeScriptAlgebraicType().serialize(__writer, __args);
     let __argsBuffer = __writer.getBuffer();
     this.connection.callReducer("InitializeJobAttack", __argsBuffer, this.setCallReducerFlags.initializeJobAttackFlags);
   }
 
-  onInitializeJobAttack(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, attackSlot: number, attackType: string, name: string, damage: number, cooldown: number, critChance: number, knockback: number, range: number, hits: number, targets: number, manaCost: number, ammoCost: number, modifiers: string, manaLeech: number, hpLeech: number, projectile: string | undefined, skillEffect: string | undefined, areaRadius: number | undefined) => void) {
+  onInitializeJobAttack(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, attackSlot: number, attackType: string, name: string, damage: number, cooldown: number, critChance: number, knockback: number, range: number, hits: number, targets: number, manaCost: number, manaLeech: number, hpLeech: number, projectile: string | undefined, skillEffect: string | undefined, areaRadius: number | undefined) => void) {
     this.connection.onReducer("InitializeJobAttack", callback);
   }
 
-  removeOnInitializeJobAttack(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, attackSlot: number, attackType: string, name: string, damage: number, cooldown: number, critChance: number, knockback: number, range: number, hits: number, targets: number, manaCost: number, ammoCost: number, modifiers: string, manaLeech: number, hpLeech: number, projectile: string | undefined, skillEffect: string | undefined, areaRadius: number | undefined) => void) {
+  removeOnInitializeJobAttack(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, attackSlot: number, attackType: string, name: string, damage: number, cooldown: number, critChance: number, knockback: number, range: number, hits: number, targets: number, manaCost: number, manaLeech: number, hpLeech: number, projectile: string | undefined, skillEffect: string | undefined, areaRadius: number | undefined) => void) {
     this.connection.offReducer("InitializeJobAttack", callback);
-  }
-
-  initializeJobPassive(adminApiKey: string, jobKey: string, passiveSlot: number, name: string) {
-    const __args = { adminApiKey, jobKey, passiveSlot, name };
-    let __writer = new BinaryWriter(1024);
-    InitializeJobPassive.getTypeScriptAlgebraicType().serialize(__writer, __args);
-    let __argsBuffer = __writer.getBuffer();
-    this.connection.callReducer("InitializeJobPassive", __argsBuffer, this.setCallReducerFlags.initializeJobPassiveFlags);
-  }
-
-  onInitializeJobPassive(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, passiveSlot: number, name: string) => void) {
-    this.connection.onReducer("InitializeJobPassive", callback);
-  }
-
-  removeOnInitializeJobPassive(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, passiveSlot: number, name: string) => void) {
-    this.connection.offReducer("InitializeJobPassive", callback);
   }
 
   initializeTeleports(adminApiKey: string, teleportJson: string) {
@@ -1688,11 +1652,6 @@ export class SetReducerFlags {
     this.initializeJobAttackFlags = flags;
   }
 
-  initializeJobPassiveFlags: CallReducerFlags = 'FullUpdate';
-  initializeJobPassive(flags: CallReducerFlags) {
-    this.initializeJobPassiveFlags = flags;
-  }
-
   initializeTeleportsFlags: CallReducerFlags = 'FullUpdate';
   initializeTeleports(flags: CallReducerFlags) {
     this.initializeTeleportsFlags = flags;
@@ -1866,10 +1825,6 @@ export class RemoteTables {
 
   get jobAttack(): JobAttackTableHandle {
     return new JobAttackTableHandle(this.connection.clientCache.getOrCreateTable<JobAttack>(REMOTE_MODULE.tables.JobAttack));
-  }
-
-  get jobPassive(): JobPassiveTableHandle {
-    return new JobPassiveTableHandle(this.connection.clientCache.getOrCreateTable<JobPassive>(REMOTE_MODULE.tables.JobPassive));
   }
 
   get leaderboard(): LeaderboardTableHandle {

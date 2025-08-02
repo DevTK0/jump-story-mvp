@@ -18,7 +18,7 @@ export const COMBAT_SKILL_CONFIG = {
 
   // Grid layout
   grid: {
-    rows: 2,
+    rows: 1,
     cols: 3,
     spacing: 2, // Space between slots (reduced from 5)
   },
@@ -86,16 +86,12 @@ export const COMBAT_SKILL_CONFIG = {
 
   // Placeholder skill slots configuration
   skills: {
-    // Bottom row - Attack skills
+    // Attack skills only
     0: { hotkey: 'X', label: 'A1', slotType: 'attack' },
     1: { hotkey: 'C', label: 'A2', slotType: 'attack' },
     2: { hotkey: 'V', label: 'A3', slotType: 'attack' },
-    // Top row - Passive/utility skills (no hotkeys)
-    3: { hotkey: '', label: 'P1', slotType: 'passive' },
-    4: { hotkey: '', label: 'P2', slotType: 'passive' },
-    5: { hotkey: '', label: 'P3', slotType: 'passive' },
   },
 } as const;
 
 // Type for skill slot indices
-export type SkillSlotIndex = 0 | 1 | 2 | 3 | 4 | 5;
+export type SkillSlotIndex = 0 | 1 | 2;
