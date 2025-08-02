@@ -40,6 +40,11 @@ export class TeleportSelectionMenu {
   
   // UI message display
   private uiMessageDisplay: UIMessageDisplay;
+  private page: number = 0; // page number of current teleport
+  private maxPerPage: number = 9;
+  private get totalPages (): number {
+    return Math.ceil((this.teleportTableData?.length ?? 1) / 9);
+  }
   
   // Audio cooldown tracking
   private lastActionBlockedSoundTime = 0;
@@ -100,9 +105,38 @@ export class TeleportSelectionMenu {
         this.keyboardHandlers.push({ event: keyName, handler });
       });
     }
+
+    // Toggle pages
+    const arrowKeys = ['LEFT', 'RIGHT'];
+    arrowKeys.forEach((keyCode) => {
+        const handler = () => {
+          this.logger.info(`Arrow key ${keyCode} pressed, isVisible: ${this.isVisible}`);
+          if (this.isVisible) {
+            this.changePage(keyCode);
+          }
+        };
+        
+        const keyName = `keydown-${keyCode}`;
+        this.logger.info(`Setting up handler for ${keyName}`);
+        
+        this.scene.input.keyboard?.on(keyName, handler);
+        this.keyboardHandlers.push({ event: keyName, handler });
+    });
+
     
     // Log that keyboard handlers are set up
     this.logger.info('Keyboard handlers set up for TeleportSelectionMenu');
+  }
+
+  private changePage(direction: string) {
+    if (direction === 'LEFT' && this.page > 0) {
+      this.page--;
+    } else if (direction === 'RIGHT' && this.page < this.totalPages - 1) {
+      this.page++;
+    } else {
+      return;
+    }
+    this.refreshTeleportOptions();
   }
 
   private createUI(): void {
@@ -153,29 +187,31 @@ export class TeleportSelectionMenu {
     // Add all to container
     this.container.add([overlay, this.background, title, instruction]);
 
-    // Create teleport options
-    this.createTeleportOptions(centerX, centerY, menuWidth, menuHeight);
-
     // Add arrow keys
     this.addPageArrowKeys(centerX, centerY, menuWidth, menuHeight);
+
+    // Create teleport options
+    this.createTeleportOptions(centerX, centerY, menuWidth, menuHeight);
   }
 
   private addPageArrowKeys (centerX: number, centerY: number, menuWidth: number, menuHeight: number) {
 
     // Create arrow keys
     const previousPage = this.scene.add.text(centerX - menuWidth / 2 + 50, centerY + menuHeight / 2 - 40, '< Previous', {
-      fontSize: '20px',
-      color: '#ffffff',
+      fontSize: '16px',
+      color: '#cccccc',
       fontStyle: 'bold',
     });
     previousPage.setOrigin(0, 0.5);
+    previousPage.setVisible(this.page > 0);
 
     const nextPage = this.scene.add.text(centerX + menuWidth / 2 - 50, centerY + menuHeight / 2 - 40, 'Next >', {
-      fontSize: '20px',
-      color: '#ffffff',
+      fontSize: '16px',
+      color: '#cccccc',
       fontStyle: 'bold',
     });
     nextPage.setOrigin(1, 0.5);
+    nextPage.setVisible(this.page < this.totalPages - 1);
 
     // Add left and right arrow
     this.container.add([previousPage, nextPage]);
@@ -187,7 +223,7 @@ export class TeleportSelectionMenu {
 
     // Convert teleport data to options
     this.teleportTableData.forEach((teleport) => {
-      const row = Math.floor(index / cols);
+      const row = Math.floor((index % this.maxPerPage) / cols);
       const col = index % cols;
 
       const unlocked = this.playerTeleportUnlockStatus.get(teleport.locationName) || false;
@@ -213,7 +249,7 @@ export class TeleportSelectionMenu {
     const gridSize = 120; // Same as job cells
     const padding = 30;
     const cols = 3;
-    const rows = Math.ceil(Math.min(9, this.teleportOptions.length) / cols);
+    const rows = Math.ceil(Math.min(this.maxPerPage, this.teleportOptions.length) / cols);
     const total = cols * rows;
 
     // Calculate starting position to center the grid
@@ -222,8 +258,12 @@ export class TeleportSelectionMenu {
     const startX = centerX - totalWidth / 2 + gridSize / 2;
     const startY = centerY - totalHeight / 2 + gridSize / 2 + 20; // Offset down a bit
 
+    // Page skip
+    const pageStart = this.page * this.maxPerPage;
+    const pageEnd = pageStart + total;
+
     this.teleportOptions.forEach((teleportOption, index) => {
-      if (index >= total) return;
+      if (index < pageStart || index >= pageEnd) return;
       const x = startX + teleportOption.position.col * (gridSize + padding);
       const y = startY + teleportOption.position.row * (gridSize + padding);
 
@@ -238,7 +278,7 @@ export class TeleportSelectionMenu {
       spriteBg.setStrokeStyle(2, teleportOption.unlocked ? 0x5a5a5a : 0x3a3a3a);
       
       // Add number indicator in top-left corner
-      const numberKey = index + 1; // 1-based indexing for display
+      const numberKey = index - pageStart + 1; // 1-based indexing for display
       const numberBg = this.scene.add.circle(x - gridSize/2 + 15, y - gridSize/2 + 15, 12, 0x4a4a4a);
       numberBg.setStrokeStyle(1, 0x6a6a6a);
       
@@ -313,7 +353,7 @@ export class TeleportSelectionMenu {
     this.logger.info(`selectTeleportByNumber called with key: ${numberKey}`);
     
     // Convert 1-based number to 0-based index
-    const index = numberKey - 1;
+    const index = numberKey - 1 + this.page * this.maxPerPage;
     
     this.logger.info(`Total teleports: ${this.teleportOptions.length}, index: ${index}`);
     
@@ -459,7 +499,8 @@ export class TeleportSelectionMenu {
     const elementsToRemove: Phaser.GameObjects.GameObject[] = [];
     this.container.list.forEach((child) => {
       // Keep the overlay, background, title, and instruction (first 4 elements)
-      if (this.container.list.indexOf(child) > 3) {
+      // Adding arrow keys + 2
+      if (this.container.list.indexOf(child) > 5) {
         elementsToRemove.push(child);
       }
     });
