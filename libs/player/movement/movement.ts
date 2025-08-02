@@ -45,7 +45,6 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
     if (!this.player.isClimbing && !this.player.isDashing && !this.stateTracker.isMovementDisabled()) {
       const body = this.player.body;
       const onGround = body.onFloor();
-      const inputState = this.inputSystem.getInputState();
 
       // Check for ground contact transition (landing)
       if (this.stateTracker.hasLanded(onGround)) {
@@ -76,14 +75,17 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
       }
 
       // Regular jump
-      if (inputState.jump && onGround) {
-        this.jump();
-        this.player.transitionToState('Jump');
-        this.logger.debug('Player jumped');
+      if (this.inputSystem.isJumpPressed()) {
+        if (onGround) {
+          this.jump();
+          this.player.transitionToState('Jump');
+          this.logger.debug('Player jumped');
+        } else {
+          // Double jump
+          this.handleDoubleJump();
+        }
       }
 
-      // Double jump
-      this.handleDoubleJump();
 
       // Sliding on wall
       const onWall = body.onWall();
@@ -126,7 +128,7 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
 
     // Check for double jump input
     if (
-      this.inputSystem.isDoubleJumpPressed() &&
+      // this.inputSystem.isDoubleJumpPressed() &&
       !onGround &&
       !this.stateTracker.getHasUsedDoubleJump() &&
       !this.player.isClimbing
