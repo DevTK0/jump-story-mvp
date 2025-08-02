@@ -400,6 +400,14 @@ export class UIFactory {
             this.playActionBlockedSound();
             
             return;
+          } else if (!player.isAtTeleportPoint === true) {
+            this.logger.warn('Can only change jobs at the Teleport Points!');
+            
+            // Show message and play sound
+            this.uiMessageDisplay?.showMessage('Can only change jobs at the Teleport Points!');
+            this.playActionBlockedSound();
+            
+            return;
           }
           break;
         }
@@ -551,6 +559,14 @@ export class UIFactory {
           
           // Show message and play sound
           this.uiMessageDisplay?.showMessage('Cannot change jobs while in combat!');
+          this.playActionBlockedSound();
+          
+          return;
+        } else if (!player.isAtTeleportPoint) {
+          this.logger.warn('Can only change jobs at the Teleport Points!');
+          
+          // Show message and play sound
+          this.uiMessageDisplay?.showMessage('Can only change jobs at the Teleport Points!');
           this.playActionBlockedSound();
           
           return;

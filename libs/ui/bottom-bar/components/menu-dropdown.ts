@@ -195,9 +195,15 @@ export class MenuDropdown {
         if (player.identity.toHexString() === this.playerIdentity.toHexString()) {
           playerFound = true;
           this.logger.info(`Player combat state: inCombat=${player.inCombat}`);
-          if (player.inCombat === true) {
+          if (player.inCombat) {
             this.logger.warn('Cannot change jobs while in combat');
             // Show combat warning (could add a visual notification here)
+            // Show message and play sound
+            return;
+          } else if (!player.isAtTeleportPoint) {
+            this.logger.warn('Can only change jobs at the Teleport Points!');
+            // Show combat warning (could add a visual notification here)
+            // Show message and play sound
             return;
           }
           break;

@@ -132,7 +132,7 @@ export class TeleportSelectionMenu {
     this.background.setStrokeStyle(2, 0x4a4a4a);
 
     // Create title
-    const title = this.scene.add.text(centerX, centerY - menuHeight / 2 + 40, 'Select Teleport Location', {
+    const title = this.scene.add.text(centerX, centerY - menuHeight / 2 + 40, 'Select Teleport Point', {
       fontSize: '24px',
       color: '#ffffff',
       fontStyle: 'bold',
