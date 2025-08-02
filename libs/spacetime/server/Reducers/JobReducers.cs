@@ -84,6 +84,7 @@ public static partial class Module
         uint ammoCost,
         string modifiers,
         uint manaLeech,
+        uint hpLeech,
         string? projectile,
         string? skillEffect,
         uint? areaRadius)
@@ -137,6 +138,7 @@ public static partial class Module
             ammo_cost = ammoCost,
             modifiers = modifiers,
             mana_leech = manaLeech,
+            hp_leech = hpLeech,
             projectile = projectile,
             skill_effect = skillEffect,
             area_radius = areaRadius

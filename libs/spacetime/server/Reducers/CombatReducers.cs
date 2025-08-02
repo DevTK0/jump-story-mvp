@@ -273,6 +273,30 @@ public static partial class Module
             }
         }
 
+        // Apply HP leech if the attack has it and enemies were hit
+        if (jobAttack.Value.hp_leech > 0 && damageCount > 0)
+        {
+            // Calculate total HP to restore (hp_leech per enemy hit)
+            var hpToRestore = jobAttack.Value.hp_leech * (uint)damageCount;
+            
+            // Get current player state (may have been updated during combat)
+            var updatedPlayer = ctx.Db.Player.identity.Find(ctx.Sender);
+            if (updatedPlayer != null)
+            {
+                // Calculate new HP, capped at max_hp
+                var newHp = Math.Min(updatedPlayer.Value.current_hp + hpToRestore, updatedPlayer.Value.max_hp);
+                
+                // Only update if HP actually increased
+                if (newHp > updatedPlayer.Value.current_hp)
+                {
+                    var playerWithHp = updatedPlayer.Value with { current_hp = newHp };
+                    ctx.Db.Player.identity.Update(playerWithHp);
+                    
+                    Log.Info($"Player {ctx.Sender} restored {newHp - updatedPlayer.Value.current_hp} HP from {jobAttack.Value.name} leech (hit {damageCount} enemies)");
+                }
+            }
+        }
+
         Log.Info($"Player {ctx.Sender} used attack {attackSlot} ({jobAttack.Value.name}) at {ctx.Timestamp}");
 
         Log.Info($"Player {ctx.Sender} attack hit {damageCount} enemies, killed {killCount}");

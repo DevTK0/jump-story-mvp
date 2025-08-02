@@ -18,6 +18,7 @@ const sharedAttacks = {
     manaCost: 0,
     ammoCost: 0,
     manaLeech: 3, // Default mana leech for basic attack
+    hpLeech: 2, // Default HP leech for basic attack
     icon: 'heal1',
     audio: 'p_att_phys',
   },
@@ -97,6 +98,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         manaCost: 0,
         ammoCost: 0,
         manaLeech: 3, // Moderate mana leech for soldier
+        hpLeech: 3, // Higher HP leech for tank class
         icon: 'heal1',
         audio: 'p_att_phys',
       },
@@ -218,6 +220,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         manaCost: 0,
         ammoCost: 0,
         manaLeech: 1, // Low mana leech for wizard, relies on high mana regen
+        hpLeech: 1, // Very low HP leech for magic users
         skillEffect: 'freeze',
         icon: 'heal1',
         audio: 'p_att_phys',
@@ -307,6 +310,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         manaCost: 0,
         ammoCost: 0,
         manaLeech: 2, // Low mana leech for ranged combat
+        hpLeech: 1, // Low HP leech for ranged classes
         projectile: 'arrow',
         icon: 'heal1',
         audio: 'p_att_phys',

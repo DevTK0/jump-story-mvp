@@ -28,6 +28,7 @@ interface BaseAttack {
   manaCost: number;
   ammoCost: number;
   manaLeech?: number; // Optional: Mana restored per enemy hit
+  hpLeech?: number; // Optional: HP restored per enemy hit
   description: string;
   skillEffect?: string; // Optional VFX sprite key for on-hit effects
   icon?: string; // Optional icon sprite key for UI display

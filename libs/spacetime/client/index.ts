@@ -1155,19 +1155,19 @@ export class RemoteReducers {
     this.connection.offReducer("InitializeJob", callback);
   }
 
-  initializeJobAttack(adminApiKey: string, jobKey: string, attackSlot: number, attackType: string, name: string, damage: number, cooldown: number, critChance: number, knockback: number, range: number, hits: number, targets: number, manaCost: number, ammoCost: number, modifiers: string, manaLeech: number, projectile: string | undefined, skillEffect: string | undefined, areaRadius: number | undefined) {
-    const __args = { adminApiKey, jobKey, attackSlot, attackType, name, damage, cooldown, critChance, knockback, range, hits, targets, manaCost, ammoCost, modifiers, manaLeech, projectile, skillEffect, areaRadius };
+  initializeJobAttack(adminApiKey: string, jobKey: string, attackSlot: number, attackType: string, name: string, damage: number, cooldown: number, critChance: number, knockback: number, range: number, hits: number, targets: number, manaCost: number, ammoCost: number, modifiers: string, manaLeech: number, hpLeech: number, projectile: string | undefined, skillEffect: string | undefined, areaRadius: number | undefined) {
+    const __args = { adminApiKey, jobKey, attackSlot, attackType, name, damage, cooldown, critChance, knockback, range, hits, targets, manaCost, ammoCost, modifiers, manaLeech, hpLeech, projectile, skillEffect, areaRadius };
     let __writer = new BinaryWriter(1024);
     InitializeJobAttack.getTypeScriptAlgebraicType().serialize(__writer, __args);
     let __argsBuffer = __writer.getBuffer();
     this.connection.callReducer("InitializeJobAttack", __argsBuffer, this.setCallReducerFlags.initializeJobAttackFlags);
   }
 
-  onInitializeJobAttack(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, attackSlot: number, attackType: string, name: string, damage: number, cooldown: number, critChance: number, knockback: number, range: number, hits: number, targets: number, manaCost: number, ammoCost: number, modifiers: string, manaLeech: number, projectile: string | undefined, skillEffect: string | undefined, areaRadius: number | undefined) => void) {
+  onInitializeJobAttack(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, attackSlot: number, attackType: string, name: string, damage: number, cooldown: number, critChance: number, knockback: number, range: number, hits: number, targets: number, manaCost: number, ammoCost: number, modifiers: string, manaLeech: number, hpLeech: number, projectile: string | undefined, skillEffect: string | undefined, areaRadius: number | undefined) => void) {
     this.connection.onReducer("InitializeJobAttack", callback);
   }
 
-  removeOnInitializeJobAttack(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, attackSlot: number, attackType: string, name: string, damage: number, cooldown: number, critChance: number, knockback: number, range: number, hits: number, targets: number, manaCost: number, ammoCost: number, modifiers: string, manaLeech: number, projectile: string | undefined, skillEffect: string | undefined, areaRadius: number | undefined) => void) {
+  removeOnInitializeJobAttack(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, attackSlot: number, attackType: string, name: string, damage: number, cooldown: number, critChance: number, knockback: number, range: number, hits: number, targets: number, manaCost: number, ammoCost: number, modifiers: string, manaLeech: number, hpLeech: number, projectile: string | undefined, skillEffect: string | undefined, areaRadius: number | undefined) => void) {
     this.connection.offReducer("InitializeJobAttack", callback);
   }
 
