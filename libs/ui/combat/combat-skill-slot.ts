@@ -80,6 +80,7 @@ export class CombatSkillSlot {
       }
     );
     this.skillLabel.setOrigin(0.5, 0.5);
+    this.skillLabel.setDepth(1000);
     
     this.container.add([
       this.background,
@@ -154,7 +155,9 @@ export class CombatSkillSlot {
       
       // Show icon if available, otherwise show label
       if (skillData.icon) {
-        this.skillLabel.setVisible(false);
+        // Show the hotkey for it as well
+        this.skillLabel.setVisible(true);
+        this.skillLabel.setText(skillData.hotkey ?? '');
         
         // Remove existing icon if any
         if (this.skillIcon) {
