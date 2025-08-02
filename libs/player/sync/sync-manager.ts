@@ -6,7 +6,6 @@ import {
 } from '@/spacetime/client';
 import { Player } from '../player';
 import { PlayerQueryService } from '../services/player-query-service';
-import { PositionReconciliationService } from '../movement/position-reconciliation-service';
 import { PLAYER_CONFIG } from '../config';
 import { emitSceneEvent } from '@/core/scene/scene-events';
 
@@ -19,7 +18,6 @@ export class SyncManager {
   private player: Player;
   private dbConnection: DbConnection | null = null;
   private playerQueryService: PlayerQueryService | null = null;
-  private positionReconciliationService: PositionReconciliationService;
 
   // Position and facing synchronization
   private lastSyncedPosition = { x: 0, y: 0 };
@@ -41,7 +39,6 @@ export class SyncManager {
     };
 
     this.lastSyncedPosition = { x: player.x, y: player.y };
-    this.positionReconciliationService = new PositionReconciliationService(player);
   }
 
   public setDbConnection(connection: DbConnection): void {
@@ -63,14 +60,14 @@ export class SyncManager {
       }
     }
 
-    // Set up position reconciliation monitoring
-    this.setupPositionReconciliation();
+    // Set up job change monitoring
+    this.setupJobChangeMonitoring();
   }
 
-  private setupPositionReconciliation(): void {
+  private setupJobChangeMonitoring(): void {
     if (!this.dbConnection?.db?.player) return;
 
-    // Subscribe to player position updates from server
+    // Subscribe to player updates from server for job changes only
     this.dbConnection.db.player.onUpdate((_ctx, _oldPlayer, newPlayer) => {
       // Only process updates for the current player
       if (
@@ -78,33 +75,12 @@ export class SyncManager {
         this.dbConnection.identity &&
         newPlayer.identity.toHexString() === this.dbConnection.identity.toHexString()
       ) {
-        this.handleServerPositionUpdate(newPlayer);
+        // Check for job change
+        if (newPlayer.job && newPlayer.job !== this.currentPlayerJob) {
+          this.handleJobChange(newPlayer.job);
+        }
       }
     });
-  }
-
-  private handleServerPositionUpdate(serverPlayer: ServerPlayer): void {
-    // Skip reconciliation if player is dead - let death monitor handle respawn positioning
-    if (serverPlayer.state.tag === 'Dead' || serverPlayer.currentHp <= 0) {
-      return;
-    }
-
-    // Check for job change
-    if (serverPlayer.job && serverPlayer.job !== this.currentPlayerJob) {
-      this.handleJobChange(serverPlayer.job);
-    }
-
-    if (typeof serverPlayer.x === 'number' && typeof serverPlayer.y === 'number') {
-      const serverPos = { x: serverPlayer.x, y: serverPlayer.y };
-
-      // Server position update received
-
-      // Check if reconciliation is needed
-      this.positionReconciliationService.checkAndReconcile(serverPos, (reconciledPos) => {
-        // Update our last synced position to prevent immediate re-sync
-        this.updateLastSyncedPosition(reconciledPos.x, reconciledPos.y);
-      });
-    }
   }
 
   private handleJobChange(newJob: string): void {

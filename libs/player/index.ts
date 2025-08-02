@@ -69,10 +69,6 @@ export { RespawnEffectRenderer } from './effects';
 // Player services
 export { PlayerQueryService } from './services/player-query-service';
 export { CombatValidationService } from './services/combat-validation-service';
-export {
-  PositionReconciliationService,
-  type PositionReconciliationConfig,
-} from './movement/position-reconciliation-service';
 
 // Builder pattern for flexible player creation
 export { PlayerBuilder } from './player-builder';

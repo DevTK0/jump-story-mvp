@@ -28,7 +28,6 @@ public static class PlayerConstants
     public const int DEATH_RESPAWN_TIME_MS = 3000; // Time before respawn (3 seconds)
     
     // Position constants
-    public const float MAX_POSITION_UPDATE_DISTANCE = 200.0f; // Max pixels movement per update
     public const float SPAWN_POSITION_X = 1000.0f;  // Default spawn X coordinate
     public const float SPAWN_POSITION_Y = 100.0f;   // Default spawn Y coordinate
     

@@ -285,15 +285,6 @@ public static partial class Module
             // Allow Y movement for gravity
         }
 
-        // Prevent teleportation by checking distance between current and new position
-        var distance = Math.Sqrt(Math.Pow(x - currentX, 2) + Math.Pow(y - currentY, 2));
-        
-        // Reject position updates that are too far from current position (likely teleportation attempts)
-        if (distance > PlayerConstants.MAX_POSITION_UPDATE_DISTANCE)
-        {
-            Log.Info($"Rejected position update for {ctx.Sender} - too large movement ({distance:F1} pixels from ({currentX}, {currentY}) to ({x}, {y}))");
-            return;
-        }
 
         bool isAtTeleportPoint = false;
         string teleportId = player.Value.teleport_id;

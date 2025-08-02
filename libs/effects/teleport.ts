@@ -25,7 +25,7 @@ const DEFAULT_TELEPORT_CONFIG: TeleportConfig = {
 
 /**
  * Teleport effect that moves the player instantly in their facing direction
- * Can be used as a skill, ability, or for testing position reconciliation
+ * Can be used as a skill or ability
  */
 export class TeleportEffect implements System {
   private player: Player;
@@ -76,7 +76,6 @@ export class TeleportEffect implements System {
     const clampedX = Math.max(0, Math.min(this.config.maxBoundX, targetX));
 
     // CLIENT-ONLY TELEPORT - Move player locally without telling server
-    // This should trigger position reconciliation when server notices the discrepancy
     // CLIENT-ONLY teleport in facing direction
 
     // Directly set player position on client
