@@ -5,7 +5,6 @@ import { PlayerQueryService } from '../services/player-query-service';
 import { DeathStateService } from './death-state-service';
 import { emitSceneEvent } from '@/core/scene/scene-events';
 import { createLogger, type ModuleLogger } from '@/core/logger';
-import { UIContextService } from '@/ui/services/ui-context-service';
 
 /**
  * Monitors player health and manages death state transitions

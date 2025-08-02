@@ -108,6 +108,7 @@ export class SyncManager {
   }
 
   private handleJobChange(newJob: string): void {
+    logger.info('[SyncManager] handleJobChange', newJob);
     const oldJob = this.currentPlayerJob;
     this.currentPlayerJob = newJob;
 
