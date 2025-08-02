@@ -32,6 +32,7 @@ public static partial class Module
         public float death_x;
         public float death_y;
         public Timestamp respawn_available_at;
+        public string teleport_id;
     }
 
     [Table(Name = "EnemyDamageEvent", Public = true)]

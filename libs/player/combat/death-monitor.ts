@@ -5,6 +5,7 @@ import { PlayerQueryService } from '../services/player-query-service';
 import { DeathStateService } from './death-state-service';
 import { emitSceneEvent } from '@/core/scene/scene-events';
 import { createLogger, type ModuleLogger } from '@/core/logger';
+import { UIContextService } from '@/ui/services/ui-context-service';
 
 /**
  * Monitors player health and manages death state transitions
@@ -70,7 +71,7 @@ export class DeathMonitor implements System {
           this.handlePlayerUpdate(
             this.player.getPlayerState().health,
             0,
-            'Dead'
+            'Dead',
           );
         }
       }
@@ -81,10 +82,10 @@ export class DeathMonitor implements System {
     oldHp: number,
     newHp: number,
     serverState: string,
-    _newPlayer?: ServerPlayer
+    newPlayer?: ServerPlayer
   ): void {
     // Player HP changed
-    console.log('[DeathMonitor][handlePlayerUpdate]', { oldHp, newHp, serverState, _newPlayer });
+    console.log('[DeathMonitor][handlePlayerUpdate]', { oldHp, newHp, serverState, newPlayer });
 
     // Use death state service to determine what action to take
     const stateAction = this.deathStateService.determineStateAction(
@@ -93,9 +94,8 @@ export class DeathMonitor implements System {
       serverState,
       this.isDead
     );
-
     // Execute the determined action
-    this.executeStateAction(stateAction.action, stateAction.reason);
+    this.executeStateAction(stateAction.action, stateAction.reason, newPlayer);
   }
 
   /**
@@ -105,7 +105,8 @@ export class DeathMonitor implements System {
    */
   private executeStateAction(
     action: 'die' | 'respawn' | 'force_dead' | 'sync_dead' | 'none',
-    _reason: string
+    _reason: string,
+    newPlayer?: ServerPlayer
   ): void {
     logger.info('[DeathMonitor][executeStateAction]', { action, _reason });
     switch (action) {
@@ -123,17 +124,7 @@ export class DeathMonitor implements System {
         break;
 
       case 'respawn':
-        // Player respawned
-        this.isDead = false;
-        this.player.transitionToState('Idle');
-        
-        // Emit respawn event for audio system
-        emitSceneEvent(this.player.scene, 'player:respawned', {
-          position: { x: this.player.x, y: this.player.y }
-        });
-        
-        // Play respawn effect if available
-        this.playRespawnEffect();
+        this.respawnPlayer(newPlayer?.x, newPlayer?.y);
         break;
 
       case 'none':
@@ -148,6 +139,25 @@ export class DeathMonitor implements System {
 
   public isPlayerDead(): boolean {
     return this.isDead;
+  }
+
+  public respawnPlayer(x?: number, y?: number) {
+    // Move player to last teleport point
+    if (x !== undefined && y !== undefined) {
+      this.player.setPosition(x, y);
+    }
+    
+    // Player respawned
+    this.isDead = false;
+    this.player.transitionToState('Idle');
+    
+    // Emit respawn event for audio system
+    emitSceneEvent(this.player.scene, 'player:respawned', {
+      position: { x: this.player.x, y: this.player.y }
+    });
+    
+    // Play respawn effect if available
+    this.playRespawnEffect();
   }
 
   /**
