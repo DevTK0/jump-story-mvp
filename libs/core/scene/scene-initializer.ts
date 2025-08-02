@@ -181,6 +181,8 @@ export class SceneInitializer {
     // Setup background color
     const { DISPLAY_CONFIG } = await import('../display-config');
     this.scene.cameras.main.setBackgroundColor(DISPLAY_CONFIG.backgroundColor);
+
+    this.initializeUiCamera();
     
     const mapData = this.assetLoader.createMap();
     this.systems.mapData = mapData;
@@ -218,6 +220,16 @@ export class SceneInitializer {
     
     // Set camera bounds
     this.scene.cameras.main.setBounds(offsetX, offsetY, boundsWidth, boundsHeight);
+  }
+
+  private initializeUiCamera() {
+    // Create UI camera at a distant corner of the world
+    const uiCamera = this.scene.cameras.add(_uiPosition.x, _uiPosition.y, this.scene.scale.width, this.scene.scale.height, false, 'ui');
+    uiCamera.setScroll(0, 0); // Keep the UI camera fixed at the viewport origin
+    this.scene.scale.on('resize', (_gameSize: Phaser.Structs.Size) => {
+      uiCamera.width = this.scene.scale.width;
+      uiCamera.height = this.scene.scale.height;
+    }, this);
   }
   
   private async initializeDatabase(): Promise<void> {
