@@ -184,6 +184,7 @@ export class PlayerBuilder {
       player.on('jobChanged', (newJob: string) => {
         const newJobConfig = jobAttributesConfig.jobs[newJob] || jobAttributesConfig.jobs.soldier;
         combatSystem.setPlayerJob(newJob, newJobConfig);
+        player.setTexture(newJob);
       });
     }
 

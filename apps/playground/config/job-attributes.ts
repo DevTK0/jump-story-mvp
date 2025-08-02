@@ -59,7 +59,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     spriteKey: 'soldier',
     unlockLevel: 0, // Unlocked by default
     baseStats: {
-      health: 100,
+      health: 120,
       moveSpeed: 250,
       mana: 30,
       hpRecovery: 1,
@@ -138,7 +138,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     spriteKey: 'wizard',
     unlockLevel: 0, // Unlock at level 10
     baseStats: {
-      health: 80,
+      health: 100,
       moveSpeed: 250,
       mana: 100,
       hpRecovery: 0.5,
@@ -205,8 +205,8 @@ export const jobAttributes: Record<string, JobConfig> = {
     spriteKey: 'archer',
     unlockLevel: 0, // Unlocked by default
     baseStats: {
-      health: 90,
-      moveSpeed: 300,
+      health: 60,
+      moveSpeed: 250,
       mana: 40,
       hpRecovery: 0.8,
       manaRecovery: 0.8,
@@ -271,7 +271,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     spriteKey: 'armored-axeman',
     unlockLevel: 0, // Unlock at level 15
     baseStats: {
-      health: 140,
+      health: 180,
       moveSpeed: 175,
       mana: 40,
       hpRecovery: 1.2,
@@ -285,7 +285,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     spriteKey: 'knight-templar',
     unlockLevel: 0, // Unlock at level 20
     baseStats: {
-      health: 160,
+      health: 200,
       moveSpeed: 150,
       mana: 80,
       hpRecovery: 2,
@@ -331,7 +331,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     attacks: {
       attack1: {
         ...sharedAttacks.attack1,
-        attackType: 'standard' as const,
+        attackType: 'stationary' as const,
       },
       attack2: {
         attackType: 'dash' as const,
