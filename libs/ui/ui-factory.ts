@@ -84,7 +84,7 @@ export class UIFactory {
     this.createPartyInvitePopup();
     
     // Setup keyboard shortcuts
-    this.setupKeyboardShortcuts(config);
+    this.setupKeyboardShortcuts();
     
     // Check if player has default name and show name change dialog
     // Only if player data is available
@@ -238,12 +238,7 @@ export class UIFactory {
     this.partyInvitePopup = new PartyInvitePopup(this.scene);
   }
   
-  private setupKeyboardShortcuts(config: UICreateConfig): void {
-    // Test level up animation (U key) - for development
-    this.registerKeyboardShortcut('U', () => {
-      this.testLevelUpAnimation(config);
-    });
-    
+  private setupKeyboardShortcuts(): void {    
     // Job menu hotkey (J key)
     this.registerKeyboardShortcut('J', () => {
       this.openJobMenu();
@@ -295,26 +290,6 @@ export class UIFactory {
     if (this.scene.input.keyboard) {
       this.scene.input.keyboard.on(`keydown-${key}`, handler);
       this.keyboardHandlers.set(key, handler);
-    }
-  }
-  
-  private testLevelUpAnimation(config: UICreateConfig): void {
-    // This is a test function for development
-    // The managers are stored in the scene data, not registry
-    const managers = this.scene.data.get('managers');
-    const levelUpManager = managers?.getLevelUpAnimationManager();
-    
-    if (levelUpManager && config.connection) {
-      // Get current level from database
-      let currentLevel = 1;
-      for (const player of config.connection.db.player.iter()) {
-        if (player.identity.toHexString() === config.identity.toHexString()) {
-          currentLevel = player.level;
-          break;
-        }
-      }
-      // Trigger level up animation
-      levelUpManager.triggerLevelUpAnimation(config.identity, currentLevel + 1);
     }
   }
 
