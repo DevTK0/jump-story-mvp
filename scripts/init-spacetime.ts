@@ -28,6 +28,12 @@ import { calculateBossAnimationDurations, logBossAnimationDurations } from './ca
 // Load environment variables
 dotenv.config();
 
+// Helper function to log with timestamp
+const log = (message: string) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${message}`);
+};
+
 async function initializeSpacetime() {
   let connection: DbConnection | null = null;
   let isIntentionalDisconnect = false;
@@ -112,12 +118,20 @@ async function initializeSpacetime() {
           reject(err);
         }
       };
+      
+      const onDisconnect = (_conn: DbConnection, closeEvent: CloseEvent) => {
+        if (!isIntentionalDisconnect) {
+          console.log('⚠️  Unexpected disconnect during initialization:', closeEvent.reason || 'No reason provided');
+          console.log('   Close code:', closeEvent.code);
+        }
+      };
 
       DbConnection.builder()
         .withUri(uri)
         .withModuleName('jump-story')
         .onConnect(onConnect)
         .onConnectError(onConnectError)
+        .onDisconnect(onDisconnect)
         .build();
     });
 
@@ -184,14 +198,23 @@ async function initializeSpacetime() {
     // Initialize boss routes from tilemap
     await connection.reducers.initializeBossRoutes(adminApiKey, tilemapContent);
     
-    console.log('✅ Boss routes initialized successfully!');
+    log('✅ Boss routes initialized successfully!');
     
-    console.log('Populating boss triggers from config...');
+    log('Populating boss triggers from config...');
     
-    // Populate boss triggers from enemy config
-    await connection.reducers.populateBossTriggers(adminApiKey, enemyConfigContent);
-    
-    console.log('✅ Boss triggers populated successfully!');
+    try {
+      // Populate boss triggers from enemy config
+      await connection.reducers.populateBossTriggers(adminApiKey, enemyConfigContent);
+      
+      log('✅ Boss triggers populated successfully!');
+      
+      // Give extra time for boss trigger operations to complete on cloud
+      log('   Waiting for boss trigger operations to sync...');
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    } catch (error) {
+      console.error('❌ Failed to populate boss triggers:', (error as Error).message);
+      // Don't throw - continue with other initialization
+    }
     
     console.log('🐺 Spawning initial enemies for all routes...');
 
