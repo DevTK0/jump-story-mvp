@@ -273,7 +273,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     unlockLevel: 0, // Unlocked by default
     baseStats: {
       health: 90,
-      moveSpeed: 300,
+      moveSpeed: 250,
       mana: 40,
       hpRecovery: 0.8,
       manaRecovery: 0.8,
