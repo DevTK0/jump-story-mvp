@@ -23,6 +23,8 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
   // Shadow trajectory renderer
   private shadowRenderer: ShadowTrajectoryRenderer;
 
+  private _acceleration: number = 10;
+
   constructor(player: Player, inputSystem: InputSystem) {
     super();
     this.player = player;
@@ -57,22 +59,26 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
       this.stateTracker.updateFacingFromInput(horizontalDir);
 
       // Horizontal movement (only when on ground)
-      // if (onGround) {
-      if (horizontalDir !== 0) {
-        body.setVelocityX(horizontalDir * this.player.getSpeed());
+      body.setMaxVelocityX(this.player.getSpeed());
+      if (onGround) {
+        body.setAccelerationX(0);
+        if (horizontalDir !== 0) {
+          body.setVelocityX(horizontalDir * this.player.getSpeed());
 
-        // Transition to walk state if not already walking or attacking
-        if (!this.player.isInState('Walk') && !this.player.isAttacking) {
-          this.player.transitionToState('Walk');
+          // Transition to walk state if not already walking or attacking
+          if (!this.player.isInState('Walk') && !this.player.isAttacking) {
+            this.player.transitionToState('Walk');
+          }
+        } else {
+          body.setVelocityX(0);
+          // Transition to idle state if not already idle or attacking
+          if (!this.player.isInState('Idle') && !this.player.isAttacking) {
+            this.player.transitionToState('Idle');
+          }
         }
       } else {
-        body.setVelocityX(0);
-        // Transition to idle state if not already idle or attacking
-        if (!this.player.isInState('Idle') && !this.player.isAttacking) {
-          this.player.transitionToState('Idle');
-        }
+        body.setAccelerationX(this._acceleration * horizontalDir * this.player.getSpeed());
       }
-      // }
 
       // Regular jump
       if (this.inputSystem.isJumpPressed()) {
