@@ -143,7 +143,7 @@ export class TeleportSelectionMenu {
     // Close button removed - use T hotkey or ESC to close
     
     // Create instruction text
-    const instruction = this.scene.add.text(centerX, centerY - menuHeight / 2 + 80, 'Use number keys 1-9 to select a teleport location', {
+    const instruction = this.scene.add.text(centerX, centerY - menuHeight / 2 + 80, 'Use number keys 1-9 to select a teleport location' , {
       fontSize: '16px',
       color: '#cccccc',
       fontStyle: 'italic',
@@ -155,6 +155,30 @@ export class TeleportSelectionMenu {
 
     // Create teleport options
     this.createTeleportOptions(centerX, centerY, menuWidth, menuHeight);
+
+    // Add arrow keys
+    this.addPageArrowKeys(centerX, centerY, menuWidth, menuHeight);
+  }
+
+  private addPageArrowKeys (centerX: number, centerY: number, menuWidth: number, menuHeight: number) {
+
+    // Create arrow keys
+    const previousPage = this.scene.add.text(centerX - menuWidth / 2 + 50, centerY + menuHeight / 2 - 40, '< Previous', {
+      fontSize: '20px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+    });
+    previousPage.setOrigin(0, 0.5);
+
+    const nextPage = this.scene.add.text(centerX + menuWidth / 2 - 50, centerY + menuHeight / 2 - 40, 'Next >', {
+      fontSize: '20px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+    });
+    nextPage.setOrigin(1, 0.5);
+
+    // Add left and right arrow
+    this.container.add([previousPage, nextPage]);
   }
 
   private generateTeleportOptions(): void {
@@ -189,15 +213,17 @@ export class TeleportSelectionMenu {
     const gridSize = 120; // Same as job cells
     const padding = 30;
     const cols = 3;
-    const rows = Math.ceil(this.teleportOptions.length / cols);
+    const rows = Math.ceil(Math.min(9, this.teleportOptions.length) / cols);
+    const total = cols * rows;
 
     // Calculate starting position to center the grid
     const totalWidth = cols * gridSize + (cols - 1) * padding;
     const totalHeight = rows * gridSize + (rows - 1) * padding;
     const startX = centerX - totalWidth / 2 + gridSize / 2;
-    const startY = centerY - totalHeight / 2 + gridSize / 2 - 20; // Offset up a bit
+    const startY = centerY - totalHeight / 2 + gridSize / 2 + 20; // Offset down a bit
 
     this.teleportOptions.forEach((teleportOption, index) => {
+      if (index >= total) return;
       const x = startX + teleportOption.position.col * (gridSize + padding);
       const y = startY + teleportOption.position.row * (gridSize + padding);
 
@@ -243,8 +269,9 @@ export class TeleportSelectionMenu {
       locationName.setOrigin(0.5, 0.5);
 
       // Add "LOCKED" text indicator for locked teleports
+      let lockedText: Phaser.GameObjects.Text | undefined;
       if (!teleportOption.unlocked) {
-        const lockedText = this.scene.add.text(x, y, 'LOCKED', {
+        lockedText = this.scene.add.text(x, y, 'LOCKED', {
           fontSize: '14px',
           color: '#ff4444',
           fontStyle: 'bold',
@@ -253,8 +280,6 @@ export class TeleportSelectionMenu {
         });
         lockedText.setOrigin(0.5, 0.5);
         lockedText.setAlpha(0.9);
-
-        this.container.add(lockedText);
       }
 
       // Only make unlocked teleports interactive
@@ -278,7 +303,9 @@ export class TeleportSelectionMenu {
         });
       }
 
-      this.container.add([spriteBg, numberBg, numberText, sprite, locationName]);
+      this.container.add([spriteBg, numberBg, numberText, sprite, locationName]
+        .concat(lockedText === undefined ? [] : [lockedText])
+      );
     });
   }
 
