@@ -6,9 +6,11 @@ import { createLogger, type ModuleLogger } from '@/core/logger';
 import { UIContextService, UIEvents } from '../services/ui-context-service';
 import { DbConnection } from '@/spacetime/client';
 import { jobAttributes } from '../../../apps/playground/config/job-attributes';
+import type { Attack } from '@/player/combat/attack-types';
 
 export class CombatSkillBar {
   private scene: Phaser.Scene;
+  private camera: Phaser.Cameras.Scene2D.Camera;
   private container!: Phaser.GameObjects.Container;
   private background!: Phaser.GameObjects.Graphics;
   private skillSlots: CombatSkillSlot[] = [];
@@ -20,6 +22,7 @@ export class CombatSkillBar {
   
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
+    this.camera = scene.cameras.getCamera('ui') ?? scene.cameras.main;
     this.logger = createLogger('CombatSkillBar');
     
     // Get tooltip instance
@@ -100,7 +103,7 @@ export class CombatSkillBar {
     
     attackKeys.forEach((key, index) => {
       if (index < 3) {
-        const attack = (attacks as any)[key];
+        const attack: Attack = (attacks as any)[key];
         skills.set(index, {
           id: `${key}_A${index + 1}`,
           name: attack.name,
@@ -260,7 +263,7 @@ export class CombatSkillBar {
   }
   
   private positionContainer(): void {
-    const camera = this.scene.cameras.main;
+    const camera = this.camera;
     const config = COMBAT_SKILL_CONFIG;
     
     // Calculate container dimensions (including padding)

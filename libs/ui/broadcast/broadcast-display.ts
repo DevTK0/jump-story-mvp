@@ -5,6 +5,7 @@ import { type Broadcast } from '@/spacetime/client';
 
 export class BroadcastDisplay {
   private scene: Phaser.Scene;
+  private camera: Phaser.Cameras.Scene2D.Camera;
   private container!: Phaser.GameObjects.Container;
   private background!: Phaser.GameObjects.Rectangle;
   private broadcastText!: Phaser.GameObjects.Text;
@@ -18,6 +19,7 @@ export class BroadcastDisplay {
 
   constructor(scene: Phaser.Scene, dbConnection: DbConnection) {
     this.scene = scene;
+    this.camera = scene.cameras.getCamera('ui') ?? scene.cameras.main;
     this.dbConnection = dbConnection;
 
     this.createUI();
@@ -26,7 +28,7 @@ export class BroadcastDisplay {
   }
 
   private createUI(): void {
-    const camera = this.scene.cameras.main;
+    const camera = this.camera;
     const centerX = camera.width / 2;
     const topY = 100; // Position from top of screen
 

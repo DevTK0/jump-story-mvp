@@ -6,6 +6,7 @@ import type { JobConfig } from '@/player/combat/attack-types';
 
 export class AttackInfoMenu {
   private scene: Phaser.Scene;
+    private camera: Phaser.Cameras.Scene2D.Camera;
   private container!: Phaser.GameObjects.Container;
   private background!: Phaser.GameObjects.Rectangle;
   private logger: ModuleLogger = createLogger('AttackInfoMenu');
@@ -18,6 +19,7 @@ export class AttackInfoMenu {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
+    this.camera = scene.cameras.getCamera('ui') ?? scene.cameras.main;
     
     this.createUI();
     this.hide(); // Start hidden
@@ -36,7 +38,7 @@ export class AttackInfoMenu {
     this.container.setScrollFactor(0);
     this.container.setDepth(2000); // High depth to appear above everything
 
-    const camera = this.scene.cameras.main;
+    const camera = this.camera;
     const centerX = camera.width / 2;
     const centerY = camera.height / 2;
 
