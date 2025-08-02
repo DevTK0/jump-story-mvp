@@ -36,6 +36,7 @@ export type Teleport = {
   locationName: string,
   x: number,
   y: number,
+  order: number,
 };
 
 /**
@@ -51,6 +52,7 @@ export namespace Teleport {
       new ProductTypeElement("locationName", AlgebraicType.createStringType()),
       new ProductTypeElement("x", AlgebraicType.createF32Type()),
       new ProductTypeElement("y", AlgebraicType.createF32Type()),
+      new ProductTypeElement("order", AlgebraicType.createI32Type()),
     ]);
   }
 

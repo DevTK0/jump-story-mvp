@@ -201,6 +201,7 @@ public static partial class Module
         public string location_name;
         public float x;
         public float y;
+        public int order;
     }
 
     [Table(Name = "PlayerTeleport", Public = true)]

@@ -9,6 +9,7 @@ import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { createLogger, type ModuleLogger } from '@/core/logger';
 import { UIContextService, UIEvents } from '../services/ui-context-service';
 import { onSceneEvent, offSceneEvent } from '@/core/scene';
+import type { Teleport } from '@/spacetime/client';
 
 export class BottomUIBar {
   private scene: Phaser.Scene;
@@ -170,12 +171,14 @@ export class BottomUIBar {
    * Handle teleport data updates from scene events (new event-driven pattern)
    * This receives events from TeleportStoneManager and updates UIContextService
    */
-  private handleTeleportSceneEvent(data: { unlockStatus: Map<string, boolean>; locations: any[] }): void {
-    this.logger.info(`Teleport data updated via scene event: ${data.unlockStatus.size} entries, ${data.locations.length} teleports`);
+  private handleTeleportSceneEvent(data: { unlockStatus: Map<string, boolean>; locations: Teleport[] }): void {
+    this.logger.info(`Teleport data updated via scene event: ${data.unlockStatus.size} entries, ${data.locations.length} teleports`, data.locations);
     
     // Update UIContextService with the teleport data
     // This ensures any UI components that depend on UIContextService still work
-    UIContextService.getInstance().updateTeleportData(data.unlockStatus, data.locations);
+    UIContextService.getInstance().updateTeleportData(data.unlockStatus, data.locations.sort(
+      (t1, t2) => t1.order - t2.order
+    ));
   }
 
   private setupDataSubscriptions(): void {

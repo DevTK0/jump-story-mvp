@@ -290,17 +290,20 @@ async function initializeSpacetime() {
 
     // Extract teleport locations from tilemap
     let teleportCount = 0;
-    const teleportLocations: Array<{ name: string; x: number; y: number }> = [];
+    const teleportLocations: Array<{ name: string; x: number; y: number, order: number }> = [];
 
     for (const layer of tilemap.layers) {
       if (layer.name === 'Teleport' && layer.objects) {
         for (const obj of layer.objects) {
           if (obj.properties) {
             let isTeleport = false;
+            let order: string = '';
             for (const prop of obj.properties) {
               if (prop.name === 'type' && prop.value === 'teleport') {
                 isTeleport = true;
-                break;
+              }
+              if (prop.name === 'order' && prop.type === 'string') {
+                order = prop.value;
               }
             }
 
@@ -308,10 +311,11 @@ async function initializeSpacetime() {
               teleportLocations.push({
                 name: obj.name,
                 x: obj.x,
-                y: obj.y
+                y: obj.y,
+                order: parseInt(order)
               });
               teleportCount++;
-              console.log(`  Found teleport: ${obj.name} at (${obj.x}, ${obj.y})`);
+              console.log(`  Found teleport: [${order}] ${obj.name} at (${obj.x}, ${obj.y})`);
             }
           }
         }
@@ -323,7 +327,9 @@ async function initializeSpacetime() {
       console.log(`  Populating ${teleportCount} teleport locations...`);
       
       // Create JSON content for teleport locations
-      const teleportContent = JSON.stringify(teleportLocations);
+      const teleportContent = JSON.stringify(teleportLocations.sort(
+        (t1, t2) => t1.order - t2.order
+      ));
       
       try {
         await connection.reducers.initializeTeleports(adminApiKey, teleportContent);

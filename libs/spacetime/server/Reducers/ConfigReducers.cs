@@ -187,6 +187,7 @@ public static partial class Module
                 var name = teleportElement.GetProperty("name").GetString();
                 var x = (float)teleportElement.GetProperty("x").GetDouble();
                 var y = (float)teleportElement.GetProperty("y").GetDouble();
+                var order = (int)teleportElement.GetProperty("order").GetUInt32();
                 
                 if (name == null)
                 {
@@ -197,9 +198,10 @@ public static partial class Module
                 // Insert the teleport location
                 ctx.Db.Teleport.Insert(new Teleport
                 {
-                    location_name = name,
-                    x = x,
-                    y = y
+                  location_name = name,
+                  x = x,
+                  y = y,
+                  order = order,
                 });
                 
                 teleportCount++;

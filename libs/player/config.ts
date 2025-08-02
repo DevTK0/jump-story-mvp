@@ -55,7 +55,7 @@ export const PLAYER_CONFIG = {
     /** Default spawn coordinates */
     spawnPosition: {
       x: 800,
-      y: 100,
+      y: 145,
     },
   },
 } as const;

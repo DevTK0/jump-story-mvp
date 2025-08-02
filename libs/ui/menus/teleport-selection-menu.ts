@@ -4,6 +4,7 @@ import { DbConnection } from '@/spacetime/client';
 import { UIContextService, UIEvents } from '../services/ui-context-service';
 import { UIMessageDisplay } from '../common/ui-message-display';
 import { getAudioManager } from '@/core/audio/audio-manager';
+import type { Teleport } from '@/spacetime/server/libs/spacetime/client';
 
 export interface TeleportOption {
   locationName: string;
@@ -33,7 +34,7 @@ export class TeleportSelectionMenu {
   // Map of location names to their unlock status
   private playerTeleportUnlockStatus: Map<string, boolean> = new Map();
   // Teleport table data
-  private teleportTableData: any[] = [];
+  private teleportTableData: Teleport[] = [];
   // Keyboard handlers for cleanup
   private keyboardHandlers: { event: string; handler: () => void }[] = [];
   
