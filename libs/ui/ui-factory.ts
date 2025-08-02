@@ -20,6 +20,8 @@ import { PartyInvitePopup } from './party/party-invite-popup';
 import { jobAttributes } from '../../apps/playground/config/job-attributes';
 import type { Player } from '@/spacetime/client';
 import { KeyIndicatorManager } from './indicators/key-indicator-manager';
+import { UIMessageDisplay } from './common/ui-message-display';
+import { getAudioManager } from '@/core/audio/audio-manager';
 
 // Re-export UICreateConfig from UIContextService to maintain compatibility
 export type { UICreateConfig };
@@ -44,9 +46,14 @@ export class UIFactory {
   private partyMenu?: PartyMenu;
   private partyInvitePopup?: PartyInvitePopup;
   private keyIndicatorManager?: KeyIndicatorManager;
+  private uiMessageDisplay?: UIMessageDisplay;
   
   // Keyboard shortcuts
   private keyboardHandlers: Map<string, () => void> = new Map();
+  
+  // Audio cooldown tracking
+  private lastActionBlockedSoundTime = 0;
+  private readonly UI_SOUND_COOLDOWN_MS = 1000;
   
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -84,6 +91,9 @@ export class UIFactory {
     
     // Create key indicator manager
     this.keyIndicatorManager = new KeyIndicatorManager(this.scene);
+    
+    // Create UI message display
+    this.uiMessageDisplay = new UIMessageDisplay(this.scene);
     
     // Show all key indicators
     this.keyIndicatorManager.show([
@@ -204,6 +214,7 @@ export class UIFactory {
     this.partyMenu?.destroy();
     this.partyInvitePopup?.destroy();
     this.keyIndicatorManager?.destroy();
+    this.uiMessageDisplay?.destroy();
     
     // Destroy UIContextService if it was initialized
     if (UIContextService.isInitialized()) {
@@ -383,6 +394,11 @@ export class UIFactory {
         if (player.identity.toHexString() === identity.toHexString()) {
           if (player.inCombat === true) {
             this.logger.warn('Cannot change jobs while in combat');
+            
+            // Show message and play sound
+            this.uiMessageDisplay?.showMessage('Cannot change jobs while in combat!');
+            this.playActionBlockedSound();
+            
             return;
           }
           break;
@@ -532,6 +548,11 @@ export class UIFactory {
       if (player.identity.toHexString() === identity.toHexString()) {
         if (player.inCombat === true) {
           this.logger.warn('Cannot change jobs while in combat');
+          
+          // Show message and play sound
+          this.uiMessageDisplay?.showMessage('Cannot change jobs while in combat!');
+          this.playActionBlockedSound();
+          
           return;
         }
         break;
@@ -573,5 +594,14 @@ export class UIFactory {
   
   getPerformanceMetrics(): PerformanceMetrics | undefined {
     return this.performanceMetrics;
+  }
+  
+  private playActionBlockedSound(): void {
+    const now = Date.now();
+    if (now - this.lastActionBlockedSoundTime > this.UI_SOUND_COOLDOWN_MS) {
+      const audioManager = getAudioManager(this.scene);
+      audioManager.playSound('actionBlocked');
+      this.lastActionBlockedSoundTime = now;
+    }
   }
 }

@@ -9,9 +9,10 @@ import { BaseDebugRenderer } from '@/debug/debug-renderer';
 import type { JobConfig, Attack } from './attack-types';
 import { PlayerQueryService } from '../services/player-query-service';
 import { CombatValidationService } from '../services/combat-validation-service';
-import { CombatMessageDisplay } from './combat-message-display';
 import { getAttackAnimationDuration } from '../animations/animation-duration-helper';
 import type { IHitValidator } from './hit-validator-interface';
+import { getAudioManager } from '@/core/audio/audio-manager';
+import { UIMessageDisplay } from '@/ui/common/ui-message-display';
 
 export interface AttackConfig {
   name: string;
@@ -53,12 +54,16 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
   // Services
   private playerQueryService: PlayerQueryService | null = null;
   private combatValidationService: CombatValidationService | null = null;
-  private messageDisplay: CombatMessageDisplay;
+  private uiMessageDisplay: UIMessageDisplay;
   
   // Physics registration
   private physicsRegistry: any = null;
   private hitCallback: Function | null = null;
   private hitContext: any = null;
+  
+  // Audio cooldown tracking
+  private lastManaErrorSoundTime = 0;
+  private readonly UI_SOUND_COOLDOWN_MS = 500;
 
   constructor(
     player: Player,
@@ -79,7 +84,7 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     this.combatValidationService = CombatValidationService.getInstance();
     
     // Initialize message display
-    this.messageDisplay = new CombatMessageDisplay(scene);
+    this.uiMessageDisplay = new UIMessageDisplay(scene);
 
     // Initialize hitboxes for each attack
     this.initializeHitboxes();
@@ -200,14 +205,23 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
       const manaResult = this.combatValidationService.canUseAttack(attackNum, this.jobConfig, currentMana);
       
       if (!manaResult.canAttack) {
-        this.messageDisplay.showMessage(manaResult.reason || 'Cannot use attack');
+        this.uiMessageDisplay.showMessage(manaResult.reason || 'Cannot use attack');
+        
+        // Play out of mana sound with cooldown
+        const now = Date.now();
+        if (now - this.lastManaErrorSoundTime > this.UI_SOUND_COOLDOWN_MS) {
+          const audioManager = getAudioManager(this.scene);
+          audioManager.playSound('outOfMana');
+          this.lastManaErrorSoundTime = now;
+        }
+        
         return false;
       }
 
       // Check cooldown
       const cooldownResult = this.combatValidationService.checkCooldownWithConfig(attackNum, attackConfig);
       if (!cooldownResult.canAttack) {
-        this.messageDisplay.showMessage(cooldownResult.reason || 'Attack on cooldown');
+        this.uiMessageDisplay.showMessage(cooldownResult.reason || 'Attack on cooldown');
         return false;
       }
     }
@@ -925,6 +939,6 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
 
   destroy(): void {
     this.destroyHitboxes();
-    this.messageDisplay.destroy();
+    this.uiMessageDisplay.destroy();
   }
 }

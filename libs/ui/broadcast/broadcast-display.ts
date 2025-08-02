@@ -30,7 +30,7 @@ export class BroadcastDisplay {
   private createUI(): void {
     const camera = this.camera;
     const centerX = camera.width / 2;
-    const topY = 100; // Position from top of screen
+    const topY = 200; // Position from top of screen
 
     // Create container
     this.container = this.scene.add.container(centerX, topY);

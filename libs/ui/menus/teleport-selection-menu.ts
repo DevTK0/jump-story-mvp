@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { createLogger, type ModuleLogger } from '@/core/logger';
 import { DbConnection } from '@/spacetime/client';
 import { UIContextService, UIEvents } from '../services/ui-context-service';
+import { UIMessageDisplay } from '../common/ui-message-display';
+import { getAudioManager } from '@/core/audio/audio-manager';
 
 export interface TeleportOption {
   locationName: string;
@@ -34,6 +36,13 @@ export class TeleportSelectionMenu {
   private teleportTableData: any[] = [];
   // Keyboard handlers for cleanup
   private keyboardHandlers: { event: string; handler: () => void }[] = [];
+  
+  // UI message display
+  private uiMessageDisplay: UIMessageDisplay;
+  
+  // Audio cooldown tracking
+  private lastActionBlockedSoundTime = 0;
+  private readonly UI_SOUND_COOLDOWN_MS = 1000;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -56,6 +65,9 @@ export class TeleportSelectionMenu {
 
     this.createUI();
     this.hide(); // Start hidden
+    
+    // Create UI message display
+    this.uiMessageDisplay = new UIMessageDisplay(scene);
 
     // Setup escape key to close
     const escHandler = () => {
@@ -344,6 +356,11 @@ export class TeleportSelectionMenu {
           // Check if player is in combat
           if (player.inCombat === true) {
             this.logger.warn('Cannot teleport while in combat');
+            
+            // Show message and play sound
+            this.uiMessageDisplay.showMessage('Cannot teleport while in combat!');
+            this.playActionBlockedSound();
+            
             return;
           }
           
@@ -393,6 +410,11 @@ export class TeleportSelectionMenu {
     this.keyboardHandlers = [];
 
     this.container.destroy();
+    
+    // Destroy UI message display
+    if (this.uiMessageDisplay) {
+      this.uiMessageDisplay.destroy();
+    }
   }
 
   private updateTeleportUnlockStates(): void {
@@ -422,5 +444,14 @@ export class TeleportSelectionMenu {
     const menuWidth = 500;
     const menuHeight = 650;
     this.createTeleportOptions(centerX, centerY, menuWidth, menuHeight);
+  }
+  
+  private playActionBlockedSound(): void {
+    const now = Date.now();
+    if (now - this.lastActionBlockedSoundTime > this.UI_SOUND_COOLDOWN_MS) {
+      const audioManager = getAudioManager(this.scene);
+      audioManager.playSound('actionBlocked');
+      this.lastActionBlockedSoundTime = now;
+    }
   }
 }
