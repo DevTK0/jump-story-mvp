@@ -54,7 +54,7 @@ export const PLAYER_CONFIG = {
     cooldown: 1000,
     /** Default spawn coordinates */
     spawnPosition: {
-      x: 800,
+      x: 1000,
       y: 145,
     },
   },
