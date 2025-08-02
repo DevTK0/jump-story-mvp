@@ -135,10 +135,10 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
   }
 
   private initializeHitboxes(): void {
-    // Create hitbox sprites for each attack (standard, dash, and projectile)
+    // Create hitbox sprites for each attack (standard, dash, projectile, and area)
     for (let i = 1; i <= 3; i++) {
       const attackConfig = this.jobConfig.attacks[`attack${i}` as keyof typeof this.jobConfig.attacks];
-      if (attackConfig && (attackConfig.attackType === 'standard' || attackConfig.attackType === 'dash' || attackConfig.attackType === 'projectile')) {
+      if (attackConfig && (attackConfig.attackType === 'standard' || attackConfig.attackType === 'dash' || attackConfig.attackType === 'projectile' || attackConfig.attackType === 'area')) {
         const hitbox = this.scene.physics.add.sprite(-200, -200, '');
         // Will be sized dynamically during attack
 
@@ -226,8 +226,9 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
       case 'heal':
         this.performHealAttack(attackNum, attackConfig);
         break;
-      default:
-        console.log(`Attack type ${attackConfig.attackType} not yet implemented`);
+      case 'area':
+        this.performAreaAttack(attackNum, attackConfig);
+        break;
     }
 
     return true;
@@ -272,29 +273,38 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
   private configureHitbox(
     hitboxSprite: Phaser.Physics.Arcade.Sprite,
     config: Attack,
-    attackType: 'standard' | 'dash' | 'projectile'
+    attackType: 'standard' | 'dash' | 'projectile' | 'area'
   ): void {
     const facing = this.player.facingDirection;
     const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
-
-    // Calculate hitbox dimensions based on attack type
-    const hitboxWidth = playerBody.width + config.range;
-    const hitboxHeight = attackType === 'projectile' 
-      ? playerBody.height * this.PROJECTILE_HITBOX_HEIGHT_MULTIPLIER
-      : playerBody.height;
-
-    // Calculate hitbox position
     const playerCenterX = playerBody.x + playerBody.halfWidth;
     const playerCenterY = playerBody.y + playerBody.halfHeight;
-    const hitboxCenterX = playerCenterX + (facing * config.range / 2);
-    
-    // Update hitbox sprite position
-    hitboxSprite.setPosition(hitboxCenterX, playerCenterY);
 
-    // Update physics body size
     if (hitboxSprite.body) {
       const body = hitboxSprite.body as Phaser.Physics.Arcade.Body;
-      body.setSize(hitboxWidth, hitboxHeight);
+      
+      if (attackType === 'area' && config.attackType === 'area' && config.radius) {
+        // For area attacks, create a circular hitbox centered on the player
+        body.setCircle(config.radius);
+        hitboxSprite.setPosition(playerCenterX, playerCenterY);
+        // Center the circular body by offsetting it by negative radius
+        body.setOffset(-config.radius, -config.radius);
+      } else {
+        // Calculate hitbox dimensions based on attack type
+        const hitboxWidth = playerBody.width + config.range;
+        const hitboxHeight = attackType === 'projectile' 
+          ? playerBody.height * this.PROJECTILE_HITBOX_HEIGHT_MULTIPLIER
+          : playerBody.height;
+
+        // Calculate hitbox position
+        const hitboxCenterX = playerCenterX + (facing * config.range / 2);
+        
+        // Update hitbox sprite position
+        hitboxSprite.setPosition(hitboxCenterX, playerCenterY);
+
+        // Update physics body size
+        body.setSize(hitboxWidth, hitboxHeight);
+      }
     }
   }
 
@@ -371,15 +381,29 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
         const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
         const facing = this.player.facingDirection;
         
-        // Recalculate position with forward extension
+        // Recalculate position
         const playerCenterX = playerBody.x + playerBody.halfWidth;
         const playerCenterY = playerBody.y + playerBody.halfHeight;
-        const hitboxCenterX = playerCenterX + (facing * config.range / 2);
-        
-        hitboxSprite.setPosition(hitboxCenterX, playerCenterY);
         
         const body = hitboxSprite.body as Phaser.Physics.Arcade.Body;
-        body.reset(hitboxCenterX, playerCenterY);
+        
+        // Position hitbox based on attack type
+        if (config.attackType === 'area') {
+          // Area attacks are centered on the player
+          hitboxSprite.setPosition(playerCenterX, playerCenterY);
+          body.reset(playerCenterX, playerCenterY);
+          // Reconfigure circle and offset after reset
+          if ('radius' in config && config.radius) {
+            body.setCircle(config.radius);
+            body.setOffset(-config.radius, -config.radius);
+          }
+        } else {
+          // Other attacks extend forward
+          const hitboxCenterX = playerCenterX + (facing * config.range / 2);
+          hitboxSprite.setPosition(hitboxCenterX, playerCenterY);
+          body.reset(hitboxCenterX, playerCenterY);
+        }
+        
         body.enable = true;
         // Ensure physics properties are maintained after reset
         body.setGravityY(0);
@@ -602,15 +626,29 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
         const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
         const facing = this.player.facingDirection;
         
-        // Recalculate position with forward extension
+        // Recalculate position
         const playerCenterX = playerBody.x + playerBody.halfWidth;
         const playerCenterY = playerBody.y + playerBody.halfHeight;
-        const hitboxCenterX = playerCenterX + (facing * config.range / 2);
-        
-        hitboxSprite.setPosition(hitboxCenterX, playerCenterY);
         
         const body = hitboxSprite.body as Phaser.Physics.Arcade.Body;
-        body.reset(hitboxCenterX, playerCenterY);
+        
+        // Position hitbox based on attack type
+        if (config.attackType === 'area') {
+          // Area attacks are centered on the player
+          hitboxSprite.setPosition(playerCenterX, playerCenterY);
+          body.reset(playerCenterX, playerCenterY);
+          // Reconfigure circle and offset after reset
+          if ('radius' in config && config.radius) {
+            body.setCircle(config.radius);
+            body.setOffset(-config.radius, -config.radius);
+          }
+        } else {
+          // Other attacks extend forward
+          const hitboxCenterX = playerCenterX + (facing * config.range / 2);
+          hitboxSprite.setPosition(hitboxCenterX, playerCenterY);
+          body.reset(hitboxCenterX, playerCenterY);
+        }
+        
         body.enable = true;
         // Ensure physics properties are maintained after reset
         body.setGravityY(0);
@@ -693,6 +731,29 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     // - PlayerHealEvent from server triggers visual effects through PlayerHealEffectRenderer
     
     // This method is kept for potential future local effects on the caster
+  }
+
+  private performAreaAttack(attackNum: number, config: Attack): void {
+    // Type guard to ensure we have an area attack
+    if (config.attackType !== 'area') return;
+
+    const hitboxSprite = this.setupAttack(attackNum, config);
+    if (!hitboxSprite) return;
+
+    this.configureHitbox(hitboxSprite, config, 'area');
+
+    // Emit attack event
+    emitSceneEvent(this.scene, 'player:attacked', {
+      type: 'area',
+      direction: this.player.facingDirection,
+      attackType: attackNum,
+      damage: config.damage,
+      critChance: config.critChance,
+      radius: config.radius,
+    });
+
+    // Execute attack phases
+    this.executeAttackPhases(attackNum, config, hitboxSprite);
   }
 
   // Public API - Compatibility with existing physics system

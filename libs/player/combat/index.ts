@@ -11,6 +11,7 @@ export { DeathStateService } from './death-state-service';
 export { EnemyDamageRenderer } from './enemy-damage-renderer';
 export { PlayerDamageRenderer } from './player-damage-renderer';
 export { ProjectileRenderer } from './projectile-renderer';
+export { AreaEffectRenderer } from './area-effect-renderer';
 export { SkillEffectRenderer } from './skill-effect-renderer';
 export { PlayerHealEffectRenderer } from './player-heal-effect-renderer';
 export {

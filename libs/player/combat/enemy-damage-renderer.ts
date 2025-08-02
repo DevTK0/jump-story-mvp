@@ -15,6 +15,7 @@ import {
   getDamageStyle,
 } from './damage-renderer-config';
 import { ProjectileRenderer } from './projectile-renderer';
+import { AreaEffectRenderer } from './area-effect-renderer';
 
 interface DamageNumberState {
   text: Phaser.GameObjects.Text;
@@ -30,6 +31,7 @@ export class EnemyDamageRenderer {
   private enemyManager: EnemyManager | null = null;
   private bossManager: BossManager | null = null;
   private projectileRenderer: ProjectileRenderer;
+  private areaEffectRenderer: AreaEffectRenderer;
 
   // Object pooling
   private textPool: Phaser.GameObjects.Text[] = [];
@@ -40,6 +42,7 @@ export class EnemyDamageRenderer {
     this.scene = scene;
     this.initializePool();
     this.projectileRenderer = new ProjectileRenderer(scene);
+    this.areaEffectRenderer = new AreaEffectRenderer(scene);
   }
 
   /**
@@ -62,6 +65,7 @@ export class EnemyDamageRenderer {
    */
   public setPlayerSprite(playerSprite: Phaser.GameObjects.Sprite): void {
     this.projectileRenderer.setPlayerSprite(playerSprite);
+    this.areaEffectRenderer.setPlayerSprite(playerSprite);
   }
 
   /**
@@ -69,6 +73,7 @@ export class EnemyDamageRenderer {
    */
   public setPeerManager(peerManager: PeerManager): void {
     this.projectileRenderer.setPeerManager(peerManager);
+    this.areaEffectRenderer.setPeerManager(peerManager);
   }
 
   /**
@@ -76,6 +81,7 @@ export class EnemyDamageRenderer {
    */
   public setLocalPlayerIdentity(identity: string): void {
     this.projectileRenderer.setLocalPlayerIdentity(identity);
+    this.areaEffectRenderer.setLocalPlayerIdentity(identity);
   }
 
   /**
@@ -162,6 +168,11 @@ export class EnemyDamageRenderer {
     // If this is a projectile attack, create the projectile animation
     if (damageEvent.projectile) {
       this.projectileRenderer.createProjectile(damageEvent);
+    }
+
+    // If this is an area attack, create the area effect animation
+    if (damageEvent.skillEffect) {
+      this.areaEffectRenderer.createAreaEffect(damageEvent);
     }
 
     // Check if we're at max concurrent numbers
@@ -471,6 +482,7 @@ export class EnemyDamageRenderer {
    */
   public update(): void {
     this.projectileRenderer.update();
+    this.areaEffectRenderer.update();
   }
 
   /**
