@@ -63,7 +63,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     spriteKey: 'soldier',
     unlockLevel: 0, // Unlocked by default
     baseStats: {
-      health: 100,
+      health: 120,
       moveSpeed: 250,
       mana: 30,
       hpRecovery: 1,
@@ -185,7 +185,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     spriteKey: 'wizard',
     unlockLevel: 0, // Unlock at level 10
     baseStats: {
-      health: 80,
+      health: 100,
       moveSpeed: 250,
       mana: 100,
       hpRecovery: 0.5,
@@ -272,7 +272,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     spriteKey: 'archer',
     unlockLevel: 0, // Unlocked by default
     baseStats: {
-      health: 90,
+      health: 60,
       moveSpeed: 250,
       mana: 40,
       hpRecovery: 0.8,
