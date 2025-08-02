@@ -214,6 +214,7 @@ public static partial class Module
             is_typing = false,
             job = defaultJob,
             in_combat = false,
+            is_at_teleport_point = false,
             last_combat_time = ctx.Timestamp - TimeSpan.FromDays(1), // Initialize to old time
             teleport_id = "",
             is_online = true,
@@ -294,15 +295,8 @@ public static partial class Module
             return;
         }
 
-        // Update player position
-        ctx.Db.Player.identity.Update(player.Value with
-        {
-            x = x,
-            y = y,
-            facing = facing,
-            last_active = ctx.Timestamp
-        });
-        Log.Info($"Updated position for {ctx.Sender} to ({x}, {y}) facing {facing}");
+        bool isAtTeleportPoint = false;
+        string teleportId = player.Value.teleport_id;
         
         // Check for teleport unlocks
         foreach (var teleport in ctx.Db.Teleport.Iter())
@@ -318,15 +312,14 @@ public static partial class Module
             
             if (xDiff <= 17.5f && yDiff <= 17.5f) // Within 17.5 pixels in each direction = 35x35 pixel area
             {
+                isAtTeleportPoint = true;
                 // Check if already unlocked
                 var existingUnlock = ctx.Db.PlayerTeleport
                     .Iter()
                     .FirstOrDefault(pt => pt.player_identity == ctx.Sender && 
                                          pt.location_name == teleport.location_name);
-                ctx.Db.Player.identity.Update(player.Value with
-                {
-                    teleport_id = teleport.location_name,
-                });
+                
+                teleportId = teleport.location_name;
                 if (existingUnlock.player_identity == ctx.Sender && !existingUnlock.is_unlocked)
                 {
                     // Delete old entry and insert updated one
@@ -341,6 +334,18 @@ public static partial class Module
                 }
             }
         }
+        
+        // Update player position
+        ctx.Db.Player.identity.Update(player.Value with
+        {
+            x = x,
+            y = y,
+            facing = facing,
+            last_active = ctx.Timestamp,
+            is_at_teleport_point = isAtTeleportPoint,
+            teleport_id = teleportId,
+        });
+        Log.Info($"Updated position for {ctx.Sender} to ({x}, {y}) facing {facing}");
     }
 
     [Reducer]
@@ -727,6 +732,13 @@ public static partial class Module
         if (player.Value.in_combat)
         {
             Log.Info($"Player {ctx.Sender} cannot change jobs while in combat");
+            return;
+        }
+
+        // Don't allow job change if player is in combat
+        if (!player.Value.is_at_teleport_point)
+        {
+            Log.Info($"Player {ctx.Sender} cannot change jobs while not at teleport point");
             return;
         }
 
