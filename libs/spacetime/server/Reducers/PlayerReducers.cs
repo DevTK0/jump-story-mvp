@@ -306,11 +306,13 @@ public static partial class Module
             var teleportCenterX = teleport.x + 16f;
             var teleportCenterY = teleport.y + 16f;
             
-            // Check if player is within range of teleport center (35x35 pixel area for leeway)
+            // Check if player is within range of teleport center 
             var xDiff = Math.Abs(x - teleportCenterX);
             var yDiff = Math.Abs(y - teleportCenterY);
             
-            if (xDiff <= 17.5f && yDiff <= 17.5f) // Within 17.5 pixels in each direction = 35x35 pixel area
+            var leeway = 30f; // Within 30 pixels in each direction = 60x60 pixel area
+            
+            if (xDiff <= leeway && yDiff <= leeway) 
             {
                 isAtTeleportPoint = true;
                 // Check if already unlocked
