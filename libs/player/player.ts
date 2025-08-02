@@ -177,7 +177,6 @@ export class Player extends Phaser.GameObjects.Sprite implements PhysicsEntity {
   }
 
   public set isAlive (value: boolean) {
-    logger.info('[player] set isAlive', value);
     this.playerState.isAlive = value;
   }
 
@@ -191,7 +190,6 @@ export class Player extends Phaser.GameObjects.Sprite implements PhysicsEntity {
   }
 
   public transitionToState(stateName: string): boolean {
-    logger.info('[player][transitionToState] stateName', stateName);
     return this.stateMachine.transitionTo(stateName);
   }
 

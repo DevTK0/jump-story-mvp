@@ -223,6 +223,9 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
       case 'projectile':
         this.performProjectileAttack(attackNum, attackConfig);
         break;
+      case 'heal':
+        this.performHealAttack(attackNum, attackConfig);
+        break;
       default:
         console.log(`Attack type ${attackConfig.attackType} not yet implemented`);
     }
@@ -341,7 +344,7 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
 
   private async executeAttackPhases(
     attackNum: number,
-    config: AttackConfig,
+    config: Attack,
     hitboxSprite: Phaser.Physics.Arcade.Sprite
   ): Promise<void> {
     try {
@@ -648,6 +651,48 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
       console.warn('Projectile attack execution interrupted:', error);
       this.cleanupAttack(attackNum, hitboxSprite);
     }
+  }
+
+  private performHealAttack(attackNum: number, config: Attack): void {
+    // Type guard to ensure we have a heal attack
+    if (config.attackType !== 'heal') return;
+
+    // Set attack state
+    this.player.setPlayerState({ isAttacking: true });
+    this.attackCooldowns.set(attackNum, true);
+
+    // Emit skill activation event for UI tracking and audio
+    emitSceneEvent(this.scene, 'skill:activated', {
+      slotIndex: attackNum - 1, // Convert 1-3 to 0-2 for UI
+      skillName: config.name,
+      cooldown: config.cooldown,
+      audio: config.audio
+    });
+
+    // Emit heal event for InteractionHandler to process
+    emitSceneEvent(this.scene, 'player:healed', {
+      type: 'heal',
+      attackType: attackNum,
+    });
+
+    // Visual feedback
+    this.playHealAnimation(config);
+
+    // Reset attack state after a short delay
+    this.scene.time.delayedCall(300, () => {
+      this.player.setPlayerState({ isAttacking: false });
+    });
+
+    // Start cooldown
+    this.startCooldown(attackNum, config.cooldown);
+  }
+
+  private playHealAnimation(_config: Attack): void {
+    // Visual and audio effects are handled through the event system:
+    // - skill:activated event triggers audio through SkillAudioService
+    // - PlayerHealEvent from server triggers visual effects through PlayerHealEffectRenderer
+    
+    // This method is kept for potential future local effects on the caster
   }
 
   // Public API - Compatibility with existing physics system

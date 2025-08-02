@@ -221,4 +221,5 @@ export class SyncManager {
     this.lastSyncedFacing = facing;
     this.lastSyncTime = time;
   }
+
 }

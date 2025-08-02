@@ -58,8 +58,13 @@ export interface DashAttack extends BaseAttack {
   dashSpeed: number;
 }
 
+// Heal attack properties
+export interface HealAttack extends BaseAttack {
+  attackType: 'heal';
+}
+
 // Discriminated union - TypeScript will enforce correct fields based on attackType
-export type Attack = StandardAttack | ProjectileAttack | AreaAttack | DashAttack;
+export type Attack = StandardAttack | ProjectileAttack | AreaAttack | DashAttack | HealAttack;
 
 // Passive ability interface
 export interface Passive {
@@ -82,6 +87,10 @@ export function isAreaAttack(attack: Attack): attack is AreaAttack {
 
 export function isDashAttack(attack: Attack): attack is DashAttack {
   return attack.attackType === 'dash';
+}
+
+export function isHealAttack(attack: Attack): attack is HealAttack {
+  return attack.attackType === 'heal';
 }
 
 // Resistance values for different damage types
@@ -136,6 +145,8 @@ export function validateAttackConfig(attack: any): attack is Attack {
       return !!attack.radius;
     case 'dash':
       return !!(attack.dashDistance && attack.dashSpeed);
+    case 'heal':
+      return true; // Heal attacks have no additional required fields
     default:
       return false;
   }

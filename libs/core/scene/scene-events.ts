@@ -67,6 +67,10 @@ export interface SceneEventMap {
     oldClass: string;
     newClass: string;
   };
+  'player:healed': {
+    type: 'heal';
+    attackType: number;
+  };
   // Add more events here as the game grows
 }
 

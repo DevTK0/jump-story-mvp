@@ -70,6 +70,20 @@ export class InteractionHandler {
         }
       });
     });
+
+    // Listen for player heal events
+    onSceneEvent(this.scene, 'player:healed', (data) => {
+      this.logger.debug('Heal started - type:', data.attackType);
+      
+      // Send heal to server
+      if (this.dbConnection && this.dbConnection.reducers) {
+        const attackType = this.mapAttackTypeToEnum(data.attackType);
+        this.logger.info('Sending heal to server');
+        this.dbConnection.reducers.healPartyMembers(attackType);
+      } else {
+        this.logger.warn('Database connection not available - cannot heal party members');
+      }
+    });
   }
 
   /**

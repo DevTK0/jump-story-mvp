@@ -5,7 +5,7 @@ import { PeerManager } from '@/peer';
 import { PhysicsSetupCoordinator } from '@/core/physics/physics-setup-coordinator';
 import { MapPhysicsFactory } from '@/core/physics/map-physics-factory';
 import { InteractionHandler } from '@/networking';
-import { EnemyDamageRenderer, PlayerDamageRenderer, SkillEffectRenderer, RespawnEffectRenderer } from '@/player';
+import { EnemyDamageRenderer, PlayerDamageRenderer, SkillEffectRenderer, RespawnEffectRenderer, PlayerHealEffectRenderer } from '@/player';
 import { LevelUpAnimationManager, ChatManager } from '@/ui';
 import { SkillAudioService } from '@/player/services/skill-audio-service';
 import { MusicManagerService } from '@/player/services/music-manager-service';
@@ -32,6 +32,7 @@ export interface ManagerInitConfig {
 export class ManagerRegistry {
   private scene: Phaser.Scene;
   private logger: ModuleLogger;
+  private player?: Player;
   
   // Managers
   private enemyManager!: EnemyManager;
@@ -43,6 +44,7 @@ export class ManagerRegistry {
   private playerDamageManager!: PlayerDamageRenderer;
   private skillEffectManager!: SkillEffectRenderer;
   private respawnEffectManager!: RespawnEffectRenderer;
+  private playerHealEffectManager!: PlayerHealEffectRenderer;
   private levelUpAnimationManager!: LevelUpAnimationManager;
   private chatManager!: ChatManager;
   private teleportStoneManager!: TeleportStoneManager;
@@ -61,6 +63,9 @@ export class ManagerRegistry {
    */
   async initialize(config: ManagerInitConfig): Promise<void> {
     this.logger.info('Initializing managers...');
+    
+    // Store player reference
+    this.player = config.player;
     
     // Create core managers
     this.createCoreManagers(config);
@@ -177,6 +182,7 @@ export class ManagerRegistry {
     this.skillAudioService?.destroy();
     this.chatManager?.destroy();
     this.levelUpAnimationManager?.destroy();
+    this.playerHealEffectManager?.destroy();
     this.skillEffectManager?.destroy();
     this.respawnEffectManager?.destroy();
     this.playerDamageManager?.destroy();
@@ -230,6 +236,9 @@ export class ManagerRegistry {
     // Skill effect renderer
     this.skillEffectManager = new SkillEffectRenderer(this.scene);
     
+    // Player heal effect renderer
+    this.playerHealEffectManager = new PlayerHealEffectRenderer(this.scene);
+    
     // Respawn effect renderer
     this.respawnEffectManager = new RespawnEffectRenderer(this.scene, config.player);
   }
@@ -282,6 +291,9 @@ export class ManagerRegistry {
     // Pass identity to enemy damage manager for projectile rendering
     this.enemyDamageManager.setLocalPlayerIdentity(identity.toHexString());
     
+    // Pass identity to player heal effect renderer
+    this.playerHealEffectManager.setLocalPlayerIdentity(identity.toHexString());
+    
     // Initialize music manager service with connection
     this.musicManagerService.initialize(connection);
     
@@ -306,6 +318,11 @@ export class ManagerRegistry {
       
       // Initialize skill effect renderer with managers
       this.skillEffectManager.initialize(this.peerManager, this.enemyManager);
+      
+      // Initialize player heal effect renderer with managers
+      if (this.player) {
+        this.playerHealEffectManager.initialize(this.peerManager, this.player);
+      }
     }
     
     // Connect enemy audio service with managers
@@ -353,6 +370,12 @@ export class ManagerRegistry {
       
       // Handle damage sound
       this.enemyAudioService.playEnemyDamageSound(damageEvent.spawnId);
+    });
+    
+    // Subscribe to player heal events
+    connection.db.playerHealEvent.onInsert((_ctx, healEvent) => {
+      // Handle heal visual effects
+      this.playerHealEffectManager.handleHealEvent(healEvent);
     });
   }
   

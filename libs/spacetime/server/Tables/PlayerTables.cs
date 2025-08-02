@@ -63,6 +63,19 @@ public static partial class Module
         public Timestamp timestamp;
     }
 
+    [Table(Name = "PlayerHealEvent", Public = true)]
+    public partial struct PlayerHealEvent
+    {
+        [PrimaryKey, AutoInc]
+        public uint heal_event_id;
+        public Identity healer_identity;  // Who cast the heal
+        public Identity target_identity;  // Who received the heal
+        public float heal_amount;
+        public string ability_name;       // Name of the healing ability
+        public string? skill_effect;      // VFX to play on target when healed
+        public Timestamp timestamp;
+    }
+
     [Table(Name = "cleanup_dead_bodies_timer", Scheduled = nameof(CleanupDeadBodies), ScheduledAt = nameof(scheduled_at))]
     public partial struct CleanupDeadBodiesTimer
     {
