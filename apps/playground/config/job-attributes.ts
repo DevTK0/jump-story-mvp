@@ -18,7 +18,7 @@ const sharedAttacks = {
     manaCost: 0,
     ammoCost: 0,
     icon: 'heal1',
-    audio: 'skill1',
+    audio: 'p_att_phys',
   },
   attack2: {
     attackType: 'standard' as const,
@@ -36,7 +36,7 @@ const sharedAttacks = {
     manaCost: 0,
     ammoCost: 0,
     icon: 'heal1',
-    audio: 'skill1',
+    audio: 'p_att_phys',
   },
   attack3: {
     attackType: 'standard' as const,
@@ -53,7 +53,7 @@ const sharedAttacks = {
     manaCost: 10,
     ammoCost: 0,
     icon: 'heal1',
-    audio: 'skill1',
+    audio: 'p_att_phys',
   },
 };
 
@@ -96,7 +96,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         manaCost: 0,
         ammoCost: 0,
         icon: 'heal1',
-        audio: 'skill1',
+        audio: 'p_att_phys',
       },
       attack2: {
         attackType: 'standard' as const,
@@ -114,7 +114,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         manaCost: 0,
         ammoCost: 0,
         icon: 'heal2',
-        audio: 'skill1',
+        audio: 'p_att_phys',
       },
       attack3: {
         attackType: 'projectile' as const,
@@ -133,7 +133,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         ammoCost: 0,
         projectile: 'arrow', // Test projectile for soldier
         icon: 'heal3',
-        audio: 'skill1',
+        audio: 'p_att_phys',
       },
     },
     passives: {
@@ -217,7 +217,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         ammoCost: 0,
         skillEffect: 'freeze',
         icon: 'heal1',
-        audio: 'skill1',
+        audio: 'p_att_phys',
       },
       attack2: {
         attackType: 'area' as const,
@@ -237,7 +237,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         ammoCost: 0,
         skillEffect: 'holy',
         icon: 'heal1',
-        audio: 'skill1',
+        audio: 'p_att_phys',
       },
       attack3: {
         attackType: 'projectile' as const,
@@ -256,7 +256,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         projectile: 'fireball', // Using arrow as placeholder for magic missile
         // skillEffect: 'holy', // Explosion effect on hit
         icon: 'heal1',
-        audio: 'skill1',
+        audio: 'p_att_phys',
       },
     },
     passives: {
@@ -305,7 +305,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         ammoCost: 0,
         projectile: 'arrow',
         icon: 'heal1',
-        audio: 'skill1',
+        audio: 'p_att_phys',
       },
       attack2: {
         attackType: 'projectile' as const,
@@ -323,7 +323,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         ammoCost: 0,
         projectile: 'arrow',
         icon: 'heal1',
-        audio: 'skill1',
+        audio: 'p_att_phys',
       },
       attack3: {
         attackType: 'projectile' as const,
@@ -341,7 +341,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         ammoCost: 0,
         projectile: 'arrow',
         icon: 'heal1',
-        audio: 'skill1',
+        audio: 'p_att_phys',
       },
     },
     passives: {
@@ -417,10 +417,11 @@ export const jobAttributes: Record<string, JobConfig> = {
     unlockLevel: 0, // Unlocked by default
     baseStats: {
       health: 110,
-      moveSpeed: 300, // Really fast movement speed
+      moveSpeed: 5000, // Really fast movement speed
       mana: 50,
       hpRecovery: 1,
       manaRecovery: 0.7,
+      knockbackImmune: true, // Lancer is immune to knockback
       resistances: {
         sword: 5,
         axe: 0,
@@ -442,16 +443,16 @@ export const jobAttributes: Record<string, JobConfig> = {
         cooldown: 0.8,
         critChance: 0.15,
         knockback: 15,
-        range: 100,
+        range: 500,
         hits: 1,
         targets: 5,
         modifiers: ['spear' as const],
-        manaCost: 5,
+        manaCost: 0,
         ammoCost: 0,
-        dashDistance: 150,
-        dashSpeed: 400,
+        dashDistance: 500,
+        dashSpeed: 800,
         icon: 'heal1',
-        audio: 'skill1',
+        audio: 'p_att_phys',
       },
       attack3: {
         attackType: 'dash' as const,
@@ -461,14 +462,14 @@ export const jobAttributes: Record<string, JobConfig> = {
         cooldown: 1.2,
         critChance: 0.3,
         knockback: 20,
-        range: 150,
+        range: 1000,
         hits: 2,
         targets: 3,
         modifiers: ['spear' as const],
-        manaCost: 15,
+        manaCost: 0,
         ammoCost: 0,
-        dashDistance: 200,
-        dashSpeed: 600,
+        dashDistance: 1000,
+        dashSpeed: 1000,
         icon: 'heal',
       },
     },
@@ -476,6 +477,10 @@ export const jobAttributes: Record<string, JobConfig> = {
       passive1: {
         name: 'Reach Advantage',
         description: 'Spear mastery extends attack range by +40% and enables dash attacks.',
+      },
+      passive2: {
+        name: 'Steadfast Stance',
+        description: 'Complete immunity to knockback effects, allowing uninterrupted combat.',
       },
     },
   },
@@ -518,7 +523,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         ammoCost: 0,
         skillEffect: 'freeze',
         icon: 'heal2',
-        audio: 'heal',
+        audio: 'p_att_heal',
       },
       attack3: sharedAttacks.attack3,
     },

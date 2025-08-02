@@ -49,6 +49,9 @@ export class AssetLoaderService {
     
     // Load emotes dynamically from config
     this.loadEmotes();
+    
+    // Load audio assets
+    this.loadAudioAssets();
   }
   
   /**

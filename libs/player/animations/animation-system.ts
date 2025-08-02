@@ -190,8 +190,12 @@ export class AnimationSystem implements System {
       // exitClimbing is automatically called by setClimbingDisabled if currently climbing
     }
 
-    // Apply knockback if direction provided
-    if (knockbackDirection && this.player.body) {
+    // Check if player's job is immune to knockback
+    const combatSystem = this.player.getSystem('combat') as any;
+    const isKnockbackImmune = combatSystem?.getJobConfig?.()?.baseStats?.knockbackImmune || false;
+
+    // Apply knockback if direction provided (but not during dash attacks or if immune)
+    if (knockbackDirection && this.player.body && !this.player.isDashing && !isKnockbackImmune) {
       const body = this.player.body as Phaser.Physics.Arcade.Body;
       const knockbackForce = PLAYER_ANIMATION_TIMINGS.KNOCKBACK.FORCE;
 

@@ -28,14 +28,13 @@ export class SkillAudioService {
       try {
         const audioManager = getAudioManager(this.scene);
         
-        // For now, all skills use 'skill1' audio key
-        // In the future, we could map different audio files to different skills
-        audioManager.playSound('skill1', {
+        // Use the audio key provided in the skill data
+        audioManager.playSound(data.audio, {
           volume: 0.5,
           detune: 0
         });
         
-        this.logger.debug(`Playing skill audio for: ${data.skillName}`);
+        this.logger.debug(`Playing skill audio '${data.audio}' for: ${data.skillName}`);
       } catch (error) {
         this.logger.warn('Failed to play skill audio:', error);
       }

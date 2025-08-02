@@ -117,6 +117,7 @@ export interface JobConfig {
     hpRecovery: number;
     manaRecovery: number;
     resistances: Resistances;
+    knockbackImmune?: boolean; // Optional: Makes the job immune to knockback
   };
   attacks: {
     attack1: Attack;

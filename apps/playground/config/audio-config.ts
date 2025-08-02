@@ -1,11 +1,39 @@
+/**
+ * This file handles the sound effects used in the game.
+ */
 import type { AudioConfig, AudioDefinition } from '@/core';
 
 /**
  * Skill effect audio definitions
  */
 export const skillEffectAudio: Record<string, AudioDefinition> = {
-  skill1: {
-    path: 'assets/audio/skills/skill1.mp3',
+  p_att_phys: {
+    path: 'assets/audio/skills/P_Att_Phys.ogg',
+    volume: 0.5,
+    loop: false,
+  },
+  p_att_magic: {
+    path: 'assets/audio/skills/P_Att_Magic.ogg',
+    volume: 0.5,
+    loop: false,
+  },
+  p_att_ice: {
+    path: 'assets/audio/skills/P_Att_Ice.ogg',
+    volume: 0.5,
+    loop: false,
+  },
+  p_att_fire: {
+    path: 'assets/audio/skills/P_Att_Fire.ogg',
+    volume: 0.5,
+    loop: false,
+  },
+  p_att_arrow: {
+    path: 'assets/audio/skills/P_Att_Arrow.ogg',
+    volume: 0.5,
+    loop: false,
+  },
+  p_att_heal: {
+    path: 'assets/audio/skills/P_Att_Heal.ogg',
     volume: 0.5,
     loop: false,
   },
@@ -20,11 +48,13 @@ export const uiAudio: Record<string, AudioDefinition> = {};
  * Player event sound effects
  */
 export const playerAudio: Record<string, AudioDefinition> = {
-  death: { path: 'assets/audio/skills/skill1.mp3', volume: 0.4, loop: false },
-  respawn: { path: 'assets/audio/skills/skill1.mp3', volume: 0.5, loop: false },
-  classChange: { path: 'assets/audio/skills/skill1.mp3', volume: 0.6, loop: false },
-  jump: { path: 'assets/audio/skills/skill1.mp3', volume: 0.3, loop: false },
-  teleportUnlock: { path: 'assets/audio/skills/skill1.mp3', volume: 0.7, loop: false },
+  hit: { path: 'assets/audio/skills/P_Hit.ogg', volume: 0.5, loop: false },
+  death: { path: 'assets/audio/skills/P_Die.ogg', volume: 0.5, loop: false },
+  respawn: { path: 'assets/audio/skills/P_Resu.ogg', volume: 0.5, loop: false },
+  classChange: { path: 'assets/audio/skills/P_Class.wav', volume: 0.5, loop: false },
+  jump: { path: 'assets/audio/skills/P_Jump.ogg', volume: 0.3, loop: false },
+  teleportUnlock: { path: 'assets/audio/skills/P_Teleport.ogg', volume: 0.5, loop: false },
+  levelup: { path: 'assets/audio/skills/P_Level.wav', volume: 0.5, loop: false },
 };
 
 /**
@@ -39,13 +69,24 @@ export const musicAudio: Record<string, AudioDefinition> = {
  * Enemy sound effects
  */
 export const enemyAudio: Record<string, AudioDefinition> = {
-  enemyHit: { path: 'assets/audio/skills/enemy-hit.mp3', volume: 0.3, loop: false },
-  enemyDeath: { path: 'assets/audio/skills/enemy-death.mp3', volume: 0.4, loop: false },
-  bossHit: { path: 'assets/audio/skills/boss-hit.mp3', volume: 0.35, loop: false },
-  bossDeath: { path: 'assets/audio/skills/boss-death.mp3', volume: 0.5, loop: false },
-  bossAttack1: { path: 'assets/audio/skills/boss-attack.mp3', volume: 0.5, loop: false },
-  bossAttack2: { path: 'assets/audio/skills/boss-attack.mp3', volume: 0.5, loop: false },
-  bossAttack3: { path: 'assets/audio/skills/boss-attack.mp3', volume: 0.5, loop: false },
+  enemyHitBone: { path: 'assets/audio/skills/E_Hit_Bone.ogg', volume: 0.3, loop: false },
+  enemyHitFlesh: { path: 'assets/audio/skills/E_Hit_Flesh.ogg', volume: 0.3, loop: false },
+  enemyHitSlime: { path: 'assets/audio/skills/E_Hit_Slime.ogg', volume: 0.3, loop: false },
+  enemyHitArmor: { path: 'assets/audio/skills/E_Hit_Armor.ogg', volume: 0.3, loop: false },
+  enemyDeathGeneric: { path: 'assets/audio/skills/E_Die_Generic.ogg', volume: 0.4, loop: false },
+  enemyDeathSlime: { path: 'assets/audio/skills/E_Die_Slime.ogg', volume: 0.4, loop: false },
+  enemyDeathBone: { path: 'assets/audio/skills/E_Die_Bone.ogg', volume: 0.4, loop: false },
+  bossHitBone: { path: 'assets/audio/skills/E_Hit_Bone.ogg', volume: 0.5, loop: false },
+  bossHitFlesh: { path: 'assets/audio/skills/E_Hit_Flesh.ogg', volume: 0.5, loop: false },
+  bossHitSlime: { path: 'assets/audio/skills/E_Hit_Slime.ogg', volume: 0.5, loop: false },
+  bossHitArmor: { path: 'assets/audio/skills/E_Hit_Armor.ogg', volume: 0.5, loop: false },
+  bossDeathGeneric: { path: 'assets/audio/skills/E_Die_Generic.ogg', volume: 0.6, loop: false },
+  bossDeathSlime: { path: 'assets/audio/skills/E_Die_Slime.ogg', volume: 0.6, loop: false },
+  bossDeathBone: { path: 'assets/audio/skills/E_Die_Bone.ogg', volume: 0.6, loop: false },
+  bossAttackGeneric: { path: 'assets/audio/skills/B_Att_Generic.ogg', volume: 0.6, loop: false },
+  bossAttackArrow: { path: 'assets/audio/skills/B_Att_Arrow.ogg', volume: 0.6, loop: false },
+  bossAttackPhys: { path: 'assets/audio/skills/B_Att_Phys.ogg', volume: 0.6, loop: false },
+  bossAttackMagic: { path: 'assets/audio/skills/B_Att_Magic.ogg', volume: 0.6, loop: false },
 };
 
 /**
