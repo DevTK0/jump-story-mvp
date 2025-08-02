@@ -498,7 +498,28 @@ export const jobAttributes: Record<string, JobConfig> = {
         greatsword: -10,
       },
     },
-    attacks: sharedAttacks,
+    attacks: {
+      attack1: sharedAttacks.attack1,
+      attack2: {
+        attackType: 'heal' as const,
+        name: 'Heal',
+        description: 'Restore health to nearby party members with divine healing power.',
+        damage: 50, // Used as heal amount
+        cooldown: 2.0,
+        critChance: 0,
+        knockback: 0,
+        range: 200,
+        hits: 1,
+        targets: 3, // Can heal up to 3 party members
+        modifiers: [],
+        manaCost: 20,
+        ammoCost: 0,
+        skillEffect: 'freeze',
+        icon: 'heal2',
+        audio: 'heal',
+      },
+      attack3: sharedAttacks.attack3,
+    },
     passives: {
       passive1: {
         name: 'Blessed Recovery',

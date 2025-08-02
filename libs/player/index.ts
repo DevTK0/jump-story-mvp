@@ -34,6 +34,7 @@ export {
   EnemyDamageRenderer,
   PlayerDamageRenderer,
   SkillEffectRenderer,
+  PlayerHealEffectRenderer,
   DAMAGE_RENDERER_CONFIG,
   DAMAGE_COLOR_THEMES,
   getDamageTypeKey,

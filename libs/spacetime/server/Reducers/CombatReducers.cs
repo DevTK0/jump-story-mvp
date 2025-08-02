@@ -254,6 +254,110 @@ public static partial class Module
         Log.Info($"Player {ctx.Sender} attack hit {damageCount} enemies, killed {killCount}");
     }
 
+    [Reducer]
+    public static void HealPartyMembers(ReducerContext ctx, AttackType attackType)
+    {
+        // Validate healer
+        var healer = ctx.Db.Player.identity.Find(ctx.Sender);
+        if (healer == null || healer.Value.ban_status || healer.Value.current_hp <= 0)
+            return;
+
+        // Get heal attack configuration
+        var job = ctx.Db.Job.job_key.Find(healer.Value.job);
+        if (job == null) return;
+
+        byte attackSlot = attackType switch
+        {
+            AttackType.Attack1 => 1,
+            AttackType.Attack2 => 2,
+            AttackType.Attack3 => 3,
+            _ => 1
+        };
+
+        JobAttack? healAttack = null;
+        foreach (var attack in ctx.Db.JobAttack.Iter())
+        {
+            if (attack.job_id == job.Value.job_id && 
+                attack.attack_slot == attackSlot && 
+                attack.attack_type == "heal")
+            {
+                healAttack = attack;
+                break;
+            }
+        }
+
+        if (healAttack == null) return;
+
+        // Check mana
+        if (healer.Value.current_mana < healAttack.Value.mana_cost)
+            return;
+
+        // Deduct mana
+        var currentHealer = healer.Value with { 
+            current_mana = healer.Value.current_mana - healAttack.Value.mana_cost 
+        };
+        ctx.Db.Player.identity.Update(currentHealer);
+
+        // Get healer's party
+        var membership = ctx.Db.PartyMember.player_identity.Find(ctx.Sender);
+        
+        // Build list of potential heal targets
+        var potentialTargets = new List<Identity>();
+        
+        if (membership != null)
+        {
+            // If in a party, add all party members
+            var partyMembers = ctx.Db.PartyMember.Iter()
+                .Where(m => m.party_id == membership.Value.party_id)
+                .Select(m => m.player_identity)
+                .ToList();
+            potentialTargets.AddRange(partyMembers);
+        }
+        else
+        {
+            // If not in a party, can only heal self
+            potentialTargets.Add(ctx.Sender);
+        }
+
+        var healCount = 0;
+        var maxTargets = healAttack.Value.targets;
+
+        foreach (var targetIdentity in potentialTargets)
+        {
+            if (healCount >= maxTargets) break;
+
+            var target = ctx.Db.Player.identity.Find(targetIdentity);
+            if (target == null || target.Value.current_hp <= 0 || target.Value.current_hp >= target.Value.max_hp)
+                continue;
+
+            // Check range
+            var distance = Math.Abs(target.Value.x - healer.Value.x);
+            if (distance > healAttack.Value.range + 20f) // 20f range leniency
+                continue;
+
+            // Apply healing
+            var healAmount = healAttack.Value.damage; // Using damage as heal amount
+            var newHp = Math.Min(target.Value.current_hp + healAmount, target.Value.max_hp);
+            
+            var healedPlayer = target.Value with { current_hp = newHp };
+            ctx.Db.Player.identity.Update(healedPlayer);
+            healCount++;
+
+            // Record heal event
+            ctx.Db.PlayerHealEvent.Insert(new PlayerHealEvent
+            {
+                healer_identity = ctx.Sender,
+                target_identity = targetIdentity,
+                heal_amount = healAmount,
+                ability_name = healAttack.Value.name,
+                skill_effect = healAttack.Value.skill_effect, // Pass skill effect if present
+                timestamp = ctx.Timestamp
+            });
+
+            Log.Info($"{healer.Value.name} healed {target.Value.name} for {healAmount}. HP: {target.Value.current_hp} -> {newHp}");
+        }
+    }
+
     private static void CheckBossTrigger(ReducerContext ctx, string enemyType)
     {
         // Check if there's a boss trigger for this enemy type

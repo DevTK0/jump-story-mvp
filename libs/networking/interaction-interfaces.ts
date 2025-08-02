@@ -43,6 +43,7 @@ export interface DatabaseConnection {
   reducers: {
     damageEnemy: (spawnIds: number[], attackType: any) => void;
     playerTakeDamage: (spawnId: number) => void;
+    healPartyMembers: (attackType: any) => void;
     // Add other reducers as needed
   };
   db?: {

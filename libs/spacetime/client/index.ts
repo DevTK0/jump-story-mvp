@@ -64,6 +64,8 @@ import { Debug } from "./debug_reducer.ts";
 export { Debug };
 import { Disconnect } from "./disconnect_reducer.ts";
 export { Disconnect };
+import { HealPartyMembers } from "./heal_party_members_reducer.ts";
+export { HealPartyMembers };
 import { InitializeBossRoutes } from "./initialize_boss_routes_reducer.ts";
 export { InitializeBossRoutes };
 import { InitializeEnemyRoutes } from "./initialize_enemy_routes_reducer.ts";
@@ -160,6 +162,8 @@ import { PlayerTableHandle } from "./player_table.ts";
 export { PlayerTableHandle };
 import { PlayerDamageEventTableHandle } from "./player_damage_event_table.ts";
 export { PlayerDamageEventTableHandle };
+import { PlayerHealEventTableHandle } from "./player_heal_event_table.ts";
+export { PlayerHealEventTableHandle };
 import { PlayerJobTableHandle } from "./player_job_table.ts";
 export { PlayerJobTableHandle };
 import { PlayerLevelTableHandle } from "./player_level_table.ts";
@@ -260,6 +264,8 @@ import { Player } from "./player_type.ts";
 export { Player };
 import { PlayerDamageEvent } from "./player_damage_event_type.ts";
 export { PlayerDamageEvent };
+import { PlayerHealEvent } from "./player_heal_event_type.ts";
+export { PlayerHealEvent };
 import { PlayerJob } from "./player_job_type.ts";
 export { PlayerJob };
 import { PlayerLevel } from "./player_level_type.ts";
@@ -432,6 +438,15 @@ const REMOTE_MODULE = {
       primaryKeyInfo: {
         colName: "damageEventId",
         colType: PlayerDamageEvent.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    PlayerHealEvent: {
+      tableName: "PlayerHealEvent",
+      rowType: PlayerHealEvent.getTypeScriptAlgebraicType(),
+      primaryKey: "healEventId",
+      primaryKeyInfo: {
+        colName: "healEventId",
+        colType: PlayerHealEvent.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     PlayerJob: {
@@ -640,6 +655,10 @@ const REMOTE_MODULE = {
       reducerName: "Disconnect",
       argsType: Disconnect.getTypeScriptAlgebraicType(),
     },
+    HealPartyMembers: {
+      reducerName: "HealPartyMembers",
+      argsType: HealPartyMembers.getTypeScriptAlgebraicType(),
+    },
     InitializeBossRoutes: {
       reducerName: "InitializeBossRoutes",
       argsType: InitializeBossRoutes.getTypeScriptAlgebraicType(),
@@ -805,6 +824,7 @@ export type Reducer = never
 | { name: "DamageEnemy", args: DamageEnemy }
 | { name: "Debug", args: Debug }
 | { name: "Disconnect", args: Disconnect }
+| { name: "HealPartyMembers", args: HealPartyMembers }
 | { name: "InitializeBossRoutes", args: InitializeBossRoutes }
 | { name: "InitializeEnemyRoutes", args: InitializeEnemyRoutes }
 | { name: "InitializeJob", args: InitializeJob }
@@ -1062,6 +1082,22 @@ export class RemoteReducers {
 
   removeOnDisconnect(callback: (ctx: ReducerEventContext) => void) {
     this.connection.offReducer("Disconnect", callback);
+  }
+
+  healPartyMembers(attackType: AttackType) {
+    const __args = { attackType };
+    let __writer = new BinaryWriter(1024);
+    HealPartyMembers.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("HealPartyMembers", __argsBuffer, this.setCallReducerFlags.healPartyMembersFlags);
+  }
+
+  onHealPartyMembers(callback: (ctx: ReducerEventContext, attackType: AttackType) => void) {
+    this.connection.onReducer("HealPartyMembers", callback);
+  }
+
+  removeOnHealPartyMembers(callback: (ctx: ReducerEventContext, attackType: AttackType) => void) {
+    this.connection.offReducer("HealPartyMembers", callback);
   }
 
   initializeBossRoutes(adminApiKey: string, tilemapJson: string) {
@@ -1604,6 +1640,11 @@ export class SetReducerFlags {
     this.debugFlags = flags;
   }
 
+  healPartyMembersFlags: CallReducerFlags = 'FullUpdate';
+  healPartyMembers(flags: CallReducerFlags) {
+    this.healPartyMembersFlags = flags;
+  }
+
   initializeBossRoutesFlags: CallReducerFlags = 'FullUpdate';
   initializeBossRoutes(flags: CallReducerFlags) {
     this.initializeBossRoutesFlags = flags;
@@ -1825,6 +1866,10 @@ export class RemoteTables {
 
   get playerDamageEvent(): PlayerDamageEventTableHandle {
     return new PlayerDamageEventTableHandle(this.connection.clientCache.getOrCreateTable<PlayerDamageEvent>(REMOTE_MODULE.tables.PlayerDamageEvent));
+  }
+
+  get playerHealEvent(): PlayerHealEventTableHandle {
+    return new PlayerHealEventTableHandle(this.connection.clientCache.getOrCreateTable<PlayerHealEvent>(REMOTE_MODULE.tables.PlayerHealEvent));
   }
 
   get playerJob(): PlayerJobTableHandle {

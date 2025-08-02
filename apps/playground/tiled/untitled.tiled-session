@@ -85,6 +85,7 @@
         "/Users/terence/Development/games/jump-story-mvp/src/assets/tileset/TX Tileset Ground.tsx",
         "map1.tmx"
     ],
+    "resizeMap.removeObjects": false,
     "tileset.embedInMap": true,
     "tileset.lastUsedFormat": "tsx"
 }
