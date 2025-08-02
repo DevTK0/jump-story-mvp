@@ -74,6 +74,8 @@ public static partial class Module
                 return 0.5f; // 50% less damage
             case DamageType.Strong:
                 return 1.2f; // 20% more damage
+            case DamageType.Immune:
+                return 0.0f; // No damage - enemy is invulnerable
             case DamageType.Normal:
             default:
                 return 1.0f;

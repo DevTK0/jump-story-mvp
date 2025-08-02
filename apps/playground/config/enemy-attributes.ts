@@ -23,6 +23,7 @@ export interface EnemyAttribute {
   exp_reward: number;
   hitbox_size?: HitboxSize; // Optional with 'medium' as default
   hitbox_offset?: { x: number; y: number }; // Optional offset for physics body positioning
+  invulnerable?: boolean; // Optional: Makes the enemy immune to all damage
   boss_trigger?: {
     boss_to_spawn: string;
     required_kills: number;
@@ -172,7 +173,8 @@ export const enemyAttributes: EnemyAttributes = {
       aggro_range: 100,
       level: 1,
       exp_reward: 10,
-      hitbox_size: 'small',
+      invulnerable: true,
+      hitbox_size: 'medium',
     },
     werewolf: {
       health: 300,
@@ -206,6 +208,24 @@ export const enemyAttributes: EnemyAttributes = {
       boss_trigger: {
         boss_to_spawn: 'werebear',
         required_kills: 1000000,
+      },
+    },
+    'stone-golem': {
+      health: 500,
+      move_speed: 20,
+      damage: 50,
+      sprite: 'armored-skeleton', // Using existing sprite for now
+      name: 'Stone Golem',
+      ai_behavior: 'patrol',
+      attack_range: 60,
+      aggro_range: 150,
+      level: 5,
+      exp_reward: 0, // No reward since it can't be killed
+      hitbox_size: 'large',
+      invulnerable: true, // This enemy cannot take damage
+      audio: {
+        on_damaged: 'enemyHit', // Will play even though no damage is dealt
+        on_death: 'enemyDeath', // Won't trigger since it can't die
       },
     },
   },

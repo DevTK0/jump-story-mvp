@@ -110,6 +110,7 @@ public static partial class Module
                 var attackRange = enemyData.TryGetProperty("attack_range", out var attackRangeProp) ? attackRangeProp.GetUInt32() : 50u;
                 var aggroRange = enemyData.TryGetProperty("aggro_range", out var aggroRangeProp) ? aggroRangeProp.GetUInt32() : 150u;
                 var behavior = enemyData.TryGetProperty("ai_behavior", out var behaviorProp) ? behaviorProp.GetString() ?? "patrol" : "patrol";
+                var invulnerable = enemyData.TryGetProperty("invulnerable", out var invulnerableProp) ? invulnerableProp.GetBoolean() : false;
                 
                 // Map string behavior to enum
                 AiBehavior aiBehavior = behavior.ToLower() switch
@@ -129,7 +130,8 @@ public static partial class Module
                     move_speed = (float)movementSpeed,
                     damage = (float)damage,
                     attack_range = (float)attackRange,
-                    aggro_range = (float)aggroRange
+                    aggro_range = (float)aggroRange,
+                    invulnerable = invulnerable
                 });
                 
                 enemyCount++;

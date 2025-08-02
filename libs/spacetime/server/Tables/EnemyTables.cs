@@ -62,6 +62,7 @@ public static partial class Module
         public AiBehavior ai_behavior; // AI behavior pattern
         public float attack_range;   // Distance from which enemy can attack
         public float aggro_range;    // Distance at which enemy detects and pursues players
+        public bool invulnerable;    // Whether the enemy is immune to all damage
     }
     
     [Table(Name = "BossTrigger", Public = true)]

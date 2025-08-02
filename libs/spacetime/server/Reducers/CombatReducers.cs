@@ -136,25 +136,44 @@ public static partial class Module
         {
             var currentHp = enemy.current_hp;
             
+            // Get enemy data to check invulnerability
+            var enemyData = ctx.Db.Enemy.name.Find(enemy.enemy);
+            bool isInvulnerable = enemyData?.invulnerable ?? false;
+            
             // Apply multiple hits if specified
             for (int hit = 0; hit < jobAttack.Value.hits; hit++)
             {
                 // Skip if enemy is already dead
                 if (currentHp <= 0) break;
                 
-                // Use job attack damage as base damage
-                var baseDamage = jobAttack.Value.damage;
+                // Check if enemy is invulnerable
+                DamageType damageType;
+                uint finalDamage;
+                float baseDamage = 0;
+                float scaledDamage = 0;
                 
-                // Apply level scaling to damage
-                var scaledDamage = PlayerConstants.CalculateScaledDamage(player.Value.level, baseDamage);
-                
-                // Apply critical hit based on attack's crit chance
-                var random = new Random();
-                var isCritical = jobAttack.Value.crit_chance > 0 && random.NextDouble() < jobAttack.Value.crit_chance;
-                var damageType = isCritical ? DamageType.Crit : DamageType.Normal;
-                
-                // Apply damage multiplier (1.5x for crit, 1.0x for normal) and floor to prevent decimals
-                var finalDamage = (uint)Math.Floor(scaledDamage * DamageCalculator.GetDamageMultiplier(damageType));
+                if (isInvulnerable)
+                {
+                    // Enemy is invulnerable - set damage type to Immune and damage to 0
+                    damageType = DamageType.Immune;
+                    finalDamage = 0;
+                }
+                else
+                {
+                    // Use job attack damage as base damage
+                    baseDamage = jobAttack.Value.damage;
+                    
+                    // Apply level scaling to damage
+                    scaledDamage = PlayerConstants.CalculateScaledDamage(player.Value.level, (uint)baseDamage);
+                    
+                    // Apply critical hit based on attack's crit chance
+                    var random = new Random();
+                    var isCritical = jobAttack.Value.crit_chance > 0 && random.NextDouble() < jobAttack.Value.crit_chance;
+                    damageType = isCritical ? DamageType.Crit : DamageType.Normal;
+                    
+                    // Apply damage multiplier (1.5x for crit, 1.0x for normal) and floor to prevent decimals
+                    finalDamage = (uint)Math.Floor(scaledDamage * DamageCalculator.GetDamageMultiplier(damageType));
+                }
 
                     var oldHp = currentHp;
                     var newHp = Math.Max(0, (float)Math.Floor(currentHp - finalDamage));
@@ -242,7 +261,14 @@ public static partial class Module
                     break; // Don't continue hitting a dead enemy
                 }
 
-                Log.Info($"Player {ctx.Sender} (Lv{player.Value.level}) used {jobAttack.Value.name} (hit {hit+1}/{jobAttack.Value.hits}) dealing {finalDamage} {damageType} damage (base: {baseDamage}, scaled: {scaledDamage:F0}) to enemy {enemy.spawn_id}. HP: {oldHp} -> {newHp}" + (wasKilled ? " [KILLED]" : ""));
+                if (isInvulnerable)
+                {
+                    Log.Info($"Player {ctx.Sender} (Lv{player.Value.level}) used {jobAttack.Value.name} (hit {hit+1}/{jobAttack.Value.hits}) on INVULNERABLE enemy {enemy.spawn_id}. Damage: 0 (IMMUNE)");
+                }
+                else
+                {
+                    Log.Info($"Player {ctx.Sender} (Lv{player.Value.level}) used {jobAttack.Value.name} (hit {hit+1}/{jobAttack.Value.hits}) dealing {finalDamage} {damageType} damage (base: {baseDamage}, scaled: {scaledDamage:F0}) to enemy {enemy.spawn_id}. HP: {oldHp} -> {newHp}" + (wasKilled ? " [KILLED]" : ""));
+                }
                 
                 // Update current HP for next hit
                 currentHp = newHp;
