@@ -43,8 +43,9 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
       return;
     }
 
-    // Handle movement physics (skip if climbing, dashing, or movement disabled)
-    if (!this.player.isClimbing && !this.player.isDashing && !this.stateTracker.isMovementDisabled()) {
+    // Handle movement physics (skip if climbing, dashing, casting, or movement disabled)
+    const isCasting = this.player.currentAttackType === 'casting';
+    if (!this.player.isClimbing && !this.player.isDashing && !isCasting && !this.stateTracker.isMovementDisabled()) {
       const body = this.player.body;
       const onGround = body.onFloor();
 

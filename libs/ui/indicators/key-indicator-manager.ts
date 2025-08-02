@@ -148,7 +148,7 @@ export class KeyIndicatorManager {
     this.mainContainer.setPosition(x, y);
     
     let currentY = -totalHeight / 2;
-    this.indicators.forEach((indicator, index) => {
+    this.indicators.forEach((indicator) => {
       const width = indicator.background.width;
       const height = indicator.background.height;
       

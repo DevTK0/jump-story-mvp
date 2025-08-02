@@ -55,8 +55,15 @@ export interface HealAttack extends BaseAttack {
   attackType: 'heal';
 }
 
+// Casting attack properties
+export interface CastingAttack extends BaseAttack {
+  attackType: 'casting';
+  radius: number; // Area of effect radius around the caster
+  effectSprite: string; // Visual effect sprite
+}
+
 // Discriminated union - TypeScript will enforce correct fields based on attackType
-export type Attack = StandardAttack | ProjectileAttack | AreaAttack | DashAttack | HealAttack | StationaryAttack;
+export type Attack = StandardAttack | ProjectileAttack | AreaAttack | DashAttack | HealAttack | StationaryAttack | CastingAttack;
 
 // Type guards for runtime checking
 export function isStandardAttack(attack: Attack): attack is StandardAttack {
@@ -80,6 +87,10 @@ export function isDashAttack(attack: Attack): attack is DashAttack {
 
 export function isHealAttack(attack: Attack): attack is HealAttack {
   return attack.attackType === 'heal';
+}
+
+export function isCastingAttack(attack: Attack): attack is CastingAttack {
+  return attack.attackType === 'casting';
 }
 
 // Example job configuration with type safety
@@ -112,6 +123,8 @@ export function validateAttackConfig(attack: any): attack is Attack {
   switch (attack.attackType) {
     case 'standard':
       return true; // Standard attacks have no additional required fields
+    case 'stationary':
+      return true; // Stationary attacks have no additional required fields
     case 'projectile':
       return !!attack.projectile; // Only requires projectile sprite key
     case 'area':
@@ -120,6 +133,8 @@ export function validateAttackConfig(attack: any): attack is Attack {
       return !!(attack.dashDistance && attack.dashSpeed);
     case 'heal':
       return true; // Heal attacks have no additional required fields
+    case 'casting':
+      return !!(attack.radius && attack.effectSprite); // Requires radius and effect sprite
     default:
       return false;
   }

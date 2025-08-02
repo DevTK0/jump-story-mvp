@@ -134,7 +134,8 @@ export class PassiveInfoMenu {
       this.container.add(cardBg);
 
       // Get the passive for this card
-      const passive = jobConfig.passives?.[passiveKey as keyof typeof jobConfig.passives];
+      // TODO: Passives feature not yet implemented in JobConfig
+      const passive = null; // jobConfig.passives?.[passiveKey as keyof typeof jobConfig.passives];
       
       if (passive) {
         // Passive name

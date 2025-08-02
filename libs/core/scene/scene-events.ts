@@ -10,13 +10,14 @@ import type { Teleport } from '@/spacetime/client';
 // Define all scene event types
 export interface SceneEventMap {
   'player:attacked': {
-    type: 'standard' | 'dash' | 'projectile' | 'area';
+    type: 'standard' | 'dash' | 'projectile' | 'area' | 'casting';
     direction: number;
     attackType: number;
     damage?: number;
     critChance?: number;
     projectile?: string;
     radius?: number;
+    effectSprite?: string;
   };
   'player:died': {
     position: { x: number; y: number };

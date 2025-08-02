@@ -190,6 +190,10 @@ export class Player extends Phaser.GameObjects.Sprite implements PhysicsEntity {
     return this.playerState.isDashing;
   }
 
+  public get currentAttackType(): string | undefined {
+    return this.playerState.currentAttackType;
+  }
+
   public get isAlive(): boolean {
     return this.playerState.isAlive;
   }

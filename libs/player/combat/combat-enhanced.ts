@@ -6,7 +6,7 @@ import { InputSystem } from '../input';
 import type { IDebuggable } from '@/debug/debug-interfaces';
 import { DEBUG_CONFIG } from '@/debug/config';
 import { BaseDebugRenderer } from '@/debug/debug-renderer';
-import type { JobConfig, Attack, StandardAttack } from './attack-types';
+import type { JobConfig, Attack } from './attack-types';
 import { PlayerQueryService } from '../services/player-query-service';
 import { CombatValidationService } from '../services/combat-validation-service';
 import { getAttackAnimationDuration } from '../animations/animation-duration-helper';
@@ -14,21 +14,6 @@ import type { IHitValidator } from './hit-validator-interface';
 import { getAudioManager } from '@/core/audio/audio-manager';
 import { UIMessageDisplay } from '@/ui/common/ui-message-display';
 
-export interface AttackConfig {
-  name: string;
-  damage: number;
-  attackType: 'standard' | 'projectile' | 'area' | 'dash';
-  cooldown: number;
-  critChance: number;
-  knockback: number;
-  hits: number;
-  range: number;
-  projectileSpeed?: number;
-  projectileSize?: number;
-  radius?: number;
-  dashDistance?: number;
-  dashSpeed?: number;
-}
 
 export class CombatSystemEnhanced extends BaseDebugRenderer implements System, IDebuggable, IHitValidator {
   private player: Player;
@@ -147,10 +132,10 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
   }
 
   private initializeHitboxes(): void {
-    // Create hitbox sprites for each attack (standard, dash, projectile, and area)
+    // Create hitbox sprites for each attack (standard, dash, projectile, area, and casting)
     for (let i = 1; i <= 3; i++) {
       const attackConfig = this.jobConfig.attacks[`attack${i}` as keyof typeof this.jobConfig.attacks];
-      if (attackConfig && (attackConfig.attackType === 'standard' || attackConfig.attackType === 'dash' || attackConfig.attackType === 'projectile' || attackConfig.attackType === 'area')) {
+      if (attackConfig && (attackConfig.attackType === 'standard' || attackConfig.attackType === 'dash' || attackConfig.attackType === 'projectile' || attackConfig.attackType === 'area' || attackConfig.attackType === 'casting')) {
         const hitbox = this.scene.physics.add.sprite(-200, -200, '');
         // Will be sized dynamically during attack
 
@@ -191,19 +176,27 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
   }
 
   private tryAttack(attackNum: number): boolean {
+    logger.info(`tryAttack called - Attack ${attackNum} for job ${this.playerJob}`);
+    
     if (this.attackCooldowns.get(attackNum) || this.player.isAttacking) {
+      logger.info(`Attack blocked - Cooldown: ${this.attackCooldowns.get(attackNum)}, isAttacking: ${this.player.isAttacking}`);
       return false;
     }
 
     // Cannot attack when climbing or dead
     if (this.player.isClimbing || this.player.getStateMachine().isInState('Dead')) {
+      logger.info(`Attack blocked - isClimbing: ${this.player.isClimbing}, isDead: ${this.player.getStateMachine().isInState('Dead')}`);
       return false;
     }
 
     const attackConfig = this.jobConfig.attacks[`attack${attackNum}` as keyof typeof this.jobConfig.attacks];
     if (!attackConfig) {
+      logger.error(`No attack config found for attack${attackNum} on job ${this.playerJob}`);
       return false;
     }
+    
+    logger.info(`Attack config found: ${attackConfig.name} (type: ${attackConfig.attackType})`);
+    
 
     // Client-side validation
     if (this.playerQueryService && this.combatValidationService) {
@@ -234,12 +227,10 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     }
 
     // Handle attack types
+    logger.info(`Executing attack type: ${attackConfig.attackType}`);
     switch (attackConfig.attackType) {
       case 'standard':
         this.performStandardAttack(attackNum, attackConfig);
-        break;
-      case 'stationary':
-        this.performStationaryAttack(attackNum, attackConfig);
         break;
       case 'dash':
         this.performDashAttack(attackNum, attackConfig);
@@ -252,6 +243,13 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
         break;
       case 'area':
         this.performAreaAttack(attackNum, attackConfig);
+        break;
+      case 'casting':
+        logger.info('Performing casting attack');
+        this.performCastingAttack(attackNum, attackConfig);
+        break;
+      default:
+        logger.error(`Unknown attack type: ${attackConfig.attackType}`);
         break;
     }
 
@@ -270,8 +268,11 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     const hitboxSprite = this.hitboxSprites.get(attackNum);
     if (!hitboxSprite) return null;
 
-    // Update player state
-    this.player.setPlayerState({ isAttacking: true });
+    // Update player state with attack type
+    this.player.setPlayerState({ 
+      isAttacking: true,
+      currentAttackType: config.attackType 
+    });
     this.attackCooldowns.set(attackNum, true);
 
     // Transition to attack state so it syncs to server and peers can see it
@@ -307,8 +308,8 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     if (hitboxSprite.body) {
       const body = hitboxSprite.body as Phaser.Physics.Arcade.Body;
       
-      if (attackType === 'area' && config.attackType === 'area' && config.radius) {
-        // For area attacks, create a circular hitbox centered on the player
+      if (attackType === 'area' && (config.attackType === 'area' || config.attackType === 'casting') && config.radius) {
+        // For area/casting attacks, create a circular hitbox centered on the player
         body.setCircle(config.radius);
         hitboxSprite.setPosition(playerCenterX, playerCenterY);
         // Center the circular body by offsetting it by negative radius
@@ -332,12 +333,47 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     }
   }
 
-  private performStationaryAttack(attackNum: number, config: Attack): void {
-    logger.info('Perform stationary attack');
-    this.performStandardAttack(attackNum, {
-      ...config,
-      attackType: 'standard',
-    } as StandardAttack);
+  private performCastingAttack(attackNum: number, config: Attack): void {
+    logger.info(`performCastingAttack called for attack ${attackNum}`);
+    
+    // Type guard to ensure we have a casting attack
+    if (config.attackType !== 'casting') {
+      logger.error(`Attack type mismatch - expected casting, got ${config.attackType}`);
+      return;
+    }
+
+    const hitboxSprite = this.setupAttack(attackNum, config);
+    if (!hitboxSprite) {
+      logger.error('Failed to setup attack - no hitbox sprite');
+      return;
+    }
+    logger.info('Attack setup successful');
+
+    // Disable movement for casting attacks
+    const movementSystem = this.player.getSystem('movement') as any;
+    if (movementSystem?.stateTracker) {
+      movementSystem.stateTracker.disableMovement();
+      logger.info('Movement disabled for casting');
+    } else {
+      logger.warn('Could not disable movement - movement system not found');
+    }
+
+    // Configure hitbox as area attack with radius
+    this.configureHitbox(hitboxSprite, config, 'area');
+
+    // Emit attack event
+    emitSceneEvent(this.scene, 'player:attacked', {
+      type: 'casting',
+      direction: this.player.facingDirection,
+      attackType: attackNum,
+      damage: config.damage,
+      critChance: config.critChance,
+      radius: config.radius,
+      effectSprite: config.effectSprite,
+    });
+
+    // Execute attack phases with movement re-enabled at the end
+    this.executeCastingAttackPhases(attackNum, config, hitboxSprite, movementSystem);
   }
 
   private performStandardAttack(attackNum: number, config: Attack): void {
@@ -600,11 +636,87 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     }
 
     // Reset player state
-    this.player.setPlayerState({ isAttacking: false, isDashing: false });
+    this.player.setPlayerState({ isAttacking: false, isDashing: false, currentAttackType: undefined });
     this.resetCurrentAttack();
     this.attackCooldowns.set(attackNum, false);
   }
 
+  private async executeCastingAttackPhases(
+    attackNum: number,
+    config: Attack,
+    hitboxSprite: Phaser.Physics.Arcade.Sprite,
+    movementSystem: any
+  ): Promise<void> {
+    try {
+      // Use actual sprite animation duration for all jobs
+      let animationDuration: number;
+      try {
+        animationDuration = getAttackAnimationDuration(this.playerJob, attackNum);
+      } catch (error) {
+        console.error(`Failed to get attack animation duration for ${this.playerJob} attack${attackNum}:`, error);
+        animationDuration = 800; // Fallback duration for casting attacks
+      }
+      
+      // Calculate phase durations based on actual animation timing
+      const startupMs = animationDuration * 0.3;  // 30% for casting windup
+      const activeMs = animationDuration * 0.5;   // 50% for damage frames
+      const recoveryMs = animationDuration * 0.2; // 20% for recovery
+
+      // Store initial velocity to stop movement
+      const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
+      playerBody.setVelocityX(0); // Stop horizontal movement immediately
+
+      // Startup phase (casting animation)
+      await this.delay(startupMs);
+
+      // Enable hitbox with circular area
+      if (hitboxSprite.body) {
+        const body = hitboxSprite.body as Phaser.Physics.Arcade.Body;
+        body.reset(hitboxSprite.x, hitboxSprite.y);
+        body.enable = true;
+        body.setGravityY(0);
+        body.setAllowGravity(false);
+        body.immovable = true;
+        body.moves = false;
+      }
+
+      // Active phase (damage frames)
+      await this.delay(activeMs);
+
+      // Disable hitbox
+      if (hitboxSprite.body) {
+        hitboxSprite.body.enable = false;
+      }
+
+      // Recovery phase
+      await this.delay(recoveryMs);
+
+      // Re-enable movement
+      if (movementSystem?.stateTracker) {
+        movementSystem.stateTracker.enableMovement();
+      }
+
+      this.player.setPlayerState({ isAttacking: false, currentAttackType: undefined });
+
+      // Transition to idle state since player should be stationary
+      const transitioned = this.player.transitionToState('Idle');
+      
+      if (!transitioned) {
+        console.warn(`Failed to transition from attack state after casting attack ${attackNum}`);
+        this.player.getStateMachine().transitionTo('Idle');
+      }
+      
+      // Start cooldown timer
+      this.startCooldown(attackNum, config.cooldown);
+    } catch (error) {
+      console.warn('Casting attack execution interrupted:', error);
+      // Re-enable movement on error
+      if (movementSystem?.stateTracker) {
+        movementSystem.stateTracker.enableMovement();
+      }
+      this.cleanupAttack(attackNum, hitboxSprite);
+    }
+  }
 
   private performProjectileAttack(attackNum: number, config: Attack): void {
     // Type guard to ensure we have a projectile attack

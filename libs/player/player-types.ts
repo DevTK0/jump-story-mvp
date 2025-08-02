@@ -6,6 +6,7 @@ export interface PlayerState extends EntityState {
   isDashing: boolean;
   canJump: boolean;
   facingDirection: 1 | -1;
+  currentAttackType?: 'standard' | 'stationary' | 'projectile' | 'area' | 'dash' | 'heal' | 'casting';
 }
 
 export interface InputState {
