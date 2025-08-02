@@ -944,4 +944,49 @@ public static partial class Module
 
         Log.Info($"Party '{party.party_name}' (ID: {party.party_id}) has been disbanded due to disconnect");
     }
+
+    /// <summary>
+    /// Regenerates player's health and mana to full when out of combat
+    /// </summary>
+    [Reducer]
+    public static void RegenHealthMana(ReducerContext ctx, Identity playerIdentity)
+    {
+        var player = ctx.Db.Player.identity.Find(playerIdentity);
+        if (player == null)
+        {
+            Log.Error($"RegenHealthMana: Player not found for identity {playerIdentity}");
+            return;
+        }
+
+        // Don't regenerate if player is dead
+        if (player.Value.state == PlayerState.Dead || player.Value.current_hp <= 0)
+        {
+            Log.Info($"RegenHealthMana: Player {player.Value.name} is dead, skipping regeneration");
+            return;
+        }
+
+        // Don't regenerate if player is still in combat
+        if (player.Value.in_combat)
+        {
+            Log.Info($"RegenHealthMana: Player {player.Value.name} is still in combat, skipping regeneration");
+            return;
+        }
+
+        // Check if regeneration is needed
+        bool needsRegen = player.Value.current_hp < player.Value.max_hp || player.Value.current_mana < player.Value.max_mana;
+        
+        if (needsRegen)
+        {
+            Log.Info($"RegenHealthMana: Regenerating player {player.Value.name} from HP: {player.Value.current_hp}/{player.Value.max_hp}, Mana: {player.Value.current_mana}/{player.Value.max_mana}");
+            
+            // Update player with full health and mana
+            ctx.Db.Player.identity.Update(player.Value with
+            {
+                current_hp = player.Value.max_hp,
+                current_mana = player.Value.max_mana
+            });
+            
+            Log.Info($"RegenHealthMana: Player {player.Value.name} regenerated to full HP and Mana");
+        }
+    }
 }

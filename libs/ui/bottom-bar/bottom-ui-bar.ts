@@ -248,8 +248,13 @@ export class BottomUIBar {
       .subscribe([`SELECT * FROM player_job WHERE player_identity = x'${playerIdentityHex}'`]);
 
     // Listen to player updates
-    this.dbConnection.db.player.onUpdate((_ctx, _oldPlayer, newPlayer) => {
+    this.dbConnection.db.player.onUpdate((_ctx, oldPlayer, newPlayer) => {
       if (newPlayer.identity.toHexString() === this.playerIdentity.toHexString()) {
+        // Check for combat state change (exiting combat with HP/Mana restored)
+        if (oldPlayer && oldPlayer.inCombat && !newPlayer.inCombat) {
+          // Player just exited combat - play respawn effect for regen
+          this.playRegenEffect();
+        }
         this.updateFromPlayerData(newPlayer);
       }
     });
@@ -409,5 +414,27 @@ export class BottomUIBar {
     this.expBar.destroy();
     // this.menuButton.destroy(); // Removed
     this.container.destroy();
+  }
+
+  private playRegenEffect(): void {
+    try {
+      this.logger.info('Playing regeneration effect after exiting combat');
+      
+      // Access the scene's initializer to get the respawn effect manager
+      const scene = this.scene as any;
+      if (scene.initializer) {
+        const systems = scene.initializer.getSystems();
+        const respawnEffectManager = systems.managers?.getRespawnEffectManager();
+        
+        if (respawnEffectManager) {
+          respawnEffectManager.playRespawnEffect();
+          this.logger.info('Regeneration effect played successfully');
+        } else {
+          this.logger.warn('Respawn effect manager not found');
+        }
+      }
+    } catch (error) {
+      this.logger.warn('Failed to play regeneration effect:', error);
+    }
   }
 }

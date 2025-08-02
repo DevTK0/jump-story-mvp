@@ -96,6 +96,8 @@ import { PopulatePlayerLevel } from "./populate_player_level_reducer.ts";
 export { PopulatePlayerLevel };
 import { RecoverFromDamage } from "./recover_from_damage_reducer.ts";
 export { RecoverFromDamage };
+import { RegenHealthMana } from "./regen_health_mana_reducer.ts";
+export { RegenHealthMana };
 import { RemoveFromParty } from "./remove_from_party_reducer.ts";
 export { RemoveFromParty };
 import { RespawnPlayer } from "./respawn_player_reducer.ts";
@@ -719,6 +721,10 @@ const REMOTE_MODULE = {
       reducerName: "RecoverFromDamage",
       argsType: RecoverFromDamage.getTypeScriptAlgebraicType(),
     },
+    RegenHealthMana: {
+      reducerName: "RegenHealthMana",
+      argsType: RegenHealthMana.getTypeScriptAlgebraicType(),
+    },
     RemoveFromParty: {
       reducerName: "RemoveFromParty",
       argsType: RemoveFromParty.getTypeScriptAlgebraicType(),
@@ -840,6 +846,7 @@ export type Reducer = never
 | { name: "PopulateEnemy", args: PopulateEnemy }
 | { name: "PopulatePlayerLevel", args: PopulatePlayerLevel }
 | { name: "RecoverFromDamage", args: RecoverFromDamage }
+| { name: "RegenHealthMana", args: RegenHealthMana }
 | { name: "RemoveFromParty", args: RemoveFromParty }
 | { name: "RespawnPlayer", args: RespawnPlayer }
 | { name: "SendPlayerMessage", args: SendPlayerMessage }
@@ -1336,6 +1343,22 @@ export class RemoteReducers {
     this.connection.offReducer("RecoverFromDamage", callback);
   }
 
+  regenHealthMana(playerIdentity: Identity) {
+    const __args = { playerIdentity };
+    let __writer = new BinaryWriter(1024);
+    RegenHealthMana.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("RegenHealthMana", __argsBuffer, this.setCallReducerFlags.regenHealthManaFlags);
+  }
+
+  onRegenHealthMana(callback: (ctx: ReducerEventContext, playerIdentity: Identity) => void) {
+    this.connection.onReducer("RegenHealthMana", callback);
+  }
+
+  removeOnRegenHealthMana(callback: (ctx: ReducerEventContext, playerIdentity: Identity) => void) {
+    this.connection.offReducer("RegenHealthMana", callback);
+  }
+
   removeFromParty(targetPlayerName: string) {
     const __args = { targetPlayerName };
     let __writer = new BinaryWriter(1024);
@@ -1718,6 +1741,11 @@ export class SetReducerFlags {
   recoverFromDamageFlags: CallReducerFlags = 'FullUpdate';
   recoverFromDamage(flags: CallReducerFlags) {
     this.recoverFromDamageFlags = flags;
+  }
+
+  regenHealthManaFlags: CallReducerFlags = 'FullUpdate';
+  regenHealthMana(flags: CallReducerFlags) {
+    this.regenHealthManaFlags = flags;
   }
 
   removeFromPartyFlags: CallReducerFlags = 'FullUpdate';

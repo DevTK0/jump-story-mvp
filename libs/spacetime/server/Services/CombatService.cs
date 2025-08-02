@@ -31,7 +31,7 @@ public static partial class Module
         }
 
         /// <summary>
-        /// Removes a player from combat state
+        /// Removes a player from combat state and triggers health/mana regeneration
         /// </summary>
         public static void ExitCombat(ReducerContext ctx, Player player)
         {
@@ -43,6 +43,9 @@ public static partial class Module
                 {
                     in_combat = false
                 });
+
+                // Trigger health and mana regeneration
+                Module.RegenHealthMana(ctx, player.identity);
             }
         }
 

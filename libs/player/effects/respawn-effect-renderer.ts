@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import type { Player } from '../player';
 import { createLogger } from '@/core/logger';
 import { respawnEffectSprites } from '../../../apps/playground/config/sprite-config';
+import { getAudioManager } from '@/core/audio';
 
 const logger = createLogger('RespawnEffectRenderer');
 
@@ -26,6 +27,17 @@ export class RespawnEffectRenderer {
    */
   public playRespawnEffect(): void {
     logger.debug('Playing respawn effect');
+    
+    // Play respawn sound
+    try {
+      const audioManager = getAudioManager(this.scene);
+      audioManager.playSound('respawn', {
+        volume: 0.5
+      });
+      logger.debug('Playing respawn sound');
+    } catch (error) {
+      logger.warn('Failed to play respawn sound:', error);
+    }
     
     // Clean up any existing effect
     this.cleanup();
