@@ -40,6 +40,10 @@ export interface StandardAttack extends BaseAttack {
   attackType: 'standard';
 }
 
+export interface StationaryAttack extends BaseAttack {
+  attackType: 'stationary';
+}
+
 // Projectile-specific properties
 export interface ProjectileAttack extends BaseAttack {
   attackType: 'projectile';
@@ -66,7 +70,7 @@ export interface HealAttack extends BaseAttack {
 }
 
 // Discriminated union - TypeScript will enforce correct fields based on attackType
-export type Attack = StandardAttack | ProjectileAttack | AreaAttack | DashAttack | HealAttack;
+export type Attack = StandardAttack | ProjectileAttack | AreaAttack | DashAttack | HealAttack | StationaryAttack;
 
 // Passive ability interface
 export interface Passive {
@@ -77,6 +81,9 @@ export interface Passive {
 // Type guards for runtime checking
 export function isStandardAttack(attack: Attack): attack is StandardAttack {
   return attack.attackType === 'standard';
+}
+export function isStationaryAttack(attack: Attack): attack is StationaryAttack {
+  return attack.attackType === 'stationary';
 }
 
 export function isProjectileAttack(attack: Attack): attack is ProjectileAttack {
@@ -120,6 +127,7 @@ export interface JobConfig {
     manaRecovery: number;
     resistances: Resistances;
     knockbackImmune?: boolean; // Optional: Makes the job immune to knockback
+    doubleJump?: boolean; // Optional: Allows job to double jump
   };
   attacks: {
     attack1: Attack;

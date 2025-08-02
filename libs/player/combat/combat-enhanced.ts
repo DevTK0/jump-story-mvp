@@ -6,7 +6,7 @@ import { InputSystem } from '../input';
 import type { IDebuggable } from '@/debug/debug-interfaces';
 import { DEBUG_CONFIG } from '@/debug/config';
 import { BaseDebugRenderer } from '@/debug/debug-renderer';
-import type { JobConfig, Attack } from './attack-types';
+import type { JobConfig, Attack, StandardAttack } from './attack-types';
 import { PlayerQueryService } from '../services/player-query-service';
 import { CombatValidationService } from '../services/combat-validation-service';
 import { getAttackAnimationDuration } from '../animations/animation-duration-helper';
@@ -37,7 +37,6 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
 
   // Job configuration
   private playerJob: string;
-  private jobConfig: JobConfig;
 
   // Attack state
   private attackCooldowns: Map<number, boolean> = new Map();
@@ -88,6 +87,14 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
 
     // Initialize hitboxes for each attack
     this.initializeHitboxes();
+  }
+
+  public set jobConfig (newJobConfig: JobConfig) {
+    this.player.jobConfig = newJobConfig;
+  }
+
+  public get jobConfig (): JobConfig {
+    return this.player.jobConfig;
   }
 
   // Method to set up collision detection after physics is initialized
@@ -231,6 +238,9 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
       case 'standard':
         this.performStandardAttack(attackNum, attackConfig);
         break;
+      case 'stationary':
+        this.performStationaryAttack(attackNum, attackConfig);
+        break;
       case 'dash':
         this.performDashAttack(attackNum, attackConfig);
         break;
@@ -320,6 +330,14 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
         body.setSize(hitboxWidth, hitboxHeight);
       }
     }
+  }
+
+  private performStationaryAttack(attackNum: number, config: Attack): void {
+    logger.info('Perform stationary attack');
+    this.performStandardAttack(attackNum, {
+      ...config,
+      attackType: 'standard',
+    } as StandardAttack);
   }
 
   private performStandardAttack(attackNum: number, config: Attack): void {

@@ -35,11 +35,24 @@ export class TeleportStoneManager {
       onTeleportDelete: this.handleTeleportDelete.bind(this),
       onPlayerTeleportInsert: this.handlePlayerTeleportInsert.bind(this),
       onPlayerTeleportUpdate: this.handlePlayerTeleportUpdate.bind(this),
+      onPlayerTeleportIdUpdate: this.handlePlayerTeleportIdUpdate.bind(this),
     });
   }
 
   public setDbConnection(connection: DbConnection): void {
     this.subscriptionManager.setDbConnection(connection);
+  }
+
+  /**
+   * Handle teleport id update on player
+   */
+  private handlePlayerTeleportIdUpdate(teleportId: string): void {
+    for (const [_key, teleport] of this.teleportLocations) {
+      if (teleport.locationName !== teleportId) continue;
+      const isUnlocked = this.playerUnlockStatus.get(teleport.locationName) || false;
+      if (!isUnlocked) return;
+      this.spriteManager.updateRespawnPoint(teleport.locationName);
+    }
   }
 
   /**

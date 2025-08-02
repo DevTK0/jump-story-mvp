@@ -23,6 +23,8 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
   // Shadow trajectory renderer
   private shadowRenderer: ShadowTrajectoryRenderer;
 
+  private _acceleration: number = 10;
+
   constructor(player: Player, inputSystem: InputSystem) {
     super();
     this.player = player;
@@ -45,7 +47,6 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
     if (!this.player.isClimbing && !this.player.isDashing && !this.stateTracker.isMovementDisabled()) {
       const body = this.player.body;
       const onGround = body.onFloor();
-      const inputState = this.inputSystem.getInputState();
 
       // Check for ground contact transition (landing)
       if (this.stateTracker.hasLanded(onGround)) {
@@ -58,7 +59,9 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
       this.stateTracker.updateFacingFromInput(horizontalDir);
 
       // Horizontal movement (only when on ground)
+      body.setMaxVelocityX(this.player.getSpeed());
       if (onGround) {
+        body.setAccelerationX(0);
         if (horizontalDir !== 0) {
           body.setVelocityX(horizontalDir * this.player.getSpeed());
 
@@ -73,17 +76,22 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
             this.player.transitionToState('Idle');
           }
         }
+      } else {
+        body.setAccelerationX(this._acceleration * horizontalDir * this.player.getSpeed());
       }
 
       // Regular jump
-      if (inputState.jump && onGround) {
-        this.jump();
-        this.player.transitionToState('Jump');
-        this.logger.debug('Player jumped');
+      if (this.inputSystem.isJumpPressed()) {
+        if (onGround) {
+          this.jump();
+          this.player.transitionToState('Jump');
+          this.logger.debug('Player jumped');
+        } else {
+          // Double jump
+          this.handleDoubleJump();
+        }
       }
 
-      // Double jump
-      this.handleDoubleJump();
 
       // Sliding on wall
       const onWall = body.onWall();
@@ -126,10 +134,11 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
 
     // Check for double jump input
     if (
-      this.inputSystem.isDoubleJumpPressed() &&
+      // this.inputSystem.isDoubleJumpPressed() &&
       !onGround &&
       !this.stateTracker.getHasUsedDoubleJump() &&
-      !this.player.isClimbing
+      !this.player.isClimbing &&
+      (this.player.jobConfig?.baseStats?.doubleJump ?? false)
     ) {
       this.player.body.setVelocityY(-this.player.getJumpSpeed());
       this.stateTracker.setHasUsedDoubleJump(true);

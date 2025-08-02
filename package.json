@@ -5,8 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "spacetime:start": "spacetime start",
-    "spacetime:publish": "cd libs/spacetime/server && spacetime publish -s local jump-story",
+    "spacetime:start": "npm run spacetime:generate && spacetime start",
+    "spacetime:generate": "cd libs/spacetime/server && spacetime generate --lang typescript --out-dir ../client",
+    "spacetime:publish": "cd libs/spacetime/server && spacetime publish -s local jump-story -c -y",
     "start": "npm run spacetime:publish && npm run init:local && vite",
     "dev": "vite",
     "dev:cloud": "VITE_SPACETIME_TARGET=cloud vite",

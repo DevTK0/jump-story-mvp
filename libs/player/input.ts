@@ -112,6 +112,17 @@ export class InputSystem implements System {
     return Phaser.Input.Keyboard.JustDown(keys.z);
   }
 
+  // Special input checks
+  public isJumpPressed(): boolean {
+    // Check if chat is active
+    if ((this.player as any).chatActive) {
+      return false;
+    }
+    // Double jump is now on z key since c is used for attack2
+    const keys = this.player.getKeys();
+    return Phaser.Input.Keyboard.JustDown(keys.space);
+  }
+
   public isMovingHorizontally(): boolean {
     return this.inputState.left || this.inputState.right;
   }

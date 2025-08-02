@@ -6,6 +6,9 @@ import { PLAYER_CONFIG } from './config';
 import { PlayerStateMachine } from './state/state-machine';
 import type { PhysicsEntity } from '@/core/physics/physics-entity';
 import type { PhysicsRegistry } from '@/core/physics/physics-registry';
+import type { CombatSystemEnhanced } from './combat/combat-enhanced';
+import type { JobConfig } from './combat/attack-types';
+import jobAttributesConfig from '../../apps/playground/config/job-attributes';
 
 export interface PlayerConfig {
   scene: Phaser.Scene;
@@ -17,6 +20,7 @@ export interface PlayerConfig {
 
 export class Player extends Phaser.GameObjects.Sprite implements PhysicsEntity {
   private playerState: PlayerState;
+  private _jobConfig: JobConfig;
   private systems: Map<string, System> = new Map();
   private stateMachine!: PlayerStateMachine; // Will be initialized by PlayerBuilder
 
@@ -36,6 +40,7 @@ export class Player extends Phaser.GameObjects.Sprite implements PhysicsEntity {
     r: Phaser.Input.Keyboard.Key;
     t: Phaser.Input.Keyboard.Key;
     e: Phaser.Input.Keyboard.Key;
+    space: Phaser.Input.Keyboard.Key;
   };
 
   // Static factory method for PlayerBuilder to use
@@ -53,6 +58,10 @@ export class Player extends Phaser.GameObjects.Sprite implements PhysicsEntity {
     // Type-cast body
     const arcadeBody = this.body as Phaser.Physics.Arcade.Body;
     this.body = arcadeBody;
+
+    // Set jobConfig
+    const playerJob = config.texture || 'soldier';
+    this._jobConfig = jobAttributesConfig.jobs[playerJob] || jobAttributesConfig.jobs.soldier;
 
     // Initialize with default state - PlayerBuilder will configure the rest
     this.playerState = this.createDefaultPlayerState();
@@ -87,6 +96,7 @@ export class Player extends Phaser.GameObjects.Sprite implements PhysicsEntity {
       r: this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.R),
       t: this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.T),
       e: this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E),
+      space: this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
     };
   }
 
@@ -130,6 +140,14 @@ export class Player extends Phaser.GameObjects.Sprite implements PhysicsEntity {
 
     // Flip sprite based on facing direction
     this.setFlipX(this.playerState.facingDirection === -1);
+  }
+
+  public set jobConfig (newJobConfig: JobConfig) {
+    this._jobConfig = newJobConfig;
+  }
+
+  public get jobConfig (): JobConfig {
+    return JSON.parse(JSON.stringify(this._jobConfig)) as JobConfig;
   }
 
   // State getters and setters
@@ -223,7 +241,7 @@ export class Player extends Phaser.GameObjects.Sprite implements PhysicsEntity {
   // Config accessors
   public getSpeed(): number {
     // Try to get job-specific move speed from combat system
-    const combatSystem = this.getSystem('combat') as any;
+    const combatSystem = this.getSystem('combat') as CombatSystemEnhanced;
     if (combatSystem?.getJobConfig) {
       const jobConfig = combatSystem.getJobConfig();
       if (jobConfig?.baseStats?.moveSpeed) {
