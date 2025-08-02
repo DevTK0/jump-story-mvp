@@ -23,7 +23,7 @@ public static partial class Module
         int resSpike,
         int resClaw,
         int resGreatsword,
-        bool defaultUnlocked)
+        uint unlockLevel)
     {
         // Validate admin API key
         if (!AdminConstants.IsValidAdminKey(adminApiKey))
@@ -57,7 +57,7 @@ public static partial class Module
             res_spike = resSpike,
             res_claw = resClaw,
             res_greatsword = resGreatsword,
-            default_unlocked = defaultUnlocked
+            unlock_level = unlockLevel
         };
 
         ctx.Db.Job.Insert(job);

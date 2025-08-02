@@ -177,6 +177,9 @@ public static partial class Module
             {
                 Log.Info($"   Spent {levelUpResult.ExpSpent} EXP on level ups, {levelUpResult.RemainingExp} EXP remaining");
             }
+            
+            // Check for job unlocks at new level
+            CheckAndUnlockJobs(ctx, player.identity, levelUpResult.NewLevel);
 
             // Check if player is on the leaderboard
             var onLeaderboard = false;
@@ -280,6 +283,55 @@ public static partial class Module
             ExpSpent = totalExpSpent,
             LevelsGained = newLevel - oldLevel
         };
+    }
+    
+    /// <summary>
+    /// Check and unlock jobs based on player's new level
+    /// </summary>
+    private static void CheckAndUnlockJobs(ReducerContext ctx, Identity playerIdentity, uint playerLevel)
+    {
+        // Get all jobs with unlock level requirements
+        foreach (var job in ctx.Db.Job.Iter())
+        {
+            // Skip jobs that are already unlocked at level 0 (default unlocked)
+            if (job.unlock_level == 0)
+                continue;
+                
+            // Skip jobs with requirements higher than player's level
+            if (job.unlock_level > playerLevel)
+                continue;
+                
+            // Check if player already has this job unlocked
+            var playerJob = ctx.Db.PlayerJob
+                .Iter()
+                .FirstOrDefault(pj => pj.player_identity == playerIdentity && pj.job_key == job.job_key);
+                
+            if (playerJob.player_identity == playerIdentity)
+            {
+                // Player has the job entry
+                if (!playerJob.is_unlocked)
+                {
+                    // Unlock the job
+                    ctx.Db.PlayerJob.player_job_id.Update(playerJob with
+                    {
+                        is_unlocked = true
+                    });
+                    Log.Info($"🔓 Job '{job.display_name}' unlocked for player {playerIdentity} at level {playerLevel}!");
+                }
+            }
+            else
+            {
+                // Player doesn't have the job entry yet (shouldn't happen normally, but handle it)
+                var newPlayerJob = new PlayerJob
+                {
+                    player_identity = playerIdentity,
+                    job_key = job.job_key,
+                    is_unlocked = true
+                };
+                ctx.Db.PlayerJob.Insert(newPlayerJob);
+                Log.Info($"🔓 Job '{job.display_name}' unlocked for player {playerIdentity} at level {playerLevel} (created new entry)!");
+            }
+        }
     }
 
     #region Helper Classes

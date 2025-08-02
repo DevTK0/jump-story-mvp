@@ -1132,19 +1132,19 @@ export class RemoteReducers {
     this.connection.offReducer("InitializeEnemyRoutes", callback);
   }
 
-  initializeJob(adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, resSword: number, resAxe: number, resBow: number, resSpear: number, resDark: number, resSpike: number, resClaw: number, resGreatsword: number, defaultUnlocked: boolean) {
-    const __args = { adminApiKey, jobKey, displayName, health, moveSpeed, mana, hpRecovery, manaRecovery, resSword, resAxe, resBow, resSpear, resDark, resSpike, resClaw, resGreatsword, defaultUnlocked };
+  initializeJob(adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, resSword: number, resAxe: number, resBow: number, resSpear: number, resDark: number, resSpike: number, resClaw: number, resGreatsword: number, unlockLevel: number) {
+    const __args = { adminApiKey, jobKey, displayName, health, moveSpeed, mana, hpRecovery, manaRecovery, resSword, resAxe, resBow, resSpear, resDark, resSpike, resClaw, resGreatsword, unlockLevel };
     let __writer = new BinaryWriter(1024);
     InitializeJob.getTypeScriptAlgebraicType().serialize(__writer, __args);
     let __argsBuffer = __writer.getBuffer();
     this.connection.callReducer("InitializeJob", __argsBuffer, this.setCallReducerFlags.initializeJobFlags);
   }
 
-  onInitializeJob(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, resSword: number, resAxe: number, resBow: number, resSpear: number, resDark: number, resSpike: number, resClaw: number, resGreatsword: number, defaultUnlocked: boolean) => void) {
+  onInitializeJob(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, resSword: number, resAxe: number, resBow: number, resSpear: number, resDark: number, resSpike: number, resClaw: number, resGreatsword: number, unlockLevel: number) => void) {
     this.connection.onReducer("InitializeJob", callback);
   }
 
-  removeOnInitializeJob(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, resSword: number, resAxe: number, resBow: number, resSpear: number, resDark: number, resSpike: number, resClaw: number, resGreatsword: number, defaultUnlocked: boolean) => void) {
+  removeOnInitializeJob(callback: (ctx: ReducerEventContext, adminApiKey: string, jobKey: string, displayName: string, health: number, moveSpeed: number, mana: number, hpRecovery: number, manaRecovery: number, resSword: number, resAxe: number, resBow: number, resSpear: number, resDark: number, resSpike: number, resClaw: number, resGreatsword: number, unlockLevel: number) => void) {
     this.connection.offReducer("InitializeJob", callback);
   }
 

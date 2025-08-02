@@ -61,7 +61,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   soldier: {
     displayName: 'Soldier',
     spriteKey: 'soldier',
-    defaultUnlocked: true,
+    unlockLevel: 0, // Unlocked by default
     baseStats: {
       health: 100,
       moveSpeed: 160,
@@ -152,7 +152,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   knight: {
     displayName: 'Knight',
     spriteKey: 'knight',
-    defaultUnlocked: true,
+    unlockLevel: 2, // Unlock at level 5
     baseStats: {
       health: 150,
       moveSpeed: 140,
@@ -182,7 +182,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   wizard: {
     displayName: 'Wizard',
     spriteKey: 'wizard',
-    defaultUnlocked: true,
+    unlockLevel: 10, // Unlock at level 10
     baseStats: {
       health: 80,
       moveSpeed: 150,
@@ -269,7 +269,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   archer: {
     displayName: 'Archer',
     spriteKey: 'archer',
-    defaultUnlocked: true,
+    unlockLevel: 0, // Unlocked by default
     baseStats: {
       health: 90,
       moveSpeed: 170,
@@ -354,7 +354,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   'armored-axeman': {
     displayName: 'Armored Axeman',
     spriteKey: 'armored-axeman',
-    defaultUnlocked: true,
+    unlockLevel: 15, // Unlock at level 15
     baseStats: {
       health: 140,
       moveSpeed: 130,
@@ -384,7 +384,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   'knight-templar': {
     displayName: 'Knight Templar',
     spriteKey: 'knight-templar',
-    defaultUnlocked: true,
+    unlockLevel: 20, // Unlock at level 20
     baseStats: {
       health: 160,
       moveSpeed: 135,
@@ -414,7 +414,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   lancer: {
     displayName: 'Lancer',
     spriteKey: 'lancer',
-    defaultUnlocked: true,
+    unlockLevel: 0, // Unlocked by default
     baseStats: {
       health: 110,
       moveSpeed: 300, // Really fast movement speed
@@ -482,7 +482,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   priest: {
     displayName: 'Priest',
     spriteKey: 'priest',
-    defaultUnlocked: true,
+    unlockLevel: 8, // Unlock at level 8
     baseStats: {
       health: 85,
       moveSpeed: 145,
@@ -532,7 +532,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   swordsman: {
     displayName: 'Swordsman',
     spriteKey: 'swordsman',
-    defaultUnlocked: true,
+    unlockLevel: 0, // Unlocked by default
     baseStats: {
       health: 105,
       moveSpeed: 155,

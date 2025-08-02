@@ -30,8 +30,8 @@ public static partial class Module
         public int res_claw;
         public int res_greatsword;
         
-        // Default unlock state
-        public bool default_unlocked;
+        // Level required to unlock this job (0 = unlocked by default)
+        public uint unlock_level;
     }
 
     // JobAttack table storing all attacks for each job

@@ -88,15 +88,24 @@ public static partial class Module
                 continue;
             }
             
+            // Check if job should be unlocked based on player's level
+            var player = ctx.Db.Player.identity.Find(playerIdentity);
+            bool shouldUnlock = false;
+            if (player != null)
+            {
+                // Unlock if job's unlock_level is 0 (default unlocked) or player meets the level requirement
+                shouldUnlock = (job.unlock_level == 0) || (player.Value.level >= job.unlock_level);
+            }
+            
             var playerJob = new PlayerJob
             {
                 player_identity = playerIdentity,
                 job_key = job.job_key,
-                is_unlocked = job.default_unlocked
+                is_unlocked = shouldUnlock
             };
             
             ctx.Db.PlayerJob.Insert(playerJob);
-            Log.Info($"Created PlayerJob entry for player {playerIdentity} - job: {job.job_key}, unlocked: {job.default_unlocked}");
+            Log.Info($"Created PlayerJob entry for player {playerIdentity} - job: {job.job_key}, unlocked: {shouldUnlock} (unlock_level: {job.unlock_level})");
         }
     }
 

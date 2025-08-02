@@ -109,7 +109,7 @@ export interface Resistances {
 export interface JobConfig {
   displayName: string;
   spriteKey: string;
-  defaultUnlocked: boolean;
+  unlockLevel: number; // Level required to unlock (0 = unlocked by default)
   baseStats: {
     health: number;
     moveSpeed: number;
