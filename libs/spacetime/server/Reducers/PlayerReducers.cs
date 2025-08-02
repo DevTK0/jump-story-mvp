@@ -215,6 +215,7 @@ public static partial class Module
             job = defaultJob,
             in_combat = false,
             last_combat_time = ctx.Timestamp - TimeSpan.FromDays(1), // Initialize to old time
+            teleport_id = "",
             is_online = true,
             ban_status = false // New players are not banned
         };
@@ -334,6 +335,11 @@ public static partial class Module
                         is_unlocked = true
                     });
                     Log.Info($"Player {ctx.Sender} unlocked teleport: {teleport.location_name}");
+                } else if (existingUnlock.player_identity == ctx.Sender && existingUnlock.is_unlocked) {
+                    ctx.Db.Player.identity.Update(player.Value with
+                    {
+                        teleport_id = teleport.location_name,
+                    });
                 }
             }
         }
@@ -563,14 +569,29 @@ public static partial class Module
             maxHp = PlayerConstants.CalculateMaxHp(player.Value.level);
             maxMana = PlayerConstants.CalculateMaxMana(player.Value.level);
         }
+
+        // Get last teleport location
+        var respawn_x = player.Value.death_x; // Respawn at death location as default
+        var respawn_y = player.Value.death_y;
+
+        if (!String.IsNullOrEmpty(player.Value.teleport_id)) {
+            foreach (var teleport in ctx.Db.Teleport.Iter())
+            {
+                if (player.Value.teleport_id != teleport.location_name) continue;
+                // Teleport coordinates are from top-left of a 32x32 tile
+                // Calculate center of the teleport tile
+                respawn_x = teleport.x + 16f;
+                respawn_y = teleport.y + 16f;
+            }
+        }
         
-        // First update HP and position (use death location)
+        // First update HP and position (use teleport location)
         var respawnedPlayer = player.Value with
         {
             current_hp = maxHp,
             current_mana = maxMana,
-            x = player.Value.death_x,  // Respawn at death location
-            y = player.Value.death_y,
+            x = respawn_x,  
+            y = respawn_y,
             last_active = ctx.Timestamp,
             respawn_available_at = ctx.Timestamp  // Clear respawn timer by setting to current time
         };
@@ -583,7 +604,7 @@ public static partial class Module
             Log.Warn($"Failed to transition respawned player to Idle state: {stateResult.Reason}");
         }
 
-        Log.Info($"Player {ctx.Sender} respawned with {maxHp} HP at death location ({player.Value.death_x}, {player.Value.death_y})");
+        Log.Info($"Player {ctx.Sender} respawned with {maxHp} HP at death location ({respawn_x}, {respawn_y})");
     }
 
 

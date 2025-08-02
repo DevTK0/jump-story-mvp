@@ -5,6 +5,7 @@ import { PlayerQueryService } from '../services/player-query-service';
 import { DeathStateService } from './death-state-service';
 import { emitSceneEvent } from '@/core/scene/scene-events';
 import { createLogger, type ModuleLogger } from '@/core/logger';
+import { UIContextService } from '@/ui/services/ui-context-service';
 
 /**
  * Monitors player health and manages death state transitions
@@ -123,17 +124,8 @@ export class DeathMonitor implements System {
         break;
 
       case 'respawn':
-        // Player respawned
-        this.isDead = false;
-        this.player.transitionToState('Idle');
-        
-        // Emit respawn event for audio system
-        emitSceneEvent(this.player.scene, 'player:respawned', {
-          position: { x: this.player.x, y: this.player.y }
-        });
-        
-        // Play respawn effect if available
-        this.playRespawnEffect();
+        // Move player to last teleport point
+        this.respawnPlayer();
         break;
 
       case 'none':
@@ -148,6 +140,20 @@ export class DeathMonitor implements System {
 
   public isPlayerDead(): boolean {
     return this.isDead;
+  }
+
+  public respawnPlayer() {
+    // Player respawned
+    this.isDead = false;
+    this.player.transitionToState('Idle');
+    
+    // Emit respawn event for audio system
+    emitSceneEvent(this.player.scene, 'player:respawned', {
+      position: { x: this.player.x, y: this.player.y }
+    });
+    
+    // Play respawn effect if available
+    this.playRespawnEffect();
   }
 
   /**
