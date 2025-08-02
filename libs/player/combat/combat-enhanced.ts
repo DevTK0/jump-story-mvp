@@ -6,7 +6,7 @@ import { InputSystem } from '../input';
 import type { IDebuggable } from '@/debug/debug-interfaces';
 import { DEBUG_CONFIG } from '@/debug/config';
 import { BaseDebugRenderer } from '@/debug/debug-renderer';
-import type { JobConfig, Attack } from './attack-types';
+import type { JobConfig, Attack, StandardAttack } from './attack-types';
 import { PlayerQueryService } from '../services/player-query-service';
 import { CombatValidationService } from '../services/combat-validation-service';
 import { CombatMessageDisplay } from './combat-message-display';
@@ -224,6 +224,9 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
       case 'standard':
         this.performStandardAttack(attackNum, attackConfig);
         break;
+      case 'stationary':
+        this.performStationaryAttack(attackNum, attackConfig);
+        break;
       case 'dash':
         this.performDashAttack(attackNum, attackConfig);
         break;
@@ -313,6 +316,14 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
         body.setSize(hitboxWidth, hitboxHeight);
       }
     }
+  }
+
+  private performStationaryAttack(attackNum: number, config: Attack): void {
+    logger.info('Perform stationary attack');
+    this.performStandardAttack(attackNum, {
+      ...config,
+      attackType: 'standard',
+    } as StandardAttack);
   }
 
   private performStandardAttack(attackNum: number, config: Attack): void {

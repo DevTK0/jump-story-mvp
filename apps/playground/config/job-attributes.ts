@@ -24,7 +24,7 @@ const sharedAttacks = {
     attackType: 'standard' as const,
     name: 'Power Slash',
     description:
-      'A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.',
+      'A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.',
     damage: 50,
     cooldown: 0.5,
     critChance: 0,
@@ -102,7 +102,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         attackType: 'standard' as const,
         name: 'Power Slash',
         description:
-          'A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.',
+          'A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.',
         damage: 50,
         cooldown: 0.5,
         critChance: 0,
@@ -190,9 +190,6 @@ export const jobAttributes: Record<string, JobConfig> = {
       mana: 100,
       hpRecovery: 0.5,
       manaRecovery: 2,
-      stationaryForAttack1: true,
-      stationaryForAttack2: true,
-      stationaryForAttack3: true,
       resistances: {
         sword: -10,
         axe: -10,
@@ -398,7 +395,6 @@ export const jobAttributes: Record<string, JobConfig> = {
       hpRecovery: 2,
       manaRecovery: 1,
       knockbackImmune: true, // immune to knockback
-      chargeAttackAsUltimate: true,
       resistances: {
         sword: 15,
         axe: 10,
@@ -410,7 +406,31 @@ export const jobAttributes: Record<string, JobConfig> = {
         greatsword: 20,
       },
     },
-    attacks: sharedAttacks,
+    attacks: {
+      ...sharedAttacks,
+      attack1: {
+        ...sharedAttacks.attack1,
+        attackType: 'standard' as const,
+      },
+      attack3: {
+        attackType: 'dash' as const,
+        name: 'Shield Charge',
+        description: 'Dashes forward while holding up the shield.',
+        damage: 25,
+        cooldown: 1.2,
+        critChance: 0.3,
+        knockback: 20,
+        range: 200,
+        hits: 2,
+        targets: 3,
+        modifiers: ['spear' as const],
+        manaCost: 0,
+        ammoCost: 0,
+        dashDistance: 1000,
+        dashSpeed: 1000,
+        icon: 'heal',
+      },
+    },
     passives: {
       passive1: {
         name: 'Divine Protection',
@@ -430,7 +450,6 @@ export const jobAttributes: Record<string, JobConfig> = {
       hpRecovery: 1,
       manaRecovery: 0.7,
       knockbackImmune: true, // immune to knockback
-      stationaryForAttack1: true,
       resistances: {
         sword: 5,
         axe: 0,
@@ -443,10 +462,13 @@ export const jobAttributes: Record<string, JobConfig> = {
       },
     },
     attacks: {
-      attack1: sharedAttacks.attack1,
+      attack1: {
+        ...sharedAttacks.attack1,
+        attackType: 'standard' as const,
+      },
       attack2: {
         attackType: 'dash' as const,
-        description: 'some dash attack.',
+        description: 'A dash that uses the full speed of the steed.',
         name: 'Piercing Dash',
         damage: 40,
         cooldown: 0.8,
@@ -466,7 +488,7 @@ export const jobAttributes: Record<string, JobConfig> = {
       attack3: {
         attackType: 'dash' as const,
         name: 'Lightning Thrust',
-        description: 'some dash attack.',
+        description: 'A lightning-enhanced attack while dashing on the trusty steed.',
         damage: 25,
         cooldown: 1.2,
         critChance: 0.3,
