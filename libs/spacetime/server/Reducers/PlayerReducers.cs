@@ -586,6 +586,9 @@ public static partial class Module
                 respawn_x = teleport.x + 16f;
                 respawn_y = teleport.y + 16f;
             }
+        } else {
+          respawn_x = 1000;
+          respawn_y = 145; // Default location
         }
         
         // First update HP and position (use teleport location)
