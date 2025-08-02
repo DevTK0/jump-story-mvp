@@ -57,22 +57,22 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
       this.stateTracker.updateFacingFromInput(horizontalDir);
 
       // Horizontal movement (only when on ground)
-      if (onGround) {
-        if (horizontalDir !== 0) {
-          body.setVelocityX(horizontalDir * this.player.getSpeed());
+      // if (onGround) {
+      if (horizontalDir !== 0) {
+        body.setVelocityX(horizontalDir * this.player.getSpeed());
 
-          // Transition to walk state if not already walking or attacking
-          if (!this.player.isInState('Walk') && !this.player.isAttacking) {
-            this.player.transitionToState('Walk');
-          }
-        } else {
-          body.setVelocityX(0);
-          // Transition to idle state if not already idle or attacking
-          if (!this.player.isInState('Idle') && !this.player.isAttacking) {
-            this.player.transitionToState('Idle');
-          }
+        // Transition to walk state if not already walking or attacking
+        if (!this.player.isInState('Walk') && !this.player.isAttacking) {
+          this.player.transitionToState('Walk');
+        }
+      } else {
+        body.setVelocityX(0);
+        // Transition to idle state if not already idle or attacking
+        if (!this.player.isInState('Idle') && !this.player.isAttacking) {
+          this.player.transitionToState('Idle');
         }
       }
+      // }
 
       // Regular jump
       if (this.inputSystem.isJumpPressed()) {
@@ -131,7 +131,8 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
       // this.inputSystem.isDoubleJumpPressed() &&
       !onGround &&
       !this.stateTracker.getHasUsedDoubleJump() &&
-      !this.player.isClimbing
+      !this.player.isClimbing &&
+      (this.player.jobConfig?.baseStats?.doubleJump ?? false)
     ) {
       this.player.body.setVelocityY(-this.player.getJumpSpeed());
       this.stateTracker.setHasUsedDoubleJump(true);

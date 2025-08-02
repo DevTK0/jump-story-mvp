@@ -36,7 +36,6 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
 
   // Job configuration
   private playerJob: string;
-  private jobConfig: JobConfig;
 
   // Attack state
   private attackCooldowns: Map<number, boolean> = new Map();
@@ -83,6 +82,14 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
 
     // Initialize hitboxes for each attack
     this.initializeHitboxes();
+  }
+
+  public set jobConfig (newJobConfig: JobConfig) {
+    this.player.jobConfig = newJobConfig;
+  }
+
+  public get jobConfig (): JobConfig {
+    return this.player.jobConfig;
   }
 
   // Method to set up collision detection after physics is initialized

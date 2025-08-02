@@ -118,6 +118,7 @@ export interface JobConfig {
     manaRecovery: number;
     resistances: Resistances;
     knockbackImmune?: boolean; // Optional: Makes the job immune to knockback
+    doubleJump?: boolean;
   };
   attacks: {
     attack1: Attack;
