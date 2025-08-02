@@ -197,4 +197,45 @@ public static partial class Module
         public string location_name;
         public bool is_unlocked;
     }
+
+    [Table(Name = "Party", Public = true)]
+    public partial struct Party
+    {
+        [PrimaryKey, AutoInc]
+        public uint party_id;
+        public Identity leader_identity;
+        public string party_name;
+        public Timestamp created_at;
+        public uint member_count; // Cached count for quick 4-player limit check
+    }
+
+    [Table(Name = "PartyMember", Public = true)]
+    public partial struct PartyMember
+    {
+        [PrimaryKey, AutoInc]
+        public uint party_member_id;
+        public uint party_id;
+        [Unique]
+        public Identity player_identity; // One party per player
+    }
+
+    [Table(Name = "PartyInvite", Public = true)]
+    public partial struct PartyInvite
+    {
+        [PrimaryKey, AutoInc]
+        public uint invite_id;
+        public uint party_id;
+        public Identity inviter_identity; // Who sent the invite
+        public Identity invitee_identity;
+        public Timestamp invited_at;
+        public Timestamp expires_at; // Auto-cleanup old invites
+    }
+
+    [Table(Name = "party_invite_cleanup_timer", Scheduled = nameof(CleanupExpiredPartyInvites), ScheduledAt = nameof(scheduled_at))]
+    public partial struct PartyInviteCleanupTimer
+    {
+        [PrimaryKey, AutoInc]
+        public ulong scheduled_id;
+        public ScheduleAt scheduled_at;
+    }
 }

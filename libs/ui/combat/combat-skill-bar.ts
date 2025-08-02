@@ -19,7 +19,6 @@ export class CombatSkillBar {
   private skillCooldowns: Map<number, { startTime: number; duration: number }> = new Map();
   
   constructor(scene: Phaser.Scene) {
-    console.log('[CombatSkillBar] Constructor called');
     this.scene = scene;
     this.logger = createLogger('CombatSkillBar');
     
@@ -27,16 +26,8 @@ export class CombatSkillBar {
     this.tooltip = CombatSkillTooltip.getInstance(scene);
     
     // Get database connection
-    console.log('[CombatSkillBar] Getting UIContextService instance...');
-    let context;
-    try {
-      context = UIContextService.getInstance();
-      this.dbConnection = context.getDbConnection();
-      console.log('[CombatSkillBar] Got connection:', !!this.dbConnection);
-    } catch (error) {
-      console.error('[CombatSkillBar] Error getting UIContextService:', error);
-      return;
-    }
+    const context = UIContextService.getInstance();
+    this.dbConnection = context.getDbConnection();
     
     // Create main container
     this.createContainer();
@@ -62,7 +53,6 @@ export class CombatSkillBar {
         const identity = context.getPlayerIdentity();
         if (identity && newPlayer.identity.toHexString() === identity.toHexString()) {
           if (oldPlayer.job !== newPlayer.job) {
-            this.logger.info(`Player job changed from ${oldPlayer.job} to ${newPlayer.job}`);
             this.initializeSkillsFromJob();
           }
         }
@@ -300,12 +290,12 @@ export class CombatSkillBar {
       const currentTime = Date.now();
       const remainingTime = (cooldownInfo.startTime + cooldownInfo.duration) - currentTime;
       if (remainingTime > 0) {
-        this.logger.debug(`Skill ${skillData.name} still on cooldown: ${remainingTime}ms remaining`);
+        // Skill still on cooldown
         return;
       }
     }
     
-    this.logger.info(`UI: Skill slot ${slotIndex} clicked`);
+    // Skill slot clicked - trigger the skill
   }
   
   private handleSkillActivatedEvent(data: { slotIndex: number; skillName: string; cooldown: number }): void {
@@ -395,7 +385,5 @@ export class CombatSkillBar {
     
     // Destroy container
     this.container.destroy();
-    
-    this.logger.info('CombatSkillBar destroyed');
   }
 }

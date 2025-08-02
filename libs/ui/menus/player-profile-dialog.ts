@@ -37,7 +37,7 @@ export class PlayerProfileDialog extends ModalDialog {
 
   constructor(scene: Phaser.Scene, playerData: Player) {
     const dialogWidth = 400;
-    const dialogHeight = 500;
+    const dialogHeight = 550; // Increased height to fix overlap
     
     super(scene, dialogWidth, dialogHeight, 'Player Profile');
     
@@ -77,32 +77,32 @@ export class PlayerProfileDialog extends ModalDialog {
 
   protected createContent(): void {
     const centerX = 0;
-    const startY = -this.dialogHeight / 2 + 60;
+    const startY = -this.dialogHeight / 2 + 80; // Increased top padding
     
     // Create profile container
     this.profileContainer = this.scene.add.container(centerX, startY);
     this.contentContainer.add(this.profileContainer);
     
     // Player sprite
-    this.createPlayerSprite(0, 20);
+    this.createPlayerSprite(0, 30); // Moved down
     
     // Player name
-    this.createNameSection(0, 100);
+    this.createNameSection(0, 120); // Moved down
     
     // Level and job
-    this.createLevelJobSection(0, 130);
+    this.createLevelJobSection(0, 150); // Moved down
     
     // HP bar
-    this.createHealthBar(0, 180);
+    this.createHealthBar(0, 200); // Moved down
     
     // Mana bar
-    this.createManaBar(0, 240);
+    this.createManaBar(0, 260); // Moved down
     
     // Experience
-    this.createExperienceSection(0, 300);
+    this.createExperienceSection(0, 320); // Moved down
     
-    // Close button
-    this.createCloseButton();
+    // ESC instruction instead of close button
+    this.createESCInstruction();
   }
 
   private createPlayerSprite(x: number, y: number): void {
@@ -250,32 +250,17 @@ export class PlayerProfileDialog extends ModalDialog {
     this.profileContainer.add(this.expText);
   }
 
-  private createCloseButton(): void {
-    const buttonY = this.dialogHeight / 2 - 50;
+  private createESCInstruction(): void {
+    const instructionY = this.dialogHeight / 2 - 40;
     
-    const closeButton = this.scene.add.rectangle(0, buttonY, 120, 40, 0x555555);
-    closeButton.setStrokeStyle(2, 0xffffff);
-    closeButton.setInteractive({ useHandCursor: true });
-    
-    const closeText = this.scene.add.text(0, buttonY, 'Close', {
-      fontSize: '18px',
-      color: '#ffffff'
+    const instructionText = this.scene.add.text(0, instructionY, 'Press ESC to close', {
+      fontSize: '14px',
+      color: '#cccccc',
+      fontStyle: 'italic'
     });
-    closeText.setOrigin(0.5);
+    instructionText.setOrigin(0.5);
     
-    closeButton.on('pointerover', () => {
-      closeButton.setFillStyle(0x777777);
-    });
-    
-    closeButton.on('pointerout', () => {
-      closeButton.setFillStyle(0x555555);
-    });
-    
-    closeButton.on('pointerdown', () => {
-      this.hide();
-    });
-    
-    this.contentContainer.add([closeButton, closeText]);
+    this.contentContainer.add(instructionText);
   }
 
   private subscribeToPlayerUpdates(): void {

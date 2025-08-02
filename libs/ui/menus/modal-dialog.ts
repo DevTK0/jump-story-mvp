@@ -48,6 +48,9 @@ export abstract class ModalDialog {
     
     // Setup click outside to close
     this.setupClickOutside();
+    
+    // Setup ESC key to close
+    this.setupEscapeKey();
   }
   
   protected abstract createContent(): void;
@@ -73,6 +76,14 @@ export abstract class ModalDialog {
     
     this.container.add(clickBg);
     this.container.sendToBack(clickBg);
+  }
+  
+  private setupEscapeKey(): void {
+    this.scene.input.keyboard?.on('keydown-ESC', () => {
+      if (this.container.visible) {
+        this.hide();
+      }
+    });
   }
   
   public show(): void {

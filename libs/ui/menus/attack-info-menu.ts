@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import { createLogger, type ModuleLogger } from '@/core/logger';
 import { UIContextService } from '../services/ui-context-service';
-import { COMBAT_SKILL_CONFIG } from '../combat/combat-skill-config';
 import { jobAttributes } from '../../../apps/playground/config/job-attributes';
 import type { JobConfig } from '@/player/combat/attack-types';
 
@@ -67,7 +66,7 @@ export class AttackInfoMenu {
     title.setOrigin(0.5, 0.5);
 
     // Create instruction text
-    const instruction = this.scene.add.text(centerX, centerY - menuHeight / 2 + 70, 'Press P for passives | Press A or ESC to close', {
+    const instruction = this.scene.add.text(centerX, centerY - menuHeight / 2 + 70, 'Press A or ESC to close', {
       fontSize: '14px',
       color: '#cccccc',
       fontStyle: 'italic',
@@ -81,7 +80,7 @@ export class AttackInfoMenu {
     this.createAttackInfo(centerX, centerY, menuWidth, menuHeight);
   }
 
-  private createAttackInfo(centerX: number, centerY: number, menuWidth: number, menuHeight: number): void {
+  private createAttackInfo(centerX: number, centerY: number, _menuWidth: number, menuHeight: number): void {
     // Get current player's job
     const context = UIContextService.getInstance();
     const connection = context.getDbConnection();

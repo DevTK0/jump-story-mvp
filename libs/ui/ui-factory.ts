@@ -15,7 +15,8 @@ import { ClassSelectionMenu } from './menus/class-selection-menu';
 import { TeleportSelectionMenu } from './menus/teleport-selection-menu';
 import { LeaderboardDialog } from './menus/leaderboard-dialog';
 import { AttackInfoMenu } from './menus/attack-info-menu';
-import { PassiveInfoMenu } from './menus/passive-info-menu';
+import { PartyMenu } from './menus/party-menu';
+import { PartyInvitePopup } from './party/party-invite-popup';
 import { jobAttributes } from '../../apps/playground/config/job-attributes';
 import type { Player } from '@/spacetime/client';
 
@@ -42,7 +43,8 @@ export class UIFactory {
   private teleportSelectionMenu?: TeleportSelectionMenu;
   private leaderboardDialog?: LeaderboardDialog;
   private attackInfoMenu?: AttackInfoMenu;
-  private passiveInfoMenu?: PassiveInfoMenu;
+  private partyMenu?: PartyMenu;
+  private partyInvitePopup?: PartyInvitePopup;
   
   // Keyboard shortcuts
   private keyboardHandlers: Map<string, () => void> = new Map();
@@ -56,22 +58,14 @@ export class UIFactory {
    * Create all game UI components
    */
   createGameUI(config: UICreateConfig): void {
-    console.log('[UIFactory] createGameUI called', {
-      hasConnection: !!config.connection,
-      hasIdentity: !!config.identity,
-      hasPlayer: !!config.player
-    });
-    this.logger.info('Creating game UI...');
+    // Store reference to UIFactory in scene data for other components
+    this.scene.data.set('uiFactory', this);
     
     // Initialize UIContextService first
-    console.log('[UIFactory] Initializing UIContextService...');
     UIContextService.initialize(this.scene, config);
-    this.logger.debug('UIContextService initialized');
-    console.log('[UIFactory] UIContextService initialized successfully');
     
     // Initialize DbMetricsTracker singleton
     DbMetricsTracker.getInstance().initialize(config.connection);
-    this.logger.debug('DbMetricsTracker initialized');
     
     
     // Create player stats UI
@@ -86,6 +80,9 @@ export class UIFactory {
     // Create respawn countdown UI
     this.createRespawnCountdownUI();
     
+    // Create party invite popup
+    this.createPartyInvitePopup();
+    
     // Setup keyboard shortcuts
     this.setupKeyboardShortcuts(config);
     
@@ -94,8 +91,6 @@ export class UIFactory {
     if (config.player) {
       this.checkAndShowNameChangeDialog(config);
     }
-    
-    this.logger.info('Game UI created successfully');
   }
   
   private checkAndShowNameChangeDialog(config: UICreateConfig): void {
@@ -106,7 +101,6 @@ export class UIFactory {
         for (const player of config.connection.db.player.iter()) {
           if (player.identity.toHexString() === config.identity.toHexString()) {
             if (player.name === 'Player') {
-              this.logger.info('Player has default name, showing name change dialog');
               const nameChangeDialog = new NameChangeDialog(this.scene);
               nameChangeDialog.show();
             }
@@ -141,18 +135,12 @@ export class UIFactory {
    * Update UI with player data when it becomes available
    */
   updatePlayerData(player: Player): void {
-    this.logger.info('Updating UI with player data', {
-      playerName: player.name,
-      playerId: player.playerId
-    });
-    
     // Get the current config from UIContextService
     const contextService = UIContextService.getInstance();
     const connection = contextService.getDbConnection();
     const identity = contextService.getPlayerIdentity();
     
     if (!connection || !identity) {
-      this.logger.error('Cannot update player data: missing connection or identity');
       return;
     }
     
@@ -165,8 +153,6 @@ export class UIFactory {
    * Cleanup UI components
    */
   destroy(): void {
-    this.logger.info('Destroying UI components...');
-    
     // Remove keyboard handlers
     this.keyboardHandlers.forEach((handler, key) => {
       this.scene.input.keyboard?.off(`keydown-${key}`, handler);
@@ -186,7 +172,8 @@ export class UIFactory {
     this.teleportSelectionMenu?.destroy();
     this.leaderboardDialog?.destroy();
     this.attackInfoMenu?.destroy();
-    this.passiveInfoMenu?.destroy();
+    this.partyMenu?.destroy();
+    this.partyInvitePopup?.destroy();
     
     // Destroy UIContextService if it was initialized
     if (UIContextService.isInitialized()) {
@@ -197,22 +184,11 @@ export class UIFactory {
   // Private creation methods
   
   private createPlayerStatsUI(_config: UICreateConfig): void {
-    console.log('[UIFactory] Creating player stats UI...');
     // Create the new bottom UI bar - no need to pass identity or connection
-    try {
-      this.bottomUIBar = new BottomUIBar(this.scene);
-      console.log('[UIFactory] BottomUIBar created successfully');
-    } catch (error) {
-      console.error('[UIFactory] Failed to create BottomUIBar:', error);
-    }
+    this.bottomUIBar = new BottomUIBar(this.scene);
     
     // Create combat skill bar
-    try {
-      this.combatSkillBar = new CombatSkillBar(this.scene);
-      console.log('[UIFactory] CombatSkillBar created successfully');
-    } catch (error) {
-      console.error('[UIFactory] Failed to create CombatSkillBar:', error);
-    }
+    this.combatSkillBar = new CombatSkillBar(this.scene);
     
     // Keep the old stats UI but hide it (for backward compatibility)
     this.playerStatsUI = new PlayerStatsUI(this.scene);
@@ -250,20 +226,16 @@ export class UIFactory {
     // Create broadcast display if we have a connection
     if (config.connection) {
       this.broadcastDisplay = new BroadcastDisplay(this.scene, config.connection);
-      this.logger.debug('BroadcastDisplay created');
     }
   }
   
   private createRespawnCountdownUI(): void {
-    console.log('[UIFactory] Creating respawn countdown UI...');
     // Create respawn countdown UI
-    try {
-      this.respawnCountdownUI = new RespawnCountdownUI(this.scene);
-      this.logger.debug('RespawnCountdownUI created');
-      console.log('[UIFactory] RespawnCountdownUI created successfully');
-    } catch (error) {
-      console.error('[UIFactory] Failed to create RespawnCountdownUI:', error);
-    }
+    this.respawnCountdownUI = new RespawnCountdownUI(this.scene);
+  }
+  
+  private createPartyInvitePopup(): void {
+    this.partyInvitePopup = new PartyInvitePopup(this.scene);
   }
   
   private setupKeyboardShortcuts(config: UICreateConfig): void {
@@ -289,7 +261,10 @@ export class UIFactory {
     
     // Leaderboard hotkey (L key)
     this.registerKeyboardShortcut('L', () => {
-      this.openLeaderboard();
+      // Don't open leaderboard if party menu is visible
+      if (!this.partyMenu?.visible) {
+        this.openLeaderboard();
+      }
     });
     
     // Attack info hotkey (A key)
@@ -297,9 +272,9 @@ export class UIFactory {
       this.openAttackInfo();
     });
     
-    // Passive info hotkey (P key)
+    // Party menu hotkey (P key)
     this.registerKeyboardShortcut('P', () => {
-      this.openPassiveInfo();
+      this.openPartyMenu();
     });
     
     // Number keys 1-9 to directly change jobs
@@ -418,10 +393,6 @@ export class UIFactory {
       this.attackInfoMenu = new AttackInfoMenu(this.scene);
     }
     
-    // Hide passive menu if open
-    if (this.passiveInfoMenu?.visible) {
-      this.passiveInfoMenu.hide();
-    }
     
     // Toggle visibility
     if (this.attackInfoMenu.visible) {
@@ -431,22 +402,22 @@ export class UIFactory {
     }
   }
   
-  private openPassiveInfo(): void {
-    // Toggle the passive info menu
-    if (!this.passiveInfoMenu) {
-      this.passiveInfoMenu = new PassiveInfoMenu(this.scene);
-    }
-    
-    // Hide attack menu if open
-    if (this.attackInfoMenu?.visible) {
-      this.attackInfoMenu.hide();
+  public openPassiveInfo(): void {
+    // Passive menu is currently disabled
+    return;
+  }
+  
+  private openPartyMenu(): void {
+    // Toggle the party menu
+    if (!this.partyMenu) {
+      this.partyMenu = new PartyMenu(this.scene);
     }
     
     // Toggle visibility
-    if (this.passiveInfoMenu.visible) {
-      this.passiveInfoMenu.hide();
+    if (this.partyMenu.visible) {
+      this.partyMenu.hide();
     } else {
-      this.passiveInfoMenu.show();
+      this.partyMenu.show();
     }
   }
   
@@ -456,7 +427,7 @@ export class UIFactory {
         this.teleportSelectionMenu?.visible || 
         this.leaderboardDialog?.visible ||
         this.attackInfoMenu?.visible ||
-        this.passiveInfoMenu?.visible ||
+        this.partyMenu?.visible ||
         this.nameChangeDialog?.visible) {
         // Don't switch jobs if any menu is open
         return;
@@ -488,17 +459,14 @@ export class UIFactory {
     const index = jobNumber - 1;
     
     if (index >= 0 && index < jobList.length) {
-      const [jobId, jobConfig] = jobList[index];
+      const [jobId] = jobList[index];
       
       // Check if job is unlocked
       const jobData = context.getJobData();
       const isUnlocked = jobData.jobData.get(jobId) || false;
       
       if (isUnlocked) {
-        this.logger.info(`Quick changing to job: ${jobConfig.displayName}`);
         connection.reducers.changeJob(jobId);
-      } else {
-        this.logger.info(`Job ${jobConfig.displayName} is locked`);
       }
     } else {
       this.logger.warn(`Invalid job number: ${jobNumber}`);

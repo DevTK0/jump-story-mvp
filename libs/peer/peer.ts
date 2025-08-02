@@ -10,13 +10,16 @@ import { emitSceneEvent } from '@/core/scene';
 export interface PeerConfig {
   scene: Phaser.Scene;
   playerData: PlayerData;
+  partyName?: string;
 }
 
 export class Peer extends Phaser.GameObjects.Sprite {
   private playerData: PlayerData;
   private nameLabel!: Phaser.GameObjects.Text;
+  private partyLabel!: Phaser.GameObjects.Text;
   private healthBar!: PeerHealthBar;
   private logger: ModuleLogger = createLogger('Peer');
+  private partyName: string = '';
 
   // Interpolation properties
   private targetPosition = { x: 0, y: 0 };
@@ -50,6 +53,7 @@ export class Peer extends Phaser.GameObjects.Sprite {
 
     this.playerData = config.playerData;
     this.currentJob = job;
+    this.partyName = config.partyName || '';
 
     // Add to scene (no physics - peers are visual only)
     config.scene.add.existing(this);
@@ -81,6 +85,9 @@ export class Peer extends Phaser.GameObjects.Sprite {
     // Create name label
     this.createNameLabel();
 
+    // Create party label
+    this.createPartyLabel();
+
     // Create health bar
     this.createHealthBar();
 
@@ -108,11 +115,35 @@ export class Peer extends Phaser.GameObjects.Sprite {
     this.nameLabel.setDepth(PEER_CONFIG.display.nameLabel.depth); // Above the peer sprite
   }
 
+  private createPartyLabel(): void {
+    // Get party name from database
+    const partyName = this.getPartyName();
+    
+    this.partyLabel = this.scene.add.text(
+      this.x,
+      this.y + PEER_CONFIG.display.nameLabel.offsetY + 15, // Position below name
+      partyName,
+      {
+        fontSize: '10px',
+        color: '#aaffaa',
+        stroke: '#000000',
+        strokeThickness: 2,
+      }
+    );
+    this.partyLabel.setOrigin(0.5, 0.5);
+    this.partyLabel.setDepth(PEER_CONFIG.display.nameLabel.depth);
+    this.partyLabel.setVisible(partyName !== '');
+  }
+
   private createHealthBar(): void {
     this.healthBar = new PeerHealthBar(this.scene, this.x, this.y, this.playerData.maxHp);
 
     // Initialize health bar with current health
     this.healthBar.updateHealth(this.playerData.currentHp);
+  }
+
+  private getPartyName(): string {
+    return this.partyName ? `<${this.partyName}>` : '';
   }
 
   public playAnimation(animationKey: string): void {
@@ -284,6 +315,7 @@ export class Peer extends Phaser.GameObjects.Sprite {
         this.setPosition(newTargetX, newTargetY);
         this.targetPosition = { x: newTargetX, y: newTargetY };
         this.nameLabel.setPosition(this.x, this.y + PEER_CONFIG.display.nameLabel.offsetY);
+        this.partyLabel.setPosition(this.x, this.y + PEER_CONFIG.display.nameLabel.offsetY + 15);
         this.healthBar.updatePosition(this.x, this.y);
         this.logger.debug(`Teleported peer ${this.playerData.name} to (${this.x}, ${this.y}`);
       } else {
@@ -331,6 +363,7 @@ export class Peer extends Phaser.GameObjects.Sprite {
 
       // Update name label and health bar positions
       this.nameLabel.setPosition(this.x, this.y + PEER_CONFIG.display.nameLabel.offsetY);
+      this.partyLabel.setPosition(this.x, this.y + PEER_CONFIG.display.nameLabel.offsetY + 15);
       this.healthBar.updatePosition(this.x, this.y);
     }
 
@@ -354,6 +387,17 @@ export class Peer extends Phaser.GameObjects.Sprite {
     return this.playerData;
   }
 
+  public updatePartyLabel(newPartyName?: string): void {
+    if (newPartyName !== undefined) {
+      this.partyName = newPartyName;
+    }
+    const partyNameDisplay = this.getPartyName();
+    if (this.partyLabel) {
+      this.partyLabel.setText(partyNameDisplay);
+      this.partyLabel.setVisible(partyNameDisplay !== '');
+    }
+  }
+
   public destroy(): void {
     // Remove all event listeners
     this.off('animationcomplete');
@@ -362,6 +406,7 @@ export class Peer extends Phaser.GameObjects.Sprite {
     this.stateMachine?.destroy();
 
     this.nameLabel?.destroy();
+    this.partyLabel?.destroy();
     this.healthBar?.destroy();
     super.destroy();
   }

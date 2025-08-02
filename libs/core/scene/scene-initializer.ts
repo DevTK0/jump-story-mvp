@@ -206,6 +206,7 @@ export class SceneInitializer {
     // 20x world bounds for infinite tilemap support, centered around the tilemap
     const mapWidth = mapData.tilemap.widthInPixels;
     const mapHeight = mapData.tilemap.heightInPixels;
+    console.log(`[SceneInitializer] Tilemap dimensions: ${mapWidth}x${mapHeight}`);
     
     // Center the bounds so you can go in negative directions
     const boundsWidth = mapWidth * 20;

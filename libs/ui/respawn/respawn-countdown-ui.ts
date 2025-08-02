@@ -6,14 +6,12 @@
 import Phaser from 'phaser';
 import { DbConnection, Player as ServerPlayer } from '@/spacetime/client';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
-import { createLogger } from '@/core/logger';
 import { UIContextService } from '../services/ui-context-service';
 
 export class RespawnCountdownUI {
   private scene: Phaser.Scene;
   private dbConnection: DbConnection | null = null;
   private playerIdentity: Identity;
-  private logger = createLogger('RespawnCountdownUI');
 
   // UI Elements
   private container!: Phaser.GameObjects.Container;
@@ -27,15 +25,12 @@ export class RespawnCountdownUI {
   private updateInterval?: number;
 
   constructor(scene: Phaser.Scene) {
-    console.log('[RespawnCountdownUI] Constructor called');
     this.scene = scene;
     
     // Get data from context service
     const context = UIContextService.getInstance();
     this.playerIdentity = context.getPlayerIdentity()!;
     this.dbConnection = context.getDbConnection();
-    
-    this.logger.debug('Initializing RespawnCountdownUI');
     
     this.createUI();
     

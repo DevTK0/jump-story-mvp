@@ -68,20 +68,9 @@ export class UIContextService {
    * Initialize the UIContextService singleton with initial configuration
    */
   static initialize(scene: Phaser.Scene, config: UICreateConfig): UIContextService {
-    console.log('[UIContextService] initialize called', {
-      hasInstance: !!this.instance,
-      hasConnection: !!config.connection,
-      hasIdentity: !!config.identity,
-      identityHex: config.identity?.toHexString()
-    });
-    
     if (!this.instance) {
       this.instance = new UIContextService(scene);
       this.instance.setInitialConfig(config);
-      this.instance.logger.info('UIContextService initialized');
-      console.log('[UIContextService] New instance created and configured');
-    } else {
-      console.log('[UIContextService] Using existing instance');
     }
     return this.instance;
   }
@@ -90,12 +79,7 @@ export class UIContextService {
    * Get the singleton instance
    */
   static getInstance(): UIContextService {
-    console.log('[UIContextService] getInstance called', {
-      hasInstance: !!this.instance
-    });
-    
     if (!this.instance) {
-      console.error('[UIContextService] ERROR: Not initialized!');
       throw new Error('UIContextService not initialized. Call initialize() first.');
     }
     return this.instance;
@@ -105,18 +89,8 @@ export class UIContextService {
    * Set initial configuration from UIFactory
    */
   private setInitialConfig(config: UICreateConfig): void {
-    console.log('[UIContextService] setInitialConfig called', {
-      hasConnection: !!config.connection,
-      hasIdentity: !!config.identity,
-      identityHex: config.identity?.toHexString()
-    });
-    
     this.dbConnection = config.connection;
     this.playerIdentity = config.identity;
-    this.logger.debug('Initial config set', {
-      hasConnection: !!config.connection,
-      identityHex: config.identity?.toHexString()
-    });
   }
 
   /**
@@ -130,10 +104,6 @@ export class UIContextService {
    * Get the player identity
    */
   getPlayerIdentity(): Identity | null {
-    console.log('[UIContextService] getPlayerIdentity called', {
-      hasIdentity: !!this.playerIdentity,
-      identityHex: this.playerIdentity?.toHexString()
-    });
     return this.playerIdentity;
   }
 

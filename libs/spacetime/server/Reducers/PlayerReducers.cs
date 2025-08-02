@@ -1,6 +1,7 @@
 using SpacetimeDB;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 public static partial class Module
@@ -58,7 +59,13 @@ public static partial class Module
             scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(100))
         });
         
-        Log.Info("Initialized dead body cleanup, enemy spawning, enemy patrol, message cleanup, combat timeout, leaderboard update, broadcast cleanup, and boss action schedulers");
+        // Schedule party invite cleanup every 30 seconds
+        ctx.Db.party_invite_cleanup_timer.Insert(new PartyInviteCleanupTimer
+        {
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromSeconds(30))
+        });
+        
+        Log.Info("Initialized dead body cleanup, enemy spawning, enemy patrol, message cleanup, combat timeout, leaderboard update, broadcast cleanup, boss action, and party invite cleanup schedulers");
     }
 
     // Helper function to populate PlayerJob entries for a new player
@@ -226,6 +233,9 @@ public static partial class Module
                 last_active = ctx.Timestamp
             });
             Log.Info($"Player {ctx.Sender} marked as offline. Level: {player.Value.level}, Experience: {player.Value.experience}");
+            
+            // Remove player from party when they disconnect
+            RemovePlayerFromPartyOnDisconnect(ctx, player.Value);
         }
     }
 
@@ -849,5 +859,80 @@ public static partial class Module
 
         ctx.Db.Broadcast.Insert(broadcast);
         Log.Info($"Broadcast message created: {message}");
+    }
+
+    private static void RemovePlayerFromPartyOnDisconnect(ReducerContext ctx, Player player)
+    {
+        // Find player's party membership
+        var membership = ctx.Db.PartyMember.player_identity.Find(player.identity);
+        if (membership == null)
+        {
+            // Player is not in a party
+            return;
+        }
+
+        // Get the party
+        var party = ctx.Db.Party.party_id.Find(membership.Value.party_id);
+        if (party == null)
+        {
+            Log.Error($"Party {membership.Value.party_id} not found for disconnecting player");
+            return;
+        }
+
+        // Remove player from party
+        ctx.Db.PartyMember.party_member_id.Delete(membership.Value.party_member_id);
+
+        // Update party member count
+        var newMemberCount = party.Value.member_count - 1;
+
+        // Check if party should be disbanded (1 or 0 members left)
+        if (newMemberCount <= 1)
+        {
+            // Disband the party
+            DisbandPartyOnDisconnect(ctx, party.Value);
+            Log.Info($"Player {player.name} disconnected from party '{party.Value.party_name}' - party disbanded");
+        }
+        else
+        {
+            // Update member count
+            var updatedParty = party.Value with { member_count = newMemberCount };
+
+            // If the leader disconnected, promote the next member
+            if (party.Value.leader_identity == player.identity)
+            {
+                var nextMember = ctx.Db.PartyMember.Iter()
+                    .Where(m => m.party_id == party.Value.party_id)
+                    .FirstOrDefault();
+
+                if (nextMember.party_member_id != default)
+                {
+                    updatedParty = updatedParty with { leader_identity = nextMember.player_identity };
+                    Log.Info($"Promoted player {nextMember.player_identity} to party leader after disconnect");
+                }
+            }
+
+            ctx.Db.Party.party_id.Update(updatedParty);
+            Log.Info($"Player {player.name} disconnected from party '{party.Value.party_name}'");
+        }
+    }
+
+    private static void DisbandPartyOnDisconnect(ReducerContext ctx, Party party)
+    {
+        // Remove all remaining members
+        foreach (var member in ctx.Db.PartyMember.Iter().Where(m => m.party_id == party.party_id))
+        {
+            ctx.Db.PartyMember.party_member_id.Delete(member.party_member_id);
+        }
+
+        // Delete all pending invites
+        foreach (var invite in ctx.Db.PartyInvite.Iter().Where(i => i.party_id == party.party_id))
+        {
+            ctx.Db.PartyInvite.invite_id.Delete(invite.invite_id);
+        }
+
+        // Delete the party
+        ctx.Db.Party.party_id.Delete(party.party_id);
+
+        Log.Info($"Party '{party.party_name}' (ID: {party.party_id}) has been disbanded due to disconnect");
     }
 }

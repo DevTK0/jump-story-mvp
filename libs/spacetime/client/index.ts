@@ -34,6 +34,8 @@ import {
 } from "@clockworklabs/spacetimedb-sdk";
 
 // Import and reexport all reducer arg types
+import { AcceptPartyInvite } from "./accept_party_invite_reducer.ts";
+export { AcceptPartyInvite };
 import { BroadcastMessage } from "./broadcast_message_reducer.ts";
 export { BroadcastMessage };
 import { ChangeJob } from "./change_job_reducer.ts";
@@ -42,6 +44,8 @@ import { CheckCombatTimeouts } from "./check_combat_timeouts_reducer.ts";
 export { CheckCombatTimeouts };
 import { CleanupDeadBodies } from "./cleanup_dead_bodies_reducer.ts";
 export { CleanupDeadBodies };
+import { CleanupExpiredPartyInvites } from "./cleanup_expired_party_invites_reducer.ts";
+export { CleanupExpiredPartyInvites };
 import { CleanupInactivePlayers } from "./cleanup_inactive_players_reducer.ts";
 export { CleanupInactivePlayers };
 import { CleanupOldBroadcasts } from "./cleanup_old_broadcasts_reducer.ts";
@@ -52,6 +56,8 @@ import { ClearAllJobData } from "./clear_all_job_data_reducer.ts";
 export { ClearAllJobData };
 import { Connect } from "./connect_reducer.ts";
 export { Connect };
+import { CreateParty } from "./create_party_reducer.ts";
+export { CreateParty };
 import { DamageEnemy } from "./damage_enemy_reducer.ts";
 export { DamageEnemy };
 import { Debug } from "./debug_reducer.ts";
@@ -72,6 +78,10 @@ import { InitializeTeleports } from "./initialize_teleports_reducer.ts";
 export { InitializeTeleports };
 import { InstakillPlayer } from "./instakill_player_reducer.ts";
 export { InstakillPlayer };
+import { InviteToParty } from "./invite_to_party_reducer.ts";
+export { InviteToParty };
+import { LeaveParty } from "./leave_party_reducer.ts";
+export { LeaveParty };
 import { PlayerTakeDamage } from "./player_take_damage_reducer.ts";
 export { PlayerTakeDamage };
 import { PopulateBoss } from "./populate_boss_reducer.ts";
@@ -84,6 +94,8 @@ import { PopulatePlayerLevel } from "./populate_player_level_reducer.ts";
 export { PopulatePlayerLevel };
 import { RecoverFromDamage } from "./recover_from_damage_reducer.ts";
 export { RecoverFromDamage };
+import { RemoveFromParty } from "./remove_from_party_reducer.ts";
+export { RemoveFromParty };
 import { RespawnPlayer } from "./respawn_player_reducer.ts";
 export { RespawnPlayer };
 import { SendPlayerMessage } from "./send_player_message_reducer.ts";
@@ -104,6 +116,8 @@ import { UpdateEnemyPatrol } from "./update_enemy_patrol_reducer.ts";
 export { UpdateEnemyPatrol };
 import { UpdateLeaderboard } from "./update_leaderboard_reducer.ts";
 export { UpdateLeaderboard };
+import { UpdatePartyName } from "./update_party_name_reducer.ts";
+export { UpdatePartyName };
 import { UpdatePlayerPosition } from "./update_player_position_reducer.ts";
 export { UpdatePlayerPosition };
 import { UpdatePlayerState } from "./update_player_state_reducer.ts";
@@ -136,6 +150,12 @@ import { JobPassiveTableHandle } from "./job_passive_table.ts";
 export { JobPassiveTableHandle };
 import { LeaderboardTableHandle } from "./leaderboard_table.ts";
 export { LeaderboardTableHandle };
+import { PartyTableHandle } from "./party_table.ts";
+export { PartyTableHandle };
+import { PartyInviteTableHandle } from "./party_invite_table.ts";
+export { PartyInviteTableHandle };
+import { PartyMemberTableHandle } from "./party_member_table.ts";
+export { PartyMemberTableHandle };
 import { PlayerTableHandle } from "./player_table.ts";
 export { PlayerTableHandle };
 import { PlayerDamageEventTableHandle } from "./player_damage_event_table.ts";
@@ -168,6 +188,8 @@ import { LeaderboardUpdateTimerTableHandle } from "./leaderboard_update_timer_ta
 export { LeaderboardUpdateTimerTableHandle };
 import { MessageCleanupTimerTableHandle } from "./message_cleanup_timer_table.ts";
 export { MessageCleanupTimerTableHandle };
+import { PartyInviteCleanupTimerTableHandle } from "./party_invite_cleanup_timer_table.ts";
+export { PartyInviteCleanupTimerTableHandle };
 import { SpawnEnemiesTimerTableHandle } from "./spawn_enemies_timer_table.ts";
 export { SpawnEnemiesTimerTableHandle };
 
@@ -226,6 +248,14 @@ import { MessageCleanupTimer } from "./message_cleanup_timer_type.ts";
 export { MessageCleanupTimer };
 import { MessageType } from "./message_type_type.ts";
 export { MessageType };
+import { Party } from "./party_type.ts";
+export { Party };
+import { PartyInvite } from "./party_invite_type.ts";
+export { PartyInvite };
+import { PartyInviteCleanupTimer } from "./party_invite_cleanup_timer_type.ts";
+export { PartyInviteCleanupTimer };
+import { PartyMember } from "./party_member_type.ts";
+export { PartyMember };
 import { Player } from "./player_type.ts";
 export { Player };
 import { PlayerDamageEvent } from "./player_damage_event_type.ts";
@@ -357,6 +387,33 @@ const REMOTE_MODULE = {
       primaryKeyInfo: {
         colName: "rank",
         colType: Leaderboard.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    Party: {
+      tableName: "Party",
+      rowType: Party.getTypeScriptAlgebraicType(),
+      primaryKey: "partyId",
+      primaryKeyInfo: {
+        colName: "partyId",
+        colType: Party.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    PartyInvite: {
+      tableName: "PartyInvite",
+      rowType: PartyInvite.getTypeScriptAlgebraicType(),
+      primaryKey: "inviteId",
+      primaryKeyInfo: {
+        colName: "inviteId",
+        colType: PartyInvite.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
+    PartyMember: {
+      tableName: "PartyMember",
+      rowType: PartyMember.getTypeScriptAlgebraicType(),
+      primaryKey: "partyMemberId",
+      primaryKeyInfo: {
+        colName: "partyMemberId",
+        colType: PartyMember.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
     Player: {
@@ -503,6 +560,15 @@ const REMOTE_MODULE = {
         colType: MessageCleanupTimer.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
       },
     },
+    party_invite_cleanup_timer: {
+      tableName: "party_invite_cleanup_timer",
+      rowType: PartyInviteCleanupTimer.getTypeScriptAlgebraicType(),
+      primaryKey: "scheduledId",
+      primaryKeyInfo: {
+        colName: "scheduledId",
+        colType: PartyInviteCleanupTimer.getTypeScriptAlgebraicType().product.elements[0].algebraicType,
+      },
+    },
     spawn_enemies_timer: {
       tableName: "spawn_enemies_timer",
       rowType: SpawnEnemiesTimer.getTypeScriptAlgebraicType(),
@@ -514,6 +580,10 @@ const REMOTE_MODULE = {
     },
   },
   reducers: {
+    AcceptPartyInvite: {
+      reducerName: "AcceptPartyInvite",
+      argsType: AcceptPartyInvite.getTypeScriptAlgebraicType(),
+    },
     BroadcastMessage: {
       reducerName: "BroadcastMessage",
       argsType: BroadcastMessage.getTypeScriptAlgebraicType(),
@@ -529,6 +599,10 @@ const REMOTE_MODULE = {
     CleanupDeadBodies: {
       reducerName: "CleanupDeadBodies",
       argsType: CleanupDeadBodies.getTypeScriptAlgebraicType(),
+    },
+    CleanupExpiredPartyInvites: {
+      reducerName: "CleanupExpiredPartyInvites",
+      argsType: CleanupExpiredPartyInvites.getTypeScriptAlgebraicType(),
     },
     CleanupInactivePlayers: {
       reducerName: "CleanupInactivePlayers",
@@ -549,6 +623,10 @@ const REMOTE_MODULE = {
     Connect: {
       reducerName: "Connect",
       argsType: Connect.getTypeScriptAlgebraicType(),
+    },
+    CreateParty: {
+      reducerName: "CreateParty",
+      argsType: CreateParty.getTypeScriptAlgebraicType(),
     },
     DamageEnemy: {
       reducerName: "DamageEnemy",
@@ -590,6 +668,14 @@ const REMOTE_MODULE = {
       reducerName: "InstakillPlayer",
       argsType: InstakillPlayer.getTypeScriptAlgebraicType(),
     },
+    InviteToParty: {
+      reducerName: "InviteToParty",
+      argsType: InviteToParty.getTypeScriptAlgebraicType(),
+    },
+    LeaveParty: {
+      reducerName: "LeaveParty",
+      argsType: LeaveParty.getTypeScriptAlgebraicType(),
+    },
     PlayerTakeDamage: {
       reducerName: "PlayerTakeDamage",
       argsType: PlayerTakeDamage.getTypeScriptAlgebraicType(),
@@ -613,6 +699,10 @@ const REMOTE_MODULE = {
     RecoverFromDamage: {
       reducerName: "RecoverFromDamage",
       argsType: RecoverFromDamage.getTypeScriptAlgebraicType(),
+    },
+    RemoveFromParty: {
+      reducerName: "RemoveFromParty",
+      argsType: RemoveFromParty.getTypeScriptAlgebraicType(),
     },
     RespawnPlayer: {
       reducerName: "RespawnPlayer",
@@ -653,6 +743,10 @@ const REMOTE_MODULE = {
     UpdateLeaderboard: {
       reducerName: "UpdateLeaderboard",
       argsType: UpdateLeaderboard.getTypeScriptAlgebraicType(),
+    },
+    UpdatePartyName: {
+      reducerName: "UpdatePartyName",
+      argsType: UpdatePartyName.getTypeScriptAlgebraicType(),
     },
     UpdatePlayerPosition: {
       reducerName: "UpdatePlayerPosition",
@@ -696,15 +790,18 @@ const REMOTE_MODULE = {
 
 // A type representing all the possible variants of a reducer.
 export type Reducer = never
+| { name: "AcceptPartyInvite", args: AcceptPartyInvite }
 | { name: "BroadcastMessage", args: BroadcastMessage }
 | { name: "ChangeJob", args: ChangeJob }
 | { name: "CheckCombatTimeouts", args: CheckCombatTimeouts }
 | { name: "CleanupDeadBodies", args: CleanupDeadBodies }
+| { name: "CleanupExpiredPartyInvites", args: CleanupExpiredPartyInvites }
 | { name: "CleanupInactivePlayers", args: CleanupInactivePlayers }
 | { name: "CleanupOldBroadcasts", args: CleanupOldBroadcasts }
 | { name: "CleanupOldMessages", args: CleanupOldMessages }
 | { name: "ClearAllJobData", args: ClearAllJobData }
 | { name: "Connect", args: Connect }
+| { name: "CreateParty", args: CreateParty }
 | { name: "DamageEnemy", args: DamageEnemy }
 | { name: "Debug", args: Debug }
 | { name: "Disconnect", args: Disconnect }
@@ -715,12 +812,15 @@ export type Reducer = never
 | { name: "InitializeJobPassive", args: InitializeJobPassive }
 | { name: "InitializeTeleports", args: InitializeTeleports }
 | { name: "InstakillPlayer", args: InstakillPlayer }
+| { name: "InviteToParty", args: InviteToParty }
+| { name: "LeaveParty", args: LeaveParty }
 | { name: "PlayerTakeDamage", args: PlayerTakeDamage }
 | { name: "PopulateBoss", args: PopulateBoss }
 | { name: "PopulateBossTriggers", args: PopulateBossTriggers }
 | { name: "PopulateEnemy", args: PopulateEnemy }
 | { name: "PopulatePlayerLevel", args: PopulatePlayerLevel }
 | { name: "RecoverFromDamage", args: RecoverFromDamage }
+| { name: "RemoveFromParty", args: RemoveFromParty }
 | { name: "RespawnPlayer", args: RespawnPlayer }
 | { name: "SendPlayerMessage", args: SendPlayerMessage }
 | { name: "SetName", args: SetName }
@@ -731,6 +831,7 @@ export type Reducer = never
 | { name: "UpdateBossActions", args: UpdateBossActions }
 | { name: "UpdateEnemyPatrol", args: UpdateEnemyPatrol }
 | { name: "UpdateLeaderboard", args: UpdateLeaderboard }
+| { name: "UpdatePartyName", args: UpdatePartyName }
 | { name: "UpdatePlayerPosition", args: UpdatePlayerPosition }
 | { name: "UpdatePlayerState", args: UpdatePlayerState }
 | { name: "UpdatePlayerTyping", args: UpdatePlayerTyping }
@@ -738,6 +839,22 @@ export type Reducer = never
 
 export class RemoteReducers {
   constructor(private connection: DbConnectionImpl, private setCallReducerFlags: SetReducerFlags) {}
+
+  acceptPartyInvite(inviteId: number) {
+    const __args = { inviteId };
+    let __writer = new BinaryWriter(1024);
+    AcceptPartyInvite.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("AcceptPartyInvite", __argsBuffer, this.setCallReducerFlags.acceptPartyInviteFlags);
+  }
+
+  onAcceptPartyInvite(callback: (ctx: ReducerEventContext, inviteId: number) => void) {
+    this.connection.onReducer("AcceptPartyInvite", callback);
+  }
+
+  removeOnAcceptPartyInvite(callback: (ctx: ReducerEventContext, inviteId: number) => void) {
+    this.connection.offReducer("AcceptPartyInvite", callback);
+  }
 
   broadcastMessage(message: string) {
     const __args = { message };
@@ -801,6 +918,22 @@ export class RemoteReducers {
 
   removeOnCleanupDeadBodies(callback: (ctx: ReducerEventContext, timer: CleanupDeadBodiesTimer) => void) {
     this.connection.offReducer("CleanupDeadBodies", callback);
+  }
+
+  cleanupExpiredPartyInvites(timer: PartyInviteCleanupTimer) {
+    const __args = { timer };
+    let __writer = new BinaryWriter(1024);
+    CleanupExpiredPartyInvites.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("CleanupExpiredPartyInvites", __argsBuffer, this.setCallReducerFlags.cleanupExpiredPartyInvitesFlags);
+  }
+
+  onCleanupExpiredPartyInvites(callback: (ctx: ReducerEventContext, timer: PartyInviteCleanupTimer) => void) {
+    this.connection.onReducer("CleanupExpiredPartyInvites", callback);
+  }
+
+  removeOnCleanupExpiredPartyInvites(callback: (ctx: ReducerEventContext, timer: PartyInviteCleanupTimer) => void) {
+    this.connection.offReducer("CleanupExpiredPartyInvites", callback);
   }
 
   cleanupInactivePlayers(adminApiKey: string) {
@@ -873,6 +1006,22 @@ export class RemoteReducers {
 
   removeOnConnect(callback: (ctx: ReducerEventContext) => void) {
     this.connection.offReducer("Connect", callback);
+  }
+
+  createParty(partyName: string) {
+    const __args = { partyName };
+    let __writer = new BinaryWriter(1024);
+    CreateParty.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("CreateParty", __argsBuffer, this.setCallReducerFlags.createPartyFlags);
+  }
+
+  onCreateParty(callback: (ctx: ReducerEventContext, partyName: string) => void) {
+    this.connection.onReducer("CreateParty", callback);
+  }
+
+  removeOnCreateParty(callback: (ctx: ReducerEventContext, partyName: string) => void) {
+    this.connection.offReducer("CreateParty", callback);
   }
 
   damageEnemy(spawnIds: number[], attackType: AttackType) {
@@ -1027,6 +1176,34 @@ export class RemoteReducers {
     this.connection.offReducer("InstakillPlayer", callback);
   }
 
+  inviteToParty(targetPlayerName: string) {
+    const __args = { targetPlayerName };
+    let __writer = new BinaryWriter(1024);
+    InviteToParty.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("InviteToParty", __argsBuffer, this.setCallReducerFlags.inviteToPartyFlags);
+  }
+
+  onInviteToParty(callback: (ctx: ReducerEventContext, targetPlayerName: string) => void) {
+    this.connection.onReducer("InviteToParty", callback);
+  }
+
+  removeOnInviteToParty(callback: (ctx: ReducerEventContext, targetPlayerName: string) => void) {
+    this.connection.offReducer("InviteToParty", callback);
+  }
+
+  leaveParty() {
+    this.connection.callReducer("LeaveParty", new Uint8Array(0), this.setCallReducerFlags.leavePartyFlags);
+  }
+
+  onLeaveParty(callback: (ctx: ReducerEventContext) => void) {
+    this.connection.onReducer("LeaveParty", callback);
+  }
+
+  removeOnLeaveParty(callback: (ctx: ReducerEventContext) => void) {
+    this.connection.offReducer("LeaveParty", callback);
+  }
+
   playerTakeDamage(spawnId: number) {
     const __args = { spawnId };
     let __writer = new BinaryWriter(1024);
@@ -1121,6 +1298,22 @@ export class RemoteReducers {
 
   removeOnRecoverFromDamage(callback: (ctx: ReducerEventContext, spawnId: number) => void) {
     this.connection.offReducer("RecoverFromDamage", callback);
+  }
+
+  removeFromParty(targetPlayerName: string) {
+    const __args = { targetPlayerName };
+    let __writer = new BinaryWriter(1024);
+    RemoveFromParty.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("RemoveFromParty", __argsBuffer, this.setCallReducerFlags.removeFromPartyFlags);
+  }
+
+  onRemoveFromParty(callback: (ctx: ReducerEventContext, targetPlayerName: string) => void) {
+    this.connection.onReducer("RemoveFromParty", callback);
+  }
+
+  removeOnRemoveFromParty(callback: (ctx: ReducerEventContext, targetPlayerName: string) => void) {
+    this.connection.offReducer("RemoveFromParty", callback);
   }
 
   respawnPlayer() {
@@ -1279,6 +1472,22 @@ export class RemoteReducers {
     this.connection.offReducer("UpdateLeaderboard", callback);
   }
 
+  updatePartyName(newPartyName: string) {
+    const __args = { newPartyName };
+    let __writer = new BinaryWriter(1024);
+    UpdatePartyName.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("UpdatePartyName", __argsBuffer, this.setCallReducerFlags.updatePartyNameFlags);
+  }
+
+  onUpdatePartyName(callback: (ctx: ReducerEventContext, newPartyName: string) => void) {
+    this.connection.onReducer("UpdatePartyName", callback);
+  }
+
+  removeOnUpdatePartyName(callback: (ctx: ReducerEventContext, newPartyName: string) => void) {
+    this.connection.offReducer("UpdatePartyName", callback);
+  }
+
   updatePlayerPosition(x: number, y: number, facing: FacingDirection) {
     const __args = { x, y, facing };
     let __writer = new BinaryWriter(1024);
@@ -1330,6 +1539,11 @@ export class RemoteReducers {
 }
 
 export class SetReducerFlags {
+  acceptPartyInviteFlags: CallReducerFlags = 'FullUpdate';
+  acceptPartyInvite(flags: CallReducerFlags) {
+    this.acceptPartyInviteFlags = flags;
+  }
+
   broadcastMessageFlags: CallReducerFlags = 'FullUpdate';
   broadcastMessage(flags: CallReducerFlags) {
     this.broadcastMessageFlags = flags;
@@ -1350,6 +1564,11 @@ export class SetReducerFlags {
     this.cleanupDeadBodiesFlags = flags;
   }
 
+  cleanupExpiredPartyInvitesFlags: CallReducerFlags = 'FullUpdate';
+  cleanupExpiredPartyInvites(flags: CallReducerFlags) {
+    this.cleanupExpiredPartyInvitesFlags = flags;
+  }
+
   cleanupInactivePlayersFlags: CallReducerFlags = 'FullUpdate';
   cleanupInactivePlayers(flags: CallReducerFlags) {
     this.cleanupInactivePlayersFlags = flags;
@@ -1368,6 +1587,11 @@ export class SetReducerFlags {
   clearAllJobDataFlags: CallReducerFlags = 'FullUpdate';
   clearAllJobData(flags: CallReducerFlags) {
     this.clearAllJobDataFlags = flags;
+  }
+
+  createPartyFlags: CallReducerFlags = 'FullUpdate';
+  createParty(flags: CallReducerFlags) {
+    this.createPartyFlags = flags;
   }
 
   damageEnemyFlags: CallReducerFlags = 'FullUpdate';
@@ -1415,6 +1639,16 @@ export class SetReducerFlags {
     this.instakillPlayerFlags = flags;
   }
 
+  inviteToPartyFlags: CallReducerFlags = 'FullUpdate';
+  inviteToParty(flags: CallReducerFlags) {
+    this.inviteToPartyFlags = flags;
+  }
+
+  leavePartyFlags: CallReducerFlags = 'FullUpdate';
+  leaveParty(flags: CallReducerFlags) {
+    this.leavePartyFlags = flags;
+  }
+
   playerTakeDamageFlags: CallReducerFlags = 'FullUpdate';
   playerTakeDamage(flags: CallReducerFlags) {
     this.playerTakeDamageFlags = flags;
@@ -1443,6 +1677,11 @@ export class SetReducerFlags {
   recoverFromDamageFlags: CallReducerFlags = 'FullUpdate';
   recoverFromDamage(flags: CallReducerFlags) {
     this.recoverFromDamageFlags = flags;
+  }
+
+  removeFromPartyFlags: CallReducerFlags = 'FullUpdate';
+  removeFromParty(flags: CallReducerFlags) {
+    this.removeFromPartyFlags = flags;
   }
 
   respawnPlayerFlags: CallReducerFlags = 'FullUpdate';
@@ -1493,6 +1732,11 @@ export class SetReducerFlags {
   updateLeaderboardFlags: CallReducerFlags = 'FullUpdate';
   updateLeaderboard(flags: CallReducerFlags) {
     this.updateLeaderboardFlags = flags;
+  }
+
+  updatePartyNameFlags: CallReducerFlags = 'FullUpdate';
+  updatePartyName(flags: CallReducerFlags) {
+    this.updatePartyNameFlags = flags;
   }
 
   updatePlayerPositionFlags: CallReducerFlags = 'FullUpdate';
@@ -1563,6 +1807,18 @@ export class RemoteTables {
     return new LeaderboardTableHandle(this.connection.clientCache.getOrCreateTable<Leaderboard>(REMOTE_MODULE.tables.Leaderboard));
   }
 
+  get party(): PartyTableHandle {
+    return new PartyTableHandle(this.connection.clientCache.getOrCreateTable<Party>(REMOTE_MODULE.tables.Party));
+  }
+
+  get partyInvite(): PartyInviteTableHandle {
+    return new PartyInviteTableHandle(this.connection.clientCache.getOrCreateTable<PartyInvite>(REMOTE_MODULE.tables.PartyInvite));
+  }
+
+  get partyMember(): PartyMemberTableHandle {
+    return new PartyMemberTableHandle(this.connection.clientCache.getOrCreateTable<PartyMember>(REMOTE_MODULE.tables.PartyMember));
+  }
+
   get player(): PlayerTableHandle {
     return new PlayerTableHandle(this.connection.clientCache.getOrCreateTable<Player>(REMOTE_MODULE.tables.Player));
   }
@@ -1625,6 +1881,10 @@ export class RemoteTables {
 
   get messageCleanupTimer(): MessageCleanupTimerTableHandle {
     return new MessageCleanupTimerTableHandle(this.connection.clientCache.getOrCreateTable<MessageCleanupTimer>(REMOTE_MODULE.tables.message_cleanup_timer));
+  }
+
+  get partyInviteCleanupTimer(): PartyInviteCleanupTimerTableHandle {
+    return new PartyInviteCleanupTimerTableHandle(this.connection.clientCache.getOrCreateTable<PartyInviteCleanupTimer>(REMOTE_MODULE.tables.party_invite_cleanup_timer));
   }
 
   get spawnEnemiesTimer(): SpawnEnemiesTimerTableHandle {

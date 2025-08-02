@@ -138,6 +138,12 @@ export class PeerManager {
     this.logger.info('🔌 PeerManager: Registering onPlayerMessageInsert handler');
     this.dbConnection.db.playerMessage.onInsert(this.onPlayerMessageInsert);
     
+    // Subscribe to party membership changes
+    this.logger.info('🎉 PeerManager: Registering party membership handlers');
+    this.dbConnection.db.partyMember.onInsert(this.onPartyMemberChange);
+    this.dbConnection.db.partyMember.onDelete(this.onPartyMemberChange);
+    this.dbConnection.db.party.onUpdate(this.onPartyUpdate);
+    
     // Test if we can see any messages in the table
     this.logger.info(`📊 PeerManager: Current PlayerMessage count: ${this.dbConnection.db.playerMessage.count()}`);
     
@@ -169,6 +175,11 @@ export class PeerManager {
 
     // Subscribe to player messages (filtered by proximity subscription)
     this.dbConnection.db.playerMessage.onInsert(this.onPlayerMessageInsert);
+    
+    // Subscribe to party membership changes
+    this.dbConnection.db.partyMember.onInsert(this.onPartyMemberChange);
+    this.dbConnection.db.partyMember.onDelete(this.onPartyMemberChange);
+    this.dbConnection.db.party.onUpdate(this.onPartyUpdate);
 
     // Store cleanup functions
     this.cleanupFunctions.push(() => {
@@ -269,9 +280,11 @@ export class PeerManager {
             `🎯 PeerManager: Loading nearby peer ${player.name} at distance ${Math.round(distance)}`
           );
           // Create peer manually since onPlayerInsert might not fire for existing players
+          const partyName = this.getPlayerPartyName(player.identity);
           const peer = new Peer({
             scene: this.scene,
             playerData: player,
+            partyName,
           });
           this.peers.set(identityString, peer);
 
@@ -471,7 +484,8 @@ export class PeerManager {
     }
 
     // Create new peer
-    const peer = new Peer({ scene: this.scene, playerData });
+    const partyName = this.getPlayerPartyName(playerData.identity);
+    const peer = new Peer({ scene: this.scene, playerData, partyName });
     this.peers.set(identityString, peer);
 
     // Register peer sprite with level up animation manager
@@ -550,7 +564,8 @@ export class PeerManager {
           );
 
           // Create new peer
-          const newPeer = new Peer({ scene: this.scene, playerData: newPlayerData });
+          const partyName = this.getPlayerPartyName(newPlayerData.identity);
+          const newPeer = new Peer({ scene: this.scene, playerData: newPlayerData, partyName });
           this.peers.set(identityString, newPeer);
 
           // Register peer sprite with level up animation manager
@@ -756,6 +771,45 @@ export class PeerManager {
 
     this.logger.info('PeerManager: Cleaned up all resources');
   }
+
+  /**
+   * Get party name for a player
+   */
+  private getPlayerPartyName(playerIdentity: Identity): string {
+    if (!this.dbConnection) return '';
+    
+    const membership = this.dbConnection.db.partyMember.playerIdentity.find(playerIdentity);
+    if (!membership) return '';
+    
+    const party = this.dbConnection.db.party.partyId.find(membership.partyId);
+    if (!party) return '';
+    
+    return party.partyName;
+  }
+
+  /**
+   * Handle party membership changes to update peer party labels
+   */
+  private onPartyMemberChange = (_ctx: EventContext): void => {
+    // Update all peer party labels since membership changed
+    this.peers.forEach((peer) => {
+      const playerData = peer.getPlayerData();
+      const partyName = this.getPlayerPartyName(playerData.identity);
+      peer.updatePartyLabel(partyName);
+    });
+  };
+
+  /**
+   * Handle party updates (name changes) to update peer party labels
+   */
+  private onPartyUpdate = (_ctx: EventContext): void => {
+    // Update all peer party labels since party info changed
+    this.peers.forEach((peer) => {
+      const playerData = peer.getPlayerData();
+      const partyName = this.getPlayerPartyName(playerData.identity);
+      peer.updatePartyLabel(partyName);
+    });
+  };
 
   public destroy(): void {
     this.cleanup();

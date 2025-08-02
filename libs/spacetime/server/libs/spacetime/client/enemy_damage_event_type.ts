@@ -41,6 +41,7 @@ export type EnemyDamageEvent = {
   damageAmount: number,
   damageType: __DamageType,
   projectile: string | undefined,
+  skillEffect: string | undefined,
   timestamp: Timestamp,
 };
 
@@ -60,6 +61,7 @@ export namespace EnemyDamageEvent {
       new ProductTypeElement("damageAmount", AlgebraicType.createF32Type()),
       new ProductTypeElement("damageType", __DamageType.getTypeScriptAlgebraicType()),
       new ProductTypeElement("projectile", AlgebraicType.createOptionType(AlgebraicType.createStringType())),
+      new ProductTypeElement("skillEffect", AlgebraicType.createOptionType(AlgebraicType.createStringType())),
       new ProductTypeElement("timestamp", AlgebraicType.createTimestampType()),
     ]);
   }

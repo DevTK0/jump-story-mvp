@@ -80,7 +80,7 @@ export class PassiveInfoMenu {
     this.createPassiveInfo(centerX, centerY, menuWidth, menuHeight);
   }
 
-  private createPassiveInfo(centerX: number, centerY: number, menuWidth: number, menuHeight: number): void {
+  private createPassiveInfo(centerX: number, centerY: number, _menuWidth: number, menuHeight: number): void {
     // Get current player's job
     const context = UIContextService.getInstance();
     const connection = context.getDbConnection();
@@ -147,7 +147,7 @@ export class PassiveInfoMenu {
         
         // Description (with word wrap for card width)
         const descText = this.scene.add.text(cardX, cardY - cardHeight / 2 + 60, 
-          passive.description, {
+          passive.description || '', {
           fontSize: '12px',
           color: '#cccccc',
           wordWrap: { width: cardWidth - 30 },

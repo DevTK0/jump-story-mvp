@@ -50,6 +50,7 @@ export type InitializeJobAttack = {
   ammoCost: number,
   modifiers: string,
   projectile: string | undefined,
+  skillEffect: string | undefined,
   areaRadius: number | undefined,
 };
 
@@ -79,6 +80,7 @@ export namespace InitializeJobAttack {
       new ProductTypeElement("ammoCost", AlgebraicType.createU32Type()),
       new ProductTypeElement("modifiers", AlgebraicType.createStringType()),
       new ProductTypeElement("projectile", AlgebraicType.createOptionType(AlgebraicType.createStringType())),
+      new ProductTypeElement("skillEffect", AlgebraicType.createOptionType(AlgebraicType.createStringType())),
       new ProductTypeElement("areaRadius", AlgebraicType.createOptionType(AlgebraicType.createU32Type())),
     ]);
   }

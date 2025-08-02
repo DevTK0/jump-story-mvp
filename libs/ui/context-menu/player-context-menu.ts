@@ -48,6 +48,30 @@ export class PlayerContextMenu {
       label: 'Invite to Party',
       action: (_identity, name) => {
         this.logger.info(`Invite to party: ${name}`);
+        
+        // Get connection from UI context
+        const uiContext = UIContextService.getInstance();
+        const dbConnection = uiContext.getDbConnection();
+        const myIdentity = uiContext.getPlayerIdentity();
+        
+        if (dbConnection && myIdentity) {
+          // Check if we're in a party and not the leader
+          const myMembership = dbConnection.db.partyMember.playerIdentity.find(myIdentity);
+          if (myMembership) {
+            const party = dbConnection.db.party.partyId.find(myMembership.partyId);
+            if (party && party.leaderIdentity.toHexString() !== myIdentity.toHexString()) {
+              this.logger.warn('Only the party leader can invite players');
+              alert('Only the party leader can invite players');
+              return;
+            }
+          }
+          
+          // Call the invite reducer (will create party if needed)
+          this.logger.info(`Calling inviteToParty reducer for ${name}`);
+          dbConnection.reducers.inviteToParty(name);
+        } else {
+          this.logger.warn('No database connection available for party invite');
+        }
       },
     },
   ];
