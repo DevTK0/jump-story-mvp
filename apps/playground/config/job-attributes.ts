@@ -334,7 +334,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     attacks: {
       attack1: {
         ...sharedAttacks.attack1,
-        attackType: 'stationary' as const,
+        attackType: 'standard' as const,
       },
       attack2: {
         attackType: 'dash' as const,

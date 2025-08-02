@@ -44,7 +44,7 @@ export const skillEffectAudio: Record<string, AudioDefinition> = {
  */
 export const uiAudio: Record<string, AudioDefinition> = {
   outOfMana: { path: 'assets/audio/skills/E_Hit_Bone.ogg', volume: 0.4, loop: false },
-  actionBlocked: { path: 'assets/audio/skills/E_Hit_Armor.ogg', volume: 0.5, loop: false },
+  actionBlocked: { path: 'assets/audio/skills/P_Jump.ogg', volume: 0.5, loop: false },
 };
 
 /**
