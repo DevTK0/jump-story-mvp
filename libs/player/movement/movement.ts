@@ -43,9 +43,14 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
       return;
     }
 
+    if (this.player.isClimbing && this.stateTracker.getHasUsedDoubleJump()) {
+      this.stateTracker.resetDoubleJumpOnLanding();
+      logger.info('[MovementSystem] Update resetDoubleJump while climbing', this.stateTracker.getHasUsedDoubleJump());
+    }
+
     // Handle movement physics (skip if climbing, dashing, casting, or movement disabled)
     const isCasting = this.player.currentAttackType === 'casting';
-    if (!this.player.isClimbing && !this.player.isDashing && !isCasting && !this.stateTracker.isMovementDisabled()) {
+    if (!this.player.isDashing && !isCasting && !this.stateTracker.isMovementDisabled()) {
       const body = this.player.body;
       const onGround = body.onFloor();
 
@@ -132,6 +137,8 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
 
   private handleDoubleJump(): void {
     const onGround = this.player.body.onFloor();
+
+    logger.info('[handleDoubleJump]', { hasUsedDoubleJump: this.stateTracker.getHasUsedDoubleJump(), isClimbing: this.player.isClimbing });
 
     // Check for double jump input
     if (
