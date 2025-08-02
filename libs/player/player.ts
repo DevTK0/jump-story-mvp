@@ -6,6 +6,7 @@ import { PLAYER_CONFIG } from './config';
 import { PlayerStateMachine } from './state/state-machine';
 import type { PhysicsEntity } from '@/core/physics/physics-entity';
 import type { PhysicsRegistry } from '@/core/physics/physics-registry';
+import type { CombatSystemEnhanced } from './combat/combat-enhanced';
 
 export interface PlayerConfig {
   scene: Phaser.Scene;
@@ -223,7 +224,7 @@ export class Player extends Phaser.GameObjects.Sprite implements PhysicsEntity {
   // Config accessors
   public getSpeed(): number {
     // Try to get job-specific move speed from combat system
-    const combatSystem = this.getSystem('combat') as any;
+    const combatSystem = this.getSystem('combat') as CombatSystemEnhanced;
     if (combatSystem?.getJobConfig) {
       const jobConfig = combatSystem.getJobConfig();
       if (jobConfig?.baseStats?.moveSpeed) {
