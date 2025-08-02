@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 
 export class BossHealthBar {
   private scene: Phaser.Scene;
+  private camera: Phaser.Cameras.Scene2D.Camera;
   private container!: Phaser.GameObjects.Container;
   private background!: Phaser.GameObjects.Graphics;
   private healthBar!: Phaser.GameObjects.Graphics;
@@ -51,6 +52,7 @@ export class BossHealthBar {
 
   constructor(scene: Phaser.Scene, bossName: string, maxHp: number, spawnTime: number) {
     this.scene = scene;
+    this.camera = scene.cameras.getCamera('ui') ?? scene.cameras.main;
     this.bossName = bossName;
     this.maxHp = maxHp;
     this.currentHp = maxHp;
@@ -58,10 +60,6 @@ export class BossHealthBar {
 
     this.createHealthBar();
     this.createTimer();
-    this.updatePosition();
-    
-    // Listen for camera changes to update position
-    this.scene.cameras.main.on('followupdate', this.updatePosition, this);
     
     // Start timer updates
     this.startTimerUpdates();
@@ -69,22 +67,21 @@ export class BossHealthBar {
 
   private createHealthBar(): void {
     const config = BossHealthBar.CONFIG;
+    const centerX = this.camera.width / 2;
+    const topY = config.marginY + (config.height / 2);
     
-    // Create container
-    this.container = this.scene.add.container(0, 0);
+    this.container = this.scene.add.container(centerX, topY);
+    this.container.setScrollFactor(0);
     this.container.setDepth(config.depth);
-    this.container.setAlpha(0); // Start invisible
+    this.container.setAlpha(0);
 
-    // Create graphics objects
     this.background = this.scene.add.graphics();
     this.healthBar = this.scene.add.graphics();
     this.border = this.scene.add.graphics();
 
-    // Create boss name text
     this.bossNameText = this.scene.add.text(0, 0, this.bossName, config.nameStyle);
     this.bossNameText.setOrigin(0.5, 0.5);
 
-    // Add to container
     this.container.add([this.background, this.healthBar, this.border, this.bossNameText]);
 
     this.drawHealthBar();
@@ -92,18 +89,15 @@ export class BossHealthBar {
 
   private drawHealthBar(): void {
     const config = BossHealthBar.CONFIG;
-    const camera = this.scene.cameras.main;
-    const width = camera.width - (config.marginX * 2);
+    const width = this.camera.width - (config.marginX * 2);
     const height = config.height;
     const halfWidth = width / 2;
     const halfHeight = height / 2;
 
-    // Clear all graphics
     this.background.clear();
     this.healthBar.clear();
     this.border.clear();
 
-    // Draw background (black)
     this.background.fillStyle(config.backgroundColor, config.alpha);
     this.background.fillRoundedRect(
       -halfWidth,
@@ -113,11 +107,9 @@ export class BossHealthBar {
       config.cornerRadius
     );
 
-    // Calculate health percentage and width
     const healthPercentage = Math.max(0, this.currentHp / this.maxHp);
     const healthWidth = width * healthPercentage;
 
-    // Draw health bar (red)
     if (healthWidth > 0) {
       this.healthBar.fillStyle(config.healthColor, config.alpha);
       this.healthBar.fillRoundedRect(
@@ -129,7 +121,6 @@ export class BossHealthBar {
       );
     }
 
-    // Draw border (white)
     this.border.lineStyle(config.borderWidth, config.borderColor, config.alpha);
     this.border.strokeRoundedRect(
       -halfWidth,
@@ -139,22 +130,21 @@ export class BossHealthBar {
       config.cornerRadius
     );
 
-    // Position boss name text at the center of the health bar
     this.bossNameText.setPosition(0, 0);
   }
 
   private createTimer(): void {
     const config = BossHealthBar.CONFIG;
+    const centerX = this.camera.width / 2;
+    const timerY = config.marginY + config.height + config.timer.marginTop + (config.timer.height / 2);
     
-    // Create timer container
-    this.timerContainer = this.scene.add.container(0, 0);
+    this.timerContainer = this.scene.add.container(centerX, timerY);
+    this.timerContainer.setScrollFactor(0);
     this.timerContainer.setDepth(config.depth);
-    this.timerContainer.setAlpha(0); // Start invisible
+    this.timerContainer.setAlpha(0);
     
-    // Create timer background
     this.timerBackground = this.scene.add.graphics();
     
-    // Create timer text
     this.timerText = this.scene.add.text(0, 0, '00:00', {
       fontSize: config.timer.fontSize,
       color: config.timer.textColor,
@@ -162,7 +152,6 @@ export class BossHealthBar {
     });
     this.timerText.setOrigin(0.5, 0.5);
     
-    // Add to timer container
     this.timerContainer.add([this.timerBackground, this.timerText]);
     
     this.drawTimer();
@@ -170,15 +159,13 @@ export class BossHealthBar {
 
   private drawTimer(): void {
     const config = BossHealthBar.CONFIG;
-    const timerWidth = 100; // Fixed width for timer display
+    const timerWidth = 100;
     const timerHeight = config.timer.height;
     const halfWidth = timerWidth / 2;
     const halfHeight = timerHeight / 2;
     
-    // Clear timer background
     this.timerBackground.clear();
     
-    // Draw timer background (black)
     this.timerBackground.fillStyle(config.timer.backgroundColor, config.alpha);
     this.timerBackground.fillRoundedRect(
       -halfWidth,
@@ -188,7 +175,6 @@ export class BossHealthBar {
       config.cornerRadius
     );
     
-    // Draw timer border
     this.timerBackground.lineStyle(config.borderWidth, config.borderColor, config.alpha);
     this.timerBackground.strokeRoundedRect(
       -halfWidth,
@@ -208,14 +194,12 @@ export class BossHealthBar {
     const totalSeconds = config.timer.despawnMinutes * 60;
     const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
     
-    // Format as MM:SS
     const minutes = Math.floor(remainingSeconds / 60);
     const seconds = remainingSeconds % 60;
     const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     
     this.timerText.setText(timeString);
     
-    // Change color to red when time is running out (last minute)
     if (remainingSeconds <= 60) {
       this.timerText.setColor('#FF0000');
     } else {
@@ -224,31 +208,13 @@ export class BossHealthBar {
   }
 
   private startTimerUpdates(): void {
-    // Update timer every second
     this.timerUpdateInterval = window.setInterval(() => {
       this.updateTimer();
     }, 1000);
     
-    // Initial update
     this.updateTimer();
   }
 
-  private updatePosition(): void {
-    if (!this.container || !this.timerContainer) return;
-    
-    const config = BossHealthBar.CONFIG;
-    const camera = this.scene.cameras.main;
-    
-    // Position health bar at top of screen
-    const x = camera.centerX;
-    const y = camera.y + config.marginY + (config.height / 2);
-    
-    this.container.setPosition(x, y);
-    
-    // Position timer below health bar
-    const timerY = y + (config.height / 2) + config.timer.marginTop + (config.timer.height / 2);
-    this.timerContainer.setPosition(x, timerY);
-  }
 
   public updateHealth(newHp: number): void {
     this.currentHp = Math.max(0, Math.min(this.maxHp, newHp));
@@ -265,7 +231,6 @@ export class BossHealthBar {
     if (this.isVisible) return;
 
     this.isVisible = true;
-    this.updatePosition(); // Ensure correct position
     
     // Fade in the health bar and timer
     this.scene.tweens.add({
@@ -291,9 +256,6 @@ export class BossHealthBar {
   }
 
   public destroy(): void {
-    // Remove camera listener
-    this.scene.cameras.main.off('followupdate', this.updatePosition, this);
-    
     // Clear timer interval
     if (this.timerUpdateInterval) {
       window.clearInterval(this.timerUpdateInterval);

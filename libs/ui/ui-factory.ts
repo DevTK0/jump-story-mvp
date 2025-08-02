@@ -19,13 +19,11 @@ import { PartyMenu } from './menus/party-menu';
 import { PartyInvitePopup } from './party/party-invite-popup';
 import { jobAttributes } from '../../apps/playground/config/job-attributes';
 import type { Player } from '@/spacetime/client';
+import { KeyIndicatorManager } from './indicators/key-indicator-manager';
 
 // Re-export UICreateConfig from UIContextService to maintain compatibility
 export type { UICreateConfig };
 
-/**
- * Factory for creating and managing UI components
- */
 export class UIFactory {
   private scene: Phaser.Scene;
   private logger: ModuleLogger;
@@ -45,6 +43,7 @@ export class UIFactory {
   private attackInfoMenu?: AttackInfoMenu;
   private partyMenu?: PartyMenu;
   private partyInvitePopup?: PartyInvitePopup;
+  private keyIndicatorManager?: KeyIndicatorManager;
   
   // Keyboard shortcuts
   private keyboardHandlers: Map<string, () => void> = new Map();
@@ -54,9 +53,6 @@ export class UIFactory {
     this.logger = createLogger('UIFactory');
   }
   
-  /**
-   * Create all game UI components
-   */
   createGameUI(config: UICreateConfig): void {
     // Store reference to UIFactory in scene data for other components
     this.scene.data.set('uiFactory', this);
@@ -86,6 +82,48 @@ export class UIFactory {
     // Setup keyboard shortcuts
     this.setupKeyboardShortcuts();
     
+    // Create key indicator manager
+    this.keyIndicatorManager = new KeyIndicatorManager(this.scene);
+    
+    // Show all key indicators
+    this.keyIndicatorManager.show([
+      {
+        key: 'J',
+        label: 'Job Menu',
+        description: 'Open job selection menu'
+      },
+      {
+        key: 'T',
+        label: 'Teleport',
+        description: 'Open teleport menu'
+      },
+      {
+        key: 'A',
+        label: 'Attack Skills',
+        description: 'View attack skills'
+      },
+      {
+        key: 'P',
+        label: 'Party',
+        description: 'Manage party'
+      },
+      {
+        key: 'N',
+        label: 'Name Change',
+        description: 'Change your name'
+      },
+      {
+        key: 'Enter',
+        label: 'Chat',
+        description: 'Open chat'
+      },
+      {
+        key: '1 to 9',
+        label: 'Switch Job',
+        description: 'Quick job change'
+      }
+    ]);
+    
     // Check if player has default name and show name change dialog
     // Only if player data is available
     if (config.player) {
@@ -111,9 +149,6 @@ export class UIFactory {
     });
   }
   
-  /**
-   * Update UI components
-   */
   update(time: number, delta: number): void {
     // Update FPS counter
     if (this.fpsCounter) {
@@ -131,9 +166,6 @@ export class UIFactory {
     }
   }
   
-  /**
-   * Update UI with player data when it becomes available
-   */
   updatePlayerData(player: Player): void {
     // Get the current config from UIContextService
     const contextService = UIContextService.getInstance();
@@ -149,9 +181,6 @@ export class UIFactory {
     this.checkAndShowNameChangeDialog(config);
   }
   
-  /**
-   * Cleanup UI components
-   */
   destroy(): void {
     // Remove keyboard handlers
     this.keyboardHandlers.forEach((handler, key) => {
@@ -174,6 +203,7 @@ export class UIFactory {
     this.attackInfoMenu?.destroy();
     this.partyMenu?.destroy();
     this.partyInvitePopup?.destroy();
+    this.keyIndicatorManager?.destroy();
     
     // Destroy UIContextService if it was initialized
     if (UIContextService.isInitialized()) {
@@ -302,6 +332,46 @@ export class UIFactory {
     this.partyMenu?.hide();
   }
   
+  private showKeyIndicators(): void {
+    this.keyIndicatorManager?.show([
+      {
+        key: 'J',
+        label: 'Job Menu',
+        description: 'Open job selection menu'
+      },
+      {
+        key: 'T',
+        label: 'Teleport',
+        description: 'Open teleport menu'
+      },
+      {
+        key: 'A',
+        label: 'Attack Skills',
+        description: 'View attack skills'
+      },
+      {
+        key: 'P',
+        label: 'Party',
+        description: 'Manage party'
+      },
+      {
+        key: 'N',
+        label: 'Name Change',
+        description: 'Change your name'
+      },
+      {
+        key: 'Enter',
+        label: 'Chat',
+        description: 'Open chat'
+      },
+      {
+        key: '1 to 9',
+        label: 'Switch Job',
+        description: 'Quick job change'
+      }
+    ]);
+  }
+  
   private openJobMenu(): void {
     // Check if player is in combat first
     const context = UIContextService.getInstance();
@@ -328,9 +398,13 @@ export class UIFactory {
     // Toggle visibility
     if (this.classSelectionMenu.visible) {
       this.classSelectionMenu.hide();
+      // Show key indicators again after closing menu
+      this.showKeyIndicators();
     } else {
       this.hideAllUIPopups();
       this.classSelectionMenu.show();
+      // Hide key indicators when menu is open
+      this.keyIndicatorManager?.hide();
     }
   }
   
@@ -343,9 +417,13 @@ export class UIFactory {
     // Toggle visibility
     if (this.nameChangeDialog.visible) {
       this.nameChangeDialog.hide();
+      // Show key indicators again after closing dialog
+      this.showKeyIndicators();
     } else {
       this.hideAllUIPopups();
       this.nameChangeDialog.show();
+      // Hide key indicators when dialog is open
+      this.keyIndicatorManager?.hide();
     }
   }
   
@@ -358,9 +436,13 @@ export class UIFactory {
     // Toggle visibility
     if (this.teleportSelectionMenu.visible) {
       this.teleportSelectionMenu.hide();
+      // Show key indicators again after closing menu
+      this.showKeyIndicators();
     } else {
       this.hideAllUIPopups();
       this.teleportSelectionMenu.show();
+      // Hide key indicators when menu is open
+      this.keyIndicatorManager?.hide();
     }
   }
   
@@ -389,9 +471,13 @@ export class UIFactory {
     // Toggle visibility
     if (this.attackInfoMenu.visible) {
       this.attackInfoMenu.hide();
+      // Show key indicators again after closing menu
+      this.showKeyIndicators();
     } else {
       this.hideAllUIPopups();
       this.attackInfoMenu.show();
+      // Hide key indicators when menu is open
+      this.keyIndicatorManager?.hide();
     }
   }
   
@@ -409,9 +495,13 @@ export class UIFactory {
     // Toggle visibility
     if (this.partyMenu.visible) {
       this.partyMenu.hide();
+      // Show key indicators again after closing menu
+      this.showKeyIndicators();
     } else {
       this.hideAllUIPopups();
       this.partyMenu.show();
+      // Hide key indicators when menu is open
+      this.keyIndicatorManager?.hide();
     }
   }
   

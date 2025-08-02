@@ -238,6 +238,8 @@ export class CombatSkillBar {
           if (skillData) {
             const worldPos = hoveredSlot.getWorldPosition();
             const containerPos = this.container.getWorldTransformMatrix();
+            // Since tooltip uses scrollFactor(0), we need viewport coordinates
+            // The skill bar is already using UI camera, so these are viewport coords
             this.tooltip.show(
               containerPos.tx + worldPos.x + slotWidth / 2,
               containerPos.ty + worldPos.y,

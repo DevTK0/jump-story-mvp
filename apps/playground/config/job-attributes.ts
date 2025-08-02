@@ -124,7 +124,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         description:
           'Unleash a flurry of 3 strikes with high critical chance. Extended range and moderate mana cost.',
         damage: 15,
-        cooldown: 0.5,
+        cooldown: 5,
         critChance: 1,
         knockback: 8,
         range: 500,
