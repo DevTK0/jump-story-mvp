@@ -323,7 +323,10 @@ public static partial class Module
                     .Iter()
                     .FirstOrDefault(pt => pt.player_identity == ctx.Sender && 
                                          pt.location_name == teleport.location_name);
-                
+                ctx.Db.Player.identity.Update(player.Value with
+                {
+                    teleport_id = teleport.location_name,
+                });
                 if (existingUnlock.player_identity == ctx.Sender && !existingUnlock.is_unlocked)
                 {
                     // Delete old entry and insert updated one
@@ -335,11 +338,6 @@ public static partial class Module
                         is_unlocked = true
                     });
                     Log.Info($"Player {ctx.Sender} unlocked teleport: {teleport.location_name}");
-                } else if (existingUnlock.player_identity == ctx.Sender && existingUnlock.is_unlocked) {
-                    ctx.Db.Player.identity.Update(player.Value with
-                    {
-                        teleport_id = teleport.location_name,
-                    });
                 }
             }
         }

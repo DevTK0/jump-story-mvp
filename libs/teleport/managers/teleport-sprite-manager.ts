@@ -56,6 +56,18 @@ export class TeleportSpriteManager {
   /**
    * Update the sprite frame and play unlock animation if needed
    */
+  public updateRespawnPoint(locationName: string): void {
+    const sprite = this.teleportSprites.get(locationName);
+    if (!sprite) {
+      this.logger.warn(`Teleport sprite not found for location: ${locationName}`);
+      return;
+    }
+    this.playUnlockAnimation(sprite);
+  }
+
+  /**
+   * Update the sprite frame and play unlock animation if needed
+   */
   public updateTeleportSprite(locationName: string, isUnlocked: boolean): void {
     const sprite = this.teleportSprites.get(locationName);
     if (!sprite) {

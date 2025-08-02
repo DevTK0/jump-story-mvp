@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import type { DbConnection, Teleport, PlayerTeleport, EventContext } from '@/spacetime/client';
+import type { DbConnection, Teleport, PlayerTeleport, EventContext, Player } from '@/spacetime/client';
 import { createLogger, type ModuleLogger } from '@/core/logger';
 
 export interface TeleportSubscriptionCallbacks {
@@ -8,6 +8,7 @@ export interface TeleportSubscriptionCallbacks {
   onTeleportDelete: (teleport: Teleport) => void;
   onPlayerTeleportInsert: (playerTeleport: PlayerTeleport) => void;
   onPlayerTeleportUpdate: (playerTeleport: PlayerTeleport) => void;
+  onPlayerTeleportIdUpdate: (teleportId: string) => void;
 }
 
 /**
@@ -99,6 +100,19 @@ export class TeleportSubscriptionManager {
 
     this.dbConnection.db.playerTeleport.onInsert(onPlayerTeleportInsert);
     this.dbConnection.db.playerTeleport.onUpdate(onPlayerTeleportUpdate);
+
+    // Player handler    
+    const onPlayerTeleportIdUpdate = (_ctx: EventContext, oldPlayer: Player, newPlayer: Player) => {
+      if (
+        this.dbConnection &&
+        this.dbConnection.identity &&
+        newPlayer.identity.toHexString() === this.dbConnection.identity.toHexString() &&
+        oldPlayer.teleportId != newPlayer.teleportId
+      ) {
+        this.callbacks.onPlayerTeleportIdUpdate(newPlayer.teleportId);
+      }
+    };
+    this.dbConnection.db.player.onUpdate(onPlayerTeleportIdUpdate);
 
     // Store cleanup functions for future use
     this.cleanupFunctions.push(() => {

@@ -59,6 +59,7 @@ export type Player = {
   deathX: number,
   deathY: number,
   respawnAvailableAt: Timestamp,
+  teleportId: string,
 };
 
 /**
@@ -94,6 +95,7 @@ export namespace Player {
       new ProductTypeElement("deathX", AlgebraicType.createF32Type()),
       new ProductTypeElement("deathY", AlgebraicType.createF32Type()),
       new ProductTypeElement("respawnAvailableAt", AlgebraicType.createTimestampType()),
+      new ProductTypeElement("teleportId", AlgebraicType.createStringType()),
     ]);
   }
 
