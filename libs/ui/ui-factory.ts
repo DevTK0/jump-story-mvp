@@ -279,12 +279,16 @@ export class UIFactory {
     
     // Number keys 1-9 to directly change jobs
     const keyCodes = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
-    keyCodes.forEach((keyCode, index) => {
-      const jobNumber = index + 1;
-      this.registerKeyboardShortcut(keyCode, () => {
-        this.quickChangeJob(jobNumber);
+    const numpadKeyCodes = keyCodes.map(key => `NUMPAD_${key}`);
+    const allNumKeys = [keyCodes, numpadKeyCodes];
+    for (const keys of allNumKeys) {
+      keys.forEach((keyCode, index) => {
+        const jobNumber = index + 1;
+        this.registerKeyboardShortcut(keyCode, () => {
+          this.quickChangeJob(jobNumber);
+        });
       });
-    });
+    }
   }
   
   private registerKeyboardShortcut(key: string, handler: () => void): void {
@@ -312,6 +316,15 @@ export class UIFactory {
       // Trigger level up animation
       levelUpManager.triggerLevelUpAnimation(config.identity, currentLevel + 1);
     }
+  }
+
+  private hideAllUIPopups(): void {
+    this.classSelectionMenu?.hide();
+    this.nameChangeDialog?.hide();
+    this.teleportSelectionMenu?.hide();
+    this.leaderboardDialog?.hide();
+    this.attackInfoMenu?.hide();
+    this.partyMenu?.hide();
   }
   
   private openJobMenu(): void {
@@ -341,6 +354,7 @@ export class UIFactory {
     if (this.classSelectionMenu.visible) {
       this.classSelectionMenu.hide();
     } else {
+      this.hideAllUIPopups();
       this.classSelectionMenu.show();
     }
   }
@@ -355,6 +369,7 @@ export class UIFactory {
     if (this.nameChangeDialog.visible) {
       this.nameChangeDialog.hide();
     } else {
+      this.hideAllUIPopups();
       this.nameChangeDialog.show();
     }
   }
@@ -369,6 +384,7 @@ export class UIFactory {
     if (this.teleportSelectionMenu.visible) {
       this.teleportSelectionMenu.hide();
     } else {
+      this.hideAllUIPopups();
       this.teleportSelectionMenu.show();
     }
   }
@@ -383,6 +399,7 @@ export class UIFactory {
     if (this.leaderboardDialog.visible) {
       this.leaderboardDialog.hide();
     } else {
+      this.hideAllUIPopups();
       this.leaderboardDialog.show();
     }
   }
@@ -398,6 +415,7 @@ export class UIFactory {
     if (this.attackInfoMenu.visible) {
       this.attackInfoMenu.hide();
     } else {
+      this.hideAllUIPopups();
       this.attackInfoMenu.show();
     }
   }
@@ -417,6 +435,7 @@ export class UIFactory {
     if (this.partyMenu.visible) {
       this.partyMenu.hide();
     } else {
+      this.hideAllUIPopups();
       this.partyMenu.show();
     }
   }

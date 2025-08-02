@@ -69,22 +69,25 @@ export class ClassSelectionMenu {
     // Setup number keys 1-9 to select jobs
     // Try using Phaser key codes
     const keyCodes = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
-    
-    keyCodes.forEach((keyCode, index) => {
-      const numberKey = index + 1;
-      const handler = () => {
-        this.logger.info(`Number key ${numberKey} pressed, isVisible: ${this.isVisible}`);
-        if (this.isVisible) {
-          this.selectJobByNumber(numberKey);
-        }
-      };
-      
-      const keyName = `keydown-${keyCode}`;
-      this.logger.info(`Setting up handler for ${keyName}`);
-      
-      this.scene.input.keyboard?.on(keyName, handler);
-      this.keyboardHandlers.push({ event: keyName, handler });
-    });
+    const numpadKeyCodes = keyCodes.map(key => `NUMPAD_${key}`);
+    const allNumKeys = [keyCodes, numpadKeyCodes];
+    for (const keys of allNumKeys) {
+      keys.forEach((keyCode, index) => {
+        const numberKey = index + 1;
+        const handler = () => {
+          this.logger.info(`Number key ${numberKey} pressed, isVisible: ${this.isVisible}`);
+          if (this.isVisible) {
+            this.selectJobByNumber(numberKey);
+          }
+        };
+        
+        const keyName = `keydown-${keyCode}`;
+        this.logger.info(`Setting up handler for ${keyName}`);
+        
+        this.scene.input.keyboard?.on(keyName, handler);
+        this.keyboardHandlers.push({ event: keyName, handler });
+      });
+    }
     
     // Log that keyboard handlers are set up
     this.logger.info('Keyboard handlers set up for ClassSelectionMenu');
