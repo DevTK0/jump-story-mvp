@@ -249,6 +249,30 @@ public static partial class Module
             }
         }
 
+        // Apply mana leech if the attack has it and enemies were hit
+        if (jobAttack.Value.mana_leech > 0 && damageCount > 0)
+        {
+            // Calculate total mana to restore (mana_leech per enemy hit)
+            var manaToRestore = jobAttack.Value.mana_leech * (uint)damageCount;
+            
+            // Get current player state (may have been updated during combat)
+            var updatedPlayer = ctx.Db.Player.identity.Find(ctx.Sender);
+            if (updatedPlayer != null)
+            {
+                // Calculate new mana, capped at max_mana
+                var newMana = Math.Min(updatedPlayer.Value.current_mana + manaToRestore, updatedPlayer.Value.max_mana);
+                
+                // Only update if mana actually increased
+                if (newMana > updatedPlayer.Value.current_mana)
+                {
+                    var playerWithMana = updatedPlayer.Value with { current_mana = newMana };
+                    ctx.Db.Player.identity.Update(playerWithMana);
+                    
+                    Log.Info($"Player {ctx.Sender} restored {newMana - updatedPlayer.Value.current_mana} mana from {jobAttack.Value.name} leech (hit {damageCount} enemies)");
+                }
+            }
+        }
+
         Log.Info($"Player {ctx.Sender} used attack {attackSlot} ({jobAttack.Value.name}) at {ctx.Timestamp}");
 
         Log.Info($"Player {ctx.Sender} attack hit {damageCount} enemies, killed {killCount}");

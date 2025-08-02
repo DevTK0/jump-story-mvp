@@ -277,6 +277,7 @@ async function initializeSpacetime() {
             attack.manaCost,
             attack.ammoCost,
             attack.modifiers.join(','), // Convert array to comma-separated string
+            attack.manaLeech || 0, // Default to 0 if not specified
             projectile,
             skillEffect,
             areaRadius

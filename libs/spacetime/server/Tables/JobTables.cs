@@ -56,6 +56,7 @@ public static partial class Module
         public uint mana_cost;
         public uint ammo_cost;
         public string modifiers; // comma-separated, e.g., "sword,greatsword"
+        public uint mana_leech; // Mana restored per enemy hit by this attack
         
         // Optional field for projectile attacks
         public string? projectile; // Sprite key for projectile visual

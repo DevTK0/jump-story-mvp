@@ -309,7 +309,7 @@ export class BottomUIBar {
 
     // Update stat bars
     this.hpBar.updateValues(player.currentHp, player.maxHp);
-    this.mpBar.updateValues(player.currentMana || 50, player.maxMana || 100); // TODO: Implement mana
+    this.mpBar.updateValues(player.currentMana, player.maxMana);
 
     // Update EXP bar
     const nextLevelConfig = this.findNextLevelConfig(player.level);

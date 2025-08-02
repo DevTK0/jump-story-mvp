@@ -17,6 +17,7 @@ const sharedAttacks = {
     modifiers: ['sword' as const],
     manaCost: 0,
     ammoCost: 0,
+    manaLeech: 3, // Default mana leech for basic attack
     icon: 'heal1',
     audio: 'p_att_phys',
   },
@@ -95,6 +96,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         modifiers: ['sword' as const],
         manaCost: 0,
         ammoCost: 0,
+        manaLeech: 3, // Moderate mana leech for soldier
         icon: 'heal1',
         audio: 'p_att_phys',
       },
@@ -111,7 +113,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         hits: 1,
         targets: 6,
         modifiers: ['sword' as const],
-        manaCost: 0,
+        manaCost: 10,
         ammoCost: 0,
         icon: 'heal2',
         audio: 'p_att_phys',
@@ -182,7 +184,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   wizard: {
     displayName: 'Wizard',
     spriteKey: 'wizard',
-    unlockLevel: 10, // Unlock at level 10
+    unlockLevel: 0, // Unlock at level 10
     baseStats: {
       health: 80,
       moveSpeed: 150,
@@ -215,6 +217,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         modifiers: ['dark' as const],
         manaCost: 0,
         ammoCost: 0,
+        manaLeech: 1, // Low mana leech for wizard, relies on high mana regen
         skillEffect: 'freeze',
         icon: 'heal1',
         audio: 'p_att_phys',
@@ -303,6 +306,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         modifiers: ['bow' as const],
         manaCost: 0,
         ammoCost: 0,
+        manaLeech: 2, // Low mana leech for ranged combat
         projectile: 'arrow',
         icon: 'heal1',
         audio: 'p_att_phys',
@@ -443,13 +447,13 @@ export const jobAttributes: Record<string, JobConfig> = {
         cooldown: 0.8,
         critChance: 0.15,
         knockback: 15,
-        range: 500,
+        range: 100,
         hits: 1,
-        targets: 5,
+        targets: 10,
         modifiers: ['spear' as const],
         manaCost: 0,
         ammoCost: 0,
-        dashDistance: 500,
+        dashDistance: 300,
         dashSpeed: 800,
         icon: 'heal1',
         audio: 'p_att_phys',
@@ -462,9 +466,9 @@ export const jobAttributes: Record<string, JobConfig> = {
         cooldown: 1.2,
         critChance: 0.3,
         knockback: 20,
-        range: 1000,
+        range: 100,
         hits: 2,
-        targets: 3,
+        targets: 10,
         modifiers: ['spear' as const],
         manaCost: 0,
         ammoCost: 0,
