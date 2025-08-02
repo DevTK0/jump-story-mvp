@@ -45,7 +45,9 @@ public static partial class Module
                 });
 
                 // Trigger health and mana regeneration
-                Module.RegenHealthMana(ctx, player.identity);
+                if (player.is_at_teleport_point) {
+                    Module.RegenHealthMana(ctx, player.identity);
+                }
             }
         }
 

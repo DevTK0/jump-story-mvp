@@ -253,9 +253,10 @@ export class BottomUIBar {
     // Listen to player updates
     this.dbConnection.db.player.onUpdate((_ctx, oldPlayer, newPlayer) => {
       if (newPlayer.identity.toHexString() === this.playerIdentity.toHexString()) {
-        // Check for combat state change (exiting combat with HP/Mana restored)
-        if (oldPlayer && oldPlayer.inCombat && !newPlayer.inCombat) {
-          // Player just exited combat - play respawn effect for regen
+        if (
+          (oldPlayer.currentHp < oldPlayer.maxHp || oldPlayer.currentMana < oldPlayer.maxMana) &&
+          (newPlayer.currentHp === newPlayer.maxHp && newPlayer.currentMana === newPlayer.maxMana)
+        ) {
           this.playRegenEffect();
         }
         this.updateFromPlayerData(newPlayer);
