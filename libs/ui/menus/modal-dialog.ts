@@ -5,6 +5,7 @@ import Phaser from 'phaser';
  */
 export abstract class ModalDialog {
   protected scene: Phaser.Scene;
+  private camera: Phaser.Cameras.Scene2D.Camera;
   protected container: Phaser.GameObjects.Container;
   protected background: Phaser.GameObjects.Rectangle;
   protected titleText: Phaser.GameObjects.Text;
@@ -14,12 +15,13 @@ export abstract class ModalDialog {
   
   constructor(scene: Phaser.Scene, width: number, height: number, title: string) {
     this.scene = scene;
+    this.camera = scene.cameras.getCamera('ui') ?? scene.cameras.main;
     this.dialogWidth = width;
     this.dialogHeight = height;
     
     // Create main container
-    const centerX = scene.cameras.main.width / 2;
-    const centerY = scene.cameras.main.height / 2;
+    const centerX = this.camera.width / 2;
+    const centerY = this.camera.height / 2;
     
     this.container = scene.add.container(centerX, centerY);
     this.container.setDepth(1000);
@@ -58,10 +60,10 @@ export abstract class ModalDialog {
   private setupClickOutside(): void {
     // Create invisible background that covers the whole screen
     const clickBg = this.scene.add.rectangle(
-      this.scene.cameras.main.width / 2,
-      this.scene.cameras.main.height / 2,
-      this.scene.cameras.main.width,
-      this.scene.cameras.main.height,
+      this.camera.width / 2,
+      this.camera.height / 2,
+      this.camera.width,
+      this.camera.height,
       0x000000,
       0.5
     );

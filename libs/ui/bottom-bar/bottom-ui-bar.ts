@@ -12,6 +12,7 @@ import { onSceneEvent, offSceneEvent } from '@/core/scene';
 
 export class BottomUIBar {
   private scene: Phaser.Scene;
+  private camera: Phaser.Cameras.Scene2D.Camera;
   private container!: Phaser.GameObjects.Container;
   private background!: Phaser.GameObjects.Graphics;
   private logger: ModuleLogger = createLogger('BottomUIBar');
@@ -36,6 +37,7 @@ export class BottomUIBar {
   constructor(scene: Phaser.Scene) {
     console.log('[BottomUIBar] Constructor called');
     this.scene = scene;
+    this.camera = scene.cameras.getCamera('ui') ?? scene.cameras.main;
     
     // Get data from context service
     const context = UIContextService.getInstance();
@@ -65,7 +67,7 @@ export class BottomUIBar {
   }
 
   private createContainer(): void {
-    const camera = this.scene.cameras.main;
+    const camera = this.camera;
     const y = camera.height - BOTTOM_UI_CONFIG.container.height;
 
     this.container = this.scene.add.container(0, y);
@@ -74,7 +76,7 @@ export class BottomUIBar {
   }
 
   private createBackground(): void {
-    const camera = this.scene.cameras.main;
+    const camera = this.camera;
     const config = BOTTOM_UI_CONFIG.container;
 
     this.background = this.scene.add.graphics();
@@ -120,7 +122,7 @@ export class BottomUIBar {
     const layout = BOTTOM_UI_CONFIG.layout;
     const containerHeight = BOTTOM_UI_CONFIG.container.height;
     const centerY = containerHeight / 2;
-    const camera = this.scene.cameras.main;
+    const camera = this.camera;
 
     // Position level display (left margin, centered vertically)
     this.levelDisplay.setPosition(layout.levelMarginLeft, centerY);
@@ -369,7 +371,7 @@ export class BottomUIBar {
   }
 
   private onResize(_gameSize: Phaser.Structs.Size): void {
-    const camera = this.scene.cameras.main;
+    const camera = this.camera;
 
     // Update container position
     const y = camera.height - BOTTOM_UI_CONFIG.container.height;

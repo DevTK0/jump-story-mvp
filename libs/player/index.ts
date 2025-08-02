@@ -50,12 +50,17 @@ interface Position {
 declare global {
   var logger: ModuleLogger;
   var _defaultPosition: Position
+  var _uiPosition: Position
 }
 
 globalThis.logger = createLogger('Global');
 globalThis._defaultPosition = {
   x: PLAYER_CONFIG.respawn.spawnPosition.x,
   y: PLAYER_CONFIG.respawn.spawnPosition.y
+};
+globalThis._uiPosition = {
+  x: -10000,
+  y: -10000
 };
 
 // Effects

@@ -5,6 +5,7 @@ import { UIContextService } from '../services/ui-context-service';
 
 export class NameChangeDialog {
   private scene: Phaser.Scene;
+  private camera: Phaser.Cameras.Scene2D.Camera;
   private container!: Phaser.GameObjects.Container;
   private background!: Phaser.GameObjects.Rectangle;
   private logger: ModuleLogger = createLogger('NameChangeDialog');
@@ -20,6 +21,7 @@ export class NameChangeDialog {
   
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
+    this.camera = scene.cameras.getCamera('ui') ?? scene.cameras.main;
     
     // Get data from context service
     const context = UIContextService.getInstance();
@@ -42,7 +44,7 @@ export class NameChangeDialog {
     this.container.setScrollFactor(0);
     this.container.setDepth(2000); // High depth to appear above everything
     
-    const camera = this.scene.cameras.main;
+    const camera = this.camera;
     const centerX = camera.width / 2;
     const centerY = camera.height / 2;
     
@@ -146,7 +148,7 @@ export class NameChangeDialog {
     this.inputElement.style.position = 'absolute';
     
     // Position the input in the center of the dialog
-    const camera = this.scene.cameras.main;
+    const camera = this.camera;
     const centerY = camera.height / 2;
     
     this.inputElement.style.left = '50%';
@@ -238,7 +240,7 @@ export class NameChangeDialog {
       // Disable submit button to prevent multiple submissions
       const submitButton = this.container.list.find(obj => 
         obj instanceof Phaser.GameObjects.Rectangle && 
-        obj.y === this.scene.cameras.main.height / 2 + 60
+        obj.y === this.camera.height / 2 + 60
       ) as Phaser.GameObjects.Rectangle;
       
       if (submitButton) {
