@@ -71,7 +71,7 @@ export class DeathMonitor implements System {
           this.handlePlayerUpdate(
             this.player.getPlayerState().health,
             0,
-            'Dead'
+            'Dead',
           );
         }
       }
@@ -82,10 +82,10 @@ export class DeathMonitor implements System {
     oldHp: number,
     newHp: number,
     serverState: string,
-    _newPlayer?: ServerPlayer
+    newPlayer?: ServerPlayer
   ): void {
     // Player HP changed
-    console.log('[DeathMonitor][handlePlayerUpdate]', { oldHp, newHp, serverState, _newPlayer });
+    console.log('[DeathMonitor][handlePlayerUpdate]', { oldHp, newHp, serverState, newPlayer });
 
     // Use death state service to determine what action to take
     const stateAction = this.deathStateService.determineStateAction(
@@ -94,9 +94,8 @@ export class DeathMonitor implements System {
       serverState,
       this.isDead
     );
-
     // Execute the determined action
-    this.executeStateAction(stateAction.action, stateAction.reason);
+    this.executeStateAction(stateAction.action, stateAction.reason, newPlayer);
   }
 
   /**
@@ -106,7 +105,8 @@ export class DeathMonitor implements System {
    */
   private executeStateAction(
     action: 'die' | 'respawn' | 'force_dead' | 'sync_dead' | 'none',
-    _reason: string
+    _reason: string,
+    newPlayer?: ServerPlayer
   ): void {
     logger.info('[DeathMonitor][executeStateAction]', { action, _reason });
     switch (action) {
@@ -124,8 +124,7 @@ export class DeathMonitor implements System {
         break;
 
       case 'respawn':
-        // Move player to last teleport point
-        this.respawnPlayer();
+        this.respawnPlayer(newPlayer?.x, newPlayer?.y);
         break;
 
       case 'none':
@@ -142,7 +141,12 @@ export class DeathMonitor implements System {
     return this.isDead;
   }
 
-  public respawnPlayer() {
+  public respawnPlayer(x?: number, y?: number) {
+    // Move player to last teleport point
+    if (x !== undefined && y !== undefined) {
+      this.player.setPosition(x, y);
+    }
+    
     // Player respawned
     this.isDead = false;
     this.player.transitionToState('Idle');
