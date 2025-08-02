@@ -64,7 +64,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     unlockLevel: 0, // Unlocked by default
     baseStats: {
       health: 100,
-      moveSpeed: 200,
+      moveSpeed: 250,
       mana: 30,
       hpRecovery: 1,
       manaRecovery: 0.5,
@@ -152,13 +152,14 @@ export const jobAttributes: Record<string, JobConfig> = {
   knight: {
     displayName: 'Knight',
     spriteKey: 'knight',
-    unlockLevel: 2, // Unlock at level 5
+    unlockLevel: 0, // Unlock at level 2
     baseStats: {
       health: 150,
-      moveSpeed: 140,
+      moveSpeed: 200,
       mana: 50,
       hpRecovery: 1.5,
       manaRecovery: 0.3,
+      knockbackImmune: true, // immune to knockback
       resistances: {
         sword: 20,
         axe: 15,
@@ -182,13 +183,16 @@ export const jobAttributes: Record<string, JobConfig> = {
   wizard: {
     displayName: 'Wizard',
     spriteKey: 'wizard',
-    unlockLevel: 10, // Unlock at level 10
+    unlockLevel: 0, // Unlock at level 10
     baseStats: {
       health: 80,
-      moveSpeed: 150,
+      moveSpeed: 250,
       mana: 100,
       hpRecovery: 0.5,
       manaRecovery: 2,
+      stationaryForAttack1: true,
+      stationaryForAttack2: true,
+      stationaryForAttack3: true,
       resistances: {
         sword: -10,
         axe: -10,
@@ -272,10 +276,11 @@ export const jobAttributes: Record<string, JobConfig> = {
     unlockLevel: 0, // Unlocked by default
     baseStats: {
       health: 90,
-      moveSpeed: 170,
+      moveSpeed: 300,
       mana: 40,
       hpRecovery: 0.8,
       manaRecovery: 0.8,
+      doubleJump: true,
       resistances: {
         sword: -5,
         axe: -5,
@@ -354,13 +359,14 @@ export const jobAttributes: Record<string, JobConfig> = {
   'armored-axeman': {
     displayName: 'Armored Axeman',
     spriteKey: 'armored-axeman',
-    unlockLevel: 15, // Unlock at level 15
+    unlockLevel: 0, // Unlock at level 15
     baseStats: {
       health: 140,
-      moveSpeed: 130,
+      moveSpeed: 175,
       mana: 40,
       hpRecovery: 1.2,
       manaRecovery: 0.4,
+      knockbackImmune: true, // immune to knockback
       resistances: {
         sword: 10,
         axe: 25,
@@ -384,13 +390,15 @@ export const jobAttributes: Record<string, JobConfig> = {
   'knight-templar': {
     displayName: 'Knight Templar',
     spriteKey: 'knight-templar',
-    unlockLevel: 20, // Unlock at level 20
+    unlockLevel: 0, // Unlock at level 20
     baseStats: {
       health: 160,
-      moveSpeed: 135,
+      moveSpeed: 150,
       mana: 80,
       hpRecovery: 2,
       manaRecovery: 1,
+      knockbackImmune: true, // immune to knockback
+      chargeAttackAsUltimate: true,
       resistances: {
         sword: 15,
         axe: 10,
@@ -416,12 +424,13 @@ export const jobAttributes: Record<string, JobConfig> = {
     spriteKey: 'lancer',
     unlockLevel: 0, // Unlocked by default
     baseStats: {
-      health: 110,
-      moveSpeed: 500, // Really fast movement speed
+      health: 80,
+      moveSpeed: 400, // Really fast movement speed
       mana: 50,
       hpRecovery: 1,
       manaRecovery: 0.7,
-      knockbackImmune: true, // Lancer is immune to knockback
+      knockbackImmune: true, // immune to knockback
+      stationaryForAttack1: true,
       resistances: {
         sword: 5,
         axe: 0,
@@ -487,10 +496,10 @@ export const jobAttributes: Record<string, JobConfig> = {
   priest: {
     displayName: 'Priest',
     spriteKey: 'priest',
-    unlockLevel: 8, // Unlock at level 8
+    unlockLevel: 0, // Unlock at level 8
     baseStats: {
       health: 85,
-      moveSpeed: 145,
+      moveSpeed: 250,
       mana: 120,
       hpRecovery: 1.5,
       manaRecovery: 2.5,
@@ -540,10 +549,11 @@ export const jobAttributes: Record<string, JobConfig> = {
     unlockLevel: 0, // Unlocked by default
     baseStats: {
       health: 105,
-      moveSpeed: 155,
+      moveSpeed: 300,
       mana: 40,
       hpRecovery: 1,
       manaRecovery: 0.6,
+      doubleJump: true,
       resistances: {
         sword: 15,
         axe: 0,

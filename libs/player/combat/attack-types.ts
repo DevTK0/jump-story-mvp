@@ -118,7 +118,11 @@ export interface JobConfig {
     manaRecovery: number;
     resistances: Resistances;
     knockbackImmune?: boolean; // Optional: Makes the job immune to knockback
-    doubleJump?: boolean;
+    doubleJump?: boolean; // Optional: Allows job to double jump
+    chargeAttackAsUltimate?: boolean; // Optional: Makes job charge as its ultimate
+    stationaryForAttack1?: boolean; // Optional: Makes unable to move when using attack 1
+    stationaryForAttack2?: boolean; // Optional: Makes unable to move when using attack 2
+    stationaryForAttack3?: boolean; // Optional: Makes unable to move when using attack 3
   };
   attacks: {
     attack1: Attack;
