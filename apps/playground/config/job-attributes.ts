@@ -358,7 +358,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     spriteKey: 'armored-axeman',
     unlockLevel: 0, // Unlock at level 15
     baseStats: {
-      health: 140,
+      health: 180,
       moveSpeed: 175,
       mana: 40,
       hpRecovery: 1.2,
@@ -389,7 +389,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     spriteKey: 'knight-templar',
     unlockLevel: 0, // Unlock at level 20
     baseStats: {
-      health: 160,
+      health: 200,
       moveSpeed: 150,
       mana: 80,
       hpRecovery: 2,
@@ -464,7 +464,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     attacks: {
       attack1: {
         ...sharedAttacks.attack1,
-        attackType: 'standard' as const,
+        attackType: 'stationary' as const,
       },
       attack2: {
         attackType: 'dash' as const,
