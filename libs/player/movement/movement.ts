@@ -23,7 +23,8 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
   // Shadow trajectory renderer
   private shadowRenderer: ShadowTrajectoryRenderer;
 
-  private _acceleration: number = 10;
+  // private _accelerationMultiplier: number = 10; // Easy, fully controlled jumps
+  private _accelerationMultiplier: number = 1.5;
 
   constructor(player: Player, inputSystem: InputSystem) {
     super();
@@ -83,7 +84,7 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
           }
         }
       } else {
-        body.setAccelerationX(this._acceleration * horizontalDir * this.player.getSpeed());
+        body.setAccelerationX(this._accelerationMultiplier * horizontalDir * this.player.getSpeed());
       }
 
       // Regular jump
