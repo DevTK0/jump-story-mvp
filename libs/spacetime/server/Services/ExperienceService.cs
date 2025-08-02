@@ -123,7 +123,8 @@ public static partial class Module
         Player player,
         uint expGained,
         Spawn killedEnemy,
-        float contributionPercentage)
+        float contributionPercentage,
+        bool isSharedExp = false)
     {
         var levelUpResult = CalculateLevelUp(ctx, player, expGained);
 
@@ -202,8 +203,40 @@ public static partial class Module
             }
         }
 
-        Log.Info($"Player {player.identity} gained {expGained} EXP from {killedEnemy.enemy} (Level {killedEnemy.level}). " +
-                $"Contribution: {contributionPercentage:P1}, Total EXP: {player.experience} -> {player.experience + expGained}, Current: {levelUpResult.RemainingExp}");
+        // Share experience with party members (only for direct damage contribution, not shared exp)
+        if (!isSharedExp && expGained > 0)
+        {
+            // Find player's party membership
+            var membership = ctx.Db.PartyMember.player_identity.Find(player.identity);
+            if (membership != null)
+            {
+                // Get all other party members
+                var partyMembers = ctx.Db.PartyMember.Iter()
+                    .Where(m => m.party_id == membership.Value.party_id)
+                    .Where(m => m.player_identity != player.identity); // Skip self
+                
+                foreach (var member in partyMembers)
+                {
+                    var memberPlayer = ctx.Db.Player.identity.Find(member.player_identity);
+                    if (memberPlayer != null)
+                    {
+                        // Share the exact same expGained amount
+                        AwardExperienceToPlayer(ctx, memberPlayer.Value, expGained, killedEnemy, 0f, true);
+                    }
+                }
+            }
+        }
+
+        // Log differently for shared vs earned EXP
+        if (isSharedExp)
+        {
+            Log.Info($"Player {player.identity} received {expGained} shared EXP from party member's kill of {killedEnemy.enemy} (Level {killedEnemy.level})");
+        }
+        else
+        {
+            Log.Info($"Player {player.identity} gained {expGained} EXP from {killedEnemy.enemy} (Level {killedEnemy.level}). " +
+                    $"Contribution: {contributionPercentage:P1}, Total EXP: {player.experience} -> {player.experience + expGained}, Current: {levelUpResult.RemainingExp}");
+        }
     }
 
     /// <summary>
