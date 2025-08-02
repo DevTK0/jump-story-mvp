@@ -222,6 +222,16 @@ export class Player extends Phaser.GameObjects.Sprite implements PhysicsEntity {
 
   // Config accessors
   public getSpeed(): number {
+    // Try to get job-specific move speed from combat system
+    const combatSystem = this.getSystem('combat') as any;
+    if (combatSystem?.getJobConfig) {
+      const jobConfig = combatSystem.getJobConfig();
+      if (jobConfig?.baseStats?.moveSpeed) {
+        return jobConfig.baseStats.moveSpeed;
+      }
+    }
+    
+    // Fallback to default config if job speed not available
     return PLAYER_CONFIG.movement.speed;
   }
 
