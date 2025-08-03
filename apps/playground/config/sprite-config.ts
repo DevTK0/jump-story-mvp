@@ -62,9 +62,9 @@ export const jobSprites = {
     animations: {
       idle: { start: 0, end: 5, frameRate: 8 },
       walk: { start: 15, end: 22, frameRate: 12 },
-      attack1: { start: 30, end: 45, frameRate: 15 },
-      attack2: { start: 75, end: 86, frameRate: 15 },
-      attack3: { start: 75, end: 86, frameRate: 15 }, // Using attack2 frames as fallback
+      attack1: { start: 45, end: 50, frameRate: 15 },
+      attack2: { start: 90, end: 95, frameRate: 15 },
+      attack3: { start: 45, end: 50, frameRate: 15 },
       damaged: { start: 120, end: 123, frameRate: 15 },
       death: { start: 135, end: 138, frameRate: 8 },
     },
@@ -406,7 +406,7 @@ export const projectileSprites: Record<string, SpriteDefinition> = {
     path: 'assets/spritesheet/projectiles/fireball.png',
     frameWidth: 100,
     frameHeight: 100,
-    scale: 1.5, // Slightly smaller scale for fireballs
+    scale: 3, // Big scale for fireballs
     animations: {
       play: { start: 0, end: 6, frameRate: 20 },  // Static sprite
     },

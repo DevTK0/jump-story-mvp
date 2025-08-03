@@ -245,7 +245,7 @@ public static partial class Module
                     player_identity = ctx.Sender,
                     damage_amount = finalDamage,
                     damage_type = damageType,
-                    projectile = jobAttack.Value.attack_type == "projectile" ? jobAttack.Value.projectile : null,
+                    projectile = jobAttack.Value.projectile ?? null, // Pass projectile effect if present
                     skill_effect = jobAttack.Value.skill_effect, // Pass skill effect if present
                     timestamp = ctx.Timestamp
                 });

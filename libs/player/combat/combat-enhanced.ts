@@ -367,6 +367,7 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
       critChance: config.critChance,
       radius: config.radius,
       effectSprite: config.effectSprite,
+      projectile: config.projectile,
     });
 
     // Execute attack phases with movement re-enabled at the end
