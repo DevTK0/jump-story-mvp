@@ -11,6 +11,7 @@ const _knockback = {
   rangedHeavyAttack2: 15,
   dashAttack: 30, // very knockback
   rangedUltimate: 30, // very knockback
+  heal: 0,
 }
 
 // Shared attack configuration for all jobs
@@ -279,11 +280,11 @@ export const jobAttributes: Record<string, JobConfig> = {
         damage: 35,
         cooldown: 0.8,
         critChance: 0.25,
-        knockback: 600,
+        knockback: _knockback.rangedAttack2,
         range: 400,
         hits: 1,
         targets: 3,
-        manaCost: 0,
+        manaCost: 10,
         projectile: 'arrow',
         icon: 'arrow2',
         audio: 'p_att_phys',
@@ -295,7 +296,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         damage: 20,
         cooldown: 1.2,
         critChance: 0.1,
-        knockback: 200,
+        knockback: _knockback.rangedUltimate,
         range: 350,
         hits: 3,
         targets: 5,
@@ -345,7 +346,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         damage: 25,
         cooldown: 1.2,
         critChance: 0.3,
-        knockback: 20,
+        knockback: _knockback.dashAttack,
         range: 200,
         hits: 2,
         targets: 3,
@@ -381,7 +382,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         damage: 40,
         cooldown: 0.8,
         critChance: 0.15,
-        knockback: 15,
+        knockback: _knockback.dashAttack,
         range: 100,
         hits: 1,
         targets: 10,
@@ -398,7 +399,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         damage: 25,
         cooldown: 1.2,
         critChance: 0.3,
-        knockback: 20,
+        knockback: _knockback.dashAttack,
         range: 100,
         hits: 2,
         targets: 10,
@@ -430,7 +431,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         damage: 50, // Used as heal amount
         cooldown: 2.0,
         critChance: 0,
-        knockback: 0,
+        knockback: _knockback.heal,
         range: 200,
         hits: 1,
         targets: 3, // Can heal up to 3 party members
