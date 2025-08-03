@@ -47,7 +47,6 @@ public static partial class Module
         public byte max_enemies;
         public uint spawn_interval;
         public Timestamp last_spawn_time;
-        public byte active_enemy_count; // Counter for active enemies in this route
     }
 
     [Table(Name = "Enemy", Public = true)]

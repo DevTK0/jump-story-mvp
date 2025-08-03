@@ -41,7 +41,6 @@ export type SpawnRoute = {
   maxEnemies: number,
   spawnInterval: number,
   lastSpawnTime: Timestamp,
-  activeEnemyCount: number,
 };
 
 /**
@@ -60,7 +59,6 @@ export namespace SpawnRoute {
       new ProductTypeElement("maxEnemies", AlgebraicType.createU8Type()),
       new ProductTypeElement("spawnInterval", AlgebraicType.createU32Type()),
       new ProductTypeElement("lastSpawnTime", AlgebraicType.createTimestampType()),
-      new ProductTypeElement("activeEnemyCount", AlgebraicType.createU8Type()),
     ]);
   }
 
