@@ -1002,13 +1002,6 @@ public static partial class Module
             Log.Info($"RegenHealthMana: Player {player.Value.name} is still in combat, skipping regeneration");
             return;
         }
-        
-        // Regenerate only if player is at teleport point
-        if (!player.Value.is_at_teleport_point)
-        {
-            Log.Info($"RegenHealthMana: Player {player.Value.name} is not at teleport point, skipping regeneration");
-            return;
-        }
 
         // Check if regeneration is needed
         bool needsRegen = player.Value.current_hp < player.Value.max_hp || player.Value.current_mana < player.Value.max_mana;
