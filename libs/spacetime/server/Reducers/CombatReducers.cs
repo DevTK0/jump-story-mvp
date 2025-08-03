@@ -137,8 +137,19 @@ public static partial class Module
             var currentHp = enemy.current_hp;
             
             // Get enemy data to check invulnerability
-            var enemyData = ctx.Db.Enemy.name.Find(enemy.enemy);
-            bool isInvulnerable = enemyData?.invulnerable ?? false;
+            bool isInvulnerable = false;
+            
+            if (enemy.enemy_type == EnemyType.Boss)
+            {
+                // Bosses are never invulnerable (they're stored in Boss table, not Enemy table)
+                isInvulnerable = false;
+            }
+            else
+            {
+                // Regular enemies - check Enemy table for invulnerability
+                var enemyData = ctx.Db.Enemy.name.Find(enemy.enemy);
+                isInvulnerable = enemyData?.invulnerable ?? false;
+            }
             
             // Apply multiple hits if specified
             for (int hit = 0; hit < jobAttack.Value.hits; hit++)

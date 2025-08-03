@@ -297,6 +297,20 @@ export const enemySprites = {
       death: { start: 60, end: 63, frameRate: 10 },
     },
   },
+  'super-slime': {
+    path: 'assets/spritesheet/enemies/Slime.png',
+    frameWidth: SPRITE_SIZE,
+    frameHeight: SPRITE_SIZE,
+    animations: {
+      idle: { start: 0, end: 5, frameRate: 6 },
+      walk: { start: 12, end: 17, frameRate: 8 },
+      attack1: { start: 24, end: 29, frameRate: 15 },
+      attack2: { start: 0, end: 5, frameRate: 15 },
+      attack3: { start: 36, end: 47, frameRate: 15 },
+      damaged: { start: 48, end: 51, frameRate: 12 },
+      death: { start: 60, end: 63, frameRate: 10 },
+    },
+  },
   werewolf: {
     path: 'assets/spritesheet/enemies/Werewolf.png',
     frameWidth: SPRITE_SIZE,

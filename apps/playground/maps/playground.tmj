@@ -756,7 +756,7 @@
                         {
                          "name":"enemy",
                          "type":"string",
-                         "value":"orc-rider"
+                         "value":"slime"
                         }, 
                         {
                          "name":"type",
@@ -910,7 +910,7 @@
                         {
                          "name":"enemy",
                          "type":"string",
-                         "value":"orc-rider"
+                         "value":"skeleton-archer"
                         }, 
                         {
                          "name":"type",
@@ -1049,7 +1049,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1081,7 +1081,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1113,7 +1113,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1145,7 +1145,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1177,7 +1177,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1209,7 +1209,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1241,7 +1241,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1273,7 +1273,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1305,7 +1305,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1337,7 +1337,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1369,7 +1369,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1401,7 +1401,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1433,7 +1433,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1465,7 +1465,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1497,7 +1497,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1530,7 +1530,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1562,7 +1562,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1594,7 +1594,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1626,7 +1626,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1658,7 +1658,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1690,7 +1690,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1722,7 +1722,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1754,7 +1754,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1786,7 +1786,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1818,7 +1818,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1850,7 +1850,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1882,7 +1882,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1914,7 +1914,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1946,7 +1946,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -1978,7 +1978,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2010,7 +2010,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2043,7 +2043,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2075,7 +2075,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2107,7 +2107,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2139,7 +2139,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2171,7 +2171,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2203,7 +2203,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2235,7 +2235,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2267,7 +2267,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2299,7 +2299,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2331,7 +2331,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2363,7 +2363,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2395,7 +2395,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2427,7 +2427,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2459,7 +2459,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2491,7 +2491,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2523,7 +2523,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2556,7 +2556,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2588,7 +2588,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2620,7 +2620,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2652,7 +2652,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2684,7 +2684,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2716,7 +2716,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2748,7 +2748,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2780,7 +2780,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2812,7 +2812,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2844,7 +2844,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2876,7 +2876,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2908,7 +2908,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],
@@ -2940,7 +2940,7 @@
                          "value":"1"
                         }, 
                         {
-                         "name":"tyoe",
+                         "name":"type",
                          "type":"string",
                          "value":"spawn"
                         }],

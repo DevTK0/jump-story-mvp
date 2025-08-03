@@ -222,27 +222,6 @@ export const enemyAttributes: EnemyAttributes = {
         required_kills: 1,
       },
     },
-    'stone-golem': {
-      health: 500,
-      move_speed: 20,
-      damage: 50,
-      sprite: 'armored-skeleton', // Using existing sprite for now
-      name: 'Stone Golem',
-      ai_behavior: 'patrol',
-      aggro_range: 150,
-      level: 5,
-      exp_reward: 0, // No reward since it can't be killed
-      hitbox_size: 'large',
-      invulnerable: true, // This enemy cannot take damage
-      audio: {
-        on_damaged: 'enemyHit', // Will play even though no damage is dealt
-        on_death: 'enemyDeath', // Won't trigger since it can't die
-      },
-      boss_trigger: {
-        boss_to_spawn: 'orc-rider-2',
-        required_kills: 1,
-      },
-    },
     'super-slime': {
       health: 40,
       move_speed: 30,
@@ -255,10 +234,6 @@ export const enemyAttributes: EnemyAttributes = {
       exp_reward: 10,
       invulnerable: true,
       hitbox_size: 'medium',
-      boss_trigger: {
-        boss_to_spawn: 'slime',
-        required_kills: 1,
-      },
     },
   },
 };
