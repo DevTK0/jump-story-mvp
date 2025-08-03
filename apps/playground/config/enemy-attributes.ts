@@ -55,7 +55,7 @@ export const enemyAttributes: EnemyAttributes = {
       hitbox_size: 'medium',
       boss_trigger: {
         boss_to_spawn: 'orc',
-        required_kills: 1,
+        required_kills: 1000,
       },
       audio: {
         on_damaged: 'bossHitFlesh',
@@ -75,7 +75,7 @@ export const enemyAttributes: EnemyAttributes = {
       hitbox_size: 'medium',
       boss_trigger: {
         boss_to_spawn: 'armored-orc',
-        required_kills: 1,
+        required_kills: 1000,
       },
       audio: {
         on_damaged: 'bossHitArmor',
@@ -95,7 +95,7 @@ export const enemyAttributes: EnemyAttributes = {
       hitbox_size: 'large',
       boss_trigger: {
         boss_to_spawn: 'elite-orc',
-        required_kills: 1,
+        required_kills: 1000,
       },
       audio: {
         on_damaged: 'bossHitArmor',
@@ -115,7 +115,7 @@ export const enemyAttributes: EnemyAttributes = {
       hitbox_size: 'large',
       boss_trigger: {
         boss_to_spawn: 'orc-rider',
-        required_kills: 1,
+        required_kills: 1000,
       },
       audio: {
         on_damaged: 'bossHitArmor',
@@ -135,7 +135,7 @@ export const enemyAttributes: EnemyAttributes = {
       hitbox_size: 'small',
       boss_trigger: {
         boss_to_spawn: 'skeleton',
-        required_kills: 1,
+        required_kills: 1000,
       },
       audio: {
         on_damaged: 'bossHitBone',
@@ -155,7 +155,7 @@ export const enemyAttributes: EnemyAttributes = {
       hitbox_size: 'medium',
       boss_trigger: {
         boss_to_spawn: 'armored-skeleton',
-        required_kills: 1,
+        required_kills: 1000,
       },
       audio: {
         on_damaged: 'bossHitArmor',
@@ -175,7 +175,7 @@ export const enemyAttributes: EnemyAttributes = {
       hitbox_size: 'small',
       boss_trigger: {
         boss_to_spawn: 'skeleton-archer',
-        required_kills: 1,
+        required_kills: 1000,
       },
       audio: {
         on_damaged: 'bossHitBone',
@@ -195,7 +195,7 @@ export const enemyAttributes: EnemyAttributes = {
       hitbox_size: 'large',
       boss_trigger: {
         boss_to_spawn: 'greatsword-skeleton',
-        required_kills: 1,
+        required_kills: 1000,
       },
       audio: {
         on_damaged: 'bossHitBone',
@@ -215,7 +215,7 @@ export const enemyAttributes: EnemyAttributes = {
       hitbox_size: 'medium',
       boss_trigger: {
         boss_to_spawn: 'slime',
-        required_kills: 1,
+        required_kills: 1000,
       },
       audio: {
         on_damaged: 'bossHitSlime',
@@ -235,7 +235,7 @@ export const enemyAttributes: EnemyAttributes = {
       hitbox_size: 'large',
       boss_trigger: {
         boss_to_spawn: 'werewolf',
-        required_kills: 1,
+        required_kills: 1000,
       },
       audio: {
         on_damaged: 'bossHitFlesh',
@@ -255,7 +255,7 @@ export const enemyAttributes: EnemyAttributes = {
       hitbox_size: 'large',
       boss_trigger: {
         boss_to_spawn: 'werebear',
-        required_kills: 1,
+        required_kills: 1000,
       },
       audio: {
         on_damaged: 'bossHitFlesh',
