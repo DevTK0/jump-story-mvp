@@ -446,6 +446,150 @@ export const iconSprites: Record<string, SpriteDefinition> = {
       play: { start: 0, end: 0, frameRate: 1 }, // Static icon
     },
   },
+  arrow1: {
+    path: 'assets/spritesheet/icons/arrow1.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  arrow2: {
+    path: 'assets/spritesheet/icons/arrow2.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  arrow3: {
+    path: 'assets/spritesheet/icons/arrow3.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  magic1: {
+    path: 'assets/spritesheet/icons/magic1.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  magic2: {
+    path: 'assets/spritesheet/icons/magic2.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  magic3: {
+    path: 'assets/spritesheet/icons/magic3.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  sword1: {
+    path: 'assets/spritesheet/icons/sword1.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  sword2: {
+    path: 'assets/spritesheet/icons/sword2.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  slash1: {
+    path: 'assets/spritesheet/icons/slash1.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  slash2: {
+    path: 'assets/spritesheet/icons/slash2.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  charge1: {
+    path: 'assets/spritesheet/icons/charge1.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  charge2: {
+    path: 'assets/spritesheet/icons/charge2.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  fire1: {
+    path: 'assets/spritesheet/icons/fire1.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  fire2: {
+    path: 'assets/spritesheet/icons/fire2.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  ice1: {
+    path: 'assets/spritesheet/icons/ice1.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  shield1: {
+    path: 'assets/spritesheet/icons/shield1.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
 };
 
 // Complete sprite configuration
