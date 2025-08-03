@@ -255,7 +255,8 @@ export class BottomUIBar {
       if (newPlayer.identity.toHexString() === this.playerIdentity.toHexString()) {
         if (
           (oldPlayer.currentHp < oldPlayer.maxHp || oldPlayer.currentMana < oldPlayer.maxMana) &&
-          (newPlayer.currentHp === newPlayer.maxHp && newPlayer.currentMana === newPlayer.maxMana)
+          (newPlayer.currentHp === newPlayer.maxHp && newPlayer.currentMana === newPlayer.maxMana) &&
+          (newPlayer.isAtTeleportPoint || (oldPlayer.inCombat && !newPlayer.inCombat))
         ) {
           this.playRegenEffect();
         }
