@@ -13,6 +13,7 @@ import { getAttackAnimationDuration } from '../animations/animation-duration-hel
 import type { IHitValidator } from './hit-validator-interface';
 import { getAudioManager } from '@/core/audio/audio-manager';
 import { UIMessageDisplay } from '@/ui/common/ui-message-display';
+import type { MovementSystem } from '../movement';
 
 
 export class CombatSystemEnhanced extends BaseDebugRenderer implements System, IDebuggable, IHitValidator {
@@ -350,13 +351,9 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     logger.info('Attack setup successful');
 
     // Disable movement for casting attacks
-    const movementSystem = this.player.getSystem('movement') as any;
-    if (movementSystem?.stateTracker) {
-      movementSystem.stateTracker.disableMovement();
-      logger.info('Movement disabled for casting');
-    } else {
-      logger.warn('Could not disable movement - movement system not found');
-    }
+    const movementSystem = this.player.getSystem('movement') as MovementSystem;
+    movementSystem.disableMovement();
+    logger.info('Movement disabled for casting');
 
     // Configure hitbox as area attack with radius
     this.configureHitbox(hitboxSprite, config, 'area');
@@ -645,7 +642,7 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     attackNum: number,
     config: Attack,
     hitboxSprite: Phaser.Physics.Arcade.Sprite,
-    movementSystem: any
+    movementSystem: MovementSystem
   ): Promise<void> {
     try {
       // Use actual sprite animation duration for all jobs
@@ -692,9 +689,7 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
       await this.delay(recoveryMs);
 
       // Re-enable movement
-      if (movementSystem?.stateTracker) {
-        movementSystem.stateTracker.enableMovement();
-      }
+      movementSystem.enableMovement();
 
       this.player.setPlayerState({ isAttacking: false, currentAttackType: undefined });
 
@@ -711,9 +706,7 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     } catch (error) {
       console.warn('Casting attack execution interrupted:', error);
       // Re-enable movement on error
-      if (movementSystem?.stateTracker) {
-        movementSystem.stateTracker.enableMovement();
-      }
+      movementSystem.enableMovement();
       this.cleanupAttack(attackNum, hitboxSprite);
     }
   }

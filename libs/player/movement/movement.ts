@@ -274,6 +274,14 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
     };
   }
 
+  public disableMovement() {
+    this.stateTracker.disableMovement();
+  }
+
+  public enableMovement() {
+    this.stateTracker.enableMovement();
+  }
+
   // Clean up all resources
 
   destroy(): void {
