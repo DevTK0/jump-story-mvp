@@ -235,15 +235,34 @@ export class SceneInitializer {
   private async initializeDatabase(): Promise<void> {
     this.logger.debug('Initializing database connection...');
     
-    this.connectionHelper = new SceneConnectionHelper(this.scene, {
-      target: this.config.database?.target || 'local',
-      moduleName: this.config.database?.moduleName || 'jump-story',
-    });
+    // Check if connection was already established by preloader
+    const existingConnection = this.scene.registry.get('dbConnection');
+    const existingIdentity = this.scene.registry.get('dbIdentity');
+    
+    if (existingConnection && existingIdentity) {
+      this.logger.info('Using pre-established database connection from preloader');
+      
+      // Create connection helper with existing connection
+      this.connectionHelper = new SceneConnectionHelper(this.scene, {
+        target: this.config.database?.target || 'local',
+        moduleName: this.config.database?.moduleName || 'jump-story',
+      });
+      
+      // Set the existing connection instead of creating new one
+      await this.connectionHelper.setExistingConnection(existingConnection, existingIdentity);
+    } else {
+      this.logger.info('No pre-established connection, connecting now...');
+      
+      this.connectionHelper = new SceneConnectionHelper(this.scene, {
+        target: this.config.database?.target || 'local',
+        moduleName: this.config.database?.moduleName || 'jump-story',
+      });
+      
+      // Start new connection
+      await this.connectionHelper.connect();
+    }
     
     this.systems.connection = this.connectionHelper;
-    
-    // Start connection
-    await this.connectionHelper.connect();
   }
   
   private async initializePlayer(): Promise<void> {

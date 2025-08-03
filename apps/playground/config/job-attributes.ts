@@ -11,7 +11,7 @@ const _knockback = {
   rangedHeavyAttack2: 15,
   dashAttack: 30, // very knockback
   rangedUltimate: 30, // very knockback
-}
+};
 
 // Shared attack configuration for all jobs
 const sharedAttacks = {
@@ -101,8 +101,7 @@ export const jobAttributes: Record<string, JobConfig> = {
       attack2: {
         attackType: 'projectile' as const,
         name: 'Rapid Shot',
-        description:
-          'Fires an arrows rapidly.',
+        description: 'Fires an arrows rapidly.',
         damage: 15,
         cooldown: 0.5,
         critChance: 1,
@@ -154,10 +153,9 @@ export const jobAttributes: Record<string, JobConfig> = {
       },
       attack3: {
         ...sharedAttacks.attack3,
-        icon: 'fire_sword'
+        icon: 'fire_sword',
       },
-
-    }
+    },
   },
   wizard: {
     displayName: 'Wizard',
@@ -172,7 +170,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     },
     attacks: {
       attack1: {
-        attackType: 'casting' as const,
+        attackType: 'area' as const,
         name: 'Frost Nova',
         description: 'Channel frost magic to create a freezing explosion in front of you.',
         damage: 15,
@@ -184,7 +182,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         effectSprite: 'freeze',
         hits: 1,
         targets: 6,
-        manaCost: 0,
+        manaCost: 10,
         manaLeech: 1, // Low mana leech for wizard, relies on high mana regen
         hpLeech: 1, // Very low HP leech for magic users
         skillEffect: 'freeze',
@@ -248,7 +246,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         description:
           'A swift arrow shot that deals moderate damage at range. Low cooldown for rapid fire.',
         damage: 12,
-        cooldown: 0.4,
+        cooldown: 0,
         critChance: 0.15,
         knockback: _knockback.rangedAttack1,
         range: 300,
@@ -266,7 +264,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         name: 'Power Shot',
         description: 'A charged arrow that pierces through enemies dealing heavy damage.',
         damage: 35,
-        cooldown: 0.8,
+        cooldown: 0,
         critChance: 0.25,
         knockback: 600,
         range: 400,
@@ -282,7 +280,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         name: 'Rain of Arrows',
         description: 'Unleash multiple arrows in a wide arc, hitting all enemies in front.',
         damage: 20,
-        cooldown: 1.2,
+        cooldown: 0,
         critChance: 0.1,
         knockback: 200,
         range: 350,
@@ -342,7 +340,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         dashDistance: 1000,
         dashSpeed: 1000,
         icon: 'shield1',
-        audio: 'p_att_phys'
+        audio: 'p_att_phys',
       },
     },
   },

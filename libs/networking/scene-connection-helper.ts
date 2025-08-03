@@ -33,6 +33,19 @@ export class SceneConnectionHelper {
   }
 
   /**
+   * Set an existing connection (e.g., from preloader)
+   */
+  async setExistingConnection(connection: DbConnection, identity: Identity): Promise<void> {
+    this.connection = connection;
+    this.identity = identity;
+    
+    this.logger.info('Using existing database connection');
+    
+    // Initialize singleton services with the connection
+    this.initializeSingletonServices(connection, identity);
+  }
+
+  /**
    * Connect to the database
    */
   async connect(): Promise<void> {
@@ -137,10 +150,7 @@ export class SceneConnectionHelper {
     }
   }
 
-  private handleDatabaseConnect(conn: DbConnection, identity: Identity, _token: string): void {
-    this.connection = conn;
-    this.identity = identity;
-
+  private initializeSingletonServices(conn: DbConnection, identity: Identity): void {
     // Initialize the PlayerQueryService singleton immediately
     PlayerQueryService.getInstance(conn);
     this.logger.info('PlayerQueryService singleton initialized');
@@ -151,5 +161,13 @@ export class SceneConnectionHelper {
 
     // Emit event for other systems to react
     this.scene.events.emit('database-connected', { connection: conn, identity });
+  }
+
+  private handleDatabaseConnect(conn: DbConnection, identity: Identity, _token: string): void {
+    this.connection = conn;
+    this.identity = identity;
+
+    // Initialize singleton services
+    this.initializeSingletonServices(conn, identity);
   }
 }

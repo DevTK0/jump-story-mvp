@@ -68,6 +68,10 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
   shutdown(): void {
     this.contextMenuExtension?.destroy();
     this.initializer.shutdown();
+    
+    // Clean up registry entries from preloader
+    this.registry.remove('dbConnection');
+    this.registry.remove('dbIdentity');
   }
 
   // Debug methods for IDebuggable interface
