@@ -60,7 +60,6 @@ export interface CastingAttack extends BaseAttack {
   attackType: 'casting';
   radius: number; // Area of effect radius around the caster
   effectSprite: string; // Visual effect sprite
-  projectile?: string; // Required projectile sprite key
 }
 
 // Discriminated union - TypeScript will enforce correct fields based on attackType

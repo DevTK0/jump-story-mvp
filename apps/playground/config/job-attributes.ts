@@ -220,7 +220,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         audio: 'p_att_fire',
       },
       attack3: {
-        attackType: 'casting' as const,
+        attackType: 'area' as const,
         name: 'Fire Explosion',
         description: 'Channel fire magic to create a large explosion of fire.',
         damage: 25,
@@ -233,7 +233,6 @@ export const jobAttributes: Record<string, JobConfig> = {
         hits: 1,
         targets: 10,
         manaCost: 100,
-        projectile: 'fireball',
         skillEffect: 'fire-explosion',
         icon: 'fire2',
         audio: 'p_att_fire',
