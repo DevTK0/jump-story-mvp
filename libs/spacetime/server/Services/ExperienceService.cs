@@ -256,6 +256,13 @@ public static partial class Module
         // Check for level ups
         while (true)
         {
+            // Check if already at max level
+            if (newLevel >= PlayerConstants.MAX_LEVEL)
+            {
+                // At max level, no more leveling up
+                break;
+            }
+
             var nextLevelData = ctx.Db.PlayerLevel.level.Find(newLevel + 1);
             if (nextLevelData == null)
             {

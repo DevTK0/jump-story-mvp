@@ -333,6 +333,8 @@ public static partial class Module
         }
         
         // Delete all expired dead bodies and their associated damage events
+        var routesToCheck = new HashSet<uint>();
+        
         foreach (var spawnId in enemiesToRemove)
         {
             // Get the spawn to check if it's a boss
@@ -376,11 +378,53 @@ public static partial class Module
             
             // Then delete the enemy
             ctx.Db.Spawn.spawn_id.Delete(spawnId);
+            
+            // Track route for counter update if it's a regular enemy
+            if (spawn != null && spawn.Value.enemy_type == EnemyType.Regular)
+            {
+                routesToCheck.Add(spawn.Value.route_id);
+            }
         }
         
         if (enemiesToRemove.Count > 0)
         {
             Log.Info($"Cleaned up {enemiesToRemove.Count} dead enemies");
+        }
+        
+        // Update active enemy counts for affected routes
+        foreach (var routeId in routesToCheck)
+        {
+            var route = ctx.Db.SpawnRoute.route_id.Find(routeId);
+            if (route != null)
+            {
+                // Count remaining alive enemies for this route
+                var remainingEnemies = 0;
+                foreach (var enemy in ctx.Db.Spawn.Iter())
+                {
+                    if (enemy.route_id == routeId && 
+                        enemy.state != PlayerState.Dead &&
+                        enemy.enemy_type == EnemyType.Regular)
+                    {
+                        remainingEnemies++;
+                    }
+                }
+                
+                // Update the route's active enemy count
+                var updatedRoute = route.Value with { 
+                    active_enemy_count = (byte)remainingEnemies
+                };
+                ctx.Db.SpawnRoute.route_id.Update(updatedRoute);
+                
+                // If count reached 0, reset spawn timer to trigger immediate respawn on next cycle
+                if (remainingEnemies == 0)
+                {
+                    Log.Info($"Route {routeId} has no enemies left, resetting spawn timer for immediate respawn");
+                    updatedRoute = updatedRoute with { 
+                        last_spawn_time = ctx.Timestamp - TimeSpan.FromSeconds(route.Value.spawn_interval + 1)
+                    };
+                    ctx.Db.SpawnRoute.route_id.Update(updatedRoute);
+                }
+            }
         }
         
         // Also clean up old player damage events (older than 5 seconds)
@@ -435,6 +479,50 @@ public static partial class Module
     }
 
     [Reducer]
+    public static void SyncEnemyCounts(ReducerContext ctx, string adminApiKey)
+    {
+        // Validate admin API key
+        if (!AdminConstants.IsValidAdminKey(adminApiKey))
+        {
+            Log.Warn($"Unauthorized attempt to sync enemy counts from {ctx.Sender}");
+            return;
+        }
+
+        // Count actual enemies for each route and update the counter
+        var routeCounts = new Dictionary<uint, int>();
+        
+        // Count all alive regular enemies by route
+        foreach (var enemy in ctx.Db.Spawn.Iter())
+        {
+            if (enemy.enemy_type == EnemyType.Regular && enemy.state != PlayerState.Dead)
+            {
+                if (!routeCounts.ContainsKey(enemy.route_id))
+                {
+                    routeCounts[enemy.route_id] = 0;
+                }
+                routeCounts[enemy.route_id]++;
+            }
+        }
+        
+        // Update all routes with the actual counts
+        foreach (var route in ctx.Db.SpawnRoute.Iter())
+        {
+            var actualCount = routeCounts.ContainsKey(route.route_id) ? routeCounts[route.route_id] : 0;
+            
+            if (route.active_enemy_count != actualCount)
+            {
+                var updatedRoute = route with { 
+                    active_enemy_count = (byte)actualCount
+                };
+                ctx.Db.SpawnRoute.route_id.Update(updatedRoute);
+                Log.Info($"Synced route {route.route_id} enemy count: {route.active_enemy_count} -> {actualCount}");
+            }
+        }
+        
+        Log.Info($"Enemy count sync complete for {routeCounts.Count} routes");
+    }
+
+    [Reducer]
     public static void SpawnMissingEnemies(ReducerContext ctx, SpawnEnemiesTimer timer)
     {
         // Skip spawning if no players are connected
@@ -452,7 +540,8 @@ public static partial class Module
             // Check if this route is due for spawning
             var intervalAgo = ctx.Timestamp - TimeSpan.FromSeconds(route.spawn_interval);
             
-            if (route.last_spawn_time < intervalAgo)
+            // Only spawn if interval has passed AND all enemies are dead (count = 0)
+            if (route.last_spawn_time < intervalAgo && route.active_enemy_count == 0)
             {
                 // Get enemy data from database
                 var enemyData = ctx.Db.Enemy.name.Find(route.enemy);
@@ -465,6 +554,11 @@ public static partial class Module
                 // Use helper method to spawn enemies
                 var spawned = SpawnEnemiesOnRoute(ctx, route, random, false);
                 totalSpawned += spawned;
+                
+                if (spawned > 0)
+                {
+                    Log.Info($"Respawned {spawned} {route.enemy} enemies on route {route.route_id} (all enemies were dead)");
+                }
             }
         }
 
@@ -982,7 +1076,18 @@ public static partial class Module
         // Don't update last_spawn_time for summons to avoid interfering with normal spawning
         if (!forceSummon && spawned > 0)
         {
-            var updatedRoute = route with { last_spawn_time = ctx.Timestamp };
+            var updatedRoute = route with { 
+                last_spawn_time = ctx.Timestamp,
+                active_enemy_count = (byte)(currentEnemyCount + spawned)
+            };
+            ctx.Db.SpawnRoute.route_id.Update(updatedRoute);
+        }
+        else if (forceSummon && spawned > 0)
+        {
+            // For summons, only update the enemy count
+            var updatedRoute = route with { 
+                active_enemy_count = (byte)(currentEnemyCount + spawned)
+            };
             ctx.Db.SpawnRoute.route_id.Update(updatedRoute);
         }
         

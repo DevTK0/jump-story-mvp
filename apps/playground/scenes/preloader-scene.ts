@@ -61,7 +61,7 @@ export class PreloaderScene extends Phaser.Scene {
     this.add.rectangle(0, 0, width, height, 0x1a1a2e).setOrigin(0);
     
     // Title
-    this.add.text(width / 2, height / 2 - 100, 'Jump Story', {
+    this.add.text(width / 2, height / 2 - 100, 'Loop Story', {
       font: '48px Arial',
       color: '#ffffff',
       stroke: '#000000',

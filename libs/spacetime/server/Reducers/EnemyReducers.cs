@@ -77,7 +77,8 @@ public static partial class Module
                                 ),
                                 max_enemies = maxEnemies,
                                 spawn_interval = spawnInterval,
-                                last_spawn_time = ctx.Timestamp
+                                last_spawn_time = ctx.Timestamp,
+                                active_enemy_count = 0
                             };
 
                             routesList.Add(route);
@@ -157,6 +158,7 @@ public static partial class Module
                 continue;
             }
 
+            var routeSpawnCount = 0;
             for (byte i = 0; i < route.max_enemies; i++)
             {
                 var spawnPosition = route.spawn_area.GetRandomPoint(random);
@@ -177,7 +179,14 @@ public static partial class Module
                 ctx.Db.Spawn.Insert(newEnemy);
                 Log.Info($"Spawned {route.enemy} (Level {enemyData.Value.level}) at ({spawnPosition.x}, {spawnPosition.y}) for route {route.route_id}");
                 totalSpawned++;
+                routeSpawnCount++;
             }
+            
+            // Update the route's active enemy count
+            var updatedRoute = route with { 
+                active_enemy_count = (byte)routeSpawnCount
+            };
+            ctx.Db.SpawnRoute.route_id.Update(updatedRoute);
         }
 
         Log.Info($"Spawned {totalSpawned} enemies across all routes");

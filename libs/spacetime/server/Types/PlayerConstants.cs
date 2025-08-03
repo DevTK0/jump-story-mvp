@@ -33,7 +33,7 @@ public static class PlayerConstants
     
     // Scaling exponents for exponential growth
     public const double HP_SCALING_EXPONENT = 1.1;      // HP scales by 1.1^level
-    public const double DAMAGE_SCALING_EXPONENT = 1.15; // Damage scales by 1.15^level
+    public const double DAMAGE_SCALING_EXPONENT = 1.05; // Damage scales by 1.05^level
     
     // Helper methods for stat calculations
     public static float CalculateMaxHp(uint level)

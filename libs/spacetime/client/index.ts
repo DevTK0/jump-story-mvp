@@ -110,6 +110,8 @@ import { SpawnBoss } from "./spawn_boss_reducer.ts";
 export { SpawnBoss };
 import { SpawnMissingEnemies } from "./spawn_missing_enemies_reducer.ts";
 export { SpawnMissingEnemies };
+import { SyncEnemyCounts } from "./sync_enemy_counts_reducer.ts";
+export { SyncEnemyCounts };
 import { TeleportPlayer } from "./teleport_player_reducer.ts";
 export { TeleportPlayer };
 import { UpdateBossActions } from "./update_boss_actions_reducer.ts";
@@ -734,6 +736,10 @@ const REMOTE_MODULE = {
       reducerName: "SpawnMissingEnemies",
       argsType: SpawnMissingEnemies.getTypeScriptAlgebraicType(),
     },
+    SyncEnemyCounts: {
+      reducerName: "SyncEnemyCounts",
+      argsType: SyncEnemyCounts.getTypeScriptAlgebraicType(),
+    },
     TeleportPlayer: {
       reducerName: "TeleportPlayer",
       argsType: TeleportPlayer.getTypeScriptAlgebraicType(),
@@ -834,6 +840,7 @@ export type Reducer = never
 | { name: "SpawnAllEnemies", args: SpawnAllEnemies }
 | { name: "SpawnBoss", args: SpawnBoss }
 | { name: "SpawnMissingEnemies", args: SpawnMissingEnemies }
+| { name: "SyncEnemyCounts", args: SyncEnemyCounts }
 | { name: "TeleportPlayer", args: TeleportPlayer }
 | { name: "UpdateBossActions", args: UpdateBossActions }
 | { name: "UpdateEnemyPatrol", args: UpdateEnemyPatrol }
@@ -1431,6 +1438,22 @@ export class RemoteReducers {
     this.connection.offReducer("SpawnMissingEnemies", callback);
   }
 
+  syncEnemyCounts(adminApiKey: string) {
+    const __args = { adminApiKey };
+    let __writer = new BinaryWriter(1024);
+    SyncEnemyCounts.getTypeScriptAlgebraicType().serialize(__writer, __args);
+    let __argsBuffer = __writer.getBuffer();
+    this.connection.callReducer("SyncEnemyCounts", __argsBuffer, this.setCallReducerFlags.syncEnemyCountsFlags);
+  }
+
+  onSyncEnemyCounts(callback: (ctx: ReducerEventContext, adminApiKey: string) => void) {
+    this.connection.onReducer("SyncEnemyCounts", callback);
+  }
+
+  removeOnSyncEnemyCounts(callback: (ctx: ReducerEventContext, adminApiKey: string) => void) {
+    this.connection.offReducer("SyncEnemyCounts", callback);
+  }
+
   teleportPlayer(x: number, y: number) {
     const __args = { x, y };
     let __writer = new BinaryWriter(1024);
@@ -1740,6 +1763,11 @@ export class SetReducerFlags {
   spawnMissingEnemiesFlags: CallReducerFlags = 'FullUpdate';
   spawnMissingEnemies(flags: CallReducerFlags) {
     this.spawnMissingEnemiesFlags = flags;
+  }
+
+  syncEnemyCountsFlags: CallReducerFlags = 'FullUpdate';
+  syncEnemyCounts(flags: CallReducerFlags) {
+    this.syncEnemyCountsFlags = flags;
   }
 
   teleportPlayerFlags: CallReducerFlags = 'FullUpdate';

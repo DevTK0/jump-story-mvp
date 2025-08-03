@@ -23,7 +23,7 @@ const sceneConfig: SceneConfig = {
     shadow: false, // Shadow effect enabled independently
     invulnerable: false, // Set to true to prevent player from taking damage (useful for testing)
     fps: false, // Show FPS counter
-    metrics: true, // Show performance metrics
+    metrics: false, // Show performance metrics
   },
   sprites: spriteConfig, // Pass sprite configuration
   audio: audioConfig, // Pass audio configuration
@@ -68,7 +68,7 @@ export class PlaygroundScene extends Phaser.Scene implements IDebuggable {
   shutdown(): void {
     this.contextMenuExtension?.destroy();
     this.initializer.shutdown();
-    
+
     // Clean up registry entries from preloader
     this.registry.remove('dbConnection');
     this.registry.remove('dbIdentity');
