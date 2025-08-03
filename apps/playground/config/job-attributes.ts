@@ -350,7 +350,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         hits: 2,
         targets: 3,
         manaCost: 20,
-        dashSpeed: 500,
+        dashSpeed: 400,
         icon: 'shield1',
         audio: 'p_att_phys',
       },
@@ -372,6 +372,7 @@ export const jobAttributes: Record<string, JobConfig> = {
       attack1: {
         ...sharedAttacks.attack1,
         attackType: 'standard' as const,
+        range: 90,
       },
       attack2: {
         attackType: 'dash' as const,
