@@ -225,11 +225,16 @@ export class PlayerProfileDialog extends ModalDialog {
     let expForNextLevel = 0;
     
     if (dbConnection) {
-      const nextLevel = dbConnection.db.playerLevel.level.find(this.stats.level + 1);
-      
-      if (nextLevel) {
-        // The expRequired field is the total exp needed to reach that level from current level
-        expForNextLevel = nextLevel.expRequired;
+      // Check if at max level (100)
+      if (this.stats.level >= 100) {
+        expForNextLevel = 0; // No exp needed at max level
+      } else {
+        const nextLevel = dbConnection.db.playerLevel.level.find(this.stats.level + 1);
+        
+        if (nextLevel) {
+          // The expRequired field is the total exp needed to reach that level from current level
+          expForNextLevel = nextLevel.expRequired;
+        }
       }
     }
     
@@ -333,13 +338,23 @@ export class PlayerProfileDialog extends ModalDialog {
       let expForNextLevel = 0;
       
       if (dbConnection) {
-        const nextLevel = dbConnection.db.playerLevel.level.find(this.stats.level + 1);
-        if (nextLevel) {
-          expForNextLevel = nextLevel.expRequired;
+        // Check if at max level (100)
+        if (this.stats.level >= 100) {
+          expForNextLevel = 0; // No exp needed at max level
+        } else {
+          const nextLevel = dbConnection.db.playerLevel.level.find(this.stats.level + 1);
+          if (nextLevel) {
+            expForNextLevel = nextLevel.expRequired;
+          }
         }
       }
       
-      this.expText.setText(`${this.stats.experience} / ${expForNextLevel} XP to next level`);
+      // Update text based on whether at max level
+      if (this.stats.level >= 100) {
+        this.expText.setText(`${this.stats.experience} XP (Max Level)`);
+      } else {
+        this.expText.setText(`${this.stats.experience} / ${expForNextLevel} XP to next level`);
+      }
     }
   }
   

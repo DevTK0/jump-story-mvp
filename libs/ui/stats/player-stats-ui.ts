@@ -163,7 +163,13 @@ export class PlayerStatsUI {
       mana: 'MP',
       exp: 'EXP',
     };
-    text.setText(`${labels[type]}: ${Math.floor(current)}/${Math.floor(max)}`);
+    
+    // Special handling for EXP at max level
+    if (type === 'exp' && max === 0 && current > 0) {
+      text.setText(`${labels[type]}: ${Math.floor(current)} (Max Level)`);
+    } else {
+      text.setText(`${labels[type]}: ${Math.floor(current)}/${Math.floor(max)}`);
+    }
   }
 
   private updateStats(
@@ -302,6 +308,15 @@ export class PlayerStatsUI {
 
   private findNextLevelConfig(currentLevel: number) {
     if (!this.dbConnection) return null;
+
+    // Check if at max level (100)
+    if (currentLevel >= 100) {
+      // Return a special config indicating max level reached
+      return {
+        level: currentLevel + 1,
+        expRequired: 0  // No exp needed at max level
+      };
+    }
 
     // Check if we have any level data
     const levelConfigs = Array.from(this.dbConnection.db.playerLevel.iter());

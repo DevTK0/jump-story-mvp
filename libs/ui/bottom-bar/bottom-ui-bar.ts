@@ -360,6 +360,15 @@ export class BottomUIBar {
   private findNextLevelConfig(currentLevel: number) {
     if (!this.dbConnection) return null;
 
+    // Check if at max level (100)
+    if (currentLevel >= 100) {
+      // Return a special config indicating max level reached
+      return {
+        level: currentLevel + 1,
+        expRequired: 0  // No exp needed at max level
+      };
+    }
+
     // Check if we have any level data
     const levelConfigs = Array.from(this.dbConnection.db.playerLevel.iter());
     
