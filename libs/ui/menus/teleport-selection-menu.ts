@@ -45,6 +45,8 @@ export class TeleportSelectionMenu {
   private get totalPages (): number {
     return Math.ceil((this.teleportTableData?.length ?? 1) / 9);
   }
+  private previousPageKey: string = 'Q';
+  private nextPageKey: string = 'E';
   
   // Audio cooldown tracking
   private lastActionBlockedSoundTime = 0;
@@ -107,10 +109,10 @@ export class TeleportSelectionMenu {
     }
 
     // Toggle pages
-    const arrowKeys = ['LEFT', 'RIGHT'];
+    const arrowKeys = [this.previousPageKey, this.nextPageKey];
     arrowKeys.forEach((keyCode) => {
         const handler = () => {
-          this.logger.info(`Arrow key ${keyCode} pressed, isVisible: ${this.isVisible}`);
+          this.logger.info(`Arrow key [${keyCode}] pressed, isVisible: ${this.isVisible}`);
           if (this.isVisible) {
             this.changePage(keyCode);
           }
@@ -129,9 +131,9 @@ export class TeleportSelectionMenu {
   }
 
   private changePage(direction: string) {
-    if (direction === 'LEFT' && this.page > 0) {
+    if (direction === this.previousPageKey && this.page > 0) {
       this.page--;
-    } else if (direction === 'RIGHT' && this.page < this.totalPages - 1) {
+    } else if (direction === this.nextPageKey && this.page < this.totalPages - 1) {
       this.page++;
     } else {
       return;
@@ -187,9 +189,6 @@ export class TeleportSelectionMenu {
     // Add all to container
     this.container.add([overlay, this.background, title, instruction]);
 
-    // Add arrow keys
-    this.addPageArrowKeys(centerX, centerY, menuWidth, menuHeight);
-
     // Create teleport options
     this.createTeleportOptions(centerX, centerY, menuWidth, menuHeight);
   }
@@ -197,18 +196,16 @@ export class TeleportSelectionMenu {
   private addPageArrowKeys (centerX: number, centerY: number, menuWidth: number, menuHeight: number) {
 
     // Create arrow keys
-    const previousPage = this.scene.add.text(centerX - menuWidth / 2 + 50, centerY + menuHeight / 2 - 40, '< Previous', {
+    const previousPage = this.scene.add.text(centerX - menuWidth / 2 + 50, centerY + menuHeight / 2 - 40, '< Previous (Q)', {
       fontSize: '16px',
       color: '#cccccc',
-      fontStyle: 'bold',
     });
     previousPage.setOrigin(0, 0.5);
     previousPage.setVisible(this.page > 0);
 
-    const nextPage = this.scene.add.text(centerX + menuWidth / 2 - 50, centerY + menuHeight / 2 - 40, 'Next >', {
+    const nextPage = this.scene.add.text(centerX + menuWidth / 2 - 50, centerY + menuHeight / 2 - 40, 'Next (E) >', {
       fontSize: '16px',
       color: '#cccccc',
-      fontStyle: 'bold',
     });
     nextPage.setOrigin(1, 0.5);
     nextPage.setVisible(this.page < this.totalPages - 1);
@@ -243,8 +240,8 @@ export class TeleportSelectionMenu {
   private createTeleportOptions(
     centerX: number,
     centerY: number,
-    _menuWidth: number,
-    _menuHeight: number
+    menuWidth: number,
+    menuHeight: number
   ): void {
     const gridSize = 120; // Same as job cells
     const padding = 30;
@@ -347,6 +344,9 @@ export class TeleportSelectionMenu {
         .concat(lockedText === undefined ? [] : [lockedText])
       );
     });
+
+    // Add arrow keys
+    this.addPageArrowKeys(centerX, centerY, menuWidth, menuHeight);
   }
 
   private selectTeleportByNumber(numberKey: number): void {
@@ -499,8 +499,7 @@ export class TeleportSelectionMenu {
     const elementsToRemove: Phaser.GameObjects.GameObject[] = [];
     this.container.list.forEach((child) => {
       // Keep the overlay, background, title, and instruction (first 4 elements)
-      // Adding arrow keys + 2
-      if (this.container.list.indexOf(child) > 5) {
+      if (this.container.list.indexOf(child) > 3) {
         elementsToRemove.push(child);
       }
     });
