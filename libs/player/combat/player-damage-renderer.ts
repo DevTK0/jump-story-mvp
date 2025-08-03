@@ -279,9 +279,14 @@ export class PlayerDamageRenderer {
     const text = this.getTextFromPool();
     if (!text || !this.player) return;
 
-    // Position above player
+    // Get hit index for stacking (default to 0 for backwards compatibility)
+    const hitIndex = damageEvent.hitIndex || 0;
+    const totalHits = damageEvent.totalHits || 1;
+
+    // Position above player with vertical stacking based on hit index
     const baseX = this.player.x;
-    const baseY = this.player.y + DAMAGE_RENDERER_CONFIG.display.player.baseYOffset;
+    const stackOffset = hitIndex * -25; // Each hit 25px higher
+    const baseY = this.player.y + DAMAGE_RENDERER_CONFIG.display.player.baseYOffset + stackOffset;
 
     // Add some horizontal randomness
     const seed = this.createSeedFromDamageEvent(damageEvent);
@@ -308,7 +313,7 @@ export class PlayerDamageRenderer {
     // Add to tracking
     this.activeNumbers.push(damageNumberState);
 
-    // Start animation
+    // Start animation with stagger delay
     this.animateDamageNumber(damageNumberState);
   }
 
@@ -381,11 +386,16 @@ export class PlayerDamageRenderer {
     const targetX = initialX + spreadX;
     const targetY = initialY - riseDistance;
 
+    // Calculate stagger delay based on hit index
+    const hitIndex = damageEvent.hitIndex || 0;
+    const staggerDelay = hitIndex * 100; // 100ms between each hit appearance
+
     // Fade in
     this.scene.tweens.add({
       targets: text,
       alpha: 1,
       duration: DAMAGE_RENDERER_CONFIG.animations.fadeInDuration,
+      delay: staggerDelay,
       ease: 'Power1.easeOut',
     });
 
@@ -395,6 +405,7 @@ export class PlayerDamageRenderer {
       x: targetX,
       y: targetY,
       duration: duration,
+      delay: staggerDelay,
       ease: DAMAGE_RENDERER_CONFIG.animations.easingCurve,
     });
 
@@ -403,7 +414,7 @@ export class PlayerDamageRenderer {
       targets: text,
       alpha: 0,
       duration: DAMAGE_RENDERER_CONFIG.animations.player.fadeOutDuration,
-      delay: duration - DAMAGE_RENDERER_CONFIG.animations.player.fadeOutDuration,
+      delay: staggerDelay + duration - DAMAGE_RENDERER_CONFIG.animations.player.fadeOutDuration,
       ease: 'Power1.easeIn',
       onComplete: () => {
         this.cleanupDamageNumber(damageNumberState);

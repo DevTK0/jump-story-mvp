@@ -43,6 +43,8 @@ export type PlayerDamageEvent = {
   projectile: string | undefined,
   skillEffect: string | undefined,
   damageSource: string,
+  hitIndex: number,
+  totalHits: number,
   timestamp: Timestamp,
 };
 
@@ -64,6 +66,8 @@ export namespace PlayerDamageEvent {
       new ProductTypeElement("projectile", AlgebraicType.createOptionType(AlgebraicType.createStringType())),
       new ProductTypeElement("skillEffect", AlgebraicType.createOptionType(AlgebraicType.createStringType())),
       new ProductTypeElement("damageSource", AlgebraicType.createStringType()),
+      new ProductTypeElement("hitIndex", AlgebraicType.createU8Type()),
+      new ProductTypeElement("totalHits", AlgebraicType.createU8Type()),
       new ProductTypeElement("timestamp", AlgebraicType.createTimestampType()),
     ]);
   }

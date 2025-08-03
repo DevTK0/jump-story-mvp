@@ -1253,6 +1253,8 @@ public static partial class Module
                     damage_type = DamageType.Normal,
                     skill_effect = attack1.skill_effect,
                     damage_source = "server_attack", // Need Phase 2 effects
+                    hit_index = (byte)hit,
+                    total_hits = attack1.hits,
                     timestamp = ctx.Timestamp
                 });
                 

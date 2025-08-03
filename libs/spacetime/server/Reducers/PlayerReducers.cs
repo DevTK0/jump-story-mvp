@@ -491,6 +491,8 @@ public static partial class Module
             damage_amount = finalDamage,
             damage_type = damageType,
             damage_source = "client_collision", // Phase 1 already handled effects
+            hit_index = 0, // Single hit attacks always have index 0
+            total_hits = 1, // Regular enemy attacks are single hit
             timestamp = ctx.Timestamp
         });
 
