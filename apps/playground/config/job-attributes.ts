@@ -376,7 +376,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   lancer: {
     displayName: 'Lancer',
     spriteKey: 'lancer',
-    unlockLevel: 0, // Unlocked by default
+    unlockLevel: 5, // Unlocked by default
     baseStats: {
       health: 150,
       moveSpeed: 400, // Really fast movement speed
