@@ -29,7 +29,7 @@ const sharedAttacks = {
     hits: 1,
     targets: 5,
     manaCost: 0,
-    manaLeech: 3, // Default mana leech for basic attack
+    manaLeech: 10, // Default mana leech for basic attack
     hpLeech: 2, // Default HP leech for basic attack
     icon: 'slash1',
     audio: 'p_att_phys',
@@ -40,7 +40,7 @@ const sharedAttacks = {
     description:
       'A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.',
     damage: 30,
-    cooldown: 0.5,
+    cooldown: 1.0,
     critChance: 0.1,
     knockback: _knockback.meleeAttack2,
     range: 75,
@@ -54,14 +54,14 @@ const sharedAttacks = {
     attackType: 'standard' as const,
     name: 'Ultimate Slash',
     description: 'An attack that gathers all power into one devestating blow.',
-    damage: 50,
+    damage: 100,
     cooldown: 5.0,
     critChance: 0.1,
     knockback: _knockback.meleeUltimate,
     range: 75,
     hits: 1,
     targets: 100,
-    manaCost: 20,
+    manaCost: 30,
     icon: 'slash3',
     audio: 'p_att_phys',
   },
@@ -86,7 +86,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         name: 'Quick Strike',
         description:
           'A swift blade attack that deals moderate damage to nearby enemies. Low cooldown allows for rapid strikes.',
-        damage: 10,
+        damage: 20,
         cooldown: 0.1,
         critChance: 0,
         knockback: _knockback.meleeAttack1,
@@ -94,7 +94,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         hits: 1,
         targets: 5,
         manaCost: 0,
-        manaLeech: 3, // Moderate mana leech for soldier
+        manaLeech: 10, // Moderate mana leech for soldier
         hpLeech: 3, // Higher HP leech for tank class
         icon: 'slash1',
         audio: 'p_att_phys',
@@ -103,7 +103,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         attackType: 'projectile' as const,
         name: 'Rapid Shot',
         description: 'Fires an arrows rapidly.',
-        damage: 10,
+        damage: 20,
         cooldown: 0.5,
         critChance: 0.1,
         knockback: _knockback.rangedAttack1,
@@ -120,7 +120,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         name: 'Power Slash',
         description:
           'A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.',
-        damage: 50,
+        damage: 100,
         cooldown: 5,
         critChance: 0,
         knockback: _knockback.meleeUltimate,
@@ -154,7 +154,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         ...sharedAttacks.attack2,
         range: 75,
         manaCost: 10,
-        damage: 15,
+        damage: 20,
         hits: 2,
       },
       attack3: {
@@ -162,7 +162,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         name: 'Blazing Slash',
         description: 'An attack embedded in powerful flames.',
         icon: 'fire_sword',
-        range: 100,
+        range: 110,
         manaCost: 15,
         cooldown: 5.0,
         damage: 60,
@@ -174,7 +174,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   wizard: {
     displayName: 'Wizard',
     spriteKey: 'wizard',
-    unlockLevel: 5, // Unlock at level 10
+    unlockLevel: 0, // Unlock at level 10
     baseStats: {
       health: 100,
       moveSpeed: 250,
@@ -197,7 +197,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         hits: 1,
         targets: 1,
         manaCost: 0,
-        manaLeech: 5, // Low mana leech for wizard, relies on high mana regen
+        manaLeech: 10, // Low mana leech for wizard, relies on high mana regen
         hpLeech: 1, // Very low HP leech for magic users
         skillEffect: 'freeze',
         icon: 'ice1',
@@ -243,7 +243,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   archer: {
     displayName: 'Archer',
     spriteKey: 'archer',
-    unlockLevel: 10, // Unlocked by default
+    unlockLevel: 0, // Unlocked by default
     baseStats: {
       health: 60,
       moveSpeed: 250,
@@ -266,7 +266,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         hits: 1,
         targets: 1,
         manaCost: 0,
-        manaLeech: 2, // Low mana leech for ranged combat
+        manaLeech: 10, // Low mana leech for ranged combat
         hpLeech: 1, // Low HP leech for ranged classes
         projectile: 'arrow',
         icon: 'arrow1',
@@ -276,7 +276,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         attackType: 'projectile' as const,
         name: 'Power Shot',
         description: 'A charged arrow that pierces through enemies dealing heavy damage.',
-        damage: 35,
+        damage: 30,
         cooldown: 0,
         critChance: 0.25,
         knockback: _knockback.rangedAttack2,
@@ -292,7 +292,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         attackType: 'projectile' as const,
         name: 'Rain of Arrows',
         description: 'Unleash multiple arrows in a wide arc, hitting all enemies in front.',
-        damage: 20,
+        damage: 35,
         cooldown: 6.0,
         critChance: 0.1,
         knockback: _knockback.rangedUltimate,
@@ -309,7 +309,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   'armored-axeman': {
     displayName: 'Armored Axeman',
     spriteKey: 'armored-axeman',
-    unlockLevel: 5, // Unlock at level 15
+    unlockLevel: 0, // Unlock at level 15
     baseStats: {
       health: 180,
       moveSpeed: 175,
@@ -326,18 +326,20 @@ export const jobAttributes: Record<string, JobConfig> = {
       attack2: {
         ...sharedAttacks.attack2,
         critChance: 0.8,
+        cooldown: 2.0,
       },
       attack3: {
         ...sharedAttacks.attack3,
-        damage: 70,
+        damage: 100,
         critChance: 0.8,
+        cooldown: 6.0,
       },
     }
   },
   'knight-templar': {
     displayName: 'Knight Templar',
     spriteKey: 'knight-templar',
-    unlockLevel: 10, // Unlock at level 20
+    unlockLevel: 0, // Unlock at level 20
     baseStats: {
       health: 200,
       moveSpeed: 150,
@@ -357,7 +359,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         attackType: 'dash' as const,
         name: 'Shield Charge',
         description: 'Dashes forward while holding up the shield.',
-        damage: 25,
+        damage: 50,
         cooldown: 5.0,
         critChance: 0.3,
         knockback: _knockback.dashAttack,
@@ -374,14 +376,13 @@ export const jobAttributes: Record<string, JobConfig> = {
   lancer: {
     displayName: 'Lancer',
     spriteKey: 'lancer',
-    unlockLevel: 15, // Unlocked by default
+    unlockLevel: 0, // Unlocked by default
     baseStats: {
       health: 150,
       moveSpeed: 400, // Really fast movement speed
       mana: 50,
       hpRecovery: 1,
       manaRecovery: 0.7,
-      knockbackImmune: true, // immune to knockback
     },
     attacks: {
       attack1: {
@@ -409,7 +410,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         attackType: 'dash' as const,
         name: 'Lightning Thrust',
         description: 'A lightning-enhanced attack while dashing on the trusty steed.',
-        damage: 25,
+        damage: 50,
         cooldown: 8.0,
         critChance: 0.3,
         knockback: _knockback.dashAttack,
@@ -426,7 +427,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   priest: {
     displayName: 'Priest',
     spriteKey: 'priest',
-    unlockLevel: 15, // Unlock at level 8
+    unlockLevel: 0, // Unlock at level 8
     baseStats: {
       health: 85,
       moveSpeed: 250,
@@ -458,7 +459,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   swordsman: {
     displayName: 'Hero',
     spriteKey: 'swordsman',
-    unlockLevel: 30, // Unlocked by default
+    unlockLevel: 0, // Unlocked by default
     baseStats: {
       health: 105,
       moveSpeed: 300,
@@ -481,7 +482,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         cooldown: 2.0,
         critChance: 1.0, // Guaranteed crit
         manaCost: 15,
-        damage: 5,
+        damage: 3,
         targets: 100,
         hits: 10,
       },
@@ -492,7 +493,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         critChance: 1.0, // Guaranteed crit
         manaCost: 20,
         cooldown: 5.0,
-        damage: 30,
+        damage: 35,
         targets: 100,
         hits: 3,
       },
