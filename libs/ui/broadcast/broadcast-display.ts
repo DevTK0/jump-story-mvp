@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { createLogger, type ModuleLogger } from '@/core/logger';
 import { DbConnection } from '@/spacetime/client';
 import { type Broadcast } from '@/spacetime/client';
+import { Timestamp, type Identity } from '@clockworklabs/spacetimedb-sdk';
 
 export class BroadcastDisplay {
   private scene: Phaser.Scene;
@@ -12,15 +13,17 @@ export class BroadcastDisplay {
   private logger: ModuleLogger = createLogger('BroadcastDisplay');
 
   private dbConnection: DbConnection;
+  private playerIdentity: Identity;
   private currentBroadcast: Broadcast | null = null;
   private fadeOutTimer?: Phaser.Time.TimerEvent;
   private broadcastQueue: Broadcast[] = [];
   private isDisplaying: boolean = false;
 
-  constructor(scene: Phaser.Scene, dbConnection: DbConnection) {
+  constructor(scene: Phaser.Scene, dbConnection: DbConnection, identity: Identity) {
     this.scene = scene;
     this.camera = scene.cameras.getCamera('ui') ?? scene.cameras.main;
     this.dbConnection = dbConnection;
+    this.playerIdentity = dbConnection.identity!;
 
     this.createUI();
     this.subscribeToUpdates();
@@ -91,6 +94,16 @@ export class BroadcastDisplay {
       // If the deleted broadcast was the one we're showing, don't do anything
       // Let the natural 10-second timer handle the fade out
       // This prevents the broadcast from disappearing early when server deletes it after 15s
+    });
+
+    // Listen to player updates
+    this.dbConnection.db.player.onUpdate((_ctx, oldPlayer, newPlayer) => {
+      if (newPlayer.identity.toHexString() === this.playerIdentity?.toHexString()) {
+        // If at teleport point for the first time, show UI
+        if (!oldPlayer.isAtTeleportPoint && newPlayer.isAtTeleportPoint) {
+          this.showTeleportPointName(newPlayer.teleportId);
+        }
+      }
     });
   }
 
@@ -181,5 +194,13 @@ export class BroadcastDisplay {
       this.fadeOutTimer.destroy();
     }
     this.container.destroy();
+  }
+
+  private showTeleportPointName(teleportId: string): void {
+    this.showBroadcast({
+      broadcastId: -1, // custom broadcast
+      message: teleportId,
+      publishDt: Timestamp.now()
+    });
   }
 }
