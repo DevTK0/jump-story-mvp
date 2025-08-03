@@ -22,7 +22,7 @@ const sharedAttacks = {
     description:
       'A swift blade attack that deals moderate damage to nearby enemies. Low cooldown allows for rapid strikes.',
     damage: 10,
-    cooldown: 0.5,
+    cooldown: 0.1,
     critChance: 0,
     knockback: _knockback.meleeAttack1,
     range: 50,
@@ -55,13 +55,13 @@ const sharedAttacks = {
     name: 'Ultimate Slash',
     description: 'An attack that gathers all power into one devestating blow.',
     damage: 50,
-    cooldown: 0.5,
+    cooldown: 8.0,
     critChance: 1,
     knockback: _knockback.meleeUltimate,
     range: 75,
     hits: 1,
     targets: 100,
-    manaCost: 10,
+    manaCost: 20,
     icon: 'slash3',
     audio: 'p_att_phys',
   },
@@ -87,7 +87,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         description:
           'A swift blade attack that deals moderate damage to nearby enemies. Low cooldown allows for rapid strikes.',
         damage: 10,
-        cooldown: 0.5,
+        cooldown: 0.1,
         critChance: 0,
         knockback: _knockback.meleeAttack1,
         range: 50,
@@ -221,7 +221,7 @@ export const jobAttributes: Record<string, JobConfig> = {
       },
       attack3: {
         attackType: 'area' as const,
-        name: 'Fire Explosion',
+        name: 'Area Combustion',
         description: 'Channel fire magic to create a large explosion of fire.',
         damage: 25,
         cooldown: 8.0,
@@ -258,7 +258,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         description:
           'A swift arrow shot that deals moderate damage at range. Low cooldown for rapid fire.',
         damage: 12,
-        cooldown: 0,
+        cooldown: 0.1,
         critChance: 0.15,
         knockback: _knockback.rangedAttack1,
         range: 300,
@@ -317,7 +317,17 @@ export const jobAttributes: Record<string, JobConfig> = {
       manaRecovery: 0.4,
       knockbackImmune: true, // immune to knockback
     },
-    attacks: sharedAttacks,
+    attacks: {
+      attack1: {
+        ...sharedAttacks.attack1,
+      },
+      attack2: {
+        ...sharedAttacks.attack2,
+      },
+      attack3: {
+        ...sharedAttacks.attack3,
+      },
+    }
   },
   'knight-templar': {
     displayName: 'Knight Templar',
@@ -447,12 +457,41 @@ export const jobAttributes: Record<string, JobConfig> = {
     baseStats: {
       health: 105,
       moveSpeed: 300,
-      mana: 40,
+      mana: 60,
       hpRecovery: 1,
       manaRecovery: 0.6,
       doubleJump: true,
     },
-    attacks: sharedAttacks,
+    attacks: {
+      attack1: {
+        ...sharedAttacks.attack1,
+        range: 80,
+        critChance: 1.0, // Guaranteed crit
+      },
+      attack2: {
+        ...sharedAttacks.attack2,
+        name: 'Decimate Flash',
+        description: 'An attack that decimates the enemy with 10 hits in an instant.',
+        range: 90,
+        cooldown: 3.0,
+        critChance: 1.0, // Guaranteed crit
+        manaCost: 15,
+        damage: 5,
+        targets: 100,
+        hits: 10,
+      },
+      attack3: {
+        ...sharedAttacks.attack3,
+        name: 'Tsubame Gaeshi',
+        range: 100,
+        critChance: 1.0, // Guaranteed crit
+        manaCost: 20,
+        cooldown: 5.0,
+        damage: 30,
+        targets: 100,
+        hits: 3,
+      },
+    }
   },
 };
 
