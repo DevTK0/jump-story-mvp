@@ -69,30 +69,30 @@ export class AreaEffectRenderer {
       return;
     }
 
-    // Create area effect sprite at attacker's position
-    const effectSprite = this.scene.add.sprite(
-      attackerSprite.x,
-      attackerSprite.y,
-      damageEvent.skillEffect
-    );
+    // // Create area effect sprite at attacker's position
+    // const effectSprite = this.scene.add.sprite(
+    //   attackerSprite.x,
+    //   attackerSprite.y,
+    //   damageEvent.skillEffect
+    // );
 
-    effectSprite.setDepth(this.EFFECT_DEPTH);
-    effectSprite.setScale(this.EFFECT_SCALE);
+    // effectSprite.setDepth(this.EFFECT_DEPTH);
+    // effectSprite.setScale(this.EFFECT_SCALE);
     
-    // Try to play animation if it exists
-    const animKey = `area_${damageEvent.skillEffect}`;
-    if (this.scene.anims.exists(animKey)) {
-      effectSprite.play(animKey);
-    }
+    // // Try to play animation if it exists
+    // const animKey = `area_${damageEvent.skillEffect}`;
+    // if (this.scene.anims.exists(animKey)) {
+    //   effectSprite.play(animKey);
+    // }
 
-    // Add to active effects for tracking
-    this.activeEffects.push({
-      sprite: effectSprite,
-      startTime: this.scene.time.now,
-      duration: this.EFFECT_DURATION,
-      centerX: attackerSprite.x,
-      centerY: attackerSprite.y
-    });
+    // // Add to active effects for tracking
+    // this.activeEffects.push({
+    //   sprite: effectSprite,
+    //   startTime: this.scene.time.now,
+    //   duration: this.EFFECT_DURATION,
+    //   centerX: attackerSprite.x,
+    //   centerY: attackerSprite.y
+    // });
   }
 
   /**
