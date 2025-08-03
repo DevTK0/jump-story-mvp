@@ -1001,6 +1001,15 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
           undefined,
           this.hitContext
         );
+        
+        // Also register overlap with bosses
+        this.physicsRegistry.addOverlap(
+          hitboxSprite,
+          'bosses',
+          this.hitCallback,
+          undefined,
+          this.hitContext
+        );
       });
     }
   }
