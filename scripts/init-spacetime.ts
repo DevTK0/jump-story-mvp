@@ -311,6 +311,9 @@ async function initializeSpacetime() {
           jobConfig.unlockLevel
         );
         console.log(`    ✅ Job ${jobKey} initialized`);
+        
+        // Add a small delay between job initializations
+        await new Promise((resolve) => setTimeout(resolve, 500));
       } catch (error) {
         console.error(`    ❌ Failed to initialize job ${jobKey}:`, (error as Error).message);
       }
@@ -357,6 +360,9 @@ async function initializeSpacetime() {
             areaRadius
           );
           console.log(`    ✅ Attack ${attack.name} added`);
+          
+          // Add a small delay between attack initializations
+          await new Promise((resolve) => setTimeout(resolve, 200));
         } catch (error) {
           console.error(`    ❌ Failed to add attack ${attack.name}:`, (error as Error).message);
         }
