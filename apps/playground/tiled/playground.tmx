@@ -144,7 +144,7 @@
     <property name="type" value="boss"/>
    </properties>
   </object>
-  <object id="466" name="Armored Orc Boss" x="-3072" y="544" width="1152" height="96">
+  <object id="466" name="Armored Orc Boss" x="-3072" y="544" width="1152" height="96" visible="0">
    <properties>
     <property name="enemy" value="armored-orc"/>
     <property name="type" value="boss"/>
@@ -1199,7 +1199,7 @@
   <object id="240" x="-2016" y="3040" width="320" height="32"/>
   <object id="244" x="-1728" y="3776" width="128" height="32"/>
   <object id="256" x="2848" y="2816" width="672" height="32"/>
-  <object id="258" x="2848" y="3136" width="672" height="32"/>
+  <object id="258" x="2848" y="3072" width="672" height="32"/>
   <object id="259" x="2848" y="3296" width="672" height="32"/>
   <object id="260" x="2848" y="2976" width="672" height="32"/>
   <object id="261" x="2848" y="3456" width="672" height="32"/>

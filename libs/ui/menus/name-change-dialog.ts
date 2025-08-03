@@ -80,30 +80,15 @@ export class NameChangeDialog {
     });
     instruction.setOrigin(0.5, 0.5);
     
+    // Create hint text about pressing Enter
+    const hintText = this.scene.add.text(centerX, centerY + 60, 'Press Enter to submit', {
+      fontSize: '14px',
+      color: '#888888',
+      fontStyle: 'italic',
+    });
+    hintText.setOrigin(0.5, 0.5);
+    
     // Close button removed - use N hotkey or ESC to close
-    
-    // Create submit button
-    const submitButton = this.scene.add.rectangle(centerX, centerY + 60, 120, 40, 0x4a4a4a);
-    submitButton.setInteractive({ useHandCursor: true });
-    submitButton.setStrokeStyle(2, 0x6a6a6a);
-    
-    const submitText = this.scene.add.text(centerX, centerY + 60, 'Submit', {
-      fontSize: '18px',
-      color: '#ffffff',
-      fontStyle: 'bold',
-    });
-    submitText.setOrigin(0.5, 0.5);
-    
-    // Hover effects for submit button
-    submitButton.on('pointerover', () => {
-      submitButton.setFillStyle(0x5a5a5a);
-    });
-    submitButton.on('pointerout', () => {
-      submitButton.setFillStyle(0x4a4a4a);
-    });
-    submitButton.on('pointerdown', () => {
-      this.submitName();
-    });
     
     // Create error text (hidden by default)
     this.errorText = this.scene.add.text(centerX, centerY + 100, '', {
@@ -119,8 +104,7 @@ export class NameChangeDialog {
       this.background, 
       title, 
       instruction,
-      submitButton,
-      submitText,
+      hintText,
       this.errorText
     ]);
   }
@@ -237,15 +221,9 @@ export class NameChangeDialog {
         return;
       }
       
-      // Disable submit button to prevent multiple submissions
-      const submitButton = this.container.list.find(obj => 
-        obj instanceof Phaser.GameObjects.Rectangle && 
-        obj.y === this.camera.height / 2 + 60
-      ) as Phaser.GameObjects.Rectangle;
-      
-      if (submitButton) {
-        submitButton.disableInteractive();
-        submitButton.setFillStyle(0x3a3a3a);
+      // Disable input to prevent multiple submissions
+      if (this.inputElement) {
+        this.inputElement.disabled = true;
       }
       
       // Submit the name change
@@ -272,10 +250,9 @@ export class NameChangeDialog {
           this.hide();
         } else {
           this.showError('Name already taken or invalid');
-          // Re-enable submit button
-          if (submitButton) {
-            submitButton.setInteractive({ useHandCursor: true });
-            submitButton.setFillStyle(0x4a4a4a);
+          // Re-enable input
+          if (this.inputElement) {
+            this.inputElement.disabled = false;
           }
         }
       }, 1000); // Wait 1 second for server processing
