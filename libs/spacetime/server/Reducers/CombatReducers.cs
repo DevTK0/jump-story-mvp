@@ -303,7 +303,7 @@ public static partial class Module
         if (jobAttack.Value.hp_leech > 0 && damageCount > 0)
         {
             // Calculate total HP to restore (hp_leech per enemy hit)
-            var hpToRestore = jobAttack.Value.hp_leech * (uint)damageCount;
+            var hpToRestore = PlayerConstants.CalculateHpLeech(jobAttack.Value.hp_leech, player.Value.level) * (uint)damageCount;
             
             // Get current player state (may have been updated during combat)
             var updatedPlayer = ctx.Db.Player.identity.Find(ctx.Sender);
