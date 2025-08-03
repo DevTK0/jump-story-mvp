@@ -518,6 +518,24 @@ export const iconSprites: Record<string, SpriteDefinition> = {
       play: { start: 0, end: 0, frameRate: 1 }, // Static icon
     },
   },
+  sword3: {
+    path: 'assets/spritesheet/icons/sword3.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  fire_sword: {
+    path: 'assets/spritesheet/icons/fire_sword.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
   slash1: {
     path: 'assets/spritesheet/icons/slash1.png',
     frameWidth: 16,
@@ -529,6 +547,15 @@ export const iconSprites: Record<string, SpriteDefinition> = {
   },
   slash2: {
     path: 'assets/spritesheet/icons/slash2.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  slash3: {
+    path: 'assets/spritesheet/icons/slash3.png',
     frameWidth: 16,
     frameHeight: 16,
     scale: 2,
@@ -574,6 +601,24 @@ export const iconSprites: Record<string, SpriteDefinition> = {
   },
   ice1: {
     path: 'assets/spritesheet/icons/ice1.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  lightning1: {
+    path: 'assets/spritesheet/icons/lightning1.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  lightning2: {
+    path: 'assets/spritesheet/icons/lightning2.png',
     frameWidth: 16,
     frameHeight: 16,
     scale: 2,

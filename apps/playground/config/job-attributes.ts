@@ -127,7 +127,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         targets: 1,
         manaCost: 0,
         projectile: 'arrow', // Test projectile for soldier
-        icon: 'projectile1',
+        icon: 'arrow2',
         audio: 'p_att_phys',
       },
     },
