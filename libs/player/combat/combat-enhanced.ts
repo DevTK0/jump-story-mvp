@@ -177,10 +177,10 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
   }
 
   private tryAttack(attackNum: number): boolean {
-    logger.info(`tryAttack called - Attack ${attackNum} for job ${this.playerJob}`);
+    logger.info(`tryAttack called - Attack ${attackNum} for job ${this.playerJob} [isCooldown:${this.attackCooldowns.get(attackNum)}]`);
     
-    if (this.attackCooldowns.get(attackNum) || this.player.isAttacking) {
-      logger.info(`Attack blocked - Cooldown: ${this.attackCooldowns.get(attackNum)}, isAttacking: ${this.player.isAttacking}`);
+    if (this.player.isAttacking) {
+      logger.info(`Attack blocked - isAttacking: ${this.player.isAttacking}`);
       return false;
     }
 
@@ -193,6 +193,12 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     const attackConfig = this.jobConfig.attacks[`attack${attackNum}` as keyof typeof this.jobConfig.attacks];
     if (!attackConfig) {
       logger.error(`No attack config found for attack${attackNum} on job ${this.playerJob}`);
+      return false;
+    }
+    
+    if (this.attackCooldowns.get(attackNum) ) {
+      logger.info(`Attack blocked - Cooldown: ${this.attackCooldowns.get(attackNum)}`);
+      this.uiMessageDisplay.showMessage(`[${attackConfig.name}] attack is on cooldown!`);
       return false;
     }
     
@@ -367,7 +373,6 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
       critChance: config.critChance,
       radius: config.radius,
       effectSprite: config.effectSprite,
-      projectile: config.projectile,
     });
 
     // Execute attack phases with movement re-enabled at the end
@@ -515,7 +520,7 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
   }
 
   private startCooldown(attackNum: number, cooldownMs: number): void {
-    this.scene.time.delayedCall(cooldownMs, () => {
+    this.scene.time.delayedCall(cooldownMs * 1000, () => {
       this.attackCooldowns.set(attackNum, false);
     });
   }
@@ -627,7 +632,7 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     }
   }
 
-  private cleanupAttack(attackNum: number, hitboxSprite: Phaser.Physics.Arcade.Sprite): void {
+  private cleanupAttack(_attackNum: number, hitboxSprite: Phaser.Physics.Arcade.Sprite): void {
     // Disable hitbox
     if (hitboxSprite.body) {
       hitboxSprite.body.enable = false;
@@ -636,7 +641,7 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
     // Reset player state
     this.player.setPlayerState({ isAttacking: false, isDashing: false, currentAttackType: undefined });
     this.resetCurrentAttack();
-    this.attackCooldowns.set(attackNum, false);
+    // this.attackCooldowns.set(attackNum, false);
   }
 
   private async executeCastingAttackPhases(
