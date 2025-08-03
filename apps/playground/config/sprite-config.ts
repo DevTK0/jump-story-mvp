@@ -787,6 +787,24 @@ export const iconSprites: Record<string, SpriteDefinition> = {
       play: { start: 0, end: 0, frameRate: 1 }, // Static icon
     },
   },
+  holy1: {
+    path: 'assets/spritesheet/icons/holy1.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  holy2: {
+    path: 'assets/spritesheet/icons/holy2.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
   arrow1: {
     path: 'assets/spritesheet/icons/arrow1.png',
     frameWidth: 16,
