@@ -233,7 +233,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         effectSprite: 'fire',
         hits: 1,
         targets: 10,
-        manaCost: 100,
+        manaCost: 30,
         skillEffect: 'fire-explosion',
         icon: 'fire2',
         audio: 'p_att_fire',
