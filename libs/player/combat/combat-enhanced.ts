@@ -196,7 +196,7 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
       return false;
     }
     
-    if (this.attackCooldowns.get(attackNum) ) {
+    if (this.attackCooldowns.get(attackNum) && attackNum !== 1) {
       logger.info(`Attack blocked - Cooldown: ${this.attackCooldowns.get(attackNum)}`);
       this.uiMessageDisplay.showMessage(`[${attackConfig.name}] attack is on cooldown!`);
       return false;

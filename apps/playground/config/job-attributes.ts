@@ -22,14 +22,14 @@ const sharedAttacks = {
     description:
       'A swift blade attack that deals moderate damage to nearby enemies. Low cooldown allows for rapid strikes.',
     damage: 10,
-    cooldown: 0.5,
-    critChance: 0,
+    cooldown: 0.1,
+    critChance: 0.1,
     knockback: _knockback.meleeAttack1,
     range: 50,
     hits: 1,
     targets: 5,
     manaCost: 0,
-    manaLeech: 3, // Default mana leech for basic attack
+    manaLeech: 10, // Default mana leech for basic attack
     hpLeech: 2, // Default HP leech for basic attack
     icon: 'slash1',
     audio: 'p_att_phys',
@@ -40,8 +40,8 @@ const sharedAttacks = {
     description:
       'A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.',
     damage: 30,
-    cooldown: 0.5,
-    critChance: 0,
+    cooldown: 1.0,
+    critChance: 0.1,
     knockback: _knockback.meleeAttack2,
     range: 75,
     hits: 1,
@@ -55,13 +55,13 @@ const sharedAttacks = {
     name: 'Ultimate Slash',
     description: 'An attack that gathers all power into one devestating blow.',
     damage: 100,
-    cooldown: 0.5,
+    cooldown: 5.0,
     critChance: 0.1,
     knockback: _knockback.meleeUltimate,
     range: 75,
     hits: 1,
     targets: 100,
-    manaCost: 10,
+    manaCost: 30,
     icon: 'slash3',
     audio: 'p_att_phys',
   },
@@ -73,7 +73,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     spriteKey: 'soldier',
     unlockLevel: 0, // Unlocked by default
     baseStats: {
-      health: 120000,
+      health: 120,
       moveSpeed: 250,
       mana: 30,
       hpRecovery: 1,
@@ -86,15 +86,15 @@ export const jobAttributes: Record<string, JobConfig> = {
         name: 'Quick Strike',
         description:
           'A swift blade attack that deals moderate damage to nearby enemies. Low cooldown allows for rapid strikes.',
-        damage: 10,
-        cooldown: 0.5,
+        damage: 20,
+        cooldown: 0.1,
         critChance: 0,
         knockback: _knockback.meleeAttack1,
         range: 50,
         hits: 1,
         targets: 5,
         manaCost: 0,
-        manaLeech: 3, // Moderate mana leech for soldier
+        manaLeech: 10, // Moderate mana leech for soldier
         hpLeech: 3, // Higher HP leech for tank class
         icon: 'slash1',
         audio: 'p_att_phys',
@@ -103,14 +103,14 @@ export const jobAttributes: Record<string, JobConfig> = {
         attackType: 'projectile' as const,
         name: 'Rapid Shot',
         description: 'Fires an arrows rapidly.',
-        damage: 30,
+        damage: 20,
         cooldown: 0.5,
-        critChance: 0,
+        critChance: 0.1,
         knockback: _knockback.rangedAttack1,
         range: 500,
         hits: 1,
         targets: 1,
-        manaCost: 1,
+        manaCost: 5,
         projectile: 'arrow', // Test projectile for soldier
         icon: 'arrow2',
         audio: 'p_att_phys',
@@ -124,10 +124,10 @@ export const jobAttributes: Record<string, JobConfig> = {
         cooldown: 5,
         critChance: 0.1,
         knockback: _knockback.meleeUltimate,
-        range: 30,
+        range: 50,
         hits: 1,
         targets: 6,
-        manaCost: 10,
+        manaCost: 15,
         icon: 'slash3',
         audio: 'p_att_phys',
       },
@@ -154,17 +154,18 @@ export const jobAttributes: Record<string, JobConfig> = {
         ...sharedAttacks.attack2,
         range: 75,
         manaCost: 10,
-        damage: 30,
+        damage: 20,
+        hits: 2,
       },
       attack3: {
         ...sharedAttacks.attack3,
         name: 'Blazing Slash',
         description: 'An attack embedded in powerful flames.',
         icon: 'fire_sword',
-        range: 100,
+        range: 110,
         manaCost: 15,
-        cooldown: 8.0,
-        damage: 100,
+        cooldown: 5.0,
+        damage: 60,
         targets: 100,
         hits: 1,
       },
@@ -196,8 +197,8 @@ export const jobAttributes: Record<string, JobConfig> = {
         hits: 1,
         targets: 1,
         manaCost: 0,
-        manaLeech: 3, // Default mana leech for basic attack
-        hpLeech: 2, // Default HP leech for basic attack
+        manaLeech: 10, // Low mana leech for wizard, relies on high mana regen
+        hpLeech: 1, // Very low HP leech for magic users
         skillEffect: 'freeze',
         icon: 'ice1',
         audio: 'p_att_ice',
@@ -221,7 +222,7 @@ export const jobAttributes: Record<string, JobConfig> = {
       },
       attack3: {
         attackType: 'area' as const,
-        name: 'Fire Explosion',
+        name: 'Area Combustion',
         description: 'Channel fire magic to create a large explosion of fire.',
         damage: 100,
         cooldown: 8.0,
@@ -257,16 +258,16 @@ export const jobAttributes: Record<string, JobConfig> = {
         name: 'Quick Shot',
         description:
           'A swift arrow shot that deals moderate damage at range. Low cooldown for rapid fire.',
-        damage: 10,
-        cooldown: 0,
-        critChance: 0,
+        damage: 12,
+        cooldown: 0.1,
+        critChance: 0.15,
         knockback: _knockback.rangedAttack1,
         range: 300,
         hits: 1,
         targets: 1,
         manaCost: 0,
-        manaLeech: 3, // Default mana leech for basic attack
-        hpLeech: 2, // Default HP leech for basic attack
+        manaLeech: 10, // Low mana leech for ranged combat
+        hpLeech: 1, // Low HP leech for ranged classes
         projectile: 'arrow',
         icon: 'arrow1',
         audio: 'p_att_phys',
@@ -291,8 +292,8 @@ export const jobAttributes: Record<string, JobConfig> = {
         attackType: 'projectile' as const,
         name: 'Rain of Arrows',
         description: 'Unleash multiple arrows in a wide arc, hitting all enemies in front.',
-        damage: 100,
-        cooldown: 8.0,
+        damage: 35,
+        cooldown: 6.0,
         critChance: 0.1,
         knockback: _knockback.rangedUltimate,
         range: 350,
@@ -317,7 +318,23 @@ export const jobAttributes: Record<string, JobConfig> = {
       manaRecovery: 0.4,
       knockbackImmune: true, // immune to knockback
     },
-    attacks: sharedAttacks,
+    attacks: {
+      attack1: {
+        ...sharedAttacks.attack1,
+        critChance: 0.8,
+      },
+      attack2: {
+        ...sharedAttacks.attack2,
+        critChance: 0.8,
+        cooldown: 2.0,
+      },
+      attack3: {
+        ...sharedAttacks.attack3,
+        damage: 100,
+        critChance: 0.8,
+        cooldown: 6.0,
+      },
+    },
   },
   'knight-templar': {
     displayName: 'Knight Templar',
@@ -342,7 +359,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         attackType: 'dash' as const,
         name: 'Shield Charge',
         description: 'Dashes forward while holding up the shield.',
-        damage: 100,
+        damage: 50,
         cooldown: 5.0,
         critChance: 0.1,
         knockback: _knockback.dashAttack,
@@ -366,7 +383,6 @@ export const jobAttributes: Record<string, JobConfig> = {
       mana: 50,
       hpRecovery: 1,
       manaRecovery: 0.7,
-      knockbackImmune: true, // immune to knockback
     },
     attacks: {
       attack1: {
@@ -378,9 +394,9 @@ export const jobAttributes: Record<string, JobConfig> = {
         attackType: 'dash' as const,
         description: 'A dash that uses the full speed of the steed.',
         name: 'Piercing Dash',
-        damage: 30,
-        cooldown: 0.8,
-        critChance: 0,
+        damage: 40,
+        cooldown: 1.0,
+        critChance: 0.15,
         knockback: _knockback.dashAttack,
         range: 100,
         hits: 1,
@@ -394,7 +410,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         attackType: 'dash' as const,
         name: 'Lightning Thrust',
         description: 'A lightning-enhanced attack while dashing on the trusty steed.',
-        damage: 100,
+        damage: 50,
         cooldown: 8.0,
         critChance: 0.1,
         knockback: _knockback.dashAttack,
@@ -447,12 +463,41 @@ export const jobAttributes: Record<string, JobConfig> = {
     baseStats: {
       health: 105,
       moveSpeed: 300,
-      mana: 40,
+      mana: 60,
       hpRecovery: 1,
       manaRecovery: 0.6,
       doubleJump: true,
     },
-    attacks: sharedAttacks,
+    attacks: {
+      attack1: {
+        ...sharedAttacks.attack1,
+        range: 80,
+        critChance: 1.0, // Guaranteed crit
+      },
+      attack2: {
+        ...sharedAttacks.attack2,
+        name: 'Decimate Flash',
+        description: 'An attack that decimates the enemy with 10 hits in an instant.',
+        range: 90,
+        cooldown: 2.0,
+        critChance: 1.0, // Guaranteed crit
+        manaCost: 15,
+        damage: 3,
+        targets: 100,
+        hits: 10,
+      },
+      attack3: {
+        ...sharedAttacks.attack3,
+        name: 'Tsubame Gaeshi',
+        range: 100,
+        critChance: 1.0, // Guaranteed crit
+        manaCost: 20,
+        cooldown: 5.0,
+        damage: 35,
+        targets: 100,
+        hits: 3,
+      },
+    },
   },
 };
 
