@@ -132,7 +132,7 @@ export const jobSprites = {
     animations: {
       idle: { start: 0, end: 5, frameRate: 8 },
       walk: { start: 9, end: 16, frameRate: 12 },
-      attack1: { start: 18, end: 27, frameRate: 15 },
+      attack1: { start: 27, end: 35, frameRate: 15 },
       attack2: { start: 45, end: 50, frameRate: 20 },
       attack3: { start: 54, end: 59, frameRate: 20 },
       damaged: { start: 72, end: 75, frameRate: 15 },
