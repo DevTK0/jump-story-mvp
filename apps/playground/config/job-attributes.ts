@@ -59,10 +59,11 @@ export const jobAttributes: Record<string, JobConfig> = {
     spriteKey: 'soldier',
     unlockLevel: 0, // Unlocked by default
     baseStats: {
-      health: 120,
+      health: 120000,
       moveSpeed: 250,
       mana: 30,
       hpRecovery: 1,
+      knockbackImmune: true, // immune to knockback
       manaRecovery: 0.5,
     },
     attacks: {

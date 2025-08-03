@@ -164,6 +164,9 @@ export const enemySprites = {
     animations: {
       idle: { start: 0, end: 5, frameRate: 8 },
       walk: { start: 9, end: 16, frameRate: 10 },
+      attack1: { start: 18, end: 23, frameRate: 15 },
+      attack2: { start: 18, end: 23, frameRate: 15 },
+      attack3: { start: 18, end: 23, frameRate: 15 },
       damaged: { start: 32, end: 35, frameRate: 15 },
       death: { start: 40, end: 43, frameRate: 12 },
     },
@@ -177,6 +180,7 @@ export const enemySprites = {
       walk: { start: 9, end: 16, frameRate: 10 },
       attack1: { start: 18, end: 23, frameRate: 15 },
       attack2: { start: 27, end: 32, frameRate: 15 },
+      attack3: { start: 27, end: 32, frameRate: 15 },
       damaged: { start: 54, end: 57, frameRate: 15 },
       death: { start: 63, end: 66, frameRate: 12 },
     },
@@ -190,11 +194,26 @@ export const enemySprites = {
       walk: { start: 11, end: 18, frameRate: 10 },
       attack1: { start: 22, end: 23, frameRate: 15 },
       attack2: { start: 33, end: 32, frameRate: 15 },
+      attack3: { start: 33, end: 32, frameRate: 15 },
       damaged: { start: 55, end: 58, frameRate: 15 },
       death: { start: 66, end: 69, frameRate: 12 },
     },
   },
   'orc-rider': {
+    path: 'assets/spritesheet/enemies/Orc%20rider.png',
+    frameWidth: SPRITE_SIZE,
+    frameHeight: SPRITE_SIZE,
+    animations: {
+      idle: { start: 0, end: 5, frameRate: 8 },
+      walk: { start: 11, end: 18, frameRate: 10 },
+      attack1: { start: 22, end: 29, frameRate: 15 },
+      attack2: { start: 44, end: 54, frameRate: 15 },
+      attack3: { start: 55, end: 57, frameRate: 15 },
+      damaged: { start: 66, end: 69, frameRate: 15 },
+      death: { start: 77, end: 80, frameRate: 12 },
+    },
+  },
+  'orc-rider-2': {
     path: 'assets/spritesheet/enemies/Orc%20rider.png',
     frameWidth: SPRITE_SIZE,
     frameHeight: SPRITE_SIZE,
@@ -217,6 +236,7 @@ export const enemySprites = {
       walk: { start: 8, end: 15, frameRate: 10 },
       attack1: { start: 16, end: 21, frameRate: 15 },
       attack2: { start: 24, end: 30, frameRate: 15 },
+      attack3: { start: 24, end: 30, frameRate: 15 },
       damaged: { start: 40, end: 43, frameRate: 15 },
       death: { start: 48, end: 51, frameRate: 12 },
     },
@@ -230,6 +250,7 @@ export const enemySprites = {
       walk: { start: 9, end: 16, frameRate: 10 },
       attack1: { start: 18, end: 23, frameRate: 15 },
       attack2: { start: 27, end: 32, frameRate: 15 },
+      attack3: { start: 27, end: 32, frameRate: 15 },
       damaged: { start: 36, end: 39, frameRate: 15 },
       death: { start: 45, end: 48, frameRate: 12 },
     },
@@ -243,6 +264,7 @@ export const enemySprites = {
       walk: { start: 9, end: 16, frameRate: 10 },
       attack1: { start: 18, end: 26, frameRate: 15 },
       attack2: { start: 18, end: 26, frameRate: 15 },
+      attack3: { start: 0, end: 5, frameRate: 15 },
       damaged: { start: 27, end: 30, frameRate: 15 },
       death: { start: 36, end: 39, frameRate: 12 },
     },
@@ -255,7 +277,8 @@ export const enemySprites = {
       idle: { start: 0, end: 5, frameRate: 8 },
       walk: { start: 12, end: 20, frameRate: 10 },
       attack1: { start: 24, end: 25, frameRate: 15 },
-      attack2: { start: 36, end: 34, frameRate: 15 },
+      attack2: { start: 0, end: 5, frameRate: 15 },
+      attack3: { start: 36, end: 34, frameRate: 15 },
       damaged: { start: 60, end: 63, frameRate: 15 },
       death: { start: 72, end: 75, frameRate: 12 },
     },
@@ -267,8 +290,9 @@ export const enemySprites = {
     animations: {
       idle: { start: 0, end: 5, frameRate: 6 },
       walk: { start: 12, end: 17, frameRate: 8 },
-      attack1: { start: 24, end: 31, frameRate: 15 },
-      attack2: { start: 36, end: 45, frameRate: 15 },
+      attack1: { start: 24, end: 29, frameRate: 15 },
+      attack2: { start: 0, end: 5, frameRate: 15 },
+      attack3: { start: 36, end: 47, frameRate: 15 },
       damaged: { start: 48, end: 51, frameRate: 12 },
       death: { start: 60, end: 63, frameRate: 10 },
     },
@@ -280,8 +304,9 @@ export const enemySprites = {
     animations: {
       idle: { start: 0, end: 5, frameRate: 8 },
       walk: { start: 13, end: 20, frameRate: 10 },
-      attack1: { start: 26, end: 33, frameRate: 15 },
-      attack2: { start: 39, end: 42, frameRate: 15 },
+      attack1: { start: 26, end: 34, frameRate: 15 },
+      attack2: { start: 39, end: 51, frameRate: 15 },
+      attack3: { start: 0, end: 5, frameRate: 15 },
       damaged: { start: 52, end: 55, frameRate: 15 },
       death: { start: 65, end: 68, frameRate: 12 },
     },
@@ -293,8 +318,9 @@ export const enemySprites = {
     animations: {
       idle: { start: 0, end: 5, frameRate: 8 },
       walk: { start: 13, end: 20, frameRate: 10 },
-      attack1: { start: 26, end: 23, frameRate: 15 },
-      attack2: { start: 39, end: 32, frameRate: 15 },
+      attack1: { start: 26, end: 34, frameRate: 15 },
+      attack2: { start: 39, end: 51, frameRate: 15 },
+      attack3: { start: 52, end: 60, frameRate: 15 },
       damaged: { start: 65, end: 68, frameRate: 15 },
       death: { start: 78, end: 81, frameRate: 12 },
     },
@@ -400,6 +426,297 @@ export const skillEffectSprites: Record<string, SpriteDefinition> = {
     scale: 2, // Default scale for skill effects
     animations: {
       play: { start: 0, end: 4, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'red-slash': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 240, end: 248, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'lighting-shot': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 190, end: 198, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'gae-bolg': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 200, end: 205, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'heavy-blow': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 210, end: 215, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'mana-eruption': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 220, end: 226, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'sand-shot': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 230, end: 233, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'holy-blow': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 250, end: 256, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'yellow-slash': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 260, end: 265, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'poison-blast': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 270, end: 276, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  glowflies: {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 280, end: 287, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'energy-slash': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 150, end: 157, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'red-blast': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 140, end: 145, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'air-blast': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 130, end: 134, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'arrow-shot': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 120, end: 124, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'energy-uppercut': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 110, end: 116, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'purple-slash': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 90, end: 94, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'cut-2': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 80, end: 83, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'bullet-shot': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 70, end: 74, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'energy-impact': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 60, end: 63, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'lightning-impact': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 50, end: 54, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'candle-slash': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 40, end: 45, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'flame-shot': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 30, end: 36, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'energy-blow': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 20, end: 24, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  slash: {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 10, end: 13, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'slash-impact': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 0, end: 4, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  // enemy
+  claw: {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 180, end: 182, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'multi-slash': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 170, end: 175, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'claw-slash': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 160, end: 163, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'cut-1': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 100, end: 104, frameRate: 20 }, // Static sprite for now
     },
   },
 };
