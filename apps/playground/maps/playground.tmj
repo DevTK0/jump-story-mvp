@@ -985,7 +985,7 @@
                         }],
                  "rotation":0,
                  "type":"",
-                 "visible":true,
+                 "visible":false,
                  "width":1152,
                  "x":-3072,
                  "y":544
@@ -1014,12 +1014,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -2964,12 +2964,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -2991,12 +2991,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3018,12 +3018,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3046,12 +3046,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3073,12 +3073,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3100,12 +3100,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3127,12 +3127,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3154,12 +3154,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3181,12 +3181,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3208,12 +3208,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3235,12 +3235,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3262,12 +3262,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3289,12 +3289,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3316,12 +3316,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3343,12 +3343,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3370,12 +3370,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3397,12 +3397,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3424,12 +3424,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3451,12 +3451,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3479,12 +3479,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3506,12 +3506,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3533,12 +3533,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3560,12 +3560,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3587,12 +3587,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3614,12 +3614,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3641,12 +3641,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3668,12 +3668,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3695,12 +3695,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3722,12 +3722,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3749,12 +3749,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3776,12 +3776,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3803,12 +3803,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3830,12 +3830,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3857,12 +3857,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3884,12 +3884,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3912,12 +3912,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3939,12 +3939,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3966,12 +3966,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -3993,12 +3993,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"10"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -4020,12 +4020,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"10"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -4047,12 +4047,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"10"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -4074,12 +4074,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"10"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -4101,12 +4101,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -4128,12 +4128,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -4155,12 +4155,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -4182,12 +4182,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -4209,12 +4209,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -4236,12 +4236,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -4263,12 +4263,12 @@
                         {
                          "name":"number",
                          "type":"string",
-                         "value":"1"
+                         "value":"5"
                         }, 
                         {
                          "name":"spawn_interval",
                          "type":"string",
-                         "value":"1"
+                         "value":"60"
                         }],
                  "rotation":0,
                  "type":"",
@@ -5114,6 +5114,17 @@
                  "width":32,
                  "x":64,
                  "y":3040
+                }, 
+                {
+                 "height":224,
+                 "id":519,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":32,
+                 "x":-1152,
+                 "y":2080
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -6075,7 +6086,7 @@
                  "visible":true,
                  "width":672,
                  "x":2848,
-                 "y":3136
+                 "y":3072
                 }, 
                 {
                  "height":32,
@@ -6618,6 +6629,61 @@
                  "width":160,
                  "x":704,
                  "y":4000
+                }, 
+                {
+                 "height":32,
+                 "id":514,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":576,
+                 "x":-1664,
+                 "y":2080
+                }, 
+                {
+                 "height":32,
+                 "id":515,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":416,
+                 "x":-1440,
+                 "y":2304
+                }, 
+                {
+                 "height":32,
+                 "id":516,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":384,
+                 "x":-1376,
+                 "y":2432
+                }, 
+                {
+                 "height":32,
+                 "id":517,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":256,
+                 "x":-1408,
+                 "y":2624
+                }, 
+                {
+                 "height":32,
+                 "id":518,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":256,
+                 "x":-1664,
+                 "y":2496
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -12783,7 +12849,7 @@
          "y":0
         }],
  "nextlayerid":14,
- "nextobjectid":514,
+ "nextobjectid":521,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",
