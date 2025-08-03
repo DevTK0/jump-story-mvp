@@ -53,6 +53,13 @@ public static class PlayerConstants
         return (float)Math.Floor(baseHp * Math.Pow(HP_SCALING_EXPONENT, level));
     }
     
+    // New exponential scaling methods using job-specific base values
+    public static float CalculateHpLeech(uint level, uint hpLeech)
+    {
+        // HP = Base HP × (1.1^level)
+        return (float)Math.Floor(hpLeech * Math.Pow(HP_SCALING_EXPONENT, level));
+    }
+    
     public static float CalculateMaxManaWithJob(uint level, uint baseMana)
     {
         // For now, mana uses the same scaling as HP

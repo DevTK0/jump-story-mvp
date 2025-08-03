@@ -1,5 +1,18 @@
 import type { JobConfig } from '@/player/combat/attack-types';
 
+const _knockback = {
+  meleeAttack1: 10,
+  meleeAttack2: 30,
+  meleeAttack3: 2,
+  meleeUltimate: 40, // Very knockback
+  rangedAttack1: 5,
+  rangedAttack2: 10,
+  rangedAttack3: 5,
+  rangedHeavyAttack2: 15,
+  dashAttack: 30, // very knockback
+  rangedUltimate: 30, // very knockback
+}
+
 // Shared attack configuration for all jobs
 const sharedAttacks = {
   attack1: {
@@ -10,14 +23,14 @@ const sharedAttacks = {
     damage: 10,
     cooldown: 0.5,
     critChance: 0,
-    knockback: 500,
+    knockback: _knockback.meleeAttack1,
     range: 50,
     hits: 1,
     targets: 5,
     manaCost: 0,
     manaLeech: 3, // Default mana leech for basic attack
     hpLeech: 2, // Default HP leech for basic attack
-    icon: 'heal1',
+    icon: 'slash1',
     audio: 'p_att_phys',
   },
   attack2: {
@@ -28,27 +41,27 @@ const sharedAttacks = {
     damage: 50,
     cooldown: 0.5,
     critChance: 0,
-    knockback: 10,
+    knockback: _knockback.meleeAttack2,
     range: 75,
     hits: 1,
     targets: 6,
     manaCost: 0,
-    icon: 'heal1',
+    icon: 'slash2',
     audio: 'p_att_phys',
   },
   attack3: {
     attackType: 'standard' as const,
-    name: 'Combo Attack',
-    description: 'A ranged attack.',
+    name: 'Ultimate Slash',
+    description: 'An attack that gathers all power into one devestating blow.',
     damage: 15,
     cooldown: 0.5,
     critChance: 1,
     knockback: 0,
-    range: 500,
+    range: 75,
     hits: 1,
     targets: 1,
     manaCost: 10,
-    icon: 'heal1',
+    icon: 'slash3',
     audio: 'p_att_phys',
   },
 };
@@ -75,47 +88,47 @@ export const jobAttributes: Record<string, JobConfig> = {
         damage: 10,
         cooldown: 0.5,
         critChance: 0,
-        knockback: 500,
+        knockback: _knockback.meleeAttack1,
         range: 50,
         hits: 1,
         targets: 5,
         manaCost: 0,
         manaLeech: 3, // Moderate mana leech for soldier
         hpLeech: 3, // Higher HP leech for tank class
-        icon: 'heal1',
+        icon: 'slash1',
         audio: 'p_att_phys',
       },
       attack2: {
+        attackType: 'projectile' as const,
+        name: 'Rapid Shot',
+        description:
+          'Fires an arrows rapidly.',
+        damage: 15,
+        cooldown: 0.5,
+        critChance: 1,
+        knockback: _knockback.rangedAttack1,
+        range: 500,
+        hits: 1,
+        targets: 1,
+        manaCost: 1,
+        projectile: 'arrow', // Test projectile for soldier
+        icon: 'arrow2',
+        audio: 'p_att_phys',
+      },
+      attack3: {
         attackType: 'standard' as const,
         name: 'Power Slash',
         description:
           'A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.',
         damage: 50,
-        cooldown: 0.5,
+        cooldown: 5,
         critChance: 0,
-        knockback: 10,
-        range: 75,
+        knockback: _knockback.meleeUltimate,
+        range: 50,
         hits: 1,
         targets: 6,
         manaCost: 10,
-        icon: 'heal2',
-        audio: 'p_att_phys',
-      },
-      attack3: {
-        attackType: 'projectile' as const,
-        name: 'Combo Attack',
-        description:
-          'Unleash a flurry of 3 strikes with high critical chance. Extended range and moderate mana cost.',
-        damage: 15,
-        cooldown: 5,
-        critChance: 1,
-        knockback: 8,
-        range: 500,
-        hits: 1,
-        targets: 1,
-        manaCost: 0,
-        projectile: 'arrow', // Test projectile for soldier
-        icon: 'heal3',
+        icon: 'slash3',
         audio: 'p_att_phys',
       },
     },
@@ -132,7 +145,19 @@ export const jobAttributes: Record<string, JobConfig> = {
       manaRecovery: 0.3,
       knockbackImmune: true, // immune to knockback
     },
-    attacks: sharedAttacks,
+    attacks: {
+      attack1: {
+        ...sharedAttacks.attack1,
+      },
+      attack2: {
+        ...sharedAttacks.attack2,
+      },
+      attack3: {
+        ...sharedAttacks.attack3,
+        icon: 'fire_sword'
+      },
+
+    }
   },
   wizard: {
     displayName: 'Wizard',
@@ -149,7 +174,7 @@ export const jobAttributes: Record<string, JobConfig> = {
       attack1: {
         attackType: 'casting' as const,
         name: 'Frost Nova',
-        description: 'Channel frost magic to create a freezing explosion around you.',
+        description: 'Channel frost magic to create a freezing explosion in front of you.',
         damage: 15,
         cooldown: 0.6,
         critChance: 0.2,
@@ -163,44 +188,44 @@ export const jobAttributes: Record<string, JobConfig> = {
         manaLeech: 1, // Low mana leech for wizard, relies on high mana regen
         hpLeech: 1, // Very low HP leech for magic users
         skillEffect: 'freeze',
-        icon: 'heal1',
-        audio: 'p_att_phys',
+        icon: 'ice1',
+        audio: 'p_att_ice',
       },
       attack2: {
         attackType: 'casting' as const,
-        name: 'Holy Nova',
-        description: 'Channel divine power to unleash a radiant explosion.',
+        name: 'Fire Bolt',
+        description: 'Channel fire magic to shoot a fireball in front of you.',
         damage: 40,
         cooldown: 0.8,
         critChance: 0.15,
         knockback: 200,
         range: 150,
         radius: 150,
-        effectSprite: 'holy',
+        effectSprite: 'fire',
         hits: 1,
         targets: 8,
         manaCost: 0,
-        skillEffect: 'holy',
-        icon: 'heal1',
-        audio: 'p_att_phys',
+        skillEffect: 'fire',
+        icon: 'fire1',
+        audio: 'p_att_fire',
       },
       attack3: {
         attackType: 'casting' as const,
-        name: 'Arcane Explosion',
-        description: 'Channel pure arcane energy to detonate a massive explosion.',
+        name: 'Fire Explosion',
+        description: 'Channel fire magic to create a large explosion of fire.',
         damage: 25,
         cooldown: 1.0,
         critChance: 0.3,
         knockback: 400,
         range: 200,
         radius: 200,
-        effectSprite: 'arcane',
+        effectSprite: 'fire',
         hits: 2,
         targets: 10,
         manaCost: 0,
-        skillEffect: 'holy',
-        icon: 'heal1',
-        audio: 'p_att_phys',
+        skillEffect: 'fire',
+        icon: 'fire2',
+        audio: 'p_att_fire',
       },
     },
   },
@@ -225,7 +250,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         damage: 12,
         cooldown: 0.4,
         critChance: 0.15,
-        knockback: 300,
+        knockback: _knockback.rangedAttack1,
         range: 300,
         hits: 1,
         targets: 1,
@@ -233,7 +258,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         manaLeech: 2, // Low mana leech for ranged combat
         hpLeech: 1, // Low HP leech for ranged classes
         projectile: 'arrow',
-        icon: 'heal1',
+        icon: 'arrow1',
         audio: 'p_att_phys',
       },
       attack2: {
@@ -249,7 +274,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         targets: 3,
         manaCost: 0,
         projectile: 'arrow',
-        icon: 'heal1',
+        icon: 'arrow2',
         audio: 'p_att_phys',
       },
       attack3: {
@@ -265,7 +290,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         targets: 5,
         manaCost: 0,
         projectile: 'arrow',
-        icon: 'heal1',
+        icon: 'arrow3',
         audio: 'p_att_phys',
       },
     },
@@ -316,7 +341,8 @@ export const jobAttributes: Record<string, JobConfig> = {
         manaCost: 0,
         dashDistance: 1000,
         dashSpeed: 1000,
-        icon: 'heal',
+        icon: 'shield1',
+        audio: 'p_att_phys'
       },
     },
   },
@@ -351,7 +377,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         manaCost: 0,
         dashDistance: 300,
         dashSpeed: 800,
-        icon: 'heal1',
+        icon: 'charge1',
         audio: 'p_att_phys',
       },
       attack3: {
@@ -368,7 +394,8 @@ export const jobAttributes: Record<string, JobConfig> = {
         manaCost: 0,
         dashDistance: 1000,
         dashSpeed: 1000,
-        icon: 'heal',
+        icon: 'lightning2',
+        audio: 'p_att_phys',
       },
     },
   },
@@ -398,7 +425,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         targets: 3, // Can heal up to 3 party members
         manaCost: 20,
         skillEffect: 'freeze',
-        icon: 'heal2',
+        icon: 'heal1',
         audio: 'p_att_heal',
       },
       attack3: sharedAttacks.attack3,

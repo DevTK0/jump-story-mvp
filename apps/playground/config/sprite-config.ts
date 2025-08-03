@@ -35,8 +35,8 @@ export const jobSprites = {
       idle: { start: 0, end: 5, frameRate: 8 },
       walk: { start: 9, end: 16, frameRate: 12 },
       attack1: { start: 18, end: 23, frameRate: 15 },
-      attack2: { start: 27, end: 32, frameRate: 20 },
-      attack3: { start: 36, end: 44, frameRate: 20 },
+      attack2: { start: 36, end: 44, frameRate: 20 },
+      attack3: { start: 27, end: 32, frameRate: 20 },
       damaged: { start: 45, end: 48, frameRate: 15 },
       death: { start: 54, end: 57, frameRate: 8 },
     },
@@ -756,6 +756,195 @@ export const iconSprites: Record<string, SpriteDefinition> = {
   },
   heal3: {
     path: 'assets/spritesheet/icons/heal3.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  arrow1: {
+    path: 'assets/spritesheet/icons/arrow1.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  arrow2: {
+    path: 'assets/spritesheet/icons/arrow2.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  arrow3: {
+    path: 'assets/spritesheet/icons/arrow3.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  magic1: {
+    path: 'assets/spritesheet/icons/magic1.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  magic2: {
+    path: 'assets/spritesheet/icons/magic2.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  magic3: {
+    path: 'assets/spritesheet/icons/magic3.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  sword1: {
+    path: 'assets/spritesheet/icons/sword1.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  sword2: {
+    path: 'assets/spritesheet/icons/sword2.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  sword3: {
+    path: 'assets/spritesheet/icons/sword3.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  fire_sword: {
+    path: 'assets/spritesheet/icons/fire_sword.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  slash1: {
+    path: 'assets/spritesheet/icons/slash1.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  slash2: {
+    path: 'assets/spritesheet/icons/slash2.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  slash3: {
+    path: 'assets/spritesheet/icons/slash3.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  charge1: {
+    path: 'assets/spritesheet/icons/charge1.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  charge2: {
+    path: 'assets/spritesheet/icons/charge2.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  fire1: {
+    path: 'assets/spritesheet/icons/fire1.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  fire2: {
+    path: 'assets/spritesheet/icons/fire2.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  ice1: {
+    path: 'assets/spritesheet/icons/ice1.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  lightning1: {
+    path: 'assets/spritesheet/icons/lightning1.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  lightning2: {
+    path: 'assets/spritesheet/icons/lightning2.png',
+    frameWidth: 16,
+    frameHeight: 16,
+    scale: 2,
+    animations: {
+      play: { start: 0, end: 0, frameRate: 1 }, // Static icon
+    },
+  },
+  shield1: {
+    path: 'assets/spritesheet/icons/shield1.png',
     frameWidth: 16,
     frameHeight: 16,
     scale: 2,

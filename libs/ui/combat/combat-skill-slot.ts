@@ -160,9 +160,7 @@ export class CombatSkillSlot {
       
       // Show icon if available, otherwise show label
       if (skillData.icon) {
-        // Show the hotkey for it as well
-        this.skillLabel.setVisible(true);
-        this.skillLabel.setText(skillData.hotkey ?? '');
+        this.skillLabel.setVisible(false);
         
         // Remove existing icon if any
         if (this.skillIcon) {
