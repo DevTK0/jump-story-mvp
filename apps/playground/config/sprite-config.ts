@@ -408,7 +408,7 @@ export const projectileSprites: Record<string, SpriteDefinition> = {
     frameHeight: 100,
     scale: 1.5, // Slightly smaller scale for fireballs
     animations: {
-      play: { start: 0, end: 6, frameRate: 20 }, // Static sprite
+      play: { start: 0, end: 6, frameRate: 20 },  // Static sprite
     },
   },
 };
@@ -474,6 +474,16 @@ export const skillEffectSprites: Record<string, SpriteDefinition> = {
   },
 
   'heavy-blow': {
+    path: 'assets/spritesheet/effects/Combat-Sheet.png',
+    frameWidth: 64,
+    frameHeight: 64,
+    scale: 2, // Default scale for skill effects
+    animations: {
+      play: { start: 210, end: 215, frameRate: 20 }, // Static sprite for now
+    },
+  },
+
+  'fire-explosion': {
     path: 'assets/spritesheet/effects/Combat-Sheet.png',
     frameWidth: 64,
     frameHeight: 64,
