@@ -123,7 +123,6 @@ public static partial class Module
                 var sprite = bossData.GetProperty("sprite").GetString() ?? bossId;
                 var name = bossData.GetProperty("name").GetString() ?? bossId;
                 var aiBehaviorStr = bossData.GetProperty("ai_behavior").GetString() ?? "patrol";
-                var attackRange = bossData.GetProperty("attack_range").GetSingle();
                 var aggroRange = bossData.GetProperty("aggro_range").GetSingle();
                 var level = bossData.GetProperty("level").GetUInt32();
                 var expReward = bossData.GetProperty("exp_reward").GetUInt32();
@@ -145,7 +144,6 @@ public static partial class Module
                     exp_reward = expReward,
                     move_speed = moveSpeed,
                     ai_behavior = aiBehavior,
-                    attack_range = attackRange,
                     aggro_range = aggroRange
                 };
 

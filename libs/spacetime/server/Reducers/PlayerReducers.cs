@@ -507,8 +507,8 @@ public static partial class Module
             var deadPlayer = ctx.Db.Player.identity.Find(ctx.Sender);
             if (deadPlayer != null)
             {
-                // Calculate respawn timer: level seconds
-                var respawnDelay = TimeSpan.FromSeconds(deadPlayer.Value.level);
+                // Calculate respawn timer: always 3 seconds
+                var respawnDelay = TimeSpan.FromSeconds(3);
                 var respawnAvailableAt = ctx.Timestamp + respawnDelay;
                 
                 ctx.Db.Player.identity.Update(deadPlayer.Value with

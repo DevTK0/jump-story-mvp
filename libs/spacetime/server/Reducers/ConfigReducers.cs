@@ -107,7 +107,6 @@ public static partial class Module
                 var baseExpReward = enemyData.TryGetProperty("base_exp_reward", out var expProp) ? expProp.GetUInt32() : 25u;
                 var movementSpeed = enemyData.TryGetProperty("movement_speed", out var speedProp) ? speedProp.GetUInt32() : 50u;
                 var damage = enemyData.TryGetProperty("damage", out var damageProp) ? damageProp.GetUInt32() : 10u;
-                var attackRange = enemyData.TryGetProperty("attack_range", out var attackRangeProp) ? attackRangeProp.GetUInt32() : 50u;
                 var aggroRange = enemyData.TryGetProperty("aggro_range", out var aggroRangeProp) ? aggroRangeProp.GetUInt32() : 150u;
                 var behavior = enemyData.TryGetProperty("ai_behavior", out var behaviorProp) ? behaviorProp.GetString() ?? "patrol" : "patrol";
                 var invulnerable = enemyData.TryGetProperty("invulnerable", out var invulnerableProp) ? invulnerableProp.GetBoolean() : false;
@@ -129,7 +128,6 @@ public static partial class Module
                     exp_reward = baseExpReward,
                     move_speed = (float)movementSpeed,
                     damage = (float)damage,
-                    attack_range = (float)attackRange,
                     aggro_range = (float)aggroRange,
                     invulnerable = invulnerable
                 });

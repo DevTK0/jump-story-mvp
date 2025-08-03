@@ -60,7 +60,6 @@ public static partial class Module
         public float move_speed;     // Movement speed in pixels per second
         public float damage;         // Base damage dealt to players
         public AiBehavior ai_behavior; // AI behavior pattern
-        public float attack_range;   // Distance from which enemy can attack
         public float aggro_range;    // Distance at which enemy detects and pursues players
         public bool invulnerable;    // Whether the enemy is immune to all damage
     }

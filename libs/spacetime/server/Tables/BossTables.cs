@@ -14,7 +14,6 @@ public static partial class Module
         public uint exp_reward;          // Base experience reward
         public float move_speed;         // Movement speed
         public AiBehavior ai_behavior;   // Reuse enemy AI behaviors
-        public float attack_range;       // Melee attack range
         public float aggro_range;        // Detection range
         
     }

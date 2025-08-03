@@ -1231,7 +1231,7 @@ public static partial class Module
                 // If player died, store death location and calculate respawn timer
                 if (isDead)
                 {
-                    var respawnDelay = TimeSpan.FromSeconds(currentPlayer.level);
+                    var respawnDelay = TimeSpan.FromSeconds(3); // Always 3 seconds
                     var respawnAvailableAt = ctx.Timestamp + respawnDelay;
                     
                     damagedPlayer = damagedPlayer with {

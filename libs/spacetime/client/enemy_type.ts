@@ -42,7 +42,6 @@ export type Enemy = {
   moveSpeed: number,
   damage: number,
   aiBehavior: __AiBehavior,
-  attackRange: number,
   aggroRange: number,
   invulnerable: boolean,
 };
@@ -64,7 +63,6 @@ export namespace Enemy {
       new ProductTypeElement("moveSpeed", AlgebraicType.createF32Type()),
       new ProductTypeElement("damage", AlgebraicType.createF32Type()),
       new ProductTypeElement("aiBehavior", __AiBehavior.getTypeScriptAlgebraicType()),
-      new ProductTypeElement("attackRange", AlgebraicType.createF32Type()),
       new ProductTypeElement("aggroRange", AlgebraicType.createF32Type()),
       new ProductTypeElement("invulnerable", AlgebraicType.createBoolType()),
     ]);

@@ -43,7 +43,6 @@ export type Boss = {
   expReward: number,
   moveSpeed: number,
   aiBehavior: __AiBehavior,
-  attackRange: number,
   aggroRange: number,
 };
 
@@ -65,7 +64,6 @@ export namespace Boss {
       new ProductTypeElement("expReward", AlgebraicType.createU32Type()),
       new ProductTypeElement("moveSpeed", AlgebraicType.createF32Type()),
       new ProductTypeElement("aiBehavior", __AiBehavior.getTypeScriptAlgebraicType()),
-      new ProductTypeElement("attackRange", AlgebraicType.createF32Type()),
       new ProductTypeElement("aggroRange", AlgebraicType.createF32Type()),
     ]);
   }
