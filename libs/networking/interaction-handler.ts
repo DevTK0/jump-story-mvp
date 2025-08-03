@@ -67,6 +67,7 @@ export class InteractionHandler {
         // If no enemies were hit by now, still send the attack
         if (this.enemiesHitInCurrentAttack.length === 0) {
           this.sendCollectedHits();
+          this.damagedInCurrentAttack.clear();
         }
       });
     });
@@ -315,6 +316,7 @@ export class InteractionHandler {
 
     // Clear the collection for next attack
     this.enemiesHitInCurrentAttack = [];
+    this.damagedInCurrentAttack.clear();
   }
 
   /**

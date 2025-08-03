@@ -226,7 +226,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         name: 'Fire Explosion',
         description: 'Channel fire magic to create a large explosion of fire.',
         damage: 25,
-        cooldown: 10.0,
+        cooldown: 8.0,
         critChance: 0.3,
         knockback: _knockback.rangedUltimate,
         range: 300,
