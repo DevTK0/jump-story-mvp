@@ -23,7 +23,8 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
   // Shadow trajectory renderer
   private shadowRenderer: ShadowTrajectoryRenderer;
 
-  private _acceleration: number = 10;
+  // private _accelerationMultiplier: number = 10; // Easy, fully controlled jumps
+  private _accelerationMultiplier: number = 1.5;
 
   constructor(player: Player, inputSystem: InputSystem) {
     super();
@@ -43,9 +44,14 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
       return;
     }
 
+    if (this.player.isClimbing && this.stateTracker.getHasUsedDoubleJump()) {
+      this.stateTracker.resetDoubleJumpOnLanding();
+      logger.info('[MovementSystem] Update resetDoubleJump while climbing', this.stateTracker.getHasUsedDoubleJump());
+    }
+
     // Handle movement physics (skip if climbing, dashing, casting, or movement disabled)
     const isCasting = this.player.currentAttackType === 'casting';
-    if (!this.player.isClimbing && !this.player.isDashing && !isCasting && !this.stateTracker.isMovementDisabled()) {
+    if (!this.player.isDashing && !isCasting && !this.stateTracker.isMovementDisabled()) {
       const body = this.player.body;
       const onGround = body.onFloor();
 
@@ -78,7 +84,7 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
           }
         }
       } else {
-        body.setAccelerationX(this._acceleration * horizontalDir * this.player.getSpeed());
+        body.setAccelerationX(this._accelerationMultiplier * horizontalDir * this.player.getSpeed());
       }
 
       // Regular jump
@@ -132,6 +138,8 @@ export class MovementSystem extends BaseDebugRenderer implements System, IDebugg
 
   private handleDoubleJump(): void {
     const onGround = this.player.body.onFloor();
+
+    logger.info('[handleDoubleJump]', { hasUsedDoubleJump: this.stateTracker.getHasUsedDoubleJump(), isClimbing: this.player.isClimbing });
 
     // Check for double jump input
     if (

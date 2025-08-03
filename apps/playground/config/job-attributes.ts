@@ -324,7 +324,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     spriteKey: 'lancer',
     unlockLevel: 0, // Unlocked by default
     baseStats: {
-      health: 80,
+      health: 150,
       moveSpeed: 400, // Really fast movement speed
       mana: 50,
       hpRecovery: 1,
@@ -404,7 +404,7 @@ export const jobAttributes: Record<string, JobConfig> = {
     },
   },
   swordsman: {
-    displayName: 'Swordsman',
+    displayName: 'Hero',
     spriteKey: 'swordsman',
     unlockLevel: 0, // Unlocked by default
     baseStats: {

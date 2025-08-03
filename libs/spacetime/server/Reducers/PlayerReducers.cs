@@ -339,6 +339,10 @@ public static partial class Module
             teleport_id = teleportId,
         });
         Log.Info($"Updated position for {ctx.Sender} to ({x}, {y}) facing {facing}");
+        
+        if (isAtTeleportPoint) {
+            Module.RegenHealthMana(ctx, ctx.Sender);
+        }
     }
 
     [Reducer]
@@ -996,6 +1000,13 @@ public static partial class Module
         if (player.Value.in_combat)
         {
             Log.Info($"RegenHealthMana: Player {player.Value.name} is still in combat, skipping regeneration");
+            return;
+        }
+        
+        // Regenerate only if player is at teleport point
+        if (!player.Value.is_at_teleport_point)
+        {
+            Log.Info($"RegenHealthMana: Player {player.Value.name} is not at teleport point, skipping regeneration");
             return;
         }
 

@@ -421,7 +421,7 @@ export class ClimbingSystem extends BaseDebugRenderer implements System, IDebugg
   private handleJumpExit(): void {
     const horizontalDir = this.inputSystem.getHorizontalDirection();
 
-    this.exitClimbing();
+    this.forceExitClimbing();
 
     // Apply jump
     this.movementSystem.forceJump();
