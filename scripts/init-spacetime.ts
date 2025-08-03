@@ -149,6 +149,14 @@ async function initializeSpacetime() {
     
     console.log('Populating boss configurations...');
     
+    // List all boss types being configured
+    const bossTypes = Object.keys(bossAttributes.bosses);
+    console.log(`  Configuring ${bossTypes.length} boss types:`);
+    bossTypes.forEach((bossId, index) => {
+      const boss = bossAttributes.bosses[bossId];
+      console.log(`    ${index + 1}. ${bossId} - "${boss.name}" (Level ${boss.level})`);
+    });
+    
     // Calculate animation durations for all boss attacks
     const bossAnimationDurations = calculateBossAnimationDurations();
     logBossAnimationDurations(bossAnimationDurations);
@@ -195,12 +203,64 @@ async function initializeSpacetime() {
     
     console.log('Initializing boss routes...');
     
+    // Extract boss route information for logging
+    let bossRouteCount = 0;
+    let bossRouteInfo: string[] = [];
+    
+    for (const layer of tilemap.layers) {
+      if (layer.name === 'Bosses' && layer.objects) {
+        for (const obj of layer.objects) {
+          if (obj.properties) {
+            let bossType = '';
+            let isBoss = false;
+            
+            for (const prop of obj.properties) {
+              if (prop.name === 'enemy') bossType = prop.value;
+              if (prop.name === 'type' && prop.value === 'boss') isBoss = true;
+            }
+            
+            if (isBoss && bossType) {
+              bossRouteCount++;
+              bossRouteInfo.push(
+                `  Boss Route ${bossRouteCount}: ${bossType} at (${obj.x}, ${obj.y}) - Area: ${obj.width}x${obj.height}`
+              );
+            }
+          }
+        }
+      }
+    }
+    
+    if (bossRouteCount > 0) {
+      console.log(`Found ${bossRouteCount} boss spawn locations:`);
+      bossRouteInfo.forEach((info) => console.log(info));
+    } else {
+      console.log('  No boss routes found in tilemap.');
+    }
+    
     // Initialize boss routes from tilemap
     await connection.reducers.initializeBossRoutes(adminApiKey, tilemapContent);
     
     log('✅ Boss routes initialized successfully!');
     
     log('Populating boss triggers from config...');
+    
+    // Extract boss trigger information for logging
+    let bossTriggerCount = 0;
+    let bossTriggerInfo: string[] = [];
+    
+    for (const [enemyType, enemyData] of Object.entries(enemyAttributes.enemies)) {
+      if (enemyData.boss_trigger) {
+        bossTriggerCount++;
+        bossTriggerInfo.push(
+          `  Trigger ${bossTriggerCount}: Kill ${enemyData.boss_trigger.required_kills} ${enemyType} → Spawn ${enemyData.boss_trigger.boss_to_spawn} boss`
+        );
+      }
+    }
+    
+    if (bossTriggerCount > 0) {
+      console.log(`  Found ${bossTriggerCount} boss triggers:`);
+      bossTriggerInfo.forEach((info) => console.log(info));
+    }
     
     try {
       // Populate boss triggers from enemy config
@@ -371,7 +431,10 @@ async function initializeSpacetime() {
     console.log('✅ Enemy routes with per-route spawn intervals configured!');
     console.log(`✅ ${routeCount} spawn areas ready with individual timing!`);
     console.log('🐺 Initial enemy population spawned!');
-    console.log('👹 Boss configurations, routes, and triggers initialized!');
+    console.log('👹 Boss system initialized:');
+    console.log(`   - ${bossTypes.length} boss types configured`);
+    console.log(`   - ${bossRouteCount} boss spawn locations in tilemap`);
+    console.log(`   - ${bossTriggerCount} boss triggers configured`);
     console.log(`🎮 Job configurations populated! (${jobCount} jobs)`);
     if (teleportCount > 0) {
       console.log(`🌟 Teleport locations initialized! (${teleportCount} teleports)`);
