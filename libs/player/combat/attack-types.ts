@@ -46,7 +46,6 @@ export interface AreaAttack extends BaseAttack {
 // Dash attack properties
 export interface DashAttack extends BaseAttack {
   attackType: 'dash';
-  dashDistance: number;
   dashSpeed: number;
 }
 

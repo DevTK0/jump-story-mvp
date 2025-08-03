@@ -567,8 +567,10 @@ export class CombatSystemEnhanced extends BaseDebugRenderer implements System, I
       const facing = this.player.facingDirection;
 
       // Start dash movement
-      const dashVelocity = config.dashSpeed * facing;
+      const dashSpeed = config.dashSpeed;
+      const dashVelocity = dashSpeed * facing;
       playerBody.setVelocityX(dashVelocity);
+      playerBody.setMaxVelocityX(dashSpeed);
 
       // Enable hitbox during dash
       if (hitboxSprite.body) {
