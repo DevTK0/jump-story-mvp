@@ -51,17 +51,17 @@ const sharedAttacks = {
   },
   attack3: {
     attackType: 'standard' as const,
-    name: 'Power Shot',
-    description: 'A ranged attack.',
+    name: 'Ultimate Slash',
+    description: 'An attack that gathers all power into one devestating blow.',
     damage: 15,
     cooldown: 0.5,
     critChance: 1,
     knockback: 0,
-    range: 500,
+    range: 75,
     hits: 1,
     targets: 1,
     manaCost: 10,
-    icon: 'projectile1',
+    icon: 'slash3',
     audio: 'p_att_phys',
   },
 };
@@ -144,7 +144,19 @@ export const jobAttributes: Record<string, JobConfig> = {
       manaRecovery: 0.3,
       knockbackImmune: true, // immune to knockback
     },
-    attacks: sharedAttacks,
+    attacks: {
+      attack1: {
+        ...sharedAttacks.attack1,
+      },
+      attack2: {
+        ...sharedAttacks.attack2,
+      },
+      attack3: {
+        ...sharedAttacks.attack3,
+        icon: 'fire_sword'
+      },
+
+    }
   },
   wizard: {
     displayName: 'Wizard',
@@ -381,7 +393,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         manaCost: 0,
         dashDistance: 1000,
         dashSpeed: 1000,
-        icon: 'charge2',
+        icon: 'lightning2',
         audio: 'p_att_phys',
       },
     },
@@ -412,7 +424,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         targets: 3, // Can heal up to 3 party members
         manaCost: 20,
         skillEffect: 'freeze',
-        icon: 'heal2',
+        icon: 'heal1',
         audio: 'p_att_heal',
       },
       attack3: sharedAttacks.attack3,
