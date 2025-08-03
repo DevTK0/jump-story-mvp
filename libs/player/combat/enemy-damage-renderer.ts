@@ -145,6 +145,7 @@ export class EnemyDamageRenderer {
    * Handle incoming damage event from SpacetimeDB
    */
   public handleDamageEvent(damageEvent: EnemyDamageEvent): void {
+    logger.info('[EnemyDamageRenderer] handleDamageEvent', damageEvent);
     if (!this.enemyManager) {
       console.warn('EnemyDamageRenderer: EnemyManager not set');
       return;
@@ -167,6 +168,7 @@ export class EnemyDamageRenderer {
 
     // If this is a projectile attack, create the projectile animation
     if (damageEvent.projectile) {
+      logger.info('[EnemyDamageRenderer] Creating projectile');
       this.projectileRenderer.createProjectile(damageEvent);
     }
 

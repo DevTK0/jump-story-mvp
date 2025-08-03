@@ -23,6 +23,11 @@ public static partial class Module
         Log.Info($"Enemy {spawnId} recovered from damage and returned to idle state");
     }
 
+    private static float distanceFromPlayer(Player player, Spawn enemy) {
+        var sum = Math.Pow(Math.Abs(player.x - enemy.x), 2) + Math.Pow(Math.Abs(player.y - enemy.y), 2);
+        return (float)Math.Sqrt(sum);
+    }
+
     [Reducer]
     public static void DamageEnemy(ReducerContext ctx, List<uint> spawnIds, AttackType attackType)
     {
@@ -112,10 +117,10 @@ public static partial class Module
             if (spawnIds.Contains(enemy.spawn_id) && enemy.current_hp > 0)
             {
                 // Check if enemy is within attack range (X-axis only)
-                var xDistance = Math.Abs(enemy.x - player.Value.x);
+                var distance = Module.distanceFromPlayer(player.Value, enemy); // Math.Abs(enemy.x - player.Value.x);
                 const float rangeLeniency = 20f; // Base leniency for all attacks
                 
-                if (xDistance <= jobAttack.Value.range + rangeLeniency)
+                if (distance <= jobAttack.Value.range + rangeLeniency)
                 {
                     allEnemies.Add(enemy);
                 }
@@ -124,7 +129,7 @@ public static partial class Module
         
         // Sort by distance from player and take only up to maxTargets
         var validEnemies = allEnemies
-            .OrderBy(e => Math.Abs(e.x - player.Value.x))
+            .OrderBy(e => Module.distanceFromPlayer(player.Value, e))
             .Take(maxTargets)
             .ToList();
 
@@ -245,7 +250,7 @@ public static partial class Module
                     player_identity = ctx.Sender,
                     damage_amount = finalDamage,
                     damage_type = damageType,
-                    projectile = jobAttack.Value.attack_type == "projectile" ? jobAttack.Value.projectile : null,
+                    projectile = jobAttack.Value.projectile ?? null, // Pass projectile effect if present
                     skill_effect = jobAttack.Value.skill_effect, // Pass skill effect if present
                     timestamp = ctx.Timestamp
                 });
