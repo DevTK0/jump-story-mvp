@@ -23,7 +23,7 @@ const sharedAttacks = {
       'A swift blade attack that deals moderate damage to nearby enemies. Low cooldown allows for rapid strikes.',
     damage: 10,
     cooldown: 0.1,
-    critChance: 0,
+    critChance: 0.1,
     knockback: _knockback.meleeAttack1,
     range: 50,
     hits: 1,
@@ -41,7 +41,7 @@ const sharedAttacks = {
       'A devastating overhead swing that cleaves through multiple foes. Deals heavy damage with minimal knockback.',
     damage: 30,
     cooldown: 0.5,
-    critChance: 0,
+    critChance: 0.1,
     knockback: _knockback.meleeAttack2,
     range: 75,
     hits: 1,
@@ -56,7 +56,7 @@ const sharedAttacks = {
     description: 'An attack that gathers all power into one devestating blow.',
     damage: 50,
     cooldown: 8.0,
-    critChance: 1,
+    critChance: 0.1,
     knockback: _knockback.meleeUltimate,
     range: 75,
     hits: 1,
@@ -105,7 +105,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         description: 'Fires an arrows rapidly.',
         damage: 10,
         cooldown: 0.5,
-        critChance: 1,
+        critChance: 0.1,
         knockback: _knockback.rangedAttack1,
         range: 500,
         hits: 1,
@@ -136,7 +136,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   knight: {
     displayName: 'Knight',
     spriteKey: 'knight',
-    unlockLevel: 5, // Unlock at level 2
+    unlockLevel: 0, // Unlock at level 2
     baseStats: {
       health: 150,
       moveSpeed: 200,
@@ -164,7 +164,7 @@ export const jobAttributes: Record<string, JobConfig> = {
         range: 100,
         manaCost: 15,
         cooldown: 8.0,
-        damage: 100,
+        damage: 60,
         targets: 100,
         hits: 1,
       },
@@ -173,7 +173,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   wizard: {
     displayName: 'Wizard',
     spriteKey: 'wizard',
-    unlockLevel: 10, // Unlock at level 10
+    unlockLevel: 5, // Unlock at level 10
     baseStats: {
       health: 100,
       moveSpeed: 250,
@@ -242,7 +242,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   archer: {
     displayName: 'Archer',
     spriteKey: 'archer',
-    unlockLevel: 20, // Unlocked by default
+    unlockLevel: 10, // Unlocked by default
     baseStats: {
       health: 60,
       moveSpeed: 250,
@@ -308,7 +308,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   'armored-axeman': {
     displayName: 'Armored Axeman',
     spriteKey: 'armored-axeman',
-    unlockLevel: 25, // Unlock at level 15
+    unlockLevel: 5, // Unlock at level 15
     baseStats: {
       health: 180,
       moveSpeed: 175,
@@ -320,19 +320,23 @@ export const jobAttributes: Record<string, JobConfig> = {
     attacks: {
       attack1: {
         ...sharedAttacks.attack1,
+        critChance: 0.8,
       },
       attack2: {
         ...sharedAttacks.attack2,
+        critChance: 0.8,
       },
       attack3: {
         ...sharedAttacks.attack3,
+        damage: 70,
+        critChance: 0.8,
       },
     }
   },
   'knight-templar': {
     displayName: 'Knight Templar',
     spriteKey: 'knight-templar',
-    unlockLevel: 30, // Unlock at level 20
+    unlockLevel: 10, // Unlock at level 20
     baseStats: {
       health: 200,
       moveSpeed: 150,
@@ -369,7 +373,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   lancer: {
     displayName: 'Lancer',
     spriteKey: 'lancer',
-    unlockLevel: 35, // Unlocked by default
+    unlockLevel: 15, // Unlocked by default
     baseStats: {
       health: 150,
       moveSpeed: 400, // Really fast movement speed
@@ -421,7 +425,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   priest: {
     displayName: 'Priest',
     spriteKey: 'priest',
-    unlockLevel: 40, // Unlock at level 8
+    unlockLevel: 15, // Unlock at level 8
     baseStats: {
       health: 85,
       moveSpeed: 250,
@@ -453,7 +457,7 @@ export const jobAttributes: Record<string, JobConfig> = {
   swordsman: {
     displayName: 'Hero',
     spriteKey: 'swordsman',
-    unlockLevel: 50, // Unlocked by default
+    unlockLevel: 30, // Unlocked by default
     baseStats: {
       health: 105,
       moveSpeed: 300,
